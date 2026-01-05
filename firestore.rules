@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      // For Phase 1, we might rely on a custom claim or specific UID
+      // return request.auth.token.admin == true;
+      return isAuthenticated() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      // Allow create only by Admin or Backend (Cloud Functions usually bypass rules, but client-side creation needs this)
+      // Actually strictly, user creation should be done by triggers, but for our 'optimistic' client side write:
+      allow create: if isAuthenticated() && isOwner(userId); 
+      allow update: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Public read collections (Gyms, Trainers, Classes)
+    match /gymCenters/{gymId} {
+      allow read: if true;
+      allow write: if false; // Only Admin via Admin SDK or Console for now
+    }
+    
+    match /trainers/{trainerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /classes/{classId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /subscriptionPlans/{planId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // User-specific collections
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId)
+      );
+      // Validation logic for creation would go here (or be handled by Cloud Function)
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow update: if false; // Bookings should be modified via Functions usually to handle capacity
+      allow delete: if false;
+    }
+    
+    // Admin access to everything (Fallback)
+    // match /{document=**} {
+    //   allow read, write: if isAdmin();
+    // }
+  }
+}
