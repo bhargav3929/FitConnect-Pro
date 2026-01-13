@@ -37,7 +37,7 @@ export default function GymsPage() {
                         transition={{ delay: 0.1 }}
                         className="text-lg text-muted-foreground"
                     >
-                        Access the city's top gym centers with one membership.
+                        Access the city&apos;s top gym centers with one membership.
                     </motion.p>
 
                     <motion.div

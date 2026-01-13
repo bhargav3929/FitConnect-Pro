@@ -16,4 +16,15 @@ export interface ClassSession {
     cancelReason?: string;
     createdAt: Date;
     updatedAt: Date;
+    // New fields for spot-based booking
+    totalSpots?: number; // e.g., 12
+    bookedSpots?: number[]; // array of spot numbers taken
+    instructorImage?: string; // instructor avatar URL
+    location?: string; // e.g., "Cedar Park"
+    intensityLevel?: 1 | 2 | 3; // fire emoji count
+}
+
+export interface SpotSelection {
+    spotNumber: number;
+    isGuest: boolean;
 }

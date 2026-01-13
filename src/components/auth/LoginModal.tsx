@@ -78,9 +78,11 @@ export function LoginModal({ trigger, defaultOpen = false, isOpenOverride, onClo
 
     return (
         <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
-            <DialogTrigger asChild>
-                {trigger || <Button variant="ghost">Log in</Button>}
-            </DialogTrigger>
+            {(trigger || isOpenOverride === undefined) && (
+                <DialogTrigger asChild>
+                    {trigger || <Button variant="ghost">Log in</Button>}
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Welcome back</DialogTitle>
