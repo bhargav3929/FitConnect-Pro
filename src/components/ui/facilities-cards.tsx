@@ -80,16 +80,16 @@ export default function FacilitiesSection() {
     }, [isInView, hasInteracted]);
 
     return (
-        <section className="bg-black py-24 relative overflow-hidden">
+        <section className="bg-[#0B0F19] py-24 relative overflow-hidden">
             {/* Header */}
             <div className="container px-4 mx-auto mb-12 flex flex-col items-center text-center">
-                <div className="border border-neutral-800 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-neutral-400 bg-neutral-900/50 mb-6">
+                <div className="border border-coral-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-coral-400 bg-coral-400/10 mb-6">
                     Our Locations
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">
+                <h2 className="text-4xl md:text-5xl font-black text-[#F0F2F5] tracking-tight mb-4">
                     WORLD CLASS FACILITIES
                 </h2>
-                <p className="text-neutral-400 max-w-lg text-lg">
+                <p className="text-[#8892A4] max-w-lg text-lg">
                     Train in state-of-the-art environments designed for peak performance.
                 </p>
             </div>
@@ -113,20 +113,20 @@ export default function FacilitiesSection() {
                             className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105"
                         />
                         <div className={cn(
-                            "absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent transition-opacity duration-500",
+                            "absolute inset-0 bg-gradient-to-t from-[#0B0F19]/95 via-[#0B0F19]/40 to-transparent transition-opacity duration-500",
                             activeId === facility.id ? "opacity-100" : "opacity-70"
                         )} />
                         <div className={cn(
                             "absolute bottom-0 left-0 w-full p-8 flex flex-col justify-end transition-all duration-500 overflow-hidden",
                             activeId === facility.id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                         )}>
-                            <h3 className="text-3xl font-bold text-white mb-1 leading-tight drop-shadow-lg">{facility.name}</h3>
-                            <p className="text-primary font-medium tracking-wide text-base text-gray-300 drop-shadow-md">{facility.location}</p>
+                            <h3 className="text-3xl font-bold text-[#F0F2F5] mb-1 leading-tight drop-shadow-lg">{facility.name}</h3>
+                            <p className="font-medium tracking-wide text-base text-coral-300 drop-shadow-md">{facility.location}</p>
                             <div className={cn(
                                 "overflow-hidden transition-all duration-500 delay-75 ease-in-out",
                                 activeId === facility.id ? "max-h-20 mt-4 opacity-100" : "max-h-0 opacity-0"
                             )}>
-                                <button className="text-xs font-bold bg-white text-black px-5 py-2.5 rounded-full hover:bg-neutral-200 transition-colors uppercase tracking-wider">
+                                <button className="text-xs font-bold bg-coral-400 text-[#0B0F19] px-5 py-2.5 rounded-full hover:bg-coral-300 transition-colors uppercase tracking-wider shadow-[0_0_20px_rgba(255,106,61,0.3)]">
                                     View Details
                                 </button>
                             </div>
@@ -148,7 +148,7 @@ export default function FacilitiesSection() {
                             setHasInteracted(true); // Stop auto-play immediately on user interaction
                         }}
                         className={cn(
-                            "relative overflow-hidden rounded-3xl transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-lg border border-neutral-800",
+                            "relative overflow-hidden rounded-3xl transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-lg border border-[#1A2238]",
                             activeId === facility.id ? "h-[450px]" : "h-[100px]"
                         )}
                     >
@@ -166,8 +166,8 @@ export default function FacilitiesSection() {
                         <div className={cn(
                             "absolute inset-0 bg-gradient-to-b transition-all duration-500",
                             activeId === facility.id
-                                ? "from-transparent via-black/20 to-black/95"
-                                : "from-black/40 via-black/60 to-black/80"
+                                ? "from-transparent via-[#0B0F19]/20 to-[#0B0F19]/95"
+                                : "from-[#0B0F19]/40 via-[#0B0F19]/60 to-[#0B0F19]/80"
                         )} />
 
                         {/* Content Container */}
@@ -179,7 +179,7 @@ export default function FacilitiesSection() {
                             )}>
                                 <div className="flex justify-between items-center w-full">
                                     <h3 className={cn(
-                                        "font-black text-white uppercase tracking-tighter transition-all duration-500 leading-none",
+                                        "font-black text-[#F0F2F5] uppercase tracking-tighter transition-all duration-500 leading-none",
                                         activeId === facility.id ? "text-4xl mb-2" : "text-xl"
                                     )}>
                                         {facility.name}
@@ -193,10 +193,10 @@ export default function FacilitiesSection() {
                                 "overflow-hidden transition-all duration-500 ease-in-out gap-4 flex flex-col",
                                 activeId === facility.id ? "opacity-100 max-h-[200px] mt-4" : "opacity-0 max-h-0 mt-0"
                             )}>
-                                <p className="text-gray-300 text-sm font-medium leading-relaxed">
+                                <p className="text-[#8892A4] text-sm font-medium leading-relaxed">
                                     {facility.location} — Experience the pinnacle of fitness luxury with our dedicated zones for strength, cardio, and recovery.
                                 </p>
-                                <button className="self-start text-xs font-bold bg-white text-black px-6 py-3 rounded-full hover:bg-neutral-200 transition-colors uppercase tracking-wider">
+                                <button className="self-start text-xs font-bold bg-coral-400 text-[#0B0F19] px-6 py-3 rounded-full hover:bg-coral-300 transition-colors uppercase tracking-wider shadow-[0_0_20px_rgba(255,106,61,0.3)]">
                                     Explore Facility
                                 </button>
                             </div>

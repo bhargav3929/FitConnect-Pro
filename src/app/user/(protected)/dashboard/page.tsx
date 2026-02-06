@@ -70,13 +70,13 @@ export default function UserDashboard() {
                     <h1 className="text-3xl font-black text-white tracking-tight">
                         Hello, {user.name.split(' ')[0]} 👋
                     </h1>
-                    <p className="text-white/40 text-sm mt-1">
+                    <p className="text-[#5A6478] text-sm mt-1">
                         Ready for your workout today?
                     </p>
                 </div>
-                <div className="flex items-center gap-2 bg-[#DFFF00]/10 border border-[#DFFF00]/20 px-4 py-2 rounded-full">
-                    <Flame className="w-4 h-4 text-[#DFFF00]" />
-                    <span className="text-[#DFFF00] font-bold text-sm">{user.stats.streak} Day Streak</span>
+                <div className="flex items-center gap-2 bg-coral-400/10 border border-coral-400/20 px-4 py-2 rounded-full">
+                    <Flame className="w-4 h-4 text-coral-400" />
+                    <span className="text-coral-400 font-bold text-sm">{user.stats.streak} Day Streak</span>
                 </div>
             </div>
 
@@ -93,15 +93,15 @@ export default function UserDashboard() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="bg-[#0A0A0A] border border-white/10 p-4 rounded-2xl"
+                        className="bg-[#131A2B] border border-[#1A2238] p-4 rounded-2xl"
                     >
                         <div className="flex items-start justify-between mb-3">
-                            <div className={`p-2 rounded-lg bg-white/5 ${stat.color}`}>
+                            <div className={`p-2 rounded-lg bg-[#F0F2F5]/5 ${stat.color}`}>
                                 <stat.icon className="w-5 h-5" />
                             </div>
                         </div>
                         <p className="text-2xl font-black text-white">{stat.value}</p>
-                        <p className="text-xs text-white/40 font-medium uppercase tracking-wider">{stat.label}</p>
+                        <p className="text-xs text-[#5A6478] font-medium uppercase tracking-wider">{stat.label}</p>
                     </motion.div>
                 ))}
             </div>
@@ -111,32 +111,32 @@ export default function UserDashboard() {
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#7BA3A8] to-[#60868B] p-6 text-white"
+                className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-coral-400 to-coral-500 p-6 text-white"
             >
-                <div className="absolute top-0 right-0 p-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute top-0 right-0 p-32 bg-[#F0F2F5]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <div className="inline-flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold mb-3">
+                        <div className="inline-flex items-center gap-2 bg-[#0B0F19]/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold mb-3">
                             <Clock className="w-3 h-3" />
                             UPCOMING CLASS
                         </div>
                         <h2 className="text-2xl font-black mb-1">{UPCOMING_CLASS.name}</h2>
-                        <div className="flex items-center gap-4 text-white/80 text-sm font-medium">
+                        <div className="flex items-center gap-4 text-[#F0F2F5]/80 text-sm font-medium">
                             <span className="flex items-center gap-1">
                                 <MapPin className="w-4 h-4" />
                                 {UPCOMING_CLASS.center}
                             </span>
-                            <span className="w-1 h-1 bg-white/40 rounded-full" />
+                            <span className="w-1 h-1 bg-[#F0F2F5]/40 rounded-full" />
                             <span>{UPCOMING_CLASS.time}</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="text-center bg-black/10 backdrop-blur-sm rounded-xl p-3 min-w-[80px]">
+                        <div className="text-center bg-[#0B0F19]/10 backdrop-blur-sm rounded-xl p-3 min-w-[80px]">
                             <p className="text-xs font-bold opacity-60 uppercase">Duration</p>
                             <p className="text-lg font-black">{UPCOMING_CLASS.duration}</p>
                         </div>
-                        <Button className="bg-white text-black hover:bg-white/90 font-bold px-6 h-12 rounded-xl">
+                        <Button className="bg-[#0B0F19] text-[#F0F2F5] hover:bg-[#131A2B] font-bold px-6 h-12 rounded-xl">
                             CHECK IN
                         </Button>
                     </div>
@@ -147,7 +147,7 @@ export default function UserDashboard() {
             <div>
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-white">Nearby Centers</h2>
-                    <Link href="/user/centers" className="text-sm font-bold text-[#7BA3A8] hover:text-white transition-colors flex items-center gap-1">
+                    <Link href="/user/centers" className="text-sm font-bold text-coral-400 hover:text-white transition-colors flex items-center gap-1">
                         VIEW ALL <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>

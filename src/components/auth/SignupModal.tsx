@@ -124,7 +124,7 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
             <DialogTrigger asChild>
                 {trigger || <Button variant="default">Sign Up</Button>}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] bg-[#0B0F19] border-[#1A2238]">
                 <DialogHeader>
                     <DialogTitle>Create your account</DialogTitle>
                     <DialogDescription>
@@ -185,7 +185,7 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full" disabled={isLoading}>
+                        <Button type="submit" className="w-full bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Create Account
                         </Button>

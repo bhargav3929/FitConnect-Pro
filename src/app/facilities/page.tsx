@@ -94,12 +94,12 @@ export default function FacilitiesPage() {
     }
 
     return (
-        <div className="min-h-screen bg-black pt-28 pb-20 px-4 md:px-8">
+        <div className="min-h-screen bg-[#0B0F19] pt-28 pb-20 px-4 md:px-8">
             <div className="container mx-auto space-y-8">
                 {/* Header */}
                 <div className="text-center md:text-left">
                     <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">BROWSE FACILITIES</h1>
-                    <p className="text-white/40 text-sm md:text-base max-w-2xl">
+                    <p className="text-[#5A6478] text-sm md:text-base max-w-2xl">
                         Discover our world-class training centers. Unlock unlimited access with our FitPro subscription.
                     </p>
                 </div>
@@ -107,19 +107,19 @@ export default function FacilitiesPage() {
                 {/* Controls */}
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6478]" />
                         <Input
                             placeholder="Search by name or location..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-12 pl-11 bg-[#0A0A0A] border-white/10 text-white placeholder:text-white/20 focus:border-white/30 focus:bg-[#111] rounded-xl transition-all"
+                            className="h-12 pl-11 bg-[#131A2B] border-[#1A2238] text-white placeholder:text-[#5A6478] focus:border-coral-400/40 focus:bg-[#1A2238] rounded-xl transition-all"
                         />
                     </div>
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
                             onClick={() => setSortBy("distance")}
-                            className={`h-12 px-6 rounded-xl border-white/10 font-bold tracking-wide ${sortBy === "distance" ? 'bg-white text-black hover:bg-white/90' : 'bg-[#0A0A0A] text-white hover:bg-white/5'
+                            className={`h-12 px-6 rounded-xl border-[#1A2238] font-bold tracking-wide ${sortBy === "distance" ? 'bg-coral-400 text-[#0B0F19] hover:bg-coral-300' : 'bg-[#131A2B] text-[#F0F2F5] hover:bg-[#F0F2F5]/5'
                                 }`}
                         >
                             <MapPin className="w-4 h-4 mr-2" />
@@ -128,7 +128,7 @@ export default function FacilitiesPage() {
                         <Button
                             variant="outline"
                             onClick={() => setSortBy("rating")}
-                            className={`h-12 px-6 rounded-xl border-white/10 font-bold tracking-wide ${sortBy === "rating" ? 'bg-white text-black hover:bg-white/90' : 'bg-[#0A0A0A] text-white hover:bg-white/5'
+                            className={`h-12 px-6 rounded-xl border-[#1A2238] font-bold tracking-wide ${sortBy === "rating" ? 'bg-coral-400 text-[#0B0F19] hover:bg-coral-300' : 'bg-[#131A2B] text-[#F0F2F5] hover:bg-[#F0F2F5]/5'
                                 }`}
                         >
                             <Filter className="w-4 h-4 mr-2" />
@@ -148,11 +148,11 @@ export default function FacilitiesPage() {
                             onClick={handleAction}
                             className="group cursor-pointer"
                         >
-                            <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl overflow-hidden hover:border-white/30 transition-all group-hover:-translate-y-1">
+                            <div className="bg-[#131A2B] border border-[#1A2238] rounded-2xl overflow-hidden hover:border-coral-400/30 transition-all group-hover:-translate-y-1">
                                 {/* Image Section */}
                                 <div className="relative h-48 w-full overflow-hidden">
-                                    <div className="absolute inset-0 bg-white/5 flex items-center justify-center">
-                                        <span className="text-white/20 font-bold tracking-widest uppercase">
+                                    <div className="absolute inset-0 bg-[#F0F2F5]/5 flex items-center justify-center">
+                                        <span className="text-[#F0F2F5]/20 font-bold tracking-widest uppercase">
                                             {center.image ? 'Loading...' : 'No Image'}
                                         </span>
                                     </div>
@@ -164,7 +164,7 @@ export default function FacilitiesPage() {
                                             className="object-cover transition-transform duration-700 group-hover:scale-110"
                                         />
                                     )}
-                                    <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 z-10">
+                                    <div className="absolute top-4 right-4 bg-[#0B0F19]/80 backdrop-blur-md px-3 py-1 rounded-full border border-[#1A2238] z-10">
                                         <span className="text-xs font-bold text-white flex items-center gap-1">
                                             <MapPin className="w-3 h-3 text-white" />
                                             {center.distance} km
@@ -180,19 +180,19 @@ export default function FacilitiesPage() {
                                 {/* Content Section */}
                                 <div className="p-5">
                                     <div className="flex items-start justify-between mb-2">
-                                        <h3 className="text-lg font-black text-white group-hover:text-white/80 transition-colors line-clamp-1 uppercase tracking-tight">
+                                        <h3 className="text-lg font-black text-white group-hover:text-[#F0F2F5]/80 transition-colors line-clamp-1 uppercase tracking-tight">
                                             {center.name}
                                         </h3>
-                                        <div className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg">
+                                        <div className="flex items-center gap-1 bg-[#F0F2F5]/5 px-2 py-1 rounded-lg">
                                             <Star className="w-3 h-3 text-white fill-white" />
                                             <span className="text-xs font-bold text-white">{center.rating}</span>
                                         </div>
                                     </div>
 
-                                    <p className="text-white/40 text-sm mb-4 line-clamp-1 font-medium">{center.address}</p>
+                                    <p className="text-[#5A6478] text-sm mb-4 line-clamp-1 font-medium">{center.address}</p>
 
-                                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                        <div className="flex items-center gap-2 text-white/60 text-xs font-medium">
+                                    <div className="flex items-center justify-between pt-4 border-t border-[#1A2238]">
+                                        <div className="flex items-center gap-2 text-[#8892A4] text-xs font-medium">
                                             <Clock className="w-3 h-3" />
                                             {center.nextClassTime ? `Next class: ${center.nextClassTime}` : 'No classes today'}
                                         </div>
@@ -208,11 +208,11 @@ export default function FacilitiesPage() {
 
                 {filteredCenters.length === 0 && (
                     <div className="text-center py-20">
-                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <MapPin className="w-8 h-8 text-white/20" />
+                        <div className="w-16 h-16 bg-[#F0F2F5]/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <MapPin className="w-8 h-8 text-[#F0F2F5]/20" />
                         </div>
                         <h3 className="text-lg font-bold text-white">No centers found</h3>
-                        <p className="text-white/40 text-sm">Try adjusting your search or filters</p>
+                        <p className="text-[#5A6478] text-sm">Try adjusting your search or filters</p>
                     </div>
                 )}
             </div>

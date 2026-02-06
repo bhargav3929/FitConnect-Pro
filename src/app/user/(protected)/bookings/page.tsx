@@ -64,10 +64,10 @@ export default function BookingsPage() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'confirmed': return 'bg-[#7BA3A8]/20 text-[#7BA3A8]'
+            case 'confirmed': return 'bg-coral-400/20 text-coral-400'
             case 'attended': return 'bg-green-500/20 text-green-400'
             case 'cancelled': return 'bg-red-500/20 text-red-400'
-            default: return 'bg-white/10 text-white/60'
+            default: return 'bg-[#F0F2F5]/10 text-[#8892A4]'
         }
     }
 
@@ -85,20 +85,20 @@ export default function BookingsPage() {
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-black text-white tracking-tight">My Bookings</h1>
-                <p className="text-white/40 text-sm mt-1">
+                <p className="text-[#5A6478] text-sm mt-1">
                     Manage your upcoming classes and view history
                 </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex p-1 bg-white/5 rounded-xl w-fit">
+            <div className="flex p-1 bg-[#F0F2F5]/5 rounded-xl w-fit">
                 {['upcoming', 'past'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
                         className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${activeTab === tab
-                                ? 'bg-white text-black shadow-lg'
-                                : 'text-white/60 hover:text-white'
+                                ? 'bg-coral-400 text-[#0B0F19] shadow-lg'
+                                : 'text-[#8892A4] hover:text-white'
                             }`}
                     >
                         {tab}
@@ -116,7 +116,7 @@ export default function BookingsPage() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ delay: idx * 0.05 }}
-                            className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 group hover:border-white/30 transition-all"
+                            className="bg-[#131A2B] border border-[#1A2238] rounded-2xl p-6 group hover:border-coral-400/30 transition-all"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div>
@@ -124,37 +124,37 @@ export default function BookingsPage() {
                                         {getStatusIcon(booking.status)}
                                         {booking.status}
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-1 group-hover:text-[#7BA3A8] transition-colors">
+                                    <h3 className="text-xl font-bold text-white mb-1 group-hover:text-coral-400 transition-colors">
                                         {booking.className}
                                     </h3>
-                                    <div className="flex items-center gap-2 text-white/50 text-sm">
+                                    <div className="flex items-center gap-2 text-[#8892A4] text-sm">
                                         <User className="w-3 h-3" />
                                         <span>{booking.trainer}</span>
                                     </div>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-black text-2xl text-white">{booking.time.split(' ')[0]}</p>
-                                    <p className="text-xs font-bold text-white/40 uppercase">{booking.time.split(' ')[1]}</p>
+                                    <p className="text-xs font-bold text-[#5A6478] uppercase">{booking.time.split(' ')[1]}</p>
                                 </div>
                             </div>
 
-                            <div className="bg-white/5 rounded-xl p-4 space-y-3 mb-6">
+                            <div className="bg-[#F0F2F5]/5 rounded-xl p-4 space-y-3 mb-6">
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="flex items-center gap-2 text-white/60">
+                                    <span className="flex items-center gap-2 text-[#8892A4]">
                                         <Calendar className="w-4 h-4" />
                                         Date
                                     </span>
                                     <span className="font-medium text-white">{booking.date}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="flex items-center gap-2 text-white/60">
+                                    <span className="flex items-center gap-2 text-[#8892A4]">
                                         <Clock className="w-4 h-4" />
                                         Duration
                                     </span>
                                     <span className="font-medium text-white">{booking.duration}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="flex items-center gap-2 text-white/60">
+                                    <span className="flex items-center gap-2 text-[#8892A4]">
                                         <MapPin className="w-4 h-4" />
                                         Center
                                     </span>
@@ -170,14 +170,14 @@ export default function BookingsPage() {
                                     >
                                         Cancel
                                     </Button>
-                                    <Button className="flex-1 h-12 bg-white text-black hover:bg-white/90 font-bold rounded-xl">
+                                    <Button className="flex-1 h-12 bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold rounded-xl">
                                         Get Directions
                                     </Button>
                                 </div>
                             )}
 
                             {activeTab === 'past' && booking.status === 'attended' && (
-                                <Button className="w-full h-12 bg-white/5 text-white hover:bg-white/10 font-bold rounded-xl border border-white/10">
+                                <Button className="w-full h-12 bg-[#F0F2F5]/5 text-[#F0F2F5] hover:bg-[#F0F2F5]/10 font-bold rounded-xl border border-[#1A2238]">
                                     Book Again
                                 </Button>
                             )}
@@ -188,11 +188,11 @@ export default function BookingsPage() {
 
             {filteredBookings.length === 0 && (
                 <div className="text-center py-20">
-                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Calendar className="w-8 h-8 text-white/20" />
+                    <div className="w-16 h-16 bg-[#F0F2F5]/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="w-8 h-8 text-[#F0F2F5]/20" />
                     </div>
                     <h3 className="text-lg font-bold text-white">No bookings found</h3>
-                    <p className="text-white/40 text-sm mb-6">
+                    <p className="text-[#5A6478] text-sm mb-6">
                         {activeTab === 'upcoming'
                             ? "You don't have any upcoming classes scheduled."
                             : "You haven't completed any classes yet."

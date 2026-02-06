@@ -34,10 +34,10 @@ export function UserNav() {
     return (
         <>
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-black border-r border-white/10 flex-col z-50">
-                <div className="p-6 border-b border-white/10 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#7BA3A8] flex items-center justify-center rounded-lg">
-                        <Dumbbell className="w-4 h-4 text-black" />
+            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-[#0B0F19] border-r border-[#1A2238] flex-col z-50">
+                <div className="p-6 border-b border-[#1A2238] flex items-center gap-3">
+                    <div className="w-8 h-8 bg-coral-400 flex items-center justify-center rounded-lg">
+                        <Dumbbell className="w-4 h-4 text-[#0B0F19]" />
                     </div>
                     <span className="font-black text-white tracking-tighter text-lg">FITCONNECT</span>
                 </div>
@@ -50,16 +50,16 @@ export function UserNav() {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${isActive
-                                        ? 'bg-white text-black font-bold'
-                                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                                        ? 'bg-coral-400 text-[#0B0F19] font-bold'
+                                        : 'text-[#8892A4] hover:text-[#F0F2F5] hover:bg-[#F0F2F5]/5'
                                     }`}
                             >
-                                <item.icon className={`w-5 h-5 ${isActive ? 'text-black' : 'text-white/50 group-hover:text-white'}`} />
+                                <item.icon className={`w-5 h-5 ${isActive ? 'text-[#0B0F19]' : 'text-[#8892A4] group-hover:text-[#F0F2F5]'}`} />
                                 <span className={isActive ? 'font-bold' : 'font-medium'}>{item.label}</span>
                                 {isActive && (
                                     <motion.div
                                         layoutId="sidebar-active"
-                                        className="absolute left-0 w-1 h-8 bg-[#7BA3A8] rounded-r-full"
+                                        className="absolute left-0 w-1 h-8 bg-coral-400 rounded-r-full"
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ duration: 0.2 }}
@@ -70,7 +70,7 @@ export function UserNav() {
                     })}
                 </div>
 
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-[#1A2238]">
                     <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors font-medium"
@@ -82,7 +82,7 @@ export function UserNav() {
             </aside>
 
             {/* Mobile Bottom Nav */}
-            <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-xl border-t border-white/10 z-50 safe-area-bottom">
+            <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-[#0B0F19]/90 backdrop-blur-xl border-t border-[#1A2238] z-50 safe-area-bottom">
                 <div className="flex justify-around items-center h-16 px-2">
                     {NAV_ITEMS.map((item) => {
                         const isActive = pathname === item.href
@@ -90,12 +90,12 @@ export function UserNav() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-white' : 'text-white/40'
+                                className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-coral-400' : 'text-[#5A6478]'
                                     }`}
                             >
                                 <motion.div
                                     whileTap={{ scale: 0.9 }}
-                                    className={`p-1 rounded-lg ${isActive ? 'bg-white/10' : 'bg-transparent'}`}
+                                    className={`p-1 rounded-lg ${isActive ? 'bg-coral-400/20' : 'bg-transparent'}`}
                                 >
                                     <item.icon className="w-5 h-5" />
                                 </motion.div>

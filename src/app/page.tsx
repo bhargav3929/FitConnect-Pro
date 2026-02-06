@@ -41,15 +41,15 @@ function ProgressBar({ label, value, delay }: { label: string; value: number; de
   return (
     <div ref={ref} className="mb-8">
       <div className="flex justify-between items-center mb-3">
-        <span className="text-white font-bold tracking-wider text-sm">{label}</span>
-        <span className="text-white font-bold">{value}%</span>
+        <span className="text-[#F0F2F5] font-bold tracking-wider text-sm">{label}</span>
+        <span className="text-coral-400 font-bold">{value}%</span>
       </div>
-      <div className="h-1 bg-white/20 w-full">
+      <div className="h-1 bg-[#F0F2F5]/10 w-full rounded-full">
         <motion.div
           initial={{ width: 0 }}
           animate={isInView ? { width: `${value}%` } : { width: 0 }}
           transition={{ duration: 1.5, delay, ease: "easeOut" }}
-          className="h-full bg-gradient-to-r from-red-600 to-red-500"
+          className="h-full bg-gradient-to-r from-coral-400 to-amber-400 rounded-full"
         />
       </div>
     </div>
@@ -114,7 +114,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#0B0F19] text-[#F0F2F5] font-sans overflow-x-hidden">
 
       {/* ========== HERO SECTION ========== */}
       <section className="relative min-h-screen flex flex-col md:flex-row">
@@ -128,14 +128,14 @@ export default function Home() {
             priority
           />
           {/* Mobile Overlay Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/60 to-black md:hidden" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F19]/30 via-[#0B0F19]/60 to-[#0B0F19] md:hidden" />
         </div>
 
         {/* Right side - Content */}
-        <div className="relative z-10 w-full md:w-1/2 min-h-screen flex items-end md:items-center pb-20 md:pb-0 px-6 md:px-16 pointer-events-none md:pointer-events-auto bg-transparent md:bg-black">
+        <div className="relative z-10 w-full md:w-1/2 min-h-screen flex items-end md:items-center pb-20 md:pb-0 px-6 md:px-16 pointer-events-none md:pointer-events-auto bg-transparent md:bg-[#0B0F19]">
           <div className="w-full">
             {/* Watermark */}
-            <div className="absolute top-1/4 right-0 text-[12rem] font-black text-white/5 leading-none pointer-events-none hidden lg:block">
+            <div className="absolute top-1/4 right-0 text-[12rem] font-black text-[#F0F2F5]/5 leading-none pointer-events-none hidden lg:block">
               CAN
             </div>
 
@@ -146,8 +146,8 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               className="mb-8 md:mb-0"
             >
-              <span className="text-white/70 text-2xl md:text-4xl font-light mb-2 block">+</span>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-white drop-shadow-xl md:drop-shadow-none">
+              <span className="text-coral-400/70 text-2xl md:text-4xl font-light mb-2 block">+</span>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-[#F0F2F5] drop-shadow-xl md:drop-shadow-none">
                 WHATEVER<br />
                 YOU DECIDE,<br />
                 YOU CAN DO<br />
@@ -166,10 +166,10 @@ export default function Home() {
                 onClick={() => setShowGetStarted(true)}
                 className="group inline-flex items-center gap-4"
               >
-                <span className="px-8 py-4 md:px-10 md:py-5 bg-white text-black font-black text-xs md:text-sm tracking-widest hover:bg-neutral-200 transition-all uppercase">
+                <span className="px-8 py-4 md:px-10 md:py-5 bg-coral-400 text-[#0B0F19] font-black text-xs md:text-sm tracking-widest hover:bg-coral-300 transition-all uppercase shadow-[0_0_30px_rgba(255,106,61,0.3)]">
                   Get Started
                 </span>
-                <span className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all bg-black/50 md:bg-transparent backdrop-blur-sm md:backdrop-blur-none">
+                <span className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-coral-400 flex items-center justify-center group-hover:bg-coral-400 group-hover:text-[#0B0F19] transition-all bg-[#0B0F19]/50 md:bg-transparent backdrop-blur-sm md:backdrop-blur-none text-coral-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M7 17L17 7M17 7H7M17 7V17" />
                   </svg>
@@ -191,12 +191,12 @@ export default function Home() {
 
 
       {/* ========== SERVICES SECTION ========== */}
-      <section className="py-24 bg-black">
+      <section className="py-24 bg-[#0B0F19]">
         <div className="container mx-auto px-6">
           {/* Section Header */}
           <div className="text-center mb-12 md:mb-16 relative">
             {/* Watermark */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[5rem] md:text-[12rem] font-black text-white/5 pointer-events-none whitespace-nowrap">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[5rem] md:text-[12rem] font-black text-[#F0F2F5]/5 pointer-events-none whitespace-nowrap">
               GO!
             </div>
 
@@ -206,9 +206,9 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <span className="text-white/50 text-2xl md:text-3xl font-light">+</span>
+              <span className="text-coral-400/50 text-2xl md:text-3xl font-light">+</span>
               <h2 className="text-3xl md:text-6xl font-black mt-2">DO IT FOR YOURSELF!</h2>
-              <p className="text-white/60 mt-4 tracking-wider text-xs md:text-sm">MAKE A DIFFERENCE IN YOUR LIFE</p>
+              <p className="text-[#8892A4] mt-4 tracking-wider text-xs md:text-sm">MAKE A DIFFERENCE IN YOUR LIFE</p>
             </motion.div>
           </div>
 
@@ -231,17 +231,17 @@ export default function Home() {
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/90 via-[#0B0F19]/20 to-transparent" />
 
                   {/* Decorative Icon */}
                   <div className="absolute top-6 left-6">
-                    <DecorativeIcon type={service.icon} className="w-12 h-12 md:w-16 md:h-16 text-white/70" />
+                    <DecorativeIcon type={service.icon} className="w-12 h-12 md:w-16 md:h-16 text-coral-400/70" />
                   </div>
 
                   {/* Content */}
                   <div className="absolute bottom-8 left-6 right-6">
                     <h3 className="text-xl md:text-2xl font-black mb-4">{service.title}</h3>
-                    <button className="w-12 h-12 rounded-full border border-white/50 flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                    <button className="w-12 h-12 rounded-full border border-coral-400/50 flex items-center justify-center hover:bg-coral-400 hover:text-[#0B0F19] transition-all text-coral-400">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M7 17L17 7M17 7H7M17 7V17" />
                       </svg>
@@ -258,15 +258,15 @@ export default function Home() {
       <FacilitiesSection />
 
       {/* ========== MENTORS STACK SECTION ========== */}
-      <section className="bg-black/95 py-24 border-t border-white/5 overflow-hidden">
+      <section className="bg-[#090D16] py-24 border-t border-[#F0F2F5]/5 overflow-hidden">
         <div className="container mx-auto px-4 flex flex-col items-center">
           <div className="text-center mb-16">
-            <span className="text-white/50 text-sm font-bold tracking-[0.3em] uppercase block mb-3">Community</span>
-            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase relative inline-block">
+            <span className="text-coral-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-3">Community</span>
+            <h2 className="text-4xl md:text-5xl font-black text-[#F0F2F5] tracking-tighter uppercase relative inline-block">
               Elite Mentors
-              <svg className="absolute -right-8 -top-8 w-6 h-6 text-white/20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+              <svg className="absolute -right-8 -top-8 w-6 h-6 text-coral-400/30" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
             </h2>
-            <p className="text-neutral-400 mt-4 max-w-sm mx-auto">
+            <p className="text-[#8892A4] mt-4 max-w-sm mx-auto">
               Swipe through our roster of world-champion coaches.
             </p>
           </div>
@@ -322,7 +322,7 @@ export default function Home() {
             fill
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-black/70" />
+          <div className="absolute inset-0 bg-[#0B0F19]/80" />
         </div>
 
         <div className="container mx-auto px-6 relative z-10">
@@ -335,21 +335,21 @@ export default function Home() {
               transition={{ duration: 0.8 }}
             >
               {/* Watermark */}
-              <div className="text-[6rem] font-black text-white/5 absolute top-0 left-0 pointer-events-none hidden lg:block">
+              <div className="text-[6rem] font-black text-[#F0F2F5]/5 absolute top-0 left-0 pointer-events-none hidden lg:block">
                 BOOST
               </div>
 
-              <span className="text-white/50 text-3xl font-light">+</span>
+              <span className="text-coral-400/50 text-3xl font-light">+</span>
               <h2 className="text-4xl md:text-5xl font-black mt-2 mb-6">BOOST PERFORMANCE</h2>
-              <p className="text-white/60 mb-8 max-w-md">
+              <p className="text-[#8892A4] mb-8 max-w-md">
                 Has ei fierent repudiandae, verear prompta mea ad. Cum eu unum dolore soluta, eam eu vidit.
               </p>
 
               <button className="group inline-flex items-center gap-4">
-                <span className="px-8 py-4 border border-white font-bold text-sm tracking-wider hover:bg-white hover:text-black transition-all">
+                <span className="px-8 py-4 border border-coral-400 text-coral-400 font-bold text-sm tracking-wider hover:bg-coral-400 hover:text-[#0B0F19] transition-all">
                   VIEW MORE
                 </span>
-                <span className="w-12 h-12 rounded-full border border-white flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+                <span className="w-12 h-12 rounded-full border border-coral-400 text-coral-400 flex items-center justify-center group-hover:bg-coral-400 group-hover:text-[#0B0F19] transition-all">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M7 17L17 7M17 7H7M17 7V17" />
                   </svg>
@@ -385,9 +385,9 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/20 transition-all z-[60]"
+          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 bg-coral-400/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-coral-400/40 transition-all z-[60] border border-coral-400/30"
         >
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-coral-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M5 15l7-7 7 7" />
           </svg>
         </motion.button>

@@ -111,10 +111,10 @@ const TestimonialsColumn = (props: {
                                         boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
                                         transition: { type: "spring", stiffness: 400, damping: 17 }
                                     }}
-                                    className="p-8 rounded-2xl border border-neutral-800 bg-[#121212] shadow-xl max-w-xs w-full transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                    className="p-8 rounded-2xl border border-[#1A2238] bg-[#131A2B] shadow-xl max-w-xs w-full transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-coral-400/30"
                                 >
                                     <blockquote className="m-0 p-0">
-                                        <p className="text-neutral-400 leading-relaxed font-normal m-0 text-base">
+                                        <p className="text-[#8892A4] leading-relaxed font-normal m-0 text-base">
                                             {text}
                                         </p>
                                         <footer className="flex items-center gap-3 mt-6">
@@ -123,13 +123,13 @@ const TestimonialsColumn = (props: {
                                                 height={40}
                                                 src={image}
                                                 alt={`Avatar of ${name}`}
-                                                className="h-10 w-10 rounded-full object-cover ring-2 ring-neutral-800 group-hover:ring-neutral-600 transition-all duration-300"
+                                                className="h-10 w-10 rounded-full object-cover ring-2 ring-[#1A2238] group-hover:ring-coral-400/40 transition-all duration-300"
                                             />
                                             <div className="flex flex-col">
-                                                <cite className="font-semibold not-italic tracking-tight leading-5 text-white">
+                                                <cite className="font-semibold not-italic tracking-tight leading-5 text-[#F0F2F5]">
                                                     {name}
                                                 </cite>
-                                                <span className="text-sm leading-5 tracking-tight text-neutral-500 mt-0.5">
+                                                <span className="text-sm leading-5 tracking-tight text-coral-400/70 mt-0.5">
                                                     {role}
                                                 </span>
                                             </div>
@@ -149,7 +149,7 @@ export default function TestimonialsSection() {
     return (
         <section
             aria-labelledby="testimonials-heading"
-            className="bg-black py-24 relative overflow-hidden"
+            className="bg-[#0B0F19] py-24 relative overflow-hidden"
         >
             <motion.div
                 initial={{ opacity: 0, y: 50 }}
@@ -163,10 +163,10 @@ export default function TestimonialsSection() {
                 className="container px-4 z-10 mx-auto"
             >
                 <div className="flex flex-col items-center justify-center max-w-[540px] mx-auto mb-16">
-                    <h2 id="testimonials-heading" className="text-4xl md:text-5xl font-extrabold tracking-tight mt-6 text-center text-white">
+                    <h2 id="testimonials-heading" className="text-4xl md:text-5xl font-extrabold tracking-tight mt-6 text-center text-[#F0F2F5]">
                         What our users say
                     </h2>
-                    <p className="text-center mt-5 text-neutral-400 text-lg leading-relaxed max-w-sm">
+                    <p className="text-center mt-5 text-[#8892A4] text-lg leading-relaxed max-w-sm">
                         Join thousands of fitness professionals who trust FitConnect-Pro.
                     </p>
                 </div>

@@ -50,13 +50,30 @@ const config: Config = {
                     '4': 'hsl(var(--chart-4))',
                     '5': 'hsl(var(--chart-5))'
                 },
+                midnight: {
+                    950: "#070A12",
+                    900: "#0B0F19",
+                    800: "#131A2B",
+                    700: "#1A2238",
+                },
+                coral: {
+                    300: "#FF9A7A",
+                    400: "#FF6A3D",
+                    500: "#E85A30",
+                    600: "#D04A22",
+                },
+                amber: {
+                    300: "#FFD08A",
+                    400: "#FFB347",
+                    500: "#F5A623",
+                },
                 navy: {
-                    900: "#0B1120",
-                    800: "#1e293b",
+                    900: "#0B0F19",
+                    800: "#131A2B",
                 },
                 lime: {
-                    400: "#DFFF00",
-                    500: "#C6E300",
+                    400: "#FF6A3D",
+                    500: "#E85A30",
                 }
             },
             borderRadius: {
@@ -69,8 +86,8 @@ const config: Config = {
                 'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
                 'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
                 'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-                'glow': '0 0 24px rgba(0, 102, 255, 0.3)',
-                'glow-lg': '0 0 40px rgba(0, 102, 255, 0.5)',
+                'glow': '0 0 24px rgba(255, 106, 61, 0.3)',
+                'glow-lg': '0 0 40px rgba(255, 106, 61, 0.5)',
             },
             keyframes: {
                 "accordion-down": {

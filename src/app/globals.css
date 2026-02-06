@@ -4,69 +4,72 @@
 
 @layer base {
   :root {
-    /* Kropp Theme: Pure Black & White */
-    --background: 0 0% 0%;
-    /* #000000 Pure Black */
-    --foreground: 0 0% 100%;
-    /* White */
+    /* Ember & Midnight: Premium Fitness Palette */
+    --background: 223 39% 7%;
+    /* #0B0F19 Deep Warm Navy */
+    --foreground: 216 20% 95%;
+    /* #F0F2F5 Warm Off-White */
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
+    --card: 222 38% 12%;
+    /* #131A2B Elevated Surface */
+    --card-foreground: 216 20% 95%;
 
-    --popover: 0 0% 0%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 222 38% 12%;
+    --popover-foreground: 216 20% 95%;
 
-    --primary: 0 0% 100%;
-    /* White */
-    --primary-foreground: 0 0% 0%;
+    --primary: 14 100% 62%;
+    /* #FF6A3D Warm Coral-Orange */
+    --primary-foreground: 223 39% 7%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 224 37% 16%;
+    /* #1A2238 Dark Elevated */
+    --secondary-foreground: 216 20% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 220 25% 18%;
+    --muted-foreground: 219 14% 59%;
+    /* #8892A4 */
 
-    --accent: 175 30% 55%;
-    /* Muted Teal #7BA3A8 */
-    --accent-foreground: 0 0% 100%;
+    --accent: 35 100% 64%;
+    /* #FFB347 Warm Amber-Gold */
+    --accent-foreground: 223 39% 7%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 216 20% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 100%;
+    --border: 220 25% 18%;
+    --input: 220 25% 20%;
+    --ring: 14 100% 62%;
 
     --radius: 0rem;
 
     /* Chart Colors */
-    --chart-1: 0 70% 50%;
-    --chart-2: 0 0% 30%;
-    --chart-3: 175 30% 55%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 14 100% 62%;
+    --chart-2: 35 100% 64%;
+    --chart-3: 160 84% 39%;
+    --chart-4: 219 14% 59%;
+    --chart-5: 0 72% 51%;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 0 0% 100%;
-    --card: 222 47% 13%;
-    --card-foreground: 0 0% 100%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 74 100% 50%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 74 100% 50%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 74 100% 50%;
+    --background: 223 42% 5%;
+    --foreground: 216 20% 95%;
+    --card: 222 40% 10%;
+    --card-foreground: 216 20% 95%;
+    --popover: 222 40% 10%;
+    --popover-foreground: 216 20% 95%;
+    --primary: 14 100% 62%;
+    --primary-foreground: 223 39% 7%;
+    --secondary: 224 37% 14%;
+    --secondary-foreground: 216 20% 95%;
+    --muted: 220 25% 16%;
+    --muted-foreground: 219 14% 55%;
+    --accent: 35 100% 64%;
+    --accent-foreground: 223 39% 7%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 216 20% 98%;
+    --border: 220 25% 16%;
+    --input: 220 25% 18%;
+    --ring: 14 100% 62%;
   }
 }
 

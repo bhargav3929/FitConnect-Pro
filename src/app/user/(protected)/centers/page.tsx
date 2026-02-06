@@ -92,7 +92,7 @@ export default function BrowseCentersPage() {
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-black text-white tracking-tight">Browse Centers</h1>
-                <p className="text-white/40 text-sm mt-1">
+                <p className="text-[#5A6478] text-sm mt-1">
                     Find and book classes at fitness centers near you
                 </p>
             </div>
@@ -100,19 +100,19 @@ export default function BrowseCentersPage() {
             {/* Controls */}
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6478]" />
                     <Input
                         placeholder="Search by name or location..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-12 pl-11 bg-[#0A0A0A] border-white/10 text-white placeholder:text-white/20 focus:border-[#7BA3A8]/50 focus:bg-[#0A0A0A] rounded-xl"
+                        className="h-12 pl-11 bg-[#131A2B] border-[#1A2238] text-white placeholder:text-[#5A6478] focus:border-coral-400/50 focus:bg-[#131A2B] rounded-xl"
                     />
                 </div>
                 <div className="flex gap-2">
                     <Button
                         variant="outline"
                         onClick={() => setSortBy("distance")}
-                        className={`h-12 px-6 rounded-xl border-white/10 font-bold ${sortBy === "distance" ? 'bg-white text-black hover:bg-white/90' : 'bg-[#0A0A0A] text-white hover:bg-white/5'
+                        className={`h-12 px-6 rounded-xl border-[#1A2238] font-bold ${sortBy === "distance" ? 'bg-coral-400 text-[#0B0F19] hover:bg-coral-300' : 'bg-[#131A2B] text-[#F0F2F5] hover:bg-[#F0F2F5]/5'
                             }`}
                     >
                         <MapPin className="w-4 h-4 mr-2" />
@@ -121,7 +121,7 @@ export default function BrowseCentersPage() {
                     <Button
                         variant="outline"
                         onClick={() => setSortBy("rating")}
-                        className={`h-12 px-6 rounded-xl border-white/10 font-bold ${sortBy === "rating" ? 'bg-white text-black hover:bg-white/90' : 'bg-[#0A0A0A] text-white hover:bg-white/5'
+                        className={`h-12 px-6 rounded-xl border-[#1A2238] font-bold ${sortBy === "rating" ? 'bg-coral-400 text-[#0B0F19] hover:bg-coral-300' : 'bg-[#131A2B] text-[#F0F2F5] hover:bg-[#F0F2F5]/5'
                             }`}
                     >
                         <Filter className="w-4 h-4 mr-2" />
@@ -146,11 +146,11 @@ export default function BrowseCentersPage() {
 
             {filteredCenters.length === 0 && (
                 <div className="text-center py-20">
-                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MapPin className="w-8 h-8 text-white/20" />
+                    <div className="w-16 h-16 bg-[#F0F2F5]/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MapPin className="w-8 h-8 text-[#F0F2F5]/20" />
                     </div>
                     <h3 className="text-lg font-bold text-white">No centers found</h3>
-                    <p className="text-white/40 text-sm">Try adjusting your search or filters</p>
+                    <p className="text-[#5A6478] text-sm">Try adjusting your search or filters</p>
                 </div>
             )}
         </div>

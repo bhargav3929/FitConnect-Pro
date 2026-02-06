@@ -60,11 +60,11 @@ export default function AdminLoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-black flex">
+        <div className="min-h-screen bg-[#0B0F19] flex">
             {/* Left Panel - Decorative */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
                 {/* Gradient Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#7BA3A8]/30 via-black to-black" />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#FF6A3D]/30 via-[#0B0F19] to-[#0B0F19]" />
 
                 {/* Grid Pattern */}
                 <div
@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
                     {/* Logo */}
                     <div>
                         <Link href="/" className="inline-flex items-center gap-3 group">
-                            <ArrowLeft className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
+                            <ArrowLeft className="w-5 h-5 text-[#8892A4] group-hover:text-white transition-colors" />
                             <span className="text-2xl font-black tracking-wider text-white">FITPRO</span>
                         </Link>
                     </div>
@@ -92,20 +92,20 @@ export default function AdminLoginPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <span className="text-white/50 text-4xl font-light">+</span>
+                            <span className="text-[#8892A4] text-4xl font-light">+</span>
                             <h1 className="text-6xl font-black text-white leading-tight tracking-tight mt-4">
                                 ADMIN<br />
                                 CONTROL<br />
                                 CENTER
                             </h1>
-                            <p className="text-white/50 mt-6 max-w-md tracking-wider text-sm">
+                            <p className="text-[#8892A4] mt-6 max-w-md tracking-wider text-sm">
                                 Access the complete business management dashboard. Control classes, locations, trainers, and view comprehensive analytics.
                             </p>
                         </motion.div>
                     </div>
 
                     {/* Version */}
-                    <div className="text-white/30 text-xs tracking-wider">
+                    <div className="text-[#5A6478] text-xs tracking-wider">
                         FITPRO ADMIN v1.0
                     </div>
                 </div>
@@ -131,20 +131,20 @@ export default function AdminLoginPage() {
                     {/* Mobile Logo */}
                     <div className="lg:hidden mb-12">
                         <Link href="/" className="inline-flex items-center gap-3 group">
-                            <ArrowLeft className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
+                            <ArrowLeft className="w-5 h-5 text-[#8892A4] group-hover:text-white transition-colors" />
                             <span className="text-2xl font-black tracking-wider text-white">FITPRO</span>
                         </Link>
                     </div>
 
                     {/* Header */}
                     <div className="mb-10">
-                        <div className="w-16 h-16 bg-white/10 flex items-center justify-center mb-6">
+                        <div className="w-16 h-16 bg-[#F0F2F5]/10 flex items-center justify-center mb-6">
                             <Shield className="w-8 h-8 text-white" />
                         </div>
                         <h2 className="text-3xl font-black text-white tracking-tight">
                             ADMIN LOGIN
                         </h2>
-                        <p className="text-white/50 mt-2 text-sm tracking-wider">
+                        <p className="text-[#8892A4] mt-2 text-sm tracking-wider">
                             ENTER YOUR CREDENTIALS TO ACCESS THE DASHBOARD
                         </p>
                     </div>
@@ -157,14 +157,14 @@ export default function AdminLoginPage() {
                                 name="username"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-white/70 text-xs font-bold tracking-wider">
+                                        <FormLabel className="text-[#F0F2F5]/70 text-xs font-bold tracking-wider">
                                             USERNAME
                                         </FormLabel>
                                         <FormControl>
                                             <Input
                                                 placeholder="Enter username"
                                                 {...field}
-                                                className="h-14 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0"
+                                                className="h-14 bg-[#F0F2F5]/5 border-[#1A2238] text-white placeholder:text-[#5A6478] focus:border-coral-400/50 focus:ring-0"
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -176,7 +176,7 @@ export default function AdminLoginPage() {
                                 name="password"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-white/70 text-xs font-bold tracking-wider">
+                                        <FormLabel className="text-[#F0F2F5]/70 text-xs font-bold tracking-wider">
                                             PASSWORD
                                         </FormLabel>
                                         <FormControl>
@@ -185,12 +185,12 @@ export default function AdminLoginPage() {
                                                     placeholder="Enter password"
                                                     type={showPassword ? "text" : "password"}
                                                     {...field}
-                                                    className="h-14 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 pr-12"
+                                                    className="h-14 bg-[#F0F2F5]/5 border-[#1A2238] text-white placeholder:text-[#5A6478] focus:border-coral-400/50 focus:ring-0 pr-12"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5A6478] hover:text-[#F0F2F5]/70 transition-colors"
                                                 >
                                                     {showPassword ? (
                                                         <EyeOff className="w-5 h-5" />
@@ -207,7 +207,7 @@ export default function AdminLoginPage() {
 
                             <Button
                                 type="submit"
-                                className="w-full h-14 bg-white text-black font-black text-sm tracking-wider hover:bg-white/90 transition-all"
+                                className="w-full h-14 bg-coral-400 text-[#0B0F19] font-black text-sm tracking-wider hover:bg-coral-300 transition-all"
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
@@ -223,8 +223,8 @@ export default function AdminLoginPage() {
                     </Form>
 
                     {/* Footer */}
-                    <div className="mt-8 pt-8 border-t border-white/10">
-                        <p className="text-white/30 text-xs text-center tracking-wider">
+                    <div className="mt-8 pt-8 border-t border-[#1A2238]">
+                        <p className="text-[#5A6478] text-xs text-center tracking-wider">
                             SECURE ADMIN ACCESS • FITPRO © 2024
                         </p>
                     </div>

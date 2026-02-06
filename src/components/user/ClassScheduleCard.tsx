@@ -38,15 +38,15 @@ export function ClassScheduleCard({
     const spotsLeft = capacity - booked
 
     return (
-        <div className="flex bg-[#161618] border border-white/5 rounded-none sm:rounded-xl p-6 relative overflow-hidden group hover:bg-[#1C1C1E] transition-colors">
+        <div className="flex bg-[#131A2B] border border-[#1A2238] rounded-none sm:rounded-xl p-6 relative overflow-hidden group hover:bg-[#1A2238] transition-colors">
             {/* Left Column: Time & Avatar */}
             <div className="flex flex-col items-center mr-6 min-w-[60px] pt-1">
                 <span className="text-xl font-black text-white leading-none mb-1">{time}</span>
-                <span className="text-xs text-white/40 font-medium mb-4">{duration}</span>
+                <span className="text-xs text-[#5A6478] font-medium mb-4">{duration}</span>
 
-                <Avatar className="w-12 h-12 border-2 border-[#2C2C2E]">
+                <Avatar className="w-12 h-12 border-2 border-[#1A2238]">
                     <AvatarImage src={trainerImage} className="object-cover" />
-                    <AvatarFallback className="bg-[#2C2C2E] text-white/40 text-xs">
+                    <AvatarFallback className="bg-[#1A2238] text-[#5A6478] text-xs">
                         {trainer.charAt(0)}
                     </AvatarFallback>
                 </Avatar>
@@ -64,18 +64,18 @@ export function ClassScheduleCard({
                         )}
                     </div>
 
-                    <p className="text-[#AAAAAA] text-sm font-medium mb-1">{trainer}</p>
-                    <p className="text-white/40 text-xs mb-1">{type}</p>
-                    <p className="text-white/40 text-xs">{location}</p>
+                    <p className="text-[#8892A4] text-sm font-medium mb-1">{trainer}</p>
+                    <p className="text-[#5A6478] text-xs mb-1">{type}</p>
+                    <p className="text-[#5A6478] text-xs">{location}</p>
                 </div>
 
                 <div className="mt-2">
                     {isFull ? (
                         <div className="space-y-2">
-                            <span className="text-xs text-white/40 font-medium">Waitlist Only</span>
+                            <span className="text-xs text-[#5A6478] font-medium">Waitlist Only</span>
                             <Button
                                 variant="outline"
-                                className="w-full h-10 border-white/20 bg-transparent text-white hover:bg-white/5 hover:text-white uppercase tracking-wider text-xs font-bold rounded-sm"
+                                className="w-full h-10 border-[#1A2238] bg-transparent text-white hover:bg-[#F0F2F5]/5 hover:text-[#F0F2F5] uppercase tracking-wider text-xs font-bold rounded-sm"
                                 onClick={onBook}
                             >
                                 Join Waitlist
@@ -87,7 +87,7 @@ export function ClassScheduleCard({
                                 <span className="text-xs text-[#d4b065] font-medium">Only {spotsLeft} spots left</span>
                             )}
                             <Button
-                                className="w-full h-10 bg-white text-black hover:bg-gray-200 uppercase tracking-wider text-xs font-bold rounded-sm"
+                                className="w-full h-10 bg-coral-400 text-[#0B0F19] hover:bg-coral-300 uppercase tracking-wider text-xs font-bold rounded-sm"
                                 onClick={onBook}
                             >
                                 Book Class

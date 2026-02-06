@@ -44,12 +44,12 @@ export default function MentorsDesktop() {
                 testimonials={mentors}
                 autoplay={true}
                 colors={{
-                    name: "#ffffff",
-                    designation: "#a3a3a3",
-                    testimony: "#e5e5e5",
-                    arrowBackground: "#262626",
-                    arrowForeground: "#ffffff",
-                    arrowHoverBackground: "#ffffff",
+                    name: "#F0F2F5",
+                    designation: "#FF6A3D",
+                    testimony: "#8892A4",
+                    arrowBackground: "#131A2B",
+                    arrowForeground: "#F0F2F5",
+                    arrowHoverBackground: "#FF6A3D",
                 }}
                 fontSizes={{
                     name: "3rem",

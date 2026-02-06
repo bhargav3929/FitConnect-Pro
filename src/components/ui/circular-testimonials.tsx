@@ -53,12 +53,12 @@ export const CircularTestimonials = ({
     fontSizes = {},
 }: CircularTestimonialsProps) => {
     // Color & font config
-    const colorName = colors.name ?? "#000";
-    const colorDesignation = colors.designation ?? "#6b7280";
-    const colorTestimony = colors.testimony ?? "#4b5563";
-    const colorArrowBg = colors.arrowBackground ?? "#141414";
-    const colorArrowFg = colors.arrowForeground ?? "#f1f1f7";
-    const colorArrowHoverBg = colors.arrowHoverBackground ?? "#00a6fb";
+    const colorName = colors.name ?? "#F0F2F5";
+    const colorDesignation = colors.designation ?? "#8892A4";
+    const colorTestimony = colors.testimony ?? "#8892A4";
+    const colorArrowBg = colors.arrowBackground ?? "#131A2B";
+    const colorArrowFg = colors.arrowForeground ?? "#F0F2F5";
+    const colorArrowHoverBg = colors.arrowHoverBackground ?? "#FF6A3D";
     const fontSizeName = fontSizes.name ?? "1.5rem";
     const fontSizeDesignation = fontSizes.designation ?? "0.925rem";
     const fontSizeQuote = fontSizes.quote ?? "1.125rem";
@@ -255,7 +255,7 @@ export const CircularTestimonials = ({
                             onMouseLeave={() => setHoverPrev(false)}
                             aria-label="Previous testimonial"
                         >
-                            <FaArrowLeft size={28} color={hoverPrev ? "#000000" : colorArrowFg} />
+                            <FaArrowLeft size={28} color={hoverPrev ? "#0B0F19" : colorArrowFg} />
                         </button>
                         <button
                             className="arrow-button next-button"
@@ -267,7 +267,7 @@ export const CircularTestimonials = ({
                             onMouseLeave={() => setHoverNext(false)}
                             aria-label="Next testimonial"
                         >
-                            <FaArrowRight size={28} color={hoverNext ? "#000000" : colorArrowFg} />
+                            <FaArrowRight size={28} color={hoverNext ? "#0B0F19" : colorArrowFg} />
                         </button>
                     </div>
                 </div>

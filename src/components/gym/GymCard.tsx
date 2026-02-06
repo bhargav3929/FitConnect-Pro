@@ -30,7 +30,7 @@ export default function GymCard({ gym }: GymCardProps) {
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute top-4 right-4">
-                        <Badge variant="secondary" className="backdrop-blur-md bg-white/90 text-primary font-semibold shadow-sm">
+                        <Badge variant="secondary" className="backdrop-blur-md bg-[#F0F2F5]/90 text-primary font-semibold shadow-sm">
                             Open Now
                         </Badge>
                     </div>

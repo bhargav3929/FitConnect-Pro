@@ -98,7 +98,7 @@ export default function ImgStack({ items }: ImgStackProps) {
                 return (
                     <motion.div
                         key={card.id}
-                        className="absolute w-64 md:w-72 aspect-[5/7] origin-bottom-center overflow-hidden rounded-xl shadow-2xl bg-white cursor-grab active:cursor-grabbing border border-gray-800"
+                        className="absolute w-64 md:w-72 aspect-[5/7] origin-bottom-center overflow-hidden rounded-xl shadow-2xl bg-[#131A2B] cursor-grab active:cursor-grabbing border border-[#1A2238]"
                         style={{
                             zIndex: card.zIndex,
                         }}
@@ -131,14 +131,14 @@ export default function ImgStack({ items }: ImgStackProps) {
                             draggable={false}
                         />
                         {/* Card Overlay for definition */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/80 via-transparent to-transparent pointer-events-none" />
 
                         {/* Mentor Info */}
                         <div className="absolute bottom-6 left-6 pointer-events-none">
                             <h3 className="text-2xl font-black text-white uppercase leading-none mb-1 tracking-tight drop-shadow-md">
                                 {card.name}
                             </h3>
-                            <p className="text-xs font-bold text-white/80 uppercase tracking-[0.2em] drop-shadow-sm">
+                            <p className="text-xs font-bold text-[#F0F2F5]/80 uppercase tracking-[0.2em] drop-shadow-sm">
                                 {card.role}
                             </p>
                         </div>

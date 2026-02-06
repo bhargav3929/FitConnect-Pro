@@ -88,11 +88,11 @@ export default function LocationsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-black text-white">Locations</h2>
-                    <p className="text-white/40 text-sm mt-1">
+                    <p className="text-[#5A6478] text-sm mt-1">
                         Manage gym locations and facilities
                     </p>
                 </div>
-                <button className="px-6 py-3 bg-white text-black font-bold text-sm tracking-wider hover:bg-white/90 transition-all flex items-center gap-2 w-fit">
+                <button className="px-6 py-3 bg-coral-400 text-[#0B0F19] font-bold text-sm tracking-wider hover:bg-coral-300 transition-all flex items-center gap-2 w-fit">
                     <Plus className="w-4 h-4" />
                     ADD LOCATION
                 </button>
@@ -102,25 +102,25 @@ export default function LocationsPage() {
             <div className="flex flex-col sm:flex-row gap-4">
                 {/* Search */}
                 <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6478]" />
                     <input
                         type="text"
                         placeholder="Search locations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 bg-black border border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+                        className="w-full h-12 pl-11 pr-4 bg-[#0B0F19] border border-[#1A2238] text-white placeholder:text-[#5A6478] focus:border-coral-400/50 focus:outline-none"
                     />
                 </div>
 
                 {/* Status Filter */}
-                <div className="flex border border-white/10">
+                <div className="flex border border-[#1A2238]">
                     {(["all", "active", "inactive"] as const).map(status => (
                         <button
                             key={status}
                             onClick={() => setShowActive(status)}
                             className={`px-4 py-3 text-sm font-bold tracking-wider capitalize transition-colors ${showActive === status
-                                    ? 'bg-white text-black'
-                                    : 'text-white/50 hover:text-white'
+                                    ? 'bg-coral-400 text-[#0B0F19]'
+                                    : 'text-[#8892A4] hover:text-white'
                                 }`}
                         >
                             {status}
@@ -137,7 +137,7 @@ export default function LocationsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className={`bg-black border p-6 hover:border-white/30 transition-colors group ${location.isActive ? 'border-white/10' : 'border-white/5'
+                        className={`bg-[#0B0F19] border p-6 hover:border-coral-400/30 transition-colors group ${location.isActive ? 'border-[#1A2238]' : 'border-[#1A2238]/50'
                             }`}
                     >
                         {/* Header */}
@@ -155,16 +155,16 @@ export default function LocationsPage() {
                             </div>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors">
+                                    <button className="w-8 h-8 flex items-center justify-center text-[#5A6478] hover:text-white transition-colors">
                                         <MoreVertical className="w-4 h-4" />
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-black border-white/10">
-                                    <DropdownMenuItem className="text-white/70 focus:bg-white/10 focus:text-white cursor-pointer">
+                                <DropdownMenuContent align="end" className="bg-[#0B0F19] border-[#1A2238]">
+                                    <DropdownMenuItem className="text-[#F0F2F5]/70 focus:bg-[#F0F2F5]/10 focus:text-white cursor-pointer">
                                         <Edit className="w-4 h-4 mr-2" />
                                         Edit Location
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-white/70 focus:bg-white/10 focus:text-white cursor-pointer">
+                                    <DropdownMenuItem className="text-[#F0F2F5]/70 focus:bg-[#F0F2F5]/10 focus:text-white cursor-pointer">
                                         <Power className="w-4 h-4 mr-2" />
                                         {location.isActive ? 'Deactivate' : 'Activate'}
                                     </DropdownMenuItem>
@@ -178,33 +178,33 @@ export default function LocationsPage() {
 
                         {/* Details */}
                         <div className="space-y-3">
-                            <div className="flex items-start gap-3 text-white/60">
+                            <div className="flex items-start gap-3 text-[#8892A4]">
                                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <span className="text-sm">{location.address}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-white/60">
+                            <div className="flex items-center gap-3 text-[#8892A4]">
                                 <Phone className="w-4 h-4 flex-shrink-0" />
                                 <span className="text-sm">{location.phone}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-white/60">
+                            <div className="flex items-center gap-3 text-[#8892A4]">
                                 <Mail className="w-4 h-4 flex-shrink-0" />
                                 <span className="text-sm">{location.email}</span>
                             </div>
-                            <div className="flex items-center gap-3 text-white/60">
+                            <div className="flex items-center gap-3 text-[#8892A4]">
                                 <Clock className="w-4 h-4 flex-shrink-0" />
                                 <span className="text-sm">{location.hours}</span>
                             </div>
                         </div>
 
                         {/* Stats */}
-                        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/10">
+                        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-[#1A2238]">
                             <div>
                                 <p className="text-2xl font-black text-white">{location.trainers}</p>
-                                <p className="text-xs text-white/40 tracking-wider uppercase">Trainers</p>
+                                <p className="text-xs text-[#5A6478] tracking-wider uppercase">Trainers</p>
                             </div>
                             <div>
                                 <p className="text-2xl font-black text-white">{location.activeClasses}</p>
-                                <p className="text-xs text-white/40 tracking-wider uppercase">Active Classes</p>
+                                <p className="text-xs text-[#5A6478] tracking-wider uppercase">Active Classes</p>
                             </div>
                         </div>
                     </motion.div>

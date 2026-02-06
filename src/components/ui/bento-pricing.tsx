@@ -19,7 +19,7 @@ type PricingCardProps = {
 
 function FilledCheck() {
     return (
-        <div className="bg-white text-black rounded-full p-0.5 shrink-0">
+        <div className="bg-coral-400 text-[#0B0F19] rounded-full p-0.5 shrink-0">
             <CheckIcon className="size-3" strokeWidth={3} />
         </div>
     );
@@ -38,13 +38,13 @@ function PricingCard({
     return (
         <div
             className={cn(
-                'bg-white/5 border-white/10 relative overflow-hidden rounded-2xl border flex flex-col',
-                'hover:border-white/20 transition-all duration-300',
+                'bg-[#F0F2F5]/5 border-[#1A2238] relative overflow-hidden rounded-2xl border flex flex-col',
+                'hover:border-coral-400/30 transition-all duration-300',
                 className,
             )}
         >
             <div className="flex items-center gap-3 p-6 pb-2">
-                <Badge variant="secondary" className="bg-white text-black hover:bg-white/90 font-bold tracking-wider">{titleBadge}</Badge>
+                <Badge variant="secondary" className="bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold tracking-wider">{titleBadge}</Badge>
             </div>
 
             <div className="p-6 pt-2">
@@ -54,20 +54,20 @@ function PricingCard({
                     </span>
                     <div className="flex flex-col leading-none pb-2">
                         {priceSuffix && (
-                            <span className="text-white/40 text-sm font-semibold uppercase">{priceSuffix}</span>
+                            <span className="text-[#5A6478] text-sm font-semibold uppercase">{priceSuffix}</span>
                         )}
                         {subLabel && (
-                            <span className="text-white/40 text-[10px] font-bold uppercase">{subLabel}</span>
+                            <span className="text-[#5A6478] text-[10px] font-bold uppercase">{subLabel}</span>
                         )}
                     </div>
                 </div>
                 {description && (
-                    <p className="text-white/60 text-sm leading-relaxed mb-6 border-b border-white/10 pb-6">
+                    <p className="text-[#8892A4] text-sm leading-relaxed mb-6 border-b border-[#1A2238] pb-6">
                         {description}
                     </p>
                 )}
 
-                <ul className="text-white/60 space-y-4 text-sm mt-2 flex-grow">
+                <ul className="text-[#8892A4] space-y-4 text-sm mt-2 flex-grow">
                     {features.map((f, i) => (
                         <li key={i} className="flex items-start gap-3">
                             <FilledCheck />
@@ -77,7 +77,7 @@ function PricingCard({
                 </ul>
 
                 <div className="mt-8">
-                    <Button className="w-full bg-white text-black hover:bg-neutral-200 font-bold tracking-wide h-12 rounded-xl">{cta}</Button>
+                    <Button className="w-full bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold tracking-wide h-12 rounded-xl">{cta}</Button>
                 </div>
             </div>
         </div>
@@ -91,20 +91,20 @@ export function BentoPricing() {
             <div className="space-y-8">
                 <div className="text-center space-y-2">
                     <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight uppercase">Memberships</h2>
-                    <p className="text-white/40 max-w-2xl mx-auto">Flexible plans for your consistent training.</p>
+                    <p className="text-[#5A6478] max-w-2xl mx-auto">Flexible plans for your consistent training.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* 2. Unlimited - Featured in center conceptually, but keeping grid order. Or maybe making it consistent. */}
                     <div
                         className={cn(
-                            'bg-white/5 border-white/10 relative w-full overflow-hidden rounded-2xl border flex flex-col',
-                            'md:col-span-1 ring-1 ring-white/20', // Highlighted
+                            'bg-[#F0F2F5]/5 border-[#1A2238] relative w-full overflow-hidden rounded-2xl border flex flex-col',
+                            'md:col-span-1 ring-1 ring-coral-400/30', // Highlighted
                         )}
                     >
-                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-50"></div>
+                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-coral-400/50 to-transparent opacity-50"></div>
                         <div className="flex items-center gap-3 p-6 pb-2">
-                            <Badge variant="secondary" className="bg-white text-black hover:bg-white/90 font-bold tracking-wider">UNLIMITED</Badge>
-                            <Badge variant="outline" className="ml-auto border-white/20 text-white text-[10px] uppercase tracking-widest hidden lg:flex">
+                            <Badge variant="secondary" className="bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold tracking-wider">UNLIMITED</Badge>
+                            <Badge variant="outline" className="ml-auto border-coral-400/30 text-coral-400 text-[10px] uppercase tracking-widest hidden lg:flex">
                                 <SparklesIcon className="me-1 size-3" /> Popular
                             </Badge>
                         </div>
@@ -115,15 +115,15 @@ export function BentoPricing() {
                                         $200
                                     </span>
                                     <div className="flex flex-col leading-none pb-2">
-                                        <span className="text-white/40 text-sm font-semibold uppercase">/4 WEEKS</span>
+                                        <span className="text-[#5A6478] text-sm font-semibold uppercase">/4 WEEKS</span>
                                         <span className="text-green-400 text-[10px] font-bold uppercase">Best Value</span>
                                     </div>
                                 </div>
-                                <p className="text-white/60 text-sm mt-4 border-b border-white/10 pb-6">
+                                <p className="text-[#8892A4] text-sm mt-4 border-b border-[#1A2238] pb-6">
                                     Book as many sessions as you'd like. The ultimate commitment to your fitness journey.
                                 </p>
                             </div>
-                            <ul className="text-white/60 space-y-4 text-sm flex-grow">
+                            <ul className="text-[#8892A4] space-y-4 text-sm flex-grow">
                                 {[
                                     'Unlimited classes every 4 weeks',
                                     '14-day advance booking window',
@@ -137,7 +137,7 @@ export function BentoPricing() {
                                 ))}
                             </ul>
                             <div className="mt-8">
-                                <Button className="w-full bg-white text-black hover:bg-neutral-200 font-bold tracking-wide h-12 rounded-xl">SUBSCRIBE NOW</Button>
+                                <Button className="w-full bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold tracking-wide h-12 rounded-xl">SUBSCRIBE NOW</Button>
                             </div>
                         </div>
                     </div>
@@ -175,7 +175,7 @@ export function BentoPricing() {
             <div className="space-y-8">
                 <div className="text-center space-y-2">
                     <h2 className="text-2xl md:text-4xl font-black text-white tracking-tight uppercase">Class Packs</h2>
-                    <p className="text-white/40 max-w-2xl mx-auto">No commitment. Just train.</p>
+                    <p className="text-[#5A6478] max-w-2xl mx-auto">No commitment. Just train.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
                     <PricingCard
