@@ -23,12 +23,12 @@ import {
 
 // Mock classes data
 const MOCK_CLASSES = [
-    { id: "1", name: "HIIT Training", type: "Cardio", trainer: "John Smith", location: "Downtown", date: "2024-01-06", time: "06:00", duration: 45, capacity: 20, booked: 18, status: "scheduled" },
-    { id: "2", name: "Yoga Flow", type: "Yoga", trainer: "Sarah Chen", location: "Midtown", date: "2024-01-06", time: "08:00", duration: 60, capacity: 15, booked: 12, status: "scheduled" },
-    { id: "3", name: "Strength Training", type: "Strength", trainer: "Mike Wilson", location: "Downtown", date: "2024-01-06", time: "10:00", duration: 50, capacity: 12, booked: 12, status: "full" },
-    { id: "4", name: "Spin Class", type: "Cardio", trainer: "Emily Brown", location: "Uptown", date: "2024-01-06", time: "12:00", duration: 45, capacity: 25, booked: 20, status: "scheduled" },
-    { id: "5", name: "Pilates", type: "Flexibility", trainer: "Anna Lee", location: "Downtown", date: "2024-01-06", time: "14:00", duration: 55, capacity: 18, booked: 15, status: "scheduled" },
-    { id: "6", name: "Boxing", type: "Combat", trainer: "James Rodriguez", location: "Midtown", date: "2024-01-05", time: "16:00", duration: 60, capacity: 20, booked: 20, status: "completed" },
+    { id: "1", name: "HIIT Training", type: "Cardio", trainer: "John Smith", location: "Performance Floor", date: "2024-01-06", time: "06:00", duration: 45, capacity: 20, booked: 18, status: "scheduled" },
+    { id: "2", name: "Yoga Flow", type: "Yoga", trainer: "Sarah Chen", location: "Heated Yoga Studio", date: "2024-01-06", time: "08:00", duration: 60, capacity: 15, booked: 12, status: "scheduled" },
+    { id: "3", name: "Strength Training", type: "Strength", trainer: "Mike Wilson", location: "Olympic Platform", date: "2024-01-06", time: "10:00", duration: 50, capacity: 12, booked: 12, status: "full" },
+    { id: "4", name: "Spin Class", type: "Cardio", trainer: "Emily Brown", location: "Cycling Theater", date: "2024-01-06", time: "12:00", duration: 45, capacity: 25, booked: 20, status: "scheduled" },
+    { id: "5", name: "Pilates", type: "Flexibility", trainer: "Anna Lee", location: "Private Suite A", date: "2024-01-06", time: "14:00", duration: 55, capacity: 18, booked: 15, status: "scheduled" },
+    { id: "6", name: "Boxing", type: "Combat", trainer: "James Rodriguez", location: "Combat Zone", date: "2024-01-05", time: "16:00", duration: 60, capacity: 20, booked: 20, status: "completed" },
 ]
 
 const CLASS_TYPES = ["All Types", "Cardio", "Yoga", "Strength", "Flexibility", "Combat"]
@@ -124,7 +124,7 @@ export default function ClassesPage() {
                                 <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">CLASS</th>
                                 <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">TRAINER</th>
                                 <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">SCHEDULE</th>
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">LOCATION</th>
+                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">ZONE</th>
                                 <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">CAPACITY</th>
                                 <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">STATUS</th>
                                 <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider p-4">ACTIONS</th>

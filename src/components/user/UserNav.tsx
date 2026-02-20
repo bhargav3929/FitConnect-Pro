@@ -16,8 +16,8 @@ import { useRouter } from "next/navigation"
 
 const NAV_ITEMS = [
     { label: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
-    { label: "Browse Centers", href: "/user/centers", icon: Map },
-    { label: "My Bookings", href: "/user/bookings", icon: Calendar },
+    { label: "Schedule", href: "/user/schedule", icon: Calendar },
+    { label: "My Bookings", href: "/user/bookings", icon: Map },
     { label: "Profile", href: "/user/profile", icon: User },
 ]
 

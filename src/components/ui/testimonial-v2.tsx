@@ -42,7 +42,7 @@ const testimonials: Testimonial[] = [
         role: "Member",
     },
     {
-        text: "Managing distinct locations used to be a nightmare. FitConnect-Pro centralized everything, making operations smooth and efficient.",
+        text: "Managing our training zones used to be chaotic. FitConnect-Pro centralized everything from scheduling to equipment tracking, making operations seamless.",
         image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150&h=150",
         name: "Aliza Khan",
         role: "Operations Manager",

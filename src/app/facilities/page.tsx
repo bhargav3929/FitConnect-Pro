@@ -2,219 +2,247 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Search, MapPin, Filter, Star, Clock } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Clock, Phone, Mail, MapPin, Dumbbell, Waves, Shield, Zap, Heart, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 
-// Mock Data (Shared/Cloned from centers/page.tsx to avoid dependency issues)
-const ALL_CENTERS = [
+const AMENITY_ZONES = [
     {
-        id: "1",
-        name: "FitPro Downtown",
-        address: "123 Main St, New York, NY",
+        id: "strength",
+        name: "Strength Floor",
+        description: "12,000 sq ft of free weights, power racks, and plate-loaded machines. Rubberized Olympic platforms and dedicated deadlift zones.",
+        icon: Dumbbell,
         image: "/images/gyms/fitpro-downtown.png",
-        rating: 4.9,
-        distance: 0.8,
-        openNow: true,
-        nextClassTime: "In 30 mins"
+        features: ["Olympic Platforms", "Power Racks", "Cable Machines", "Free Weights"],
     },
     {
-        id: "2",
-        name: "FitPro Midtown",
-        address: "456 Park Ave, New York, NY",
+        id: "cardio",
+        name: "Cardio Lab",
+        description: "Performance-tracked treadmills, assault bikes, rowers, and SkiErgs. Every machine connects to your profile for real-time metrics.",
+        icon: Zap,
         image: "/images/gyms/fitpro-midtown.png",
-        rating: 4.8,
-        distance: 1.2,
-        openNow: true,
-        nextClassTime: "In 1 hour"
+        features: ["Smart Treadmills", "Assault Bikes", "Rowing Machines", "SkiErgs"],
     },
     {
-        id: "3",
-        name: "FitPro Uptown",
-        address: "789 Broadway, New York, NY",
+        id: "yoga",
+        name: "Yoga & Pilates Studio",
+        description: "Infrared-heated hardwood studio with floor-to-ceiling mirrors. Reformer Pilates equipment and aerial yoga rigging.",
+        icon: Heart,
         image: "/images/gyms/fitpro-uptown.png",
-        rating: 4.7,
-        distance: 3.5,
-        openNow: false,
-        nextClassTime: "Tomorrow"
+        features: ["Heated Studio", "Reformer Pilates", "Aerial Yoga", "Meditation Room"],
     },
     {
-        id: "4",
-        name: "FitPro Brooklyn",
-        address: "321 Atlantic Ave, Brooklyn, NY",
+        id: "boxing",
+        name: "Combat Zone",
+        description: "Competition-grade boxing ring, heavy bags, speed bags, and MMA cage. Coached sessions available daily.",
+        icon: Shield,
         image: "/images/gyms/fitpro-brooklyn.png",
-        rating: 4.6,
-        distance: 5.2,
-        openNow: true,
-        nextClassTime: "In 15 mins"
+        features: ["Boxing Ring", "Heavy Bags", "MMA Cage", "Speed Bags"],
     },
     {
-        id: "5",
-        name: "FitPro Queens",
-        address: "12 Queens Blvd, Queens, NY",
+        id: "recovery",
+        name: "Recovery Sanctuary",
+        description: "Full-spectrum recovery with cryotherapy chambers, compression boots, infrared saunas, and cold plunge pools.",
+        icon: Waves,
         image: "/images/gyms/fitpro-queens.png",
-        rating: 4.5,
-        distance: 8.4,
-        openNow: true,
-        nextClassTime: "In 45 mins"
+        features: ["Cryotherapy", "Infrared Sauna", "Cold Plunge", "Compression Boots"],
     },
-    {
-        id: "6",
-        name: "FitPro Chelsea",
-        address: "234 W 23rd St, New York, NY",
-        image: "/images/gyms/fitpro-chelsea.png",
-        rating: 4.9,
-        distance: 2.1,
-        openNow: false,
-        nextClassTime: "Tomorrow"
-    }
 ]
 
-export default function FacilitiesPage() {
-    const router = useRouter();
-    const [searchQuery, setSearchQuery] = useState("")
-    const [sortBy, setSortBy] = useState<"distance" | "rating">("distance")
+const FACILITY_HOURS = [
+    { day: "Monday - Friday", hours: "05:00 AM - 11:00 PM" },
+    { day: "Saturday", hours: "06:00 AM - 10:00 PM" },
+    { day: "Sunday", hours: "07:00 AM - 9:00 PM" },
+]
 
-    // Filter and Sort Logic
-    const filteredCenters = ALL_CENTERS
-        .filter(center =>
-            center.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            center.address.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .sort((a, b) => {
-            if (sortBy === "distance") return a.distance - b.distance
-            if (sortBy === "rating") return b.rating - a.rating
-            return 0
-        })
+export default function FacilityPage() {
+    const [activeZone, setActiveZone] = useState<string>("strength")
 
-    const handleAction = () => {
-        router.push("/subscription");
-    }
+    const selectedZone = AMENITY_ZONES.find(z => z.id === activeZone)
 
     return (
         <div className="min-h-screen bg-[#0B0F19] pt-28 pb-20 px-4 md:px-8">
-            <div className="container mx-auto space-y-8">
-                {/* Header */}
-                <div className="text-center md:text-left">
-                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">BROWSE FACILITIES</h1>
-                    <p className="text-[#5A6478] text-sm md:text-base max-w-2xl">
-                        Discover our world-class training centers. Unlock unlimited access with our FitPro subscription.
-                    </p>
+            <div className="container mx-auto space-y-16">
+                {/* Hero Header */}
+                <div className="max-w-3xl">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <span className="text-coral-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-4">Our Facility</span>
+                        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.95] mb-6">
+                            45,000 SQ FT OF<br />
+                            DEDICATED<br />
+                            TRAINING SPACE
+                        </h1>
+                        <p className="text-[#8892A4] text-lg max-w-xl leading-relaxed">
+                            Five distinct training zones, each purpose-built and equipped with commercial-grade gear. Open 7 days a week with extended hours for early risers and night owls.
+                        </p>
+                    </motion.div>
                 </div>
 
-                {/* Controls */}
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6478]" />
-                        <Input
-                            placeholder="Search by name or location..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-12 pl-11 bg-[#131A2B] border-[#1A2238] text-white placeholder:text-[#5A6478] focus:border-coral-400/40 focus:bg-[#1A2238] rounded-xl transition-all"
-                        />
+                {/* Zone Explorer */}
+                <div className="space-y-8">
+                    {/* Zone Tabs */}
+                    <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+                        {AMENITY_ZONES.map((zone) => {
+                            const IconComp = zone.icon
+                            return (
+                                <button
+                                    key={zone.id}
+                                    onClick={() => setActiveZone(zone.id)}
+                                    className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
+                                        activeZone === zone.id
+                                            ? "bg-coral-400 text-[#0B0F19] border-coral-400 shadow-[0_0_20px_rgba(255,106,61,0.3)]"
+                                            : "bg-transparent text-[#8892A4] border-[#1A2238] hover:border-[#F0F2F5]/20 hover:text-[#F0F2F5]"
+                                    }`}
+                                >
+                                    <IconComp className="w-4 h-4" />
+                                    {zone.name}
+                                </button>
+                            )
+                        })}
                     </div>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => setSortBy("distance")}
-                            className={`h-12 px-6 rounded-xl border-[#1A2238] font-bold tracking-wide ${sortBy === "distance" ? 'bg-coral-400 text-[#0B0F19] hover:bg-coral-300' : 'bg-[#131A2B] text-[#F0F2F5] hover:bg-[#F0F2F5]/5'
-                                }`}
-                        >
-                            <MapPin className="w-4 h-4 mr-2" />
-                            NEAREST
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => setSortBy("rating")}
-                            className={`h-12 px-6 rounded-xl border-[#1A2238] font-bold tracking-wide ${sortBy === "rating" ? 'bg-coral-400 text-[#0B0F19] hover:bg-coral-300' : 'bg-[#131A2B] text-[#F0F2F5] hover:bg-[#F0F2F5]/5'
-                                }`}
-                        >
-                            <Filter className="w-4 h-4 mr-2" />
-                            TOP RATED
-                        </Button>
-                    </div>
-                </div>
 
-                {/* Results Grid */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCenters.map((center, idx) => (
+                    {/* Active Zone Detail */}
+                    {selectedZone && (
                         <motion.div
-                            key={center.id}
-                            initial={{ opacity: 0, y: 20 }}
+                            key={selectedZone.id}
+                            initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                            onClick={handleAction}
-                            className="group cursor-pointer"
+                            transition={{ duration: 0.3 }}
+                            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
                         >
-                            <div className="bg-[#131A2B] border border-[#1A2238] rounded-2xl overflow-hidden hover:border-coral-400/30 transition-all group-hover:-translate-y-1">
-                                {/* Image Section */}
-                                <div className="relative h-48 w-full overflow-hidden">
-                                    <div className="absolute inset-0 bg-[#F0F2F5]/5 flex items-center justify-center">
-                                        <span className="text-[#F0F2F5]/20 font-bold tracking-widest uppercase">
-                                            {center.image ? 'Loading...' : 'No Image'}
-                                        </span>
-                                    </div>
-                                    {center.image && (
-                                        <Image
-                                            src={center.image}
-                                            alt={center.name}
-                                            fill
-                                            className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                        />
-                                    )}
-                                    <div className="absolute top-4 right-4 bg-[#0B0F19]/80 backdrop-blur-md px-3 py-1 rounded-full border border-[#1A2238] z-10">
-                                        <span className="text-xs font-bold text-white flex items-center gap-1">
-                                            <MapPin className="w-3 h-3 text-white" />
-                                            {center.distance} km
-                                        </span>
-                                    </div>
-                                    <div className="absolute top-4 left-4 z-10">
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${center.openNow ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                                            {center.openNow ? 'Open Now' : 'Closed'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Content Section */}
-                                <div className="p-5">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <h3 className="text-lg font-black text-white group-hover:text-[#F0F2F5]/80 transition-colors line-clamp-1 uppercase tracking-tight">
-                                            {center.name}
-                                        </h3>
-                                        <div className="flex items-center gap-1 bg-[#F0F2F5]/5 px-2 py-1 rounded-lg">
-                                            <Star className="w-3 h-3 text-white fill-white" />
-                                            <span className="text-xs font-bold text-white">{center.rating}</span>
-                                        </div>
-                                    </div>
-
-                                    <p className="text-[#5A6478] text-sm mb-4 line-clamp-1 font-medium">{center.address}</p>
-
-                                    <div className="flex items-center justify-between pt-4 border-t border-[#1A2238]">
-                                        <div className="flex items-center gap-2 text-[#8892A4] text-xs font-medium">
-                                            <Clock className="w-3 h-3" />
-                                            {center.nextClassTime ? `Next class: ${center.nextClassTime}` : 'No classes today'}
-                                        </div>
-                                        <span className="text-xs font-bold text-white group-hover:translate-x-1 transition-transform tracking-wider">
-                                            BOOK CLASS →
-                                        </span>
-                                    </div>
+                            {/* Image */}
+                            <div className="relative h-[320px] lg:h-[420px] overflow-hidden rounded-2xl border border-[#1A2238]">
+                                <Image
+                                    src={selectedZone.image}
+                                    alt={selectedZone.name}
+                                    fill
+                                    className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/70 via-transparent to-transparent" />
+                                <div className="absolute bottom-6 left-6">
+                                    <span className="px-3 py-1.5 bg-coral-400 text-[#0B0F19] text-xs font-bold uppercase tracking-wider rounded-full">
+                                        {selectedZone.name}
+                                    </span>
                                 </div>
                             </div>
+
+                            {/* Content */}
+                            <div className="flex flex-col justify-center space-y-6">
+                                <div>
+                                    <h3 className="text-3xl font-black text-white tracking-tight mb-4">{selectedZone.name}</h3>
+                                    <p className="text-[#8892A4] text-base leading-relaxed">{selectedZone.description}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    {selectedZone.features.map((feature) => (
+                                        <div
+                                            key={feature}
+                                            className="flex items-center gap-3 bg-[#F0F2F5]/5 border border-[#1A2238] px-4 py-3 rounded-xl"
+                                        >
+                                            <div className="w-2 h-2 bg-coral-400 rounded-full flex-shrink-0" />
+                                            <span className="text-sm text-[#F0F2F5]/80 font-medium">{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <Link href="/user/schedule">
+                                    <Button className="bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold px-8 h-12 rounded-xl w-fit transition-all duration-200">
+                                        Book a Class
+                                        <ChevronRight className="w-4 h-4 ml-1" />
+                                    </Button>
+                                </Link>
+                            </div>
                         </motion.div>
-                    ))}
+                    )}
                 </div>
 
-                {filteredCenters.length === 0 && (
-                    <div className="text-center py-20">
-                        <div className="w-16 h-16 bg-[#F0F2F5]/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <MapPin className="w-8 h-8 text-[#F0F2F5]/20" />
+                {/* Facility Info Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Hours */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="bg-[#131A2B] border border-[#1A2238] p-6 rounded-2xl"
+                    >
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-coral-400/10 rounded-xl flex items-center justify-center">
+                                <Clock className="w-5 h-5 text-coral-400" />
+                            </div>
+                            <h3 className="text-lg font-bold text-white">Operating Hours</h3>
                         </div>
-                        <h3 className="text-lg font-bold text-white">No centers found</h3>
-                        <p className="text-[#5A6478] text-sm">Try adjusting your search or filters</p>
-                    </div>
-                )}
+                        <div className="space-y-4">
+                            {FACILITY_HOURS.map((slot) => (
+                                <div key={slot.day} className="flex items-center justify-between">
+                                    <span className="text-[#8892A4] text-sm font-medium">{slot.day}</span>
+                                    <span className="text-white text-sm font-bold">{slot.hours}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+
+                    {/* Contact */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.1 }}
+                        className="bg-[#131A2B] border border-[#1A2238] p-6 rounded-2xl"
+                    >
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-coral-400/10 rounded-xl flex items-center justify-center">
+                                <Phone className="w-5 h-5 text-coral-400" />
+                            </div>
+                            <h3 className="text-lg font-bold text-white">Contact</h3>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 text-[#8892A4]">
+                                <Phone className="w-4 h-4 flex-shrink-0" />
+                                <span className="text-sm">(212) 555-0180</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-[#8892A4]">
+                                <Mail className="w-4 h-4 flex-shrink-0" />
+                                <span className="text-sm">hello@fitconnectpro.com</span>
+                            </div>
+                            <div className="flex items-start gap-3 text-[#8892A4]">
+                                <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                <span className="text-sm">250 West 54th Street<br />New York, NY 10019</span>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Quick Booking CTA */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-gradient-to-br from-coral-400/20 to-coral-400/5 border border-coral-400/20 p-6 rounded-2xl flex flex-col justify-between"
+                    >
+                        <div>
+                            <h3 className="text-lg font-bold text-white mb-3">Ready to Train?</h3>
+                            <p className="text-[#8892A4] text-sm leading-relaxed mb-6">
+                                Book your first class and experience what 45,000 sq ft of dedicated training space feels like.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            <Link href="/subscription" className="block">
+                                <Button className="w-full bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold h-12 rounded-xl transition-all duration-200">
+                                    View Membership Plans
+                                </Button>
+                            </Link>
+                            <Link href="/user/schedule" className="block">
+                                <Button variant="outline" className="w-full border-[#1A2238] text-[#F0F2F5] hover:bg-[#F0F2F5]/5 font-bold h-12 rounded-xl transition-all duration-200">
+                                    Browse Class Schedule
+                                </Button>
+                            </Link>
+                        </div>
+                    </motion.div>
+                </div>
             </div>
         </div>
     )

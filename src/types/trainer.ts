@@ -10,7 +10,6 @@ export interface Trainer {
     experienceYears: number;
     rating?: number;
     isActive: boolean;
-    gymCenterIds: string[];
     createdAt: Date;
     updatedAt: Date;
 }

@@ -25,7 +25,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && isOwner(userId);
     }
     
-    // Public read collections (Gyms, Trainers, Classes)
+    // Single-facility model: gymCenters contains exactly one document (the gym config)
     match /gymCenters/{gymId} {
       allow read: if true;
       allow write: if false; // Only Admin via Admin SDK or Console for now

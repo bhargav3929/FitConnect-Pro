@@ -6,55 +6,49 @@ import {
     Trophy,
     Calendar,
     ArrowRight,
-    MapPin,
     Dumbbell,
     Clock,
+    Star,
 } from "lucide-react"
 import { useClientAuthStore } from "@/lib/store/clientAuthStore"
-import { CenterCard } from "@/components/user/CenterCard"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 // Mock upcoming class
 const UPCOMING_CLASS = {
     name: "HIIT Intensity",
-    center: "FitPro Downtown",
+    location: "Performance Floor",
     time: "Today, 6:00 PM",
     duration: "45 min",
     spot: "Spot 12"
 }
 
-// Mock nearby centers
-const NEARBY_CENTERS = [
+// Mock today's schedule preview
+const TODAYS_CLASSES = [
     {
         id: "1",
-        name: "FitPro Downtown",
-        address: "123 Main St, New York, NY",
-        image: "/images/gyms/fitpro-downtown.png",
-        rating: 4.9,
-        distance: 0.8,
-        openNow: true,
-        nextClassTime: "In 30 mins"
+        name: "Strength & Sculpt",
+        time: "06:00 AM",
+        trainer: "Melinda H",
+        location: "Performance Floor",
+        spotsLeft: 0,
     },
     {
         id: "2",
-        name: "FitPro Midtown",
-        address: "456 Park Ave, New York, NY",
-        image: "/images/gyms/fitpro-midtown.png",
-        rating: 4.8,
-        distance: 1.2,
-        openNow: true,
-        nextClassTime: "In 1 hour"
+        name: "Morning Flow",
+        time: "07:30 AM",
+        trainer: "Sarah C",
+        location: "Heated Yoga Studio",
+        spotsLeft: 5,
     },
     {
         id: "3",
-        name: "FitPro Uptown",
-        address: "789 Broadway, New York, NY",
-        image: "/images/gyms/fitpro-uptown.png",
-        rating: 4.7,
-        distance: 3.5,
-        openNow: false,
-        nextClassTime: "Tomorrow"
-    }
+        name: "Power Cycling",
+        time: "09:00 AM",
+        trainer: "David R",
+        location: "Cycling Theater",
+        spotsLeft: 7,
+    },
 ]
 
 export default function UserDashboard() {
@@ -68,7 +62,7 @@ export default function UserDashboard() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black text-white tracking-tight">
-                        Hello, {user.name.split(' ')[0]} 👋
+                        Hello, {user.name.split(' ')[0]}
                     </h1>
                     <p className="text-[#5A6478] text-sm mt-1">
                         Ready for your workout today?
@@ -84,9 +78,9 @@ export default function UserDashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                     { label: "Classes Attended", value: user.stats.classesAttended, icon: Trophy, color: "text-yellow-400" },
-                    { label: "Loyalty Points", value: user.stats.points, icon: StarIcon, color: "text-purple-400" },
-                    { label: "Membership", value: user.membership.type, icon: CreditCardIcon, color: "text-green-400" },
-                    { label: "Next Goal", value: "20 Classes", icon: TargetIcon, color: "text-blue-400" },
+                    { label: "Loyalty Points", value: user.stats.points, icon: Star, color: "text-purple-400" },
+                    { label: "Membership", value: user.membership.type, icon: Calendar, color: "text-green-400" },
+                    { label: "Next Goal", value: "20 Classes", icon: Dumbbell, color: "text-blue-400" },
                 ].map((stat, idx) => (
                     <motion.div
                         key={stat.label}
@@ -124,8 +118,8 @@ export default function UserDashboard() {
                         <h2 className="text-2xl font-black mb-1">{UPCOMING_CLASS.name}</h2>
                         <div className="flex items-center gap-4 text-[#F0F2F5]/80 text-sm font-medium">
                             <span className="flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
-                                {UPCOMING_CLASS.center}
+                                <Dumbbell className="w-4 h-4" />
+                                {UPCOMING_CLASS.location}
                             </span>
                             <span className="w-1 h-1 bg-[#F0F2F5]/40 rounded-full" />
                             <span>{UPCOMING_CLASS.time}</span>
@@ -143,36 +137,72 @@ export default function UserDashboard() {
                 </div>
             </motion.div>
 
-            {/* Nearby Centers */}
+            {/* Today's Schedule */}
             <div>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white">Nearby Centers</h2>
-                    <Link href="/user/centers" className="text-sm font-bold text-coral-400 hover:text-white transition-colors flex items-center gap-1">
-                        VIEW ALL <ArrowRight className="w-4 h-4" />
+                    <h2 className="text-xl font-bold text-white">Today at the Facility</h2>
+                    <Link href="/user/schedule" className="text-sm font-bold text-coral-400 hover:text-white transition-colors flex items-center gap-1">
+                        FULL SCHEDULE <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {NEARBY_CENTERS.map((center, idx) => (
+                <div className="space-y-3">
+                    {TODAYS_CLASSES.map((cls, idx) => (
                         <motion.div
-                            key={center.id}
+                            key={cls.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 + (idx * 0.1) }}
                         >
-                            <CenterCard {...center} />
+                            <Link href="/user/schedule" className="block">
+                                <div className="bg-[#131A2B] border border-[#1A2238] rounded-2xl p-4 hover:border-coral-400/30 transition-all group">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex flex-col items-center min-w-[56px]">
+                                                <span className="text-lg font-black text-white leading-none">{cls.time.split(' ')[0]}</span>
+                                                <span className="text-[10px] text-[#5A6478] font-bold mt-1">{cls.time.split(' ')[1]}</span>
+                                            </div>
+                                            <div className="w-px h-10 bg-[#F0F2F5]/10" />
+                                            <div>
+                                                <h3 className="text-white font-bold group-hover:text-coral-400 transition-colors">{cls.name}</h3>
+                                                <p className="text-[#5A6478] text-xs mt-0.5">
+                                                    {cls.trainer} · {cls.location}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            {cls.spotsLeft === 0 ? (
+                                                <span className="text-xs font-bold text-[#F0F2F5]/20 uppercase tracking-wider">Full</span>
+                                            ) : (
+                                                <span className="text-xs font-bold text-coral-400">
+                                                    {cls.spotsLeft} spots
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
                         </motion.div>
                     ))}
                 </div>
             </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-4">
+                <Link href="/user/schedule">
+                    <div className="bg-[#131A2B] border border-[#1A2238] rounded-2xl p-5 hover:border-coral-400/30 transition-all group cursor-pointer">
+                        <Calendar className="w-6 h-6 text-[#8892A4] mb-3 group-hover:text-coral-400 transition-colors" />
+                        <h3 className="text-white font-bold mb-1">Book a Class</h3>
+                        <p className="text-[#5A6478] text-xs">Browse the full schedule and reserve your spot</p>
+                    </div>
+                </Link>
+                <Link href="/user/bookings">
+                    <div className="bg-[#131A2B] border border-[#1A2238] rounded-2xl p-5 hover:border-coral-400/30 transition-all group cursor-pointer">
+                        <Dumbbell className="w-6 h-6 text-[#8892A4] mb-3 group-hover:text-coral-400 transition-colors" />
+                        <h3 className="text-white font-bold mb-1">My Bookings</h3>
+                        <p className="text-[#5A6478] text-xs">View upcoming sessions and booking history</p>
+                    </div>
+                </Link>
+            </div>
         </div>
     )
 }
-
-// Icons needed for stats
-function StarIcon(props: any) { return <Star className={props.className} /> }
-import { Star } from "lucide-react"
-
-function CreditCardIcon(props: any) { return <div className={props.className}><Calendar className="w-5 h-5" /></div> }
-function TargetIcon(props: any) { return <div className={props.className}><Dumbbell className="w-5 h-5" /></div> }
-
-import { Button } from "@/components/ui/button"

@@ -3,213 +3,259 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import {
-    Plus,
-    Search,
     MapPin,
     Phone,
     Mail,
     Clock,
-    MoreVertical,
     Edit,
-    Trash2,
-    Power,
+    Save,
+    Dumbbell,
+    Users,
+    Calendar,
+    Shield,
 } from "lucide-react"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { toast } from "sonner"
 
-// Mock locations data
-const MOCK_LOCATIONS = [
-    {
-        id: "1",
-        name: "FitPro Downtown",
-        address: "123 Main St, New York, NY 10001",
-        phone: "+1 (555) 123-4567",
-        email: "downtown@fitpro.com",
-        hours: "5:00 AM - 11:00 PM",
-        trainers: 8,
-        activeClasses: 24,
-        isActive: true,
+// Single facility data
+const FACILITY_DATA = {
+    name: "FitConnect Pro",
+    address: "250 West 54th Street, New York, NY 10019",
+    phone: "(212) 555-0180",
+    email: "hello@fitconnectpro.com",
+    hours: {
+        weekday: "5:00 AM - 11:00 PM",
+        saturday: "6:00 AM - 10:00 PM",
+        sunday: "7:00 AM - 9:00 PM",
     },
-    {
-        id: "2",
-        name: "FitPro Midtown",
-        address: "456 Park Ave, New York, NY 10022",
-        phone: "+1 (555) 234-5678",
-        email: "midtown@fitpro.com",
-        hours: "6:00 AM - 10:00 PM",
-        trainers: 6,
-        activeClasses: 18,
-        isActive: true,
-    },
-    {
-        id: "3",
-        name: "FitPro Uptown",
-        address: "789 Broadway, New York, NY 10025",
-        phone: "+1 (555) 345-6789",
-        email: "uptown@fitpro.com",
-        hours: "5:30 AM - 10:30 PM",
-        trainers: 5,
-        activeClasses: 15,
-        isActive: true,
-    },
-    {
-        id: "4",
-        name: "FitPro Brooklyn",
-        address: "321 Atlantic Ave, Brooklyn, NY 11201",
-        phone: "+1 (555) 456-7890",
-        email: "brooklyn@fitpro.com",
-        hours: "6:00 AM - 9:00 PM",
-        trainers: 4,
-        activeClasses: 12,
-        isActive: false,
-    },
-]
+    trainers: 8,
+    activeClasses: 24,
+    totalMembers: 2847,
+    sqft: "45,000",
+    zones: [
+        "Performance Training Floor",
+        "Heated Yoga Studio",
+        "Indoor Cycling Theater",
+        "Olympic Lifting Platform",
+        "Recovery Lounge",
+        "Private Training Suites",
+        "Smoothie Bar",
+        "Sauna & Steam Room",
+    ],
+    description:
+        "FitConnect Pro is a 45,000 sq ft premium fitness facility featuring five distinct training zones, each purpose-built and equipped with commercial-grade gear. Open 7 days a week with extended hours.",
+}
 
-export default function LocationsPage() {
-    const [searchQuery, setSearchQuery] = useState("")
-    const [showActive, setShowActive] = useState<"all" | "active" | "inactive">("all")
+export default function FacilitySettingsPage() {
+    const [isEditing, setIsEditing] = useState(false)
 
-    const filteredLocations = MOCK_LOCATIONS.filter(loc => {
-        const matchesSearch = loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            loc.address.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesStatus = showActive === "all" ||
-            (showActive === "active" && loc.isActive) ||
-            (showActive === "inactive" && !loc.isActive)
-        return matchesSearch && matchesStatus
-    })
+    const handleSave = () => {
+        setIsEditing(false)
+        toast.success("Facility details updated successfully")
+    }
 
     return (
-        <div className="space-y-6 pb-20 lg:pb-0">
+        <div className="space-y-6 pb-20 lg:pb-0 max-w-5xl">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-white">Locations</h2>
+                    <h2 className="text-2xl font-black text-white">Facility Settings</h2>
                     <p className="text-[#5A6478] text-sm mt-1">
-                        Manage gym locations and facilities
+                        Manage your facility details, hours, and amenities
                     </p>
                 </div>
-                <button className="px-6 py-3 bg-coral-400 text-[#0B0F19] font-bold text-sm tracking-wider hover:bg-coral-300 transition-all flex items-center gap-2 w-fit">
-                    <Plus className="w-4 h-4" />
-                    ADD LOCATION
+                <button
+                    onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+                    className="px-6 py-3 bg-coral-400 text-[#0B0F19] font-bold text-sm tracking-wider hover:bg-coral-300 transition-all flex items-center gap-2 w-fit"
+                >
+                    {isEditing ? (
+                        <>
+                            <Save className="w-4 h-4" />
+                            SAVE CHANGES
+                        </>
+                    ) : (
+                        <>
+                            <Edit className="w-4 h-4" />
+                            EDIT DETAILS
+                        </>
+                    )}
                 </button>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-                {/* Search */}
-                <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6478]" />
-                    <input
-                        type="text"
-                        placeholder="Search locations..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 bg-[#0B0F19] border border-[#1A2238] text-white placeholder:text-[#5A6478] focus:border-coral-400/50 focus:outline-none"
-                    />
-                </div>
-
-                {/* Status Filter */}
-                <div className="flex border border-[#1A2238]">
-                    {(["all", "active", "inactive"] as const).map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setShowActive(status)}
-                            className={`px-4 py-3 text-sm font-bold tracking-wider capitalize transition-colors ${showActive === status
-                                    ? 'bg-coral-400 text-[#0B0F19]'
-                                    : 'text-[#8892A4] hover:text-white'
-                                }`}
-                        >
-                            {status}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Locations Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredLocations.map((location, idx) => (
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                    { label: "Active Trainers", value: FACILITY_DATA.trainers, icon: Users },
+                    { label: "Weekly Classes", value: FACILITY_DATA.activeClasses, icon: Calendar },
+                    { label: "Active Members", value: FACILITY_DATA.totalMembers.toLocaleString(), icon: Shield },
+                    { label: "Facility Size", value: `${FACILITY_DATA.sqft} sqft`, icon: Dumbbell },
+                ].map((stat, idx) => (
                     <motion.div
-                        key={location.id}
+                        key={stat.label}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className={`bg-[#0B0F19] border p-6 hover:border-coral-400/30 transition-colors group ${location.isActive ? 'border-[#1A2238]' : 'border-[#1A2238]/50'
-                            }`}
+                        className="bg-[#131A2B] border border-[#1A2238] p-5"
                     >
-                        {/* Header */}
-                        <div className="flex items-start justify-between mb-4">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <h3 className="text-lg font-bold text-white">{location.name}</h3>
-                                    <span className={`px-2 py-1 text-xs font-bold tracking-wider ${location.isActive
-                                            ? 'bg-green-500/20 text-green-400'
-                                            : 'bg-red-500/20 text-red-400'
-                                        }`}>
-                                        {location.isActive ? 'ACTIVE' : 'INACTIVE'}
-                                    </span>
-                                </div>
-                            </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button className="w-8 h-8 flex items-center justify-center text-[#5A6478] hover:text-white transition-colors">
-                                        <MoreVertical className="w-4 h-4" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-[#0B0F19] border-[#1A2238]">
-                                    <DropdownMenuItem className="text-[#F0F2F5]/70 focus:bg-[#F0F2F5]/10 focus:text-white cursor-pointer">
-                                        <Edit className="w-4 h-4 mr-2" />
-                                        Edit Location
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-[#F0F2F5]/70 focus:bg-[#F0F2F5]/10 focus:text-white cursor-pointer">
-                                        <Power className="w-4 h-4 mr-2" />
-                                        {location.isActive ? 'Deactivate' : 'Activate'}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-red-400 focus:bg-red-500/20 focus:text-red-400 cursor-pointer">
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-
-                        {/* Details */}
-                        <div className="space-y-3">
-                            <div className="flex items-start gap-3 text-[#8892A4]">
-                                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span className="text-sm">{location.address}</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[#8892A4]">
-                                <Phone className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm">{location.phone}</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[#8892A4]">
-                                <Mail className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm">{location.email}</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[#8892A4]">
-                                <Clock className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm">{location.hours}</span>
-                            </div>
-                        </div>
-
-                        {/* Stats */}
-                        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-[#1A2238]">
-                            <div>
-                                <p className="text-2xl font-black text-white">{location.trainers}</p>
-                                <p className="text-xs text-[#5A6478] tracking-wider uppercase">Trainers</p>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-black text-white">{location.activeClasses}</p>
-                                <p className="text-xs text-[#5A6478] tracking-wider uppercase">Active Classes</p>
-                            </div>
-                        </div>
+                        <stat.icon className="w-5 h-5 text-[#8892A4] mb-3" />
+                        <p className="text-2xl font-black text-white">{stat.value}</p>
+                        <p className="text-xs text-[#5A6478] tracking-wider uppercase mt-1">{stat.label}</p>
                     </motion.div>
                 ))}
             </div>
+
+            {/* Facility Details */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+            >
+                <h3 className="text-lg font-bold text-white mb-6">General Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                            FACILITY NAME
+                        </label>
+                        <input
+                            type="text"
+                            defaultValue={FACILITY_DATA.name}
+                            disabled={!isEditing}
+                            className={`w-full h-12 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                            ADDRESS
+                        </label>
+                        <input
+                            type="text"
+                            defaultValue={FACILITY_DATA.address}
+                            disabled={!isEditing}
+                            className={`w-full h-12 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                            PHONE
+                        </label>
+                        <input
+                            type="text"
+                            defaultValue={FACILITY_DATA.phone}
+                            disabled={!isEditing}
+                            className={`w-full h-12 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                            EMAIL
+                        </label>
+                        <input
+                            type="text"
+                            defaultValue={FACILITY_DATA.email}
+                            disabled={!isEditing}
+                            className={`w-full h-12 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                        />
+                    </div>
+                </div>
+
+                {/* Description */}
+                <div className="mt-6">
+                    <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                        DESCRIPTION
+                    </label>
+                    <textarea
+                        defaultValue={FACILITY_DATA.description}
+                        disabled={!isEditing}
+                        rows={3}
+                        className={`w-full px-4 py-3 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none resize-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                    />
+                </div>
+            </motion.div>
+
+            {/* Operating Hours */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+            >
+                <div className="flex items-center gap-3 mb-6">
+                    <Clock className="w-5 h-5 text-[#8892A4]" />
+                    <h3 className="text-lg font-bold text-white">Operating Hours</h3>
+                </div>
+                <div className="space-y-4">
+                    {[
+                        { label: "Monday - Friday", value: FACILITY_DATA.hours.weekday },
+                        { label: "Saturday", value: FACILITY_DATA.hours.saturday },
+                        { label: "Sunday", value: FACILITY_DATA.hours.sunday },
+                    ].map((slot) => (
+                        <div key={slot.label} className="flex items-center justify-between py-3 border-b border-[#1A2238]/50 last:border-0">
+                            <span className="text-[#8892A4] font-medium">{slot.label}</span>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    defaultValue={slot.value}
+                                    className="w-48 h-10 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white text-right focus:border-coral-400/50 focus:outline-none"
+                                />
+                            ) : (
+                                <span className="text-white font-bold">{slot.value}</span>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </motion.div>
+
+            {/* Amenities & Zones */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+            >
+                <div className="flex items-center gap-3 mb-6">
+                    <Dumbbell className="w-5 h-5 text-[#8892A4]" />
+                    <h3 className="text-lg font-bold text-white">Training Zones & Amenities</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                    {FACILITY_DATA.zones.map((zone) => (
+                        <span
+                            key={zone}
+                            className="px-4 py-2 bg-[#F0F2F5]/5 text-[#F0F2F5]/80 text-sm font-medium border border-[#1A2238] hover:border-coral-400/30 transition-colors"
+                        >
+                            {zone}
+                        </span>
+                    ))}
+                    {isEditing && (
+                        <button className="px-4 py-2 border border-dashed border-[#1A2238] text-[#5A6478] text-sm font-medium hover:border-coral-400/50 hover:text-coral-400 transition-colors">
+                            + Add Zone
+                        </button>
+                    )}
+                </div>
+            </motion.div>
+
+            {/* Contact Information */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+            >
+                <h3 className="text-lg font-bold text-white mb-6">Quick Contact Reference</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-start gap-3 text-[#8892A4]">
+                        <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{FACILITY_DATA.address}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[#8892A4]">
+                        <Phone className="w-4 h-4 flex-shrink-0" />
+                        <span className="text-sm">{FACILITY_DATA.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[#8892A4]">
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="text-sm">{FACILITY_DATA.email}</span>
+                    </div>
+                </div>
+            </motion.div>
         </div>
     )
 }

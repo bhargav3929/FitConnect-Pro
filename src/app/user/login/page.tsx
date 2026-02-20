@@ -237,7 +237,7 @@ export default function UserLoginPage() {
                             SECURE ACCESS
                         </p>
                         <Link href="/subscription" className="text-[#8892A4] text-xs tracking-wider hover:text-white transition-colors font-bold">
-                            Vew Plans →
+                            View Plans →
                         </Link>
                     </div>
                 </motion.div>

@@ -60,11 +60,11 @@ const classPopularity = [
     { name: "Pilates", bookings: 489 },
 ]
 
-const topLocations = [
-    { name: "Downtown", revenue: 28500, members: 1245 },
-    { name: "Midtown", revenue: 21200, members: 892 },
-    { name: "Uptown", revenue: 15800, members: 645 },
-    { name: "Brooklyn", revenue: 8200, members: 312 },
+const topZones = [
+    { name: "Performance Floor", bookings: 856, utilization: 92 },
+    { name: "Heated Yoga Studio", bookings: 742, utilization: 88 },
+    { name: "Cycling Theater", bookings: 612, utilization: 78 },
+    { name: "Combat Zone", bookings: 534, utilization: 71 },
 ]
 
 export default function ReportsPage() {
@@ -237,47 +237,41 @@ export default function ReportsPage() {
                 </motion.div>
             </div>
 
-            {/* Top Locations */}
+            {/* Zone Utilization */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
                 className="bg-[#0B0F19] border border-[#1A2238] p-6"
             >
-                <h3 className="text-lg font-bold text-white mb-6">Top Performing Locations</h3>
+                <h3 className="text-lg font-bold text-white mb-6">Zone Utilization</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
                             <tr className="border-b border-[#1A2238]">
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider pb-4">LOCATION</th>
-                                <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider pb-4">REVENUE</th>
-                                <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider pb-4">MEMBERS</th>
-                                <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider pb-4">% OF TOTAL</th>
+                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider pb-4">ZONE</th>
+                                <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider pb-4">BOOKINGS</th>
+                                <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider pb-4">UTILIZATION</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {topLocations.map((location, idx) => {
-                                const totalRevenue = topLocations.reduce((acc, loc) => acc + loc.revenue, 0)
-                                const percentage = ((location.revenue / totalRevenue) * 100).toFixed(1)
-                                return (
-                                    <tr key={location.name} className="border-b border-[#1A2238]/50">
-                                        <td className="py-4 font-medium text-white">{location.name}</td>
-                                        <td className="py-4 text-right text-[#F0F2F5]/80">${location.revenue.toLocaleString()}</td>
-                                        <td className="py-4 text-right text-[#8892A4]">{location.members}</td>
-                                        <td className="py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <div className="w-16 h-2 bg-[#F0F2F5]/10 overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-[#FF6A3D]"
-                                                        style={{ width: `${percentage}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-[#8892A4] text-sm w-12">{percentage}%</span>
+                            {topZones.map((zone) => (
+                                <tr key={zone.name} className="border-b border-[#1A2238]/50">
+                                    <td className="py-4 font-medium text-white">{zone.name}</td>
+                                    <td className="py-4 text-right text-[#F0F2F5]/80">{zone.bookings.toLocaleString()}</td>
+                                    <td className="py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <div className="w-16 h-2 bg-[#F0F2F5]/10 overflow-hidden">
+                                                <div
+                                                    className="h-full bg-[#FF6A3D]"
+                                                    style={{ width: `${zone.utilization}%` }}
+                                                />
                                             </div>
-                                        </td>
-                                    </tr>
-                                )
-                            })}
+                                            <span className="text-[#8892A4] text-sm w-12">{zone.utilization}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>

@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
                                 CENTER
                             </h1>
                             <p className="text-[#8892A4] mt-6 max-w-md tracking-wider text-sm">
-                                Access the complete business management dashboard. Control classes, locations, trainers, and view comprehensive analytics.
+                                Access the complete business management dashboard. Control classes, facility settings, trainers, and view comprehensive analytics.
                             </p>
                         </motion.div>
                     </div>

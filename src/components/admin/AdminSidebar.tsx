@@ -34,7 +34,7 @@ const NAV_ITEMS = [
         href: "/admin/classes",
     },
     {
-        label: "Locations",
+        label: "Facility",
         icon: MapPin,
         href: "/admin/locations",
     },

@@ -11,7 +11,7 @@ const BOOKINGS = [
     {
         id: "b1",
         className: "Morning HIIT",
-        centerName: "FitPro Downtown",
+        zone: "Performance Floor",
         trainer: "John Smith",
         date: "Today, Jan 6",
         time: "06:00 AM",
@@ -22,7 +22,7 @@ const BOOKINGS = [
     {
         id: "b2",
         className: "Power Yoga",
-        centerName: "FitPro Midtown",
+        zone: "Heated Yoga Studio",
         trainer: "Sarah Chen",
         date: "Thu, Jan 8",
         time: "06:00 PM",
@@ -33,8 +33,8 @@ const BOOKINGS = [
     {
         id: "b3",
         className: "Boxing Basics",
-        centerName: "FitPro Downtown",
-        trainer: "Mike Tyson",
+        zone: "Combat Zone",
+        trainer: "Mike Johnson",
         date: "Dec 28, 2023",
         time: "10:00 AM",
         duration: "60 min",
@@ -44,7 +44,7 @@ const BOOKINGS = [
     {
         id: "b4",
         className: "Spin Class",
-        centerName: "FitPro Uptown",
+        zone: "Cycling Theater",
         trainer: "Emily Brown",
         date: "Dec 20, 2023",
         time: "05:00 PM",
@@ -156,9 +156,9 @@ export default function BookingsPage() {
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="flex items-center gap-2 text-[#8892A4]">
                                         <MapPin className="w-4 h-4" />
-                                        Center
+                                        Zone
                                     </span>
-                                    <span className="font-medium text-white">{booking.centerName}</span>
+                                    <span className="font-medium text-white">{booking.zone}</span>
                                 </div>
                             </div>
 
@@ -199,9 +199,9 @@ export default function BookingsPage() {
                         }
                     </p>
                     {activeTab === 'upcoming' && (
-                        <Link href="/user/centers">
+                        <Link href="/user/schedule">
                             <Button className="font-bold rounded-xl px-8">
-                                Browse Centers
+                                Browse Schedule
                             </Button>
                         </Link>
                     )}

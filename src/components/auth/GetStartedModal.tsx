@@ -84,7 +84,7 @@ export function GetStartedModal({ trigger, isOpen: controlledOpen, onClose }: Ge
                                 ADMIN PORTAL
                             </h3>
                             <p className="text-[#8892A4] text-sm leading-relaxed mb-6">
-                                Access the super admin dashboard to manage classes, locations, trainers, and business analytics.
+                                Access the super admin dashboard to manage classes, facility settings, trainers, and business analytics.
                             </p>
 
                             {/* Arrow */}

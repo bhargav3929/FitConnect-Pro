@@ -29,8 +29,8 @@ export function Navbar() {
                     <Link href="/" className="text-sm font-bold uppercase tracking-wider text-[#F0F2F5]/80 hover:text-coral-400 transition-colors">
                         Home
                     </Link>
-                    <Link href="/gyms" className="text-sm font-bold uppercase tracking-wider text-[#F0F2F5]/80 hover:text-coral-400 transition-colors">
-                        Coaching
+                    <Link href="/facilities" className="text-sm font-bold uppercase tracking-wider text-[#F0F2F5]/80 hover:text-coral-400 transition-colors">
+                        Our Facility
                     </Link>
                     <Link href="/events" className="text-sm font-bold uppercase tracking-wider text-[#F0F2F5]/80 hover:text-coral-400 transition-colors">
                         Events

@@ -1,6 +1,5 @@
 export interface ClassSession {
     id: string;
-    gymCenterId: string;
     trainerId: string;
     date: Date;
     startTime: string; // "06:00"
@@ -20,7 +19,7 @@ export interface ClassSession {
     totalSpots?: number; // e.g., 12
     bookedSpots?: number[]; // array of spot numbers taken
     instructorImage?: string; // instructor avatar URL
-    location?: string; // e.g., "Cedar Park"
+    location?: string; // Room/area within the facility, e.g., "Performance Floor", "Yoga Studio"
     intensityLevel?: 1 | 2 | 3; // fire emoji count
 }
 

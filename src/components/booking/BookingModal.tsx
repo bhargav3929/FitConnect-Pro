@@ -20,10 +20,9 @@ interface BookingModalProps {
     isOpen: boolean
     onClose: () => void
     session: ClassSession | null
-    gymName?: string
 }
 
-export function BookingModal({ isOpen, onClose, session, gymName }: BookingModalProps) {
+export function BookingModal({ isOpen, onClose, session }: BookingModalProps) {
     const { user } = useAuth()
     const [step, setStep] = React.useState<'confirm' | 'success'>('confirm')
     const [loading, setLoading] = React.useState(false)
@@ -78,8 +77,8 @@ export function BookingModal({ isOpen, onClose, session, gymName }: BookingModal
                                         <MapPin className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-foreground">{gymName || "Gym Center"}</p>
-                                        <p className="text-sm text-muted-foreground">32 Hudson Yards, NY</p>
+                                        <p className="font-semibold text-foreground">FitConnect Pro</p>
+                                        <p className="text-sm text-muted-foreground">250 West 54th Street, NY</p>
                                     </div>
                                 </div>
 
@@ -117,7 +116,7 @@ export function BookingModal({ isOpen, onClose, session, gymName }: BookingModal
                             <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4 text-green-600 dark:text-green-400">
                                 <CheckCircle className="w-8 h-8" />
                             </div>
-                            <h2 className="text-2xl font-bold mb-2">You're All Set! 🎉</h2>
+                            <h2 className="text-2xl font-bold mb-2">You&apos;re All Set!</h2>
                             <p className="text-muted-foreground mb-8">
                                 Your spot for <strong>{session.classType}</strong> has been confirmed.
                                 We've sent the details to your email.

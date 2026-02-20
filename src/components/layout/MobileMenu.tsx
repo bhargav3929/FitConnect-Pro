@@ -97,8 +97,8 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                 className="mt-8 p-6 bg-[#131A2B] rounded-2xl border border-[#1A2238]"
                             >
                                 <h4 className="text-xs font-bold text-[#8892A4] tracking-wider mb-4">CONTACT</h4>
-                                <p className="text-[#F0F2F5]/80 text-sm mb-2">info@fitpro.com</p>
-                                <p className="text-[#F0F2F5]/80 text-sm">+1 (555) 123-4567</p>
+                                <p className="text-[#F0F2F5]/80 text-sm mb-2">hello@fitconnectpro.com</p>
+                                <p className="text-[#F0F2F5]/80 text-sm">(212) 555-0180</p>
                             </motion.div>
                         </div>
 

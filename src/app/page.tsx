@@ -342,7 +342,7 @@ export default function Home() {
               <span className="text-coral-400/50 text-3xl font-light">+</span>
               <h2 className="text-4xl md:text-5xl font-black mt-2 mb-6">BOOST PERFORMANCE</h2>
               <p className="text-[#8892A4] mb-8 max-w-md">
-                Has ei fierent repudiandae, verear prompta mea ad. Cum eu unum dolore soluta, eam eu vidit.
+                Track your progress across every discipline. Our performance analytics capture strength gains, endurance metrics, and recovery scores in real time.
               </p>
 
               <button className="group inline-flex items-center gap-4">

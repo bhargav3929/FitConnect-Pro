@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation"
 const PAGE_TITLES: Record<string, string> = {
     '/admin/dashboard': 'Dashboard',
     '/admin/classes': 'Class Management',
-    '/admin/locations': 'Location Management',
+    '/admin/locations': 'Facility Settings',
     '/admin/trainers': 'Trainer Management',
     '/admin/members': 'Member Management',
     '/admin/bookings': 'Bookings',

@@ -2,7 +2,6 @@ export interface Booking {
     id: string;
     userId: string;
     classId: string;
-    gymCenterId: string;
     trainerId: string;
     classDate: Date;
     bookingDate: Date;

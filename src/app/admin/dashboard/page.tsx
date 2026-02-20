@@ -157,7 +157,7 @@ export default function AdminDashboardPage() {
                         Dashboard
                     </h2>
                     <p className="text-[#5A6478] text-sm md:text-base tracking-wide max-w-lg">
-                        Overview of your fitness center performance, member activity, and daily operations.
+                        Your facility performance, member activity, and daily operations at a glance.
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -289,8 +289,8 @@ export default function AdminDashboardPage() {
                             delay={0.6}
                         />
                         <QuickAction
-                            label="Add Location"
-                            desc="Expand your network"
+                            label="Facility Settings"
+                            desc="Manage facility details"
                             href="/admin/locations"
                             icon={MapPin}
                             delay={0.7}

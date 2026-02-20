@@ -32,7 +32,7 @@ const MOCK_TRAINERS = [
         experience: 8,
         rating: 4.9,
         totalClasses: 156,
-        locations: ["Downtown", "Midtown"],
+        zones: ["Performance Floor", "Cycling Theater"],
         isActive: true,
     },
     {
@@ -44,7 +44,7 @@ const MOCK_TRAINERS = [
         experience: 6,
         rating: 4.8,
         totalClasses: 142,
-        locations: ["Midtown"],
+        zones: ["Heated Yoga Studio"],
         isActive: true,
     },
     {
@@ -56,7 +56,7 @@ const MOCK_TRAINERS = [
         experience: 10,
         rating: 4.7,
         totalClasses: 203,
-        locations: ["Downtown"],
+        zones: ["Olympic Lifting Platform"],
         isActive: true,
     },
     {
@@ -68,7 +68,7 @@ const MOCK_TRAINERS = [
         experience: 4,
         rating: 4.6,
         totalClasses: 98,
-        locations: ["Uptown", "Brooklyn"],
+        zones: ["Cycling Theater", "Performance Floor"],
         isActive: true,
     },
     {
@@ -80,7 +80,7 @@ const MOCK_TRAINERS = [
         experience: 7,
         rating: 4.9,
         totalClasses: 178,
-        locations: ["Midtown", "Downtown"],
+        zones: ["Combat Zone"],
         isActive: true,
     },
     {
@@ -92,7 +92,7 @@ const MOCK_TRAINERS = [
         experience: 5,
         rating: 4.8,
         totalClasses: 112,
-        locations: ["Downtown"],
+        zones: ["Private Suite A", "Recovery Lounge"],
         isActive: false,
     },
 ]
@@ -205,10 +205,10 @@ export default function TrainersPage() {
                             </div>
                         </div>
 
-                        {/* Locations */}
+                        {/* Zones */}
                         <div className="flex items-center gap-2 text-[#8892A4] text-sm mb-4">
                             <MapPin className="w-4 h-4" />
-                            {trainer.locations.join(", ")}
+                            {trainer.zones.join(", ")}
                         </div>
 
                         {/* Stats */}

@@ -24,14 +24,14 @@ import {
 
 // Mock bookings data
 const MOCK_BOOKINGS = [
-    { id: "1", member: "John Doe", class: "HIIT Training", trainer: "John Smith", location: "Downtown", date: "2024-01-06", time: "06:00", status: "confirmed", bookedAt: "2024-01-05 18:30" },
-    { id: "2", member: "Jane Smith", class: "Yoga Flow", trainer: "Sarah Chen", location: "Midtown", date: "2024-01-06", time: "08:00", status: "confirmed", bookedAt: "2024-01-05 14:15" },
-    { id: "3", member: "Robert Johnson", class: "Strength Training", trainer: "Mike Wilson", location: "Downtown", date: "2024-01-06", time: "10:00", status: "attended", bookedAt: "2024-01-04 09:00" },
-    { id: "4", member: "Emily Davis", class: "Spin Class", trainer: "Emily Brown", location: "Uptown", date: "2024-01-06", time: "12:00", status: "confirmed", bookedAt: "2024-01-05 20:45" },
-    { id: "5", member: "Michael Brown", class: "Pilates", trainer: "Anna Lee", location: "Downtown", date: "2024-01-06", time: "14:00", status: "canceled", bookedAt: "2024-01-05 11:30" },
-    { id: "6", member: "Sarah Wilson", class: "Boxing", trainer: "James Rodriguez", location: "Midtown", date: "2024-01-05", time: "16:00", status: "no-show", bookedAt: "2024-01-04 16:00" },
-    { id: "7", member: "David Lee", class: "HIIT Training", trainer: "John Smith", location: "Downtown", date: "2024-01-05", time: "06:00", status: "attended", bookedAt: "2024-01-04 08:00" },
-    { id: "8", member: "Lisa Chen", class: "Yoga Flow", trainer: "Sarah Chen", location: "Midtown", date: "2024-01-05", time: "08:00", status: "attended", bookedAt: "2024-01-04 19:30" },
+    { id: "1", member: "John Doe", class: "HIIT Training", trainer: "John Smith", location: "Performance Floor", date: "2024-01-06", time: "06:00", status: "confirmed", bookedAt: "2024-01-05 18:30" },
+    { id: "2", member: "Jane Smith", class: "Yoga Flow", trainer: "Sarah Chen", location: "Heated Yoga Studio", date: "2024-01-06", time: "08:00", status: "confirmed", bookedAt: "2024-01-05 14:15" },
+    { id: "3", member: "Robert Johnson", class: "Strength Training", trainer: "Mike Wilson", location: "Olympic Platform", date: "2024-01-06", time: "10:00", status: "attended", bookedAt: "2024-01-04 09:00" },
+    { id: "4", member: "Emily Davis", class: "Spin Class", trainer: "Emily Brown", location: "Cycling Theater", date: "2024-01-06", time: "12:00", status: "confirmed", bookedAt: "2024-01-05 20:45" },
+    { id: "5", member: "Michael Brown", class: "Pilates", trainer: "Anna Lee", location: "Private Suite A", date: "2024-01-06", time: "14:00", status: "canceled", bookedAt: "2024-01-05 11:30" },
+    { id: "6", member: "Sarah Wilson", class: "Boxing", trainer: "James Rodriguez", location: "Combat Zone", date: "2024-01-05", time: "16:00", status: "no-show", bookedAt: "2024-01-04 16:00" },
+    { id: "7", member: "David Lee", class: "HIIT Training", trainer: "John Smith", location: "Performance Floor", date: "2024-01-05", time: "06:00", status: "attended", bookedAt: "2024-01-04 08:00" },
+    { id: "8", member: "Lisa Chen", class: "Yoga Flow", trainer: "Sarah Chen", location: "Heated Yoga Studio", date: "2024-01-05", time: "08:00", status: "attended", bookedAt: "2024-01-04 19:30" },
 ]
 
 const STATUS_FILTERS = ["All Status", "confirmed", "attended", "canceled", "no-show"]
