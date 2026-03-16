@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ClassSession } from '@/types/class';
 
-// Mock class schedule for the single FitConnect Pro facility
+// Mock class schedule for the single SOL Pilates facility
 const MOCK_CLASSES: ClassSession[] = [
     {
         id: '101',

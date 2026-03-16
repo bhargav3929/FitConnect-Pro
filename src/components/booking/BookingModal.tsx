@@ -77,7 +77,7 @@ export function BookingModal({ isOpen, onClose, session }: BookingModalProps) {
                                         <MapPin className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-foreground">FitConnect Pro</p>
+                                        <p className="font-semibold text-foreground">SOL Pilates</p>
                                         <p className="text-sm text-muted-foreground">250 West 54th Street, NY</p>
                                     </div>
                                 </div>

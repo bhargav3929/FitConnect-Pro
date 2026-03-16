@@ -53,7 +53,7 @@ export default function ClassesPage() {
             case 'full': return 'bg-yellow-500/20 text-yellow-400'
             case 'completed': return 'bg-green-500/20 text-green-400'
             case 'canceled': return 'bg-red-500/20 text-red-400'
-            default: return 'bg-[#F0F2F5]/10 text-[#8892A4]'
+            default: return 'bg-sand-200/10 text-sage-400'
         }
     }
 
@@ -62,12 +62,12 @@ export default function ClassesPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-white">Classes</h2>
-                    <p className="text-[#5A6478] text-sm mt-1">
+                    <h2 className="text-2xl font-black text-sand-200 font-display">Classes</h2>
+                    <p className="text-sage-500 text-sm mt-1">
                         Manage all fitness classes and schedules
                     </p>
                 </div>
-                <button className="px-6 py-3 bg-coral-400 text-[#0B0F19] font-bold text-sm tracking-wider hover:bg-coral-300 transition-all flex items-center gap-2 w-fit">
+                <button className="px-6 py-3 bg-gold-400 text-forest-700 font-bold text-sm tracking-wider hover:bg-gold-300 transition-all flex items-center gap-2 w-fit">
                     <Plus className="w-4 h-4" />
                     ADD CLASS
                 </button>
@@ -75,34 +75,29 @@ export default function ClassesPage() {
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
-                {/* Search */}
                 <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6478]" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
                     <input
                         type="text"
                         placeholder="Search classes or trainers..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 bg-[#0B0F19] border border-[#1A2238] text-white placeholder:text-[#5A6478] focus:border-coral-400/50 focus:outline-none"
+                        className="w-full h-12 pl-11 pr-4 bg-forest-700 border border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/50 focus:outline-none"
                     />
                 </div>
-
-                {/* Type Filter */}
                 <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="h-12 px-4 bg-[#0B0F19] border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none appearance-none cursor-pointer"
+                    className="h-12 px-4 bg-forest-700 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none appearance-none cursor-pointer"
                 >
                     {CLASS_TYPES.map(type => (
                         <option key={type} value={type}>{type}</option>
                     ))}
                 </select>
-
-                {/* Status Filter */}
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-12 px-4 bg-[#0B0F19] border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none appearance-none cursor-pointer capitalize"
+                    className="h-12 px-4 bg-forest-700 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none appearance-none cursor-pointer capitalize"
                 >
                     {STATUSES.map(status => (
                         <option key={status} value={status} className="capitalize">{status}</option>
@@ -114,39 +109,38 @@ export default function ClassesPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0B0F19] border border-[#1A2238] overflow-hidden"
+                className="bg-forest-700 border border-forest-600 overflow-hidden"
             >
-                {/* Desktop Table */}
                 <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-[#1A2238]">
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">CLASS</th>
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">TRAINER</th>
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">SCHEDULE</th>
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">ZONE</th>
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">CAPACITY</th>
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider p-4">STATUS</th>
-                                <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider p-4">ACTIONS</th>
+                            <tr className="border-b border-forest-600">
+                                <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">CLASS</th>
+                                <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">TRAINER</th>
+                                <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">SCHEDULE</th>
+                                <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">ZONE</th>
+                                <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">CAPACITY</th>
+                                <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">STATUS</th>
+                                <th className="text-right text-xs font-bold text-sage-400 tracking-wider p-4">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredClasses.map((cls, idx) => (
                                 <tr
                                     key={cls.id}
-                                    className="border-b border-[#1A2238]/50 hover:bg-[#F0F2F5]/5 transition-colors"
+                                    className="border-b border-forest-600/50 hover:bg-sand-200/5 transition-colors"
                                 >
                                     <td className="p-4">
                                         <div>
-                                            <p className="font-bold text-white">{cls.name}</p>
-                                            <p className="text-xs text-[#5A6478]">{cls.type} • {cls.duration}min</p>
+                                            <p className="font-bold text-sand-200">{cls.name}</p>
+                                            <p className="text-xs text-sage-500">{cls.type} • {cls.duration}min</p>
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <p className="text-[#F0F2F5]/80">{cls.trainer}</p>
+                                        <p className="text-sand-200/80">{cls.trainer}</p>
                                     </td>
                                     <td className="p-4">
-                                        <div className="flex items-center gap-2 text-[#8892A4]">
+                                        <div className="flex items-center gap-2 text-sage-400">
                                             <Calendar className="w-4 h-4" />
                                             <span className="text-sm">{cls.date}</span>
                                             <Clock className="w-4 h-4 ml-2" />
@@ -154,15 +148,15 @@ export default function ClassesPage() {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <div className="flex items-center gap-2 text-[#8892A4]">
+                                        <div className="flex items-center gap-2 text-sage-400">
                                             <MapPin className="w-4 h-4" />
                                             <span className="text-sm">{cls.location}</span>
                                         </div>
                                     </td>
                                     <td className="p-4">
                                         <div className="flex items-center gap-2">
-                                            <Users className="w-4 h-4 text-[#5A6478]" />
-                                            <span className="text-[#F0F2F5]/80">{cls.booked}/{cls.capacity}</span>
+                                            <Users className="w-4 h-4 text-sage-500" />
+                                            <span className="text-sand-200/80">{cls.booked}/{cls.capacity}</span>
                                         </div>
                                     </td>
                                     <td className="p-4">
@@ -173,12 +167,12 @@ export default function ClassesPage() {
                                     <td className="p-4 text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <button className="w-8 h-8 flex items-center justify-center text-[#5A6478] hover:text-white transition-colors">
+                                                <button className="w-8 h-8 flex items-center justify-center text-sage-500 hover:text-sand-200 transition-colors">
                                                     <MoreVertical className="w-4 h-4" />
                                                 </button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-[#0B0F19] border-[#1A2238]">
-                                                <DropdownMenuItem className="text-[#F0F2F5]/70 focus:bg-[#F0F2F5]/10 focus:text-white cursor-pointer">
+                                            <DropdownMenuContent align="end" className="bg-forest-700 border-forest-600">
+                                                <DropdownMenuItem className="text-sand-200/70 focus:bg-sand-200/10 focus:text-sand-200 cursor-pointer">
                                                     <Edit className="w-4 h-4 mr-2" />
                                                     Edit Class
                                                 </DropdownMenuItem>
@@ -196,19 +190,19 @@ export default function ClassesPage() {
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="lg:hidden divide-y divide-[#1A2238]">
+                <div className="lg:hidden divide-y divide-forest-600">
                     {filteredClasses.map((cls) => (
-                        <div key={cls.id} className="p-4 hover:bg-[#F0F2F5]/5 transition-colors">
+                        <div key={cls.id} className="p-4 hover:bg-sand-200/5 transition-colors">
                             <div className="flex items-start justify-between mb-3">
                                 <div>
-                                    <p className="font-bold text-white">{cls.name}</p>
-                                    <p className="text-xs text-[#5A6478]">{cls.type} • {cls.duration}min</p>
+                                    <p className="font-bold text-sand-200">{cls.name}</p>
+                                    <p className="text-xs text-sage-500">{cls.type} • {cls.duration}min</p>
                                 </div>
                                 <span className={`px-2 py-1 text-xs font-bold tracking-wider uppercase ${getStatusColor(cls.status)}`}>
                                     {cls.status}
                                 </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 text-sm text-[#8892A4]">
+                            <div className="grid grid-cols-2 gap-2 text-sm text-sage-400">
                                 <div className="flex items-center gap-2">
                                     <Users className="w-4 h-4" />
                                     {cls.trainer}
@@ -231,8 +225,7 @@ export default function ClassesPage() {
                 </div>
             </motion.div>
 
-            {/* Pagination placeholder */}
-            <div className="flex items-center justify-between text-[#5A6478] text-sm">
+            <div className="flex items-center justify-between text-sage-500 text-sm">
                 <span>Showing {filteredClasses.length} of {MOCK_CLASSES.length} classes</span>
             </div>
         </div>

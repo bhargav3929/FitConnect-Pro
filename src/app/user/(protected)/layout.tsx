@@ -16,7 +16,6 @@ export default function UserLayout({
     const [isChecking, setIsChecking] = useState(true)
 
     useEffect(() => {
-        // Short delay to allow hydration
         const timer = setTimeout(() => {
             if (!isAuthenticated) {
                 router.push('/user/login')
@@ -28,8 +27,8 @@ export default function UserLayout({
 
     if (isChecking) {
         return (
-            <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-coral-400/40 animate-spin" />
+            <div className="min-h-screen bg-forest-700 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-gold-400/40 animate-spin" />
             </div>
         )
     }
@@ -37,7 +36,7 @@ export default function UserLayout({
     if (!isAuthenticated) return null
 
     return (
-        <div className="min-h-screen bg-[#0B0F19] text-[#F0F2F5]">
+        <div className="min-h-screen bg-forest-700 text-sand-200">
             <UserNav />
             <main className="lg:pl-64 min-h-screen pb-20 lg:pb-0">
                 <div className="container mx-auto p-4 lg:p-8 max-w-7xl">

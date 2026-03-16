@@ -1,21 +1,21 @@
 export const EMAIL_TEMPLATES = {
     WELCOME: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h1 style="color: #0066FF;">Welcome to FitConnect Pro! 🎉</h1>
+      <h1 style="color: #D4A24C;">Welcome to SOL Pilates! 🎉</h1>
       <p>Hi {{name}},</p>
       <p>We're thrilled to have you on board. Your journey to a healthier, stronger you starts here.</p>
-      <p>With FitConnect Pro, you get access to top gyms and trainers in your area.</p>
-      <a href="{{browseUrl}}" style="background-color: #0066FF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Browse Classes</a>
+      <p>With SOL Pilates, you get access to expert-led classes at our studio.</p>
+      <a href="{{browseUrl}}" style="background-color: #2C3527; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Browse Classes</a>
     </div>
   `,
 
     SUBSCRIPTION_ACTIVATED: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h1 style="color: #0066FF;">Your {{planName}} is Active!</h1>
+      <h1 style="color: #D4A24C;">Your {{planName}} is Active!</h1>
       <p>Hi {{name}},</p>
       <p>Your subscription is now active until {{endDate}}.</p>
-      <p>You can now book daily classes at any of our partner gyms.</p>
-      <a href="{{browseUrl}}" style="background-color: #0066FF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Book Your First Class</a>
+      <p>You can now book daily classes at our studio.</p>
+      <a href="{{browseUrl}}" style="background-color: #2C3527; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Book Your First Class</a>
     </div>
   `,
 

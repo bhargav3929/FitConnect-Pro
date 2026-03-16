@@ -76,14 +76,14 @@ function StatCard({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay, ease: "easeOut" }}
-            className="group relative overflow-hidden bg-[#131A2B] border border-[#1A2238] p-6 sm:p-8 rounded-3xl hover:border-coral-400/30 transition-all duration-500 hover:bg-[#F0F2F5]/5"
+            className="group relative overflow-hidden bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl hover:border-gold-400/30 transition-all duration-500 hover:bg-sand-200/5"
         >
             {/* Gradient Background Effect */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-coral-400/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
 
             <div className="flex items-start justify-between mb-6 relative z-10">
-                <div className="w-12 h-12 bg-[#F0F2F5]/5 rounded-2xl flex items-center justify-center group-hover:bg-coral-400/20 group-hover:scale-110 transition-all duration-300">
-                    <Icon className="w-6 h-6 text-[#8892A4] group-hover:text-coral-400 transition-colors" />
+                <div className="w-12 h-12 bg-sand-200/5 rounded-2xl flex items-center justify-center group-hover:bg-gold-400/20 group-hover:scale-110 transition-all duration-300">
+                    <Icon className="w-6 h-6 text-sage-400 group-hover:text-gold-400 transition-colors" />
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 border ${isPositive
                     ? 'bg-green-500/10 text-green-400 border-green-500/20'
@@ -95,10 +95,10 @@ function StatCard({
             </div>
 
             <div className="relative z-10">
-                <h3 className="text-3xl sm:text-4xl font-black text-white mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300">
+                <h3 className="text-3xl sm:text-4xl font-black text-sand-200 mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300">
                     {value}
                 </h3>
-                <p className="text-[#5A6478] text-xs font-semibold tracking-[0.2em] uppercase">
+                <p className="text-sage-500 text-xs font-semibold tracking-[0.2em] uppercase">
                     {title}
                 </p>
             </div>
@@ -128,16 +128,16 @@ function QuickAction({
         >
             <Link
                 href={href}
-                className="flex flex-col p-6 bg-[#131A2B] border border-[#1A2238] rounded-3xl hover:bg-[#F0F2F5]/5 hover:border-coral-400/30 transition-all group relative overflow-hidden h-full"
+                className="flex flex-col p-6 bg-forest-800 border border-forest-600 rounded-3xl hover:bg-sand-200/5 hover:border-gold-400/30 transition-all group relative overflow-hidden h-full"
             >
-                <div className="absolute top-4 right-4 text-[#F0F2F5]/20 group-hover:text-white transition-colors">
+                <div className="absolute top-4 right-4 text-sand-200/20 group-hover:text-sand-200 transition-colors">
                     <ArrowUpRight className="w-5 h-5" />
                 </div>
-                <div className="w-12 h-12 bg-[#F0F2F5]/5 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-[#F0F2F5]/10 transition-colors">
-                    <Icon className="w-6 h-6 text-[#F0F2F5]/70" />
+                <div className="w-12 h-12 bg-sand-200/5 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-sand-200/10 transition-colors">
+                    <Icon className="w-6 h-6 text-sand-200/70" />
                 </div>
-                <h4 className="text-lg font-bold text-white mb-1 group-hover:text-coral-400 transition-colors">{label}</h4>
-                <p className="text-[#5A6478] text-xs leading-relaxed">{desc}</p>
+                <h4 className="text-lg font-bold text-sand-200 mb-1 group-hover:text-gold-400 transition-colors">{label}</h4>
+                <p className="text-sage-500 text-xs leading-relaxed">{desc}</p>
             </Link>
         </motion.div>
     )
@@ -150,18 +150,18 @@ export default function AdminDashboardPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#1A2238]/50"
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-forest-600/50"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2">
+                    <h2 className="text-4xl md:text-5xl font-black text-sand-200 tracking-tight mb-2 font-display">
                         Dashboard
                     </h2>
-                    <p className="text-[#5A6478] text-sm md:text-base tracking-wide max-w-lg">
+                    <p className="text-sage-500 text-sm md:text-base tracking-wide max-w-lg">
                         Your facility performance, member activity, and daily operations at a glance.
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="text-[#F0F2F5]/20 text-xs font-mono bg-[#F0F2F5]/5 px-3 py-1 rounded-full border border-[#1A2238]/50">
+                    <span className="text-sand-200/20 text-xs font-mono bg-sand-200/5 px-3 py-1 rounded-full border border-forest-600/50">
                         {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                 </div>
@@ -206,17 +206,17 @@ export default function AdminDashboardPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="xl:col-span-2 bg-[#131A2B] border border-[#1A2238] p-6 sm:p-8 rounded-3xl"
+                    className="xl:col-span-2 bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl"
                 >
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h3 className="text-xl font-bold text-white mb-1">Financial Performance</h3>
-                            <p className="text-[#5A6478] text-xs tracking-wider uppercase">Revenue vs Previous Period</p>
+                            <h3 className="text-xl font-bold text-sand-200 mb-1">Financial Performance</h3>
+                            <p className="text-sage-500 text-xs tracking-wider uppercase">Revenue vs Previous Period</p>
                         </div>
                         <div className="flex gap-2">
-                            <button className="px-3 py-1 rounded-lg bg-[#F0F2F5]/10 text-white text-xs font-medium hover:bg-[#F0F2F5]/20 transition-colors">7D</button>
-                            <button className="px-3 py-1 rounded-lg bg-transparent text-[#5A6478] text-xs font-medium hover:text-white transition-colors">1M</button>
-                            <button className="px-3 py-1 rounded-lg bg-transparent text-[#5A6478] text-xs font-medium hover:text-white transition-colors">1Y</button>
+                            <button className="px-3 py-1 rounded-lg bg-sand-200/10 text-sand-200 text-xs font-medium hover:bg-sand-200/20 transition-colors">7D</button>
+                            <button className="px-3 py-1 rounded-lg bg-transparent text-sage-500 text-xs font-medium hover:text-sand-200 transition-colors">1M</button>
+                            <button className="px-3 py-1 rounded-lg bg-transparent text-sage-500 text-xs font-medium hover:text-sand-200 transition-colors">1Y</button>
                         </div>
                     </div>
                     <div className="h-[300px] w-full">
@@ -224,8 +224,8 @@ export default function AdminDashboardPage() {
                             <AreaChart data={revenueData}>
                                 <defs>
                                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#FF6A3D" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#FF6A3D" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#D4A24C" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#D4A24C" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -248,19 +248,19 @@ export default function AdminDashboardPage() {
                                 <Tooltip
                                     cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 2 }}
                                     contentStyle={{
-                                        backgroundColor: '#131A2B',
+                                        backgroundColor: '#222B1E',
                                         border: '1px solid rgba(255,255,255,0.1)',
                                         borderRadius: '12px',
                                         boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
                                         padding: '12px'
                                     }}
-                                    itemStyle={{ color: '#fff' }}
+                                    itemStyle={{ color: '#EDE6DA' }}
                                     formatter={(value) => [`$${value ?? 0}`, 'Revenue']}
                                 />
                                 <Area
                                     type="monotone"
                                     dataKey="value"
-                                    stroke="#FF6A3D"
+                                    stroke="#D4A24C"
                                     strokeWidth={3}
                                     fillOpacity={1}
                                     fill="url(#colorValue)"
@@ -271,8 +271,8 @@ export default function AdminDashboardPage() {
                 </motion.div>
 
                 {/* Quick Actions Grid */}
-                <div className="bg-[#131A2B] border border-[#1A2238] p-6 sm:p-8 rounded-3xl flex flex-col">
-                    <h3 className="text-xl font-bold text-white mb-6">Quick Actions</h3>
+                <div className="bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl flex flex-col">
+                    <h3 className="text-xl font-bold text-sand-200 mb-6">Quick Actions</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4 flex-1">
                         <QuickAction
                             label="Add Class"
@@ -306,20 +306,20 @@ export default function AdminDashboardPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
-                    className="xl:col-span-1 bg-[#131A2B] border border-[#1A2238] p-6 sm:p-8 rounded-3xl"
+                    className="xl:col-span-1 bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl"
                 >
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold text-white">Recent Activity</h3>
+                        <h3 className="text-xl font-bold text-sand-200">Recent Activity</h3>
                         <Link
                             href="/admin/bookings"
-                            className="text-coral-400 text-xs font-bold tracking-widest hover:text-white transition-colors uppercase"
+                            className="text-gold-400 text-xs font-bold tracking-widest hover:text-sand-200 transition-colors uppercase"
                         >
                             View All
                         </Link>
                     </div>
                     <div className="space-y-6 relative">
                         {/* Timeline Line */}
-                        <div className="absolute left-[19px] top-4 bottom-4 w-px bg-[#F0F2F5]/5" />
+                        <div className="absolute left-[19px] top-4 bottom-4 w-px bg-sand-200/5" />
 
                         {recentActivities.map((activity, index) => (
                             <motion.div
@@ -329,15 +329,15 @@ export default function AdminDashboardPage() {
                                 transition={{ delay: 0.7 + (index * 0.1) }}
                                 className="flex items-start gap-4 relative"
                             >
-                                <div className={`relative z-10 w-10 h-10 rounded-full border-4 border-[#131A2B] flex items-center justify-center shrink-0 ${activity.status === 'success' ? 'bg-coral-400' : 'bg-red-500/80'
+                                <div className={`relative z-10 w-10 h-10 rounded-full border-4 border-forest-800 flex items-center justify-center shrink-0 ${activity.status === 'success' ? 'bg-gold-400' : 'bg-red-500/80'
                                     }`}>
-                                    <span className="text-[10px] font-bold text-black">{activity.avatar}</span>
+                                    <span className="text-[10px] font-bold text-forest-700">{activity.avatar}</span>
                                 </div>
                                 <div className="flex-1 pt-1">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-sm font-medium text-white">{activity.message}</p>
+                                        <p className="text-sm font-medium text-sand-200">{activity.message}</p>
                                     </div>
-                                    <p className="text-xs text-[#5A6478] mt-1 flex items-center gap-2">
+                                    <p className="text-xs text-sage-500 mt-1 flex items-center gap-2">
                                         <Clock className="w-3 h-3" />
                                         {activity.time}
                                     </p>
@@ -352,11 +352,11 @@ export default function AdminDashboardPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.8 }}
-                    className="xl:col-span-2 bg-[#131A2B] border border-[#1A2238] p-6 sm:p-8 rounded-3xl"
+                    className="xl:col-span-2 bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl"
                 >
                     <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-xl font-bold text-white">Weekly Attendance</h3>
-                        <button className="flex items-center gap-2 text-[#5A6478] hover:text-white transition-colors">
+                        <h3 className="text-xl font-bold text-sand-200">Weekly Attendance</h3>
+                        <button className="flex items-center gap-2 text-sage-500 hover:text-sand-200 transition-colors">
                             <MoreHorizontal className="w-5 h-5" />
                         </button>
                     </div>
@@ -382,17 +382,17 @@ export default function AdminDashboardPage() {
                                 <Tooltip
                                     cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                                     contentStyle={{
-                                        backgroundColor: '#131A2B',
+                                        backgroundColor: '#222B1E',
                                         border: '1px solid rgba(255,255,255,0.1)',
                                         borderRadius: '12px',
                                         boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
                                         padding: '12px'
                                     }}
-                                    itemStyle={{ color: '#fff' }}
+                                    itemStyle={{ color: '#EDE6DA' }}
                                 />
                                 <Bar
                                     dataKey="value"
-                                    fill="#FF6A3D"
+                                    fill="#D4A24C"
                                     radius={[8, 8, 8, 8]}
                                     className="hover:opacity-80 transition-opacity cursor-pointer"
                                 />

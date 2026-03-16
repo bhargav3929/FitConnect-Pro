@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -83,27 +84,25 @@ export function AdminSidebar() {
     const sidebarContent = (
         <>
             {/* Header */}
-            <div className="h-20 flex items-center justify-between px-6 border-b border-[#1A2238]">
+            <div className="h-20 flex items-center justify-between px-6 border-b border-forest-600">
                 <Link href="/admin/dashboard" className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 bg-gradient-to-br from-coral-400 to-[#E85A30] rounded-xl flex items-center justify-center shadow-lg shadow-coral-400/20 group-hover:scale-105 transition-transform duration-300">
-                        <Dumbbell className="w-5 h-5 text-white" />
-                    </div>
-                    {!collapsed && (
-                        <div className="flex flex-col">
-                            <span className="font-black text-lg text-white tracking-wider leading-none">FITPRO</span>
-                            <span className="text-[10px] text-[#5A6478] font-medium tracking-[0.2em]">ADMIN</span>
-                        </div>
-                    )}
+                    <Image
+                        src="/images/sol-logo-gold.png"
+                        alt="SOL Pilates Studio"
+                        width={400}
+                        height={400}
+                        className={`${collapsed ? 'h-12 w-12 object-cover object-left' : 'h-20'} w-auto group-hover:opacity-80 transition-opacity duration-300`}
+                    />
                 </Link>
                 <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="hidden lg:flex w-8 h-8 items-center justify-center text-[#5A6478] hover:text-white transition-colors hover:bg-[#F0F2F5]/5 rounded-lg"
+                    className="hidden lg:flex w-8 h-8 items-center justify-center text-sage-500 hover:text-sand-200 transition-colors hover:bg-sand-200/5 rounded-lg"
                 >
                     <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`} />
                 </button>
                 <button
                     onClick={() => setSidebarOpen(false)}
-                    className="lg:hidden w-8 h-8 flex items-center justify-center text-[#5A6478] hover:text-white transition-colors"
+                    className="lg:hidden w-8 h-8 flex items-center justify-center text-sage-500 hover:text-sand-200 transition-colors"
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -112,7 +111,7 @@ export function AdminSidebar() {
             {/* Navigation */}
             <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto scrollbar-none">
                 <div className="px-3 mb-2">
-                    {!collapsed && <p className="text-xs font-semibold text-[#F0F2F5]/20 tracking-widest uppercase">Overview</p>}
+                    {!collapsed && <p className="text-xs font-semibold text-sand-200/20 tracking-widest uppercase">Overview</p>}
                 </div>
                 {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -122,17 +121,17 @@ export function AdminSidebar() {
                             href={item.href}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all group relative overflow-hidden ${isActive
-                                ? 'bg-gradient-to-r from-[#F0F2F5]/10 to-transparent text-white'
-                                : 'text-[#5A6478] hover:text-white hover:bg-[#F0F2F5]/5'
+                                ? 'bg-gradient-to-r from-sand-200/10 to-transparent text-sand-200'
+                                : 'text-sage-500 hover:text-sand-200 hover:bg-sand-200/5'
                                 }`}
                         >
                             {isActive && (
                                 <motion.div
                                     layoutId="activeNav"
-                                    className="absolute left-0 top-0 bottom-0 w-1 bg-coral-400"
+                                    className="absolute left-0 top-0 bottom-0 w-1 bg-gold-400"
                                 />
                             )}
-                            <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-coral-400' : ''}`} />
+                            <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-gold-400' : ''}`} />
                             {!collapsed && (
                                 <span className="text-sm font-medium tracking-wide">
                                     {item.label}
@@ -144,7 +143,7 @@ export function AdminSidebar() {
             </nav>
 
             {/* Bottom Section */}
-            <div className="py-4 px-3 border-t border-[#1A2238] space-y-1 relative">
+            <div className="py-4 px-3 border-t border-forest-600 space-y-1 relative">
                 {/* Glass Reflection */}
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
@@ -156,8 +155,8 @@ export function AdminSidebar() {
                             href={item.href}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isActive
-                                ? 'bg-[#F0F2F5]/10 text-white'
-                                : 'text-[#5A6478] hover:text-white hover:bg-[#F0F2F5]/5'
+                                ? 'bg-sand-200/10 text-sand-200'
+                                : 'text-sage-500 hover:text-sand-200 hover:bg-sand-200/5'
                                 }`}
                         >
                             <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -188,7 +187,7 @@ export function AdminSidebar() {
         <>
             {/* Desktop Sidebar */}
             <aside
-                className={`fixed left-0 top-0 bottom-0 z-40 bg-[#0B0F19]/95 backdrop-blur-xl border-r border-[#1A2238] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hidden lg:flex flex-col ${collapsed ? 'w-20' : 'w-72'
+                className={`fixed left-0 top-0 bottom-0 z-40 bg-forest-700/95 backdrop-blur-xl border-r border-forest-600 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hidden lg:flex flex-col ${collapsed ? 'w-20' : 'w-72'
                     }`}
             >
                 {sidebarContent}
@@ -203,14 +202,14 @@ export function AdminSidebar() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setSidebarOpen(false)}
-                            className="fixed inset-0 z-40 bg-[#0B0F19]/80 backdrop-blur-sm lg:hidden"
+                            className="fixed inset-0 z-40 bg-forest-700/80 backdrop-blur-sm lg:hidden"
                         />
                         <motion.aside
                             initial={{ x: "-100%" }}
                             animate={{ x: 0 }}
                             exit={{ x: "-100%" }}
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            className="fixed left-0 top-0 bottom-0 z-50 w-72 bg-[#0B0F19] border-r border-[#1A2238] flex flex-col lg:hidden"
+                            className="fixed left-0 top-0 bottom-0 z-50 w-72 bg-forest-700 border-r border-forest-600 flex flex-col lg:hidden"
                         >
                             {sidebarContent}
                         </motion.aside>

@@ -77,8 +77,7 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
                 displayName: values.name,
             })
 
-            // 3. Create User Document (Simulating Cloud Function here for immediate feedback)
-            // Ideally this is done by onUserCreate trigger, but good to have client-side optimistic update or redundant write
+            // 3. Create User Document
             const userData = {
                 uid: userCredential.user.uid,
                 email: values.email,
@@ -124,11 +123,11 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
             <DialogTrigger asChild>
                 {trigger || <Button variant="default">Sign Up</Button>}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-[#0B0F19] border-[#1A2238]">
+            <DialogContent className="sm:max-w-[425px] bg-forest-700 border-forest-600">
                 <DialogHeader>
                     <DialogTitle>Create your account</DialogTitle>
                     <DialogDescription>
-                        Join FitConnect Pro to access premium classes.
+                        Join SOL Pilates to access premium classes.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -185,7 +184,7 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold" disabled={isLoading}>
+                        <Button type="submit" className="w-full bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Create Account
                         </Button>

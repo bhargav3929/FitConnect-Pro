@@ -71,7 +71,7 @@ export function SpotSelectionModal({
         setStep('success')
         toast.success("Spot Reserved!", {
             description: `Spot ${selectedSpot} has been reserved.`,
-            className: "bg-[#0B0F19] text-white border-[#1A2238]"
+            className: "bg-forest-700 text-sand-200 border-forest-600"
         })
     }
 
@@ -98,7 +98,7 @@ export function SpotSelectionModal({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={handleClose}
-                        className="fixed inset-0 z-50 bg-[#0B0F19]/80 backdrop-blur-sm"
+                        className="fixed inset-0 z-50 bg-forest-700/80 backdrop-blur-sm"
                     />
 
                     {/* Modal Content - Mobile Bottom Sheet / Desktop Modal */}
@@ -110,11 +110,11 @@ export function SpotSelectionModal({
                         className="fixed inset-x-0 bottom-0 z-50 lg:top-0 lg:left-0 lg:right-0 lg:bottom-0 lg:flex lg:items-center lg:justify-center lg:bg-transparent lg:pointer-events-none"
                     >
                         {/* Container that acts as Sheet on Mobile, Card on Desktop */}
-                        <div className="bg-[#0B0F19] border-t lg:border border-[#1A2238] lg:rounded-3xl rounded-t-3xl shadow-2xl shadow-black max-h-[90vh] lg:max-w-4xl lg:w-full lg:max-h-[800px] flex flex-col pointer-events-auto overflow-hidden">
+                        <div className="bg-forest-700 border-t lg:border border-forest-600 lg:rounded-3xl rounded-t-3xl shadow-2xl shadow-black max-h-[90vh] lg:max-w-4xl lg:w-full lg:max-h-[800px] flex flex-col pointer-events-auto overflow-hidden">
 
                             {/* Drag Handle (Mobile only) */}
                             <div className="lg:hidden w-full flex justify-center pt-3 pb-1">
-                                <div className="w-12 h-1.5 bg-[#F0F2F5]/20 rounded-full" />
+                                <div className="w-12 h-1.5 bg-sand-200/20 rounded-full" />
                             </div>
 
                             <AnimatePresence mode="wait">
@@ -129,44 +129,44 @@ export function SpotSelectionModal({
                                         {/* Header */}
                                         <div className="flex items-start justify-between mb-6">
                                             <div>
-                                                <h2 className="text-2xl font-black text-white mb-1">Select Spot</h2>
-                                                <p className="text-[#5A6478] text-xs tracking-wider uppercase">
+                                                <h2 className="text-2xl font-black text-sand-200 mb-1 font-display">Select Spot</h2>
+                                                <p className="text-sage-500 text-xs tracking-wider uppercase">
                                                     {classDetails.name} • {classDetails.time}
                                                 </p>
                                             </div>
                                             <button
                                                 onClick={handleClose}
-                                                className="w-8 h-8 rounded-full bg-[#F0F2F5]/5 flex items-center justify-center hover:bg-[#F0F2F5]/10 transition-colors"
+                                                className="w-8 h-8 rounded-full bg-sand-200/5 flex items-center justify-center hover:bg-sand-200/10 transition-colors"
                                             >
-                                                <X className="w-4 h-4 text-white" />
+                                                <X className="w-4 h-4 text-sand-200" />
                                             </button>
                                         </div>
 
                                         {/* Class Info Compact */}
-                                        <div className="bg-[#F0F2F5]/5 rounded-2xl p-4 mb-6 flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl bg-[#FF6A3D]/20 flex items-center justify-center text-[#FF6A3D] font-bold text-lg">
+                                        <div className="bg-sand-200/5 rounded-2xl p-4 mb-6 flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-gold-400/20 flex items-center justify-center text-gold-400 font-bold text-lg">
                                                 {classDetails.date.split(' ')[0]}
                                             </div>
                                             <div>
-                                                <p className="text-white font-medium">{classDetails.instructor}</p>
-                                                <p className="text-[#5A6478] text-sm">{classDetails.location} • {classDetails.duration}</p>
+                                                <p className="text-sand-200 font-medium">{classDetails.instructor}</p>
+                                                <p className="text-sage-500 text-sm">{classDetails.location} • {classDetails.duration}</p>
                                             </div>
                                         </div>
 
                                         {/* Legend & Toggle */}
                                         <div className="flex flex-col gap-4 mb-8">
                                             {/* Toggle */}
-                                            <div className="flex bg-[#F0F2F5]/5 p-1 rounded-xl self-start">
+                                            <div className="flex bg-sand-200/5 p-1 rounded-xl self-start">
                                                 <button
                                                     onClick={() => setReserveFor('myself')}
-                                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${reserveFor === 'myself' ? 'bg-[#FF6A3D] text-white shadow-lg' : 'text-[#5A6478] hover:text-[#F0F2F5]'
+                                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${reserveFor === 'myself' ? 'bg-gold-400 text-forest-700 shadow-lg' : 'text-sage-500 hover:text-sand-200'
                                                         }`}
                                                 >
                                                     Myself
                                                 </button>
                                                 <button
                                                     onClick={() => setReserveFor('guest')}
-                                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${reserveFor === 'guest' ? 'bg-[#FF6A3D] text-white shadow-lg' : 'text-[#5A6478] hover:text-[#F0F2F5]'
+                                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${reserveFor === 'guest' ? 'bg-gold-400 text-forest-700 shadow-lg' : 'text-sage-500 hover:text-sand-200'
                                                         }`}
                                                 >
                                                     Guest
@@ -174,15 +174,15 @@ export function SpotSelectionModal({
                                             </div>
 
                                             {/* Legend */}
-                                            <div className="flex items-center gap-4 text-xs text-[#5A6478] font-medium">
+                                            <div className="flex items-center gap-4 text-xs text-sage-500 font-medium">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-3 h-3 rounded-full border border-[#F0F2F5]/20" /> Available
+                                                    <div className="w-3 h-3 rounded-full border border-sand-200/20" /> Available
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-3 h-3 rounded-full bg-[#F0F2F5]/10 diagonal-stripes" /> Booked
+                                                    <div className="w-3 h-3 rounded-full bg-sand-200/10 diagonal-stripes" /> Booked
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-3 h-3 rounded-full bg-[#FF6A3D] shadow-[0_0_10px_rgba(255,106,61,0.5)]" /> Selected
+                                                    <div className="w-3 h-3 rounded-full bg-gold-400 shadow-[0_0_10px_rgba(212,162,76,0.5)]" /> Selected
                                                 </div>
                                             </div>
                                         </div>
@@ -192,7 +192,7 @@ export function SpotSelectionModal({
                                             {/* Stage Indicator */}
                                             <div className="w-full max-w-xm text-center mb-8">
                                                 <div className="h-1 w-3/4 mx-auto bg-gradient-to-r from-transparent via-white/20 to-transparent mb-2" />
-                                                <span className="text-[10px] uppercase tracking-[0.3em] text-[#F0F2F5]/20">Front of Room</span>
+                                                <span className="text-[10px] uppercase tracking-[0.3em] text-sand-200/20">Front of Room</span>
                                             </div>
 
                                             <div className="grid grid-cols-4 gap-4 sm:gap-6">
@@ -211,10 +211,10 @@ export function SpotSelectionModal({
                                                             className={`
                                                                 relative w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold transition-all duration-300
                                                                 ${isUnavailable
-                                                                    ? 'bg-[#F0F2F5]/5 text-[#F0F2F5]/10 cursor-not-allowed'
+                                                                    ? 'bg-sand-200/5 text-sand-200/10 cursor-not-allowed'
                                                                     : isSelected
-                                                                        ? 'bg-[#FF6A3D] text-white shadow-[0_0_20px_rgba(255,106,61,0.4)] scale-110'
-                                                                        : 'bg-[#F0F2F5]/5 border border-[#1A2238] text-[#8892A4] hover:border-[#F0F2F5]/30 hover:bg-[#F0F2F5]/10'
+                                                                        ? 'bg-gold-400 text-forest-700 shadow-[0_0_20px_rgba(212,162,76,0.4)] scale-110'
+                                                                        : 'bg-sand-200/5 border border-forest-600 text-sage-400 hover:border-sand-200/30 hover:bg-sand-200/10'
                                                                 }
                                                             `}
                                                         >
@@ -236,11 +236,11 @@ export function SpotSelectionModal({
                                         </div>
 
                                         {/* Footer Actions */}
-                                        <div className="mt-8 pt-6 border-t border-[#1A2238]">
+                                        <div className="mt-8 pt-6 border-t border-forest-600">
                                             <Button
                                                 onClick={handleConfirm}
                                                 disabled={!selectedSpot || isLoading}
-                                                className="w-full h-14 bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-black tracking-wide text-lg rounded-xl disabled:opacity-50 transition-all"
+                                                className="w-full h-14 bg-gold-400 text-forest-700 hover:bg-gold-300 font-black tracking-wide text-lg rounded-xl disabled:opacity-50 transition-all"
                                             >
                                                 {isLoading ? "CONFIRMING..." : selectedSpot ? `CONFIRM SPOT ${selectedSpot}` : "SELECT A SPOT"}
                                             </Button>
@@ -255,28 +255,28 @@ export function SpotSelectionModal({
                                         animate={{ opacity: 1, scale: 1 }}
                                         className="p-8 flex flex-col items-center justify-center h-full text-center min-h-[500px]"
                                     >
-                                        <div className="w-24 h-24 bg-[#FF6A3D]/20 rounded-full flex items-center justify-center mb-6 ring-4 ring-[#FF6A3D]/10 animate-pulse">
-                                            <CheckCircle2 className="w-12 h-12 text-[#FF6A3D]" />
+                                        <div className="w-24 h-24 bg-gold-400/20 rounded-full flex items-center justify-center mb-6 ring-4 ring-gold-400/10 animate-pulse">
+                                            <CheckCircle2 className="w-12 h-12 text-gold-400" />
                                         </div>
-                                        <h2 className="text-3xl font-black text-white mb-2">You're In!</h2>
-                                        <p className="text-[#8892A4] text-lg mb-8 max-w-xs">
-                                            Spot <span className="text-[#FF6A3D] font-bold">{selectedSpot}</span> confirmed for Class.
+                                        <h2 className="text-3xl font-black text-sand-200 mb-2 font-display">You're In!</h2>
+                                        <p className="text-sage-400 text-lg mb-8 max-w-xs">
+                                            Spot <span className="text-gold-400 font-bold">{selectedSpot}</span> confirmed for Class.
                                         </p>
 
-                                        <div className="bg-[#F0F2F5]/5 rounded-2xl p-6 w-full max-w-sm mb-8 border border-[#1A2238]">
-                                            <div className="flex justify-between mb-4 pb-4 border-b border-[#1A2238]">
-                                                <span className="text-[#5A6478] text-sm">Date</span>
-                                                <span className="text-white font-bold">{classDetails.date}</span>
+                                        <div className="bg-sand-200/5 rounded-2xl p-6 w-full max-w-sm mb-8 border border-forest-600">
+                                            <div className="flex justify-between mb-4 pb-4 border-b border-forest-600">
+                                                <span className="text-sage-500 text-sm">Date</span>
+                                                <span className="text-sand-200 font-bold">{classDetails.date}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-[#5A6478] text-sm">Listing</span>
-                                                <span className="text-white font-bold text-right">{classDetails.name}</span>
+                                                <span className="text-sage-500 text-sm">Listing</span>
+                                                <span className="text-sand-200 font-bold text-right">{classDetails.name}</span>
                                             </div>
                                         </div>
 
                                         <Button
                                             onClick={handleFinalConfirm}
-                                            className="w-full max-w-sm h-14 bg-[#FF6A3D] text-white hover:bg-[#E85A30] font-black tracking-wide rounded-xl shadow-[0_0_20px_rgba(255,106,61,0.3)]"
+                                            className="w-full max-w-sm h-14 bg-gold-400 text-forest-700 hover:bg-gold-300 font-black tracking-wide rounded-xl shadow-[0_0_20px_rgba(212,162,76,0.3)]"
                                         >
                                             DONE
                                         </Button>

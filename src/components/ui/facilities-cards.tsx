@@ -7,32 +7,32 @@ import { cn } from "@/lib/utils";
 const amenities = [
     {
         id: 1,
-        name: "Strength Floor",
-        tagline: "Precision-engineered iron paradise",
+        name: "Reformer Studio",
+        tagline: "State-of-the-art Balanced Body reformers",
         image: "/images/gyms/fitpro-downtown.png",
     },
     {
         id: 2,
-        name: "Yoga & Recovery",
-        tagline: "Infrared-heated restoration studio",
+        name: "Mat Studio",
+        tagline: "Dedicated space for mat Pilates & floor work",
         image: "/images/gyms/fitpro-midtown.png",
     },
     {
         id: 3,
-        name: "Boxing Ring",
-        tagline: "Competition-grade combat zone",
+        name: "Private Suite",
+        tagline: "One-on-one sessions in an intimate setting",
         image: "/images/gyms/fitpro-uptown.png",
     },
     {
         id: 4,
-        name: "Cardio Lab",
-        tagline: "Performance-tracked conditioning",
+        name: "Barre & Stretch",
+        tagline: "Barre-fusion and deep flexibility training",
         image: "/images/gyms/fitpro-brooklyn.png",
     },
     {
         id: 5,
         name: "Recovery Lounge",
-        tagline: "Cryotherapy & compression therapy",
+        tagline: "Post-session recovery and relaxation",
         image: "/images/gyms/fitpro-queens.png",
     }
 ];
@@ -75,17 +75,17 @@ export default function FacilitiesSection() {
     }, [isInView, hasInteracted]);
 
     return (
-        <section className="bg-[#0B0F19] py-24 relative overflow-hidden">
+        <section className="bg-peach-200 py-24 relative overflow-hidden">
             {/* Header */}
             <div className="container px-4 mx-auto mb-12 flex flex-col items-center text-center">
-                <div className="border border-coral-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-coral-400 bg-coral-400/10 mb-6">
-                    Training Zones
+                <div className="border border-terra-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-terra-400 bg-terra-400/10 mb-6">
+                    Our Studios
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black text-[#F0F2F5] tracking-tight mb-4">
-                    BUILT FOR EVERY DISCIPLINE
+                <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-4 font-display">
+                    SPACES DESIGNED FOR YOU
                 </h2>
-                <p className="text-[#8892A4] max-w-lg text-lg">
-                    Five dedicated zones, each engineered for a specific training modality.
+                <p className="text-olive-300 max-w-lg text-lg">
+                    Five dedicated studios, each crafted for a specific Pilates discipline.
                 </p>
             </div>
 
@@ -109,20 +109,20 @@ export default function FacilitiesSection() {
                             className="object-cover object-center transition-transform duration-700 hover:scale-105"
                         />
                         <div className={cn(
-                            "absolute inset-0 bg-gradient-to-t from-[#0B0F19]/95 via-[#0B0F19]/40 to-transparent transition-opacity duration-500",
+                            "absolute inset-0 bg-gradient-to-t from-warmDark-800/95 via-warmDark-800/40 to-transparent transition-opacity duration-500",
                             activeId === amenity.id ? "opacity-100" : "opacity-70"
                         )} />
                         <div className={cn(
                             "absolute bottom-0 left-0 w-full p-8 flex flex-col justify-end transition-all duration-500 overflow-hidden",
                             activeId === amenity.id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                         )}>
-                            <h3 className="text-3xl font-bold text-[#F0F2F5] mb-1 leading-tight drop-shadow-lg">{amenity.name}</h3>
-                            <p className="font-medium tracking-wide text-base text-coral-300 drop-shadow-md">{amenity.tagline}</p>
+                            <h3 className="text-3xl font-bold text-peach-200 mb-1 leading-tight drop-shadow-lg font-display">{amenity.name}</h3>
+                            <p className="font-medium tracking-wide text-base text-terra-300 drop-shadow-md">{amenity.tagline}</p>
                             <div className={cn(
                                 "overflow-hidden transition-all duration-500 delay-75 ease-in-out",
                                 activeId === amenity.id ? "max-h-20 mt-4 opacity-100" : "max-h-0 opacity-0"
                             )}>
-                                <Link href="/facilities" className="text-xs font-bold bg-coral-400 text-[#0B0F19] px-5 py-2.5 rounded-full hover:bg-coral-300 transition-colors uppercase tracking-wider shadow-[0_0_20px_rgba(255,106,61,0.3)] inline-block">
+                                <Link href="/facilities" className="text-xs font-bold bg-terra-400 text-peach-50 px-5 py-2.5 rounded-full hover:bg-terra-300 transition-colors uppercase tracking-wider shadow-glow inline-block">
                                     Explore Zone
                                 </Link>
                             </div>
@@ -144,7 +144,7 @@ export default function FacilitiesSection() {
                             setHasInteracted(true);
                         }}
                         className={cn(
-                            "relative overflow-hidden rounded-3xl transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-lg border border-[#1A2238]",
+                            "relative overflow-hidden rounded-3xl transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-lg border border-peach-400",
                             activeId === amenity.id ? "h-[450px]" : "h-[100px]"
                         )}
                     >
@@ -161,8 +161,8 @@ export default function FacilitiesSection() {
                         <div className={cn(
                             "absolute inset-0 bg-gradient-to-b transition-all duration-500",
                             activeId === amenity.id
-                                ? "from-transparent via-[#0B0F19]/20 to-[#0B0F19]/95"
-                                : "from-[#0B0F19]/40 via-[#0B0F19]/60 to-[#0B0F19]/80"
+                                ? "from-transparent via-warmDark-800/20 to-warmDark-800/95"
+                                : "from-warmDark-800/40 via-warmDark-800/60 to-warmDark-800/80"
                         )} />
 
                         <div className="absolute inset-0 p-6 flex flex-col justify-end">
@@ -172,7 +172,7 @@ export default function FacilitiesSection() {
                             )}>
                                 <div className="flex justify-between items-center w-full">
                                     <h3 className={cn(
-                                        "font-black text-[#F0F2F5] uppercase tracking-tighter transition-all duration-500 leading-none",
+                                        "font-black text-peach-200 uppercase tracking-tighter transition-all duration-500 leading-none font-display",
                                         activeId === amenity.id ? "text-4xl mb-2" : "text-xl"
                                     )}>
                                         {amenity.name}
@@ -184,10 +184,10 @@ export default function FacilitiesSection() {
                                 "overflow-hidden transition-all duration-500 ease-in-out gap-4 flex flex-col",
                                 activeId === amenity.id ? "opacity-100 max-h-[200px] mt-4" : "opacity-0 max-h-0 mt-0"
                             )}>
-                                <p className="text-[#8892A4] text-sm font-medium leading-relaxed">
+                                <p className="text-peach-400 text-sm font-medium leading-relaxed">
                                     {amenity.tagline} -- purpose-built for peak performance with premium equipment and expert-guided programming.
                                 </p>
-                                <Link href="/facilities" className="self-start text-xs font-bold bg-coral-400 text-[#0B0F19] px-6 py-3 rounded-full hover:bg-coral-300 transition-colors uppercase tracking-wider shadow-[0_0_20px_rgba(255,106,61,0.3)] inline-block">
+                                <Link href="/facilities" className="self-start text-xs font-bold bg-terra-400 text-peach-50 px-6 py-3 rounded-full hover:bg-terra-300 transition-colors uppercase tracking-wider shadow-glow inline-block">
                                     Explore Zone
                                 </Link>
                             </div>

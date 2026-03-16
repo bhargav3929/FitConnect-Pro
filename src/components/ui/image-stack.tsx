@@ -34,16 +34,14 @@ export default function ImgStack({ items }: ImgStackProps) {
     const minDragDistance: number = 50;
 
     const getCardStyles = (index: number) => {
-        // Always return tiled state - no initial animation to prevent jumping
-        const baseRotation = 2; // Base tilt angle
-        const rotationIncrement = 3; // Additional tilt per card
-        const offsetIncrement = -12; // Horizontal offset per card
-        const verticalOffset = -8; // Vertical offset per card
+        const baseRotation = 2;
+        const rotationIncrement = 3;
+        const offsetIncrement = -12;
+        const verticalOffset = -8;
 
         return {
-            x: (index * offsetIncrement) + 24, // Shift right to visually center the stack (compensating for negative offset)
+            x: (index * offsetIncrement) + 24,
             y: index * verticalOffset,
-            // Keep first card straight (index 0), others get tilt
             rotate: index === 0 ? 0 : -(baseRotation + (index * rotationIncrement)),
             scale: 1,
             transition: { duration: 0.5 }
@@ -63,26 +61,22 @@ export default function ImgStack({ items }: ImgStackProps) {
         if (isAnimating) return;
 
         if (dragDistance < minDragDistance) {
-            // Let Motion handle the snap-back automatically by not doing anything
             return;
         }
 
         setIsAnimating(true);
 
-        // Move card to back and reassign proper z-index values
         setCards(prevCards => {
             const newCards = [...prevCards];
-            const cardToMove = newCards.shift()!; // Remove first card
-            newCards.push(cardToMove); // Add to end
+            const cardToMove = newCards.shift()!;
+            newCards.push(cardToMove);
 
-            // Reassign z-index values to maintain proper stacking order
             return newCards.map((card, index) => ({
                 ...card,
-                zIndex: 50 - (index * 10) // Top card gets 50, next gets 40, etc.
+                zIndex: 50 - (index * 10)
             }));
         });
 
-        // Brief delay to allow the position change to register
         setTimeout(() => {
             setIsAnimating(false);
         }, 300);
@@ -98,7 +92,7 @@ export default function ImgStack({ items }: ImgStackProps) {
                 return (
                     <motion.div
                         key={card.id}
-                        className="absolute w-64 md:w-72 aspect-[5/7] origin-bottom-center overflow-hidden rounded-xl shadow-2xl bg-[#131A2B] cursor-grab active:cursor-grabbing border border-[#1A2238]"
+                        className="absolute w-64 md:w-72 aspect-[5/7] origin-bottom-center overflow-hidden rounded-xl shadow-2xl bg-warmDark-700 cursor-grab active:cursor-grabbing border border-warmDark-700"
                         style={{
                             zIndex: card.zIndex,
                         }}
@@ -131,14 +125,14 @@ export default function ImgStack({ items }: ImgStackProps) {
                             draggable={false}
                         />
                         {/* Card Overlay for definition */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/80 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-warmDark-800/80 via-transparent to-transparent pointer-events-none" />
 
                         {/* Mentor Info */}
                         <div className="absolute bottom-6 left-6 pointer-events-none">
-                            <h3 className="text-2xl font-black text-white uppercase leading-none mb-1 tracking-tight drop-shadow-md">
+                            <h3 className="text-2xl font-black text-peach-200 uppercase leading-none mb-1 tracking-tight drop-shadow-md font-display">
                                 {card.name}
                             </h3>
-                            <p className="text-xs font-bold text-[#F0F2F5]/80 uppercase tracking-[0.2em] drop-shadow-sm">
+                            <p className="text-xs font-bold text-peach-200/80 uppercase tracking-[0.2em] drop-shadow-sm">
                                 {card.role}
                             </p>
                         </div>

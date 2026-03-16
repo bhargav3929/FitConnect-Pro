@@ -12,10 +12,10 @@ interface Testimonial {
 // --- Data ---
 const testimonials: Testimonial[] = [
     {
-        text: "FitConnect-Pro transformed how we manage our gym. The booking system is flawless, and member retention has never been higher.",
+        text: "SOL Pilates transformed how we manage our studio. The booking system is flawless, and member retention has never been higher.",
         image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
         name: "Briana Patton",
-        role: "Gym Owner",
+        role: "Studio Owner",
     },
     {
         text: "As a personal trainer, tracking client progress is crucial. This platform gives me all the data I need to help my clients succeed.",
@@ -30,7 +30,7 @@ const testimonials: Testimonial[] = [
         role: "Pro Member",
     },
     {
-        text: "The analytics provided by FitConnect-Pro helped us optimize our class schedules and increase revenue by 30%.",
+        text: "The analytics provided by SOL helped us optimize our class schedules and increase revenue by 30%.",
         image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
         name: "Omar Raza",
         role: "Fitness Director",
@@ -42,13 +42,13 @@ const testimonials: Testimonial[] = [
         role: "Member",
     },
     {
-        text: "Managing our training zones used to be chaotic. FitConnect-Pro centralized everything from scheduling to equipment tracking, making operations seamless.",
+        text: "Managing our training zones used to be chaotic. SOL centralized everything from scheduling to equipment tracking, making operations seamless.",
         image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150&h=150",
         name: "Aliza Khan",
         role: "Operations Manager",
     },
     {
-        text: "The user experience is premium. It feels like a high-end luxury service, which aligns perfectly with our gym's brand.",
+        text: "The user experience is premium. It feels like a high-end luxury service, which aligns perfectly with our studio's brand.",
         image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
         name: "Farhan Siddiqui",
         role: "Brand Director",
@@ -60,10 +60,10 @@ const testimonials: Testimonial[] = [
         role: "Studio Manager",
     },
     {
-        text: "Since switching to FitConnect-Pro, our online bookings have doubled. It's the best investment we've made for our business.",
+        text: "Since switching to SOL Pilates, our online bookings have doubled. It's the best investment we've made for our business.",
         image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150",
         name: "Hassan Ali",
-        role: "Gym Owner",
+        role: "Studio Owner",
     },
 ];
 
@@ -102,19 +102,19 @@ const TestimonialsColumn = (props: {
                                     whileHover={{
                                         scale: 1.03,
                                         y: -8,
-                                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+                                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)",
                                         transition: { type: "spring", stiffness: 400, damping: 17 }
                                     }}
                                     whileFocus={{
                                         scale: 1.03,
                                         y: -8,
-                                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+                                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)",
                                         transition: { type: "spring", stiffness: 400, damping: 17 }
                                     }}
-                                    className="p-8 rounded-2xl border border-[#1A2238] bg-[#131A2B] shadow-xl max-w-xs w-full transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-coral-400/30"
+                                    className="p-8 rounded-2xl border border-peach-400 bg-peach-300 shadow-xl max-w-xs w-full transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-terra-400/30"
                                 >
                                     <blockquote className="m-0 p-0">
-                                        <p className="text-[#8892A4] leading-relaxed font-normal m-0 text-base">
+                                        <p className="text-olive-300 leading-relaxed font-normal m-0 text-base">
                                             {text}
                                         </p>
                                         <footer className="flex items-center gap-3 mt-6">
@@ -123,13 +123,13 @@ const TestimonialsColumn = (props: {
                                                 height={40}
                                                 src={image}
                                                 alt={`Avatar of ${name}`}
-                                                className="h-10 w-10 rounded-full object-cover ring-2 ring-[#1A2238] group-hover:ring-coral-400/40 transition-all duration-300"
+                                                className="h-10 w-10 rounded-full object-cover ring-2 ring-peach-400 group-hover:ring-terra-400/40 transition-all duration-300"
                                             />
                                             <div className="flex flex-col">
-                                                <cite className="font-semibold not-italic tracking-tight leading-5 text-[#F0F2F5]">
+                                                <cite className="font-semibold not-italic tracking-tight leading-5 text-olive-600">
                                                     {name}
                                                 </cite>
-                                                <span className="text-sm leading-5 tracking-tight text-coral-400/70 mt-0.5">
+                                                <span className="text-sm leading-5 tracking-tight text-terra-400/70 mt-0.5">
                                                     {role}
                                                 </span>
                                             </div>
@@ -149,7 +149,7 @@ export default function TestimonialsSection() {
     return (
         <section
             aria-labelledby="testimonials-heading"
-            className="bg-[#0B0F19] py-24 relative overflow-hidden"
+            className="bg-peach-200 py-24 relative overflow-hidden"
         >
             <motion.div
                 initial={{ opacity: 0, y: 50 }}
@@ -163,11 +163,11 @@ export default function TestimonialsSection() {
                 className="container px-4 z-10 mx-auto"
             >
                 <div className="flex flex-col items-center justify-center max-w-[540px] mx-auto mb-16">
-                    <h2 id="testimonials-heading" className="text-4xl md:text-5xl font-extrabold tracking-tight mt-6 text-center text-[#F0F2F5]">
-                        What our users say
+                    <h2 id="testimonials-heading" className="text-4xl md:text-5xl font-extrabold tracking-tight mt-6 text-center text-olive-600 font-display">
+                        What our members say
                     </h2>
-                    <p className="text-center mt-5 text-[#8892A4] text-lg leading-relaxed max-w-sm">
-                        Join thousands of fitness professionals who trust FitConnect-Pro.
+                    <p className="text-center mt-5 text-olive-300 text-lg leading-relaxed max-w-sm">
+                        Join women who have transformed their practice with SOL Pilates.
                     </p>
                 </div>
 

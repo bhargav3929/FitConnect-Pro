@@ -46,7 +46,7 @@ export function BookingModal({ isOpen, onClose, classDetails }: BookingModalProp
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="bg-[#0B0F19] border border-[#1A2238] text-white sm:max-w-md rounded-2xl p-0 overflow-hidden">
+            <DialogContent className="bg-forest-700 border border-forest-600 text-sand-200 sm:max-w-md rounded-2xl p-0 overflow-hidden">
                 <AnimatePresence mode="wait">
                     {step === 'confirm' ? (
                         <motion.div
@@ -56,30 +56,30 @@ export function BookingModal({ isOpen, onClose, classDetails }: BookingModalProp
                             exit={{ opacity: 0 }}
                             className="p-6"
                         >
-                            <h2 className="text-xl font-black mb-1">Confirm Booking</h2>
-                            <p className="text-[#5A6478] text-sm mb-6">Review details before confirming</p>
+                            <h2 className="text-xl font-black mb-1 font-display">Confirm Booking</h2>
+                            <p className="text-sage-500 text-sm mb-6">Review details before confirming</p>
 
-                            <div className="bg-[#F0F2F5]/5 rounded-xl p-4 space-y-4 mb-6">
+                            <div className="bg-sand-200/5 rounded-xl p-4 space-y-4 mb-6">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h3 className="font-bold text-lg">{classDetails.name}</h3>
-                                        <div className="flex items-center gap-2 text-[#8892A4] text-sm mt-1">
+                                        <div className="flex items-center gap-2 text-sage-400 text-sm mt-1">
                                             <User className="w-3 h-3" />
                                             {classDetails.trainer}
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-bold text-[#FF6A3D]">{classDetails.time}</p>
-                                        <p className="text-xs text-[#5A6478]">{classDetails.duration}</p>
+                                        <p className="font-bold text-gold-400">{classDetails.time}</p>
+                                        <p className="text-xs text-sage-500">{classDetails.duration}</p>
                                     </div>
                                 </div>
-                                <div className="h-px bg-[#F0F2F5]/10" />
+                                <div className="h-px bg-sand-200/10" />
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="text-[#5A6478]">Location</span>
+                                    <span className="text-sage-500">Location</span>
                                     <span className="font-medium">{classDetails.centerName}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="text-[#5A6478]">Date</span>
+                                    <span className="text-sage-500">Date</span>
                                     <span className="font-medium">{classDetails.date}</span>
                                 </div>
                             </div>
@@ -88,14 +88,14 @@ export function BookingModal({ isOpen, onClose, classDetails }: BookingModalProp
                                 <Button
                                     variant="outline"
                                     onClick={onClose}
-                                    className="flex-1 h-12 rounded-xl border-[#1A2238] hover:bg-[#F0F2F5]/5 hover:text-white"
+                                    className="flex-1 h-12 rounded-xl border-forest-600 hover:bg-sand-200/5 hover:text-sand-200"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     onClick={handleConfirm}
                                     disabled={isLoading}
-                                    className="flex-1 h-12 bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold rounded-xl"
+                                    className="flex-1 h-12 bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold rounded-xl"
                                 >
                                     {isLoading ? "Booking..." : "Confirm Booking"}
                                 </Button>
@@ -111,14 +111,14 @@ export function BookingModal({ isOpen, onClose, classDetails }: BookingModalProp
                             <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <CheckCircle2 className="w-8 h-8 text-green-400" />
                             </div>
-                            <h2 className="text-2xl font-black mb-2">You're Booked!</h2>
-                            <p className="text-[#5A6478] text-sm mb-8">
+                            <h2 className="text-2xl font-black mb-2 font-display">You're Booked!</h2>
+                            <p className="text-sage-500 text-sm mb-8">
                                 A confirmation email has been sent to you.
                                 Use the app to check in when you arrive.
                             </p>
                             <Button
                                 onClick={handleClose}
-                                className="w-full h-12 bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold rounded-xl"
+                                className="w-full h-12 bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold rounded-xl"
                             >
                                 Done
                             </Button>

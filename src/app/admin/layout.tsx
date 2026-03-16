@@ -32,17 +32,17 @@ export default function AdminLayout({
     // Show nothing while checking auth
     if (!isAdminAuthenticated) {
         return (
-            <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center">
+            <div className="min-h-screen bg-forest-700 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-8 h-8 border-2 border-[#F0F2F5]/20 border-t-coral-400 rounded-full animate-spin" />
-                    <p className="text-[#8892A4] text-sm tracking-wider">LOADING...</p>
+                    <div className="w-8 h-8 border-2 border-sand-200/20 border-t-gold-400 rounded-full animate-spin" />
+                    <p className="text-sage-400 text-sm tracking-wider">LOADING...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-[#0B0F19]">
+        <div className="min-h-screen bg-forest-700">
             <AdminSidebar />
             <div className="lg:pl-72">
                 <AdminHeader />

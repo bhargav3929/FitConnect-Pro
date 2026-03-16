@@ -9,28 +9,38 @@ import { GetStartedModal } from "@/components/auth/GetStartedModal";
 // Service card data
 const SERVICES = [
   {
-    title: "ONLINE COACHING",
+    title: "STRENGTH & SCULPT",
     icon: "asterisk",
-    image: "/images/online-coaching.png",
+    image: "/images/service-strength-sculpt.jpg",
   },
   {
-    title: "CUSTOM TRACKING",
+    title: "CARDIO & ENDURANCE",
     icon: "triangle",
-    image: "/images/custom-tracking.png",
+    image: "/images/service-cardio-endurance.jpg",
   },
   {
-    title: "DEDICATED TRAINERS",
+    title: "RESET & RESTORE",
     icon: "plus",
-    image: "/images/dedicated-trainers.png",
+    image: "/images/service-reset-restore.jpg",
+  },
+  {
+    title: "MUSCLE RECOVERY",
+    icon: "circle",
+    image: "/images/service-muscle-recovery.jpg",
+  },
+  {
+    title: "INTENSE EXERCISE",
+    icon: "diamond",
+    image: "/images/service-intense-exercise.jpg",
   },
 ];
 
 // Testimonials data
 // Performance stats
 const STATS = [
-  { label: "SPECIFIC PREPARATION", value: 76 },
-  { label: "CARDIO CONDITIONING", value: 59 },
-  { label: "NUTRITION SKILLS", value: 98 },
+  { label: "STRENGTH & TONE", value: 85 },
+  { label: "BODY CONTROL", value: 92 },
+  { label: "TOTAL TRANSFORMATION", value: 78 },
 ];
 
 // Animated progress bar component
@@ -41,15 +51,15 @@ function ProgressBar({ label, value, delay }: { label: string; value: number; de
   return (
     <div ref={ref} className="mb-8">
       <div className="flex justify-between items-center mb-3">
-        <span className="text-[#F0F2F5] font-bold tracking-wider text-sm">{label}</span>
-        <span className="text-coral-400 font-bold">{value}%</span>
+        <span className="text-peach-200 font-bold tracking-wider text-sm">{label}</span>
+        <span className="text-terra-400 font-bold">{value}%</span>
       </div>
-      <div className="h-1 bg-[#F0F2F5]/10 w-full rounded-full">
+      <div className="h-1 bg-peach-200/10 w-full rounded-full">
         <motion.div
           initial={{ width: 0 }}
           animate={isInView ? { width: `${value}%` } : { width: 0 }}
           transition={{ duration: 1.5, delay, ease: "easeOut" }}
-          className="h-full bg-gradient-to-r from-coral-400 to-amber-400 rounded-full"
+          className="h-full bg-gradient-to-r from-terra-400 to-terra-300 rounded-full"
         />
       </div>
     </div>
@@ -85,6 +95,22 @@ function DecorativeIcon({ type, className = "" }: { type: string; className?: st
       </svg>
     );
   }
+  if (type === "circle") {
+    return (
+      <svg className={className} viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="50" cy="50" r="35" />
+        <circle cx="50" cy="50" r="15" />
+      </svg>
+    );
+  }
+  if (type === "diamond") {
+    return (
+      <svg className={className} viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+        <polygon points="50,15 85,50 50,85 15,50" />
+        <line x1="50" y1="30" x2="50" y2="70" />
+      </svg>
+    );
+  }
   return null;
 }
 
@@ -101,6 +127,77 @@ export default function Home() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showGetStarted, setShowGetStarted] = useState(false);
 
+  // --- Service Slider State ---
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isSliderPaused, setIsSliderPaused] = useState(false);
+  const sliderTrackRef = useRef<HTMLDivElement>(null);
+  const [sliderOffset, setSliderOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dotCount, setDotCount] = useState(SERVICES.length);
+  const dragStartX = useRef(0);
+
+  const getMaxSlide = () => {
+    if (typeof window === "undefined") return 2;
+    return SERVICES.length - (window.innerWidth >= 768 ? 3 : 1);
+  };
+
+  // Recalculate pixel offset when slide changes or window resizes
+  useEffect(() => {
+    const recalcOffset = () => {
+      if (!sliderTrackRef.current) return;
+      const cards = Array.from(sliderTrackRef.current.children) as HTMLElement[];
+      if (cards[currentSlide]) {
+        setSliderOffset(cards[currentSlide].offsetLeft);
+      }
+    };
+    recalcOffset();
+    setDotCount(getMaxSlide() + 1);
+    const handleResize = () => { recalcOffset(); setDotCount(getMaxSlide() + 1); };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [currentSlide]);
+
+  // Auto-advance slider
+  useEffect(() => {
+    if (isSliderPaused) return;
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => {
+        const max = getMaxSlide();
+        return prev >= max ? 0 : prev + 1;
+      });
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [isSliderPaused]);
+
+  const nextSlide = () => {
+    setCurrentSlide(prev => {
+      const max = getMaxSlide();
+      return prev >= max ? 0 : prev + 1;
+    });
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide(prev => {
+      const max = getMaxSlide();
+      return prev <= 0 ? max : prev - 1;
+    });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setIsDragging(true);
+    setIsSliderPaused(true);
+    dragStartX.current = e.clientX;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    setIsSliderPaused(false);
+    const diff = dragStartX.current - e.clientX;
+    if (diff > 50) nextSlide();
+    else if (diff < -50) prevSlide();
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 500);
@@ -114,29 +211,29 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-[#F0F2F5] font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-peach-200 text-olive-400 font-sans overflow-x-hidden">
 
       {/* ========== HERO SECTION ========== */}
       <section className="relative min-h-screen flex flex-col md:flex-row">
         {/* Mobile Background / Desktop Left Side */}
         <div className="absolute inset-0 md:relative md:w-1/2 md:min-h-screen z-0">
           <Image
-            src="/images/hero-gym.png"
-            alt="Gym workout"
+            src="/images/sol-hero-poster.jpeg"
+            alt="SOL Pilates - Strength in Every Movement"
             fill
             className="object-cover object-center"
             priority
           />
           {/* Mobile Overlay Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F19]/30 via-[#0B0F19]/60 to-[#0B0F19] md:hidden" />
+          <div className="absolute inset-0 bg-gradient-to-b from-warmDark-800/30 via-warmDark-800/60 to-warmDark-800 md:hidden" />
         </div>
 
         {/* Right side - Content */}
-        <div className="relative z-10 w-full md:w-1/2 min-h-screen flex items-end md:items-center pb-20 md:pb-0 px-6 md:px-16 pointer-events-none md:pointer-events-auto bg-transparent md:bg-[#0B0F19]">
+        <div className="relative z-10 w-full md:w-1/2 min-h-screen flex items-end md:items-center pb-20 md:pb-0 px-6 md:px-16 pointer-events-none md:pointer-events-auto bg-transparent md:bg-peach-200">
           <div className="w-full">
             {/* Watermark */}
-            <div className="absolute top-1/4 right-0 text-[12rem] font-black text-[#F0F2F5]/5 leading-none pointer-events-none hidden lg:block">
-              CAN
+            <div className="absolute top-1/4 right-0 text-[12rem] font-black text-olive-400/5 leading-none pointer-events-none hidden lg:block">
+              SOL
             </div>
 
             {/* Main headline */}
@@ -146,12 +243,12 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               className="mb-8 md:mb-0"
             >
-              <span className="text-coral-400/70 text-2xl md:text-4xl font-light mb-2 block">+</span>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-[#F0F2F5] drop-shadow-xl md:drop-shadow-none">
-                WHATEVER<br />
-                YOU DECIDE,<br />
-                YOU CAN DO<br />
-                IT!
+              <span className="text-terra-400/70 text-2xl md:text-4xl font-light mb-2 block">+</span>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-peach-50 md:text-olive-600 drop-shadow-xl md:drop-shadow-none font-display">
+                WHERE<br />
+                MOVEMENT<br />
+                MEETS<br />
+                CALM
               </h1>
             </motion.div>
 
@@ -166,10 +263,10 @@ export default function Home() {
                 onClick={() => setShowGetStarted(true)}
                 className="group inline-flex items-center gap-4"
               >
-                <span className="px-8 py-4 md:px-10 md:py-5 bg-coral-400 text-[#0B0F19] font-black text-xs md:text-sm tracking-widest hover:bg-coral-300 transition-all uppercase shadow-[0_0_30px_rgba(255,106,61,0.3)]">
+                <span className="px-8 py-4 md:px-10 md:py-5 bg-terra-400 text-peach-50 font-black text-xs md:text-sm tracking-widest hover:bg-terra-300 transition-all uppercase shadow-glow">
                   Get Started
                 </span>
-                <span className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-coral-400 flex items-center justify-center group-hover:bg-coral-400 group-hover:text-[#0B0F19] transition-all bg-[#0B0F19]/50 md:bg-transparent backdrop-blur-sm md:backdrop-blur-none text-coral-400">
+                <span className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-terra-400 flex items-center justify-center group-hover:bg-terra-400 group-hover:text-peach-50 transition-all bg-warmDark-800/50 md:bg-transparent backdrop-blur-sm md:backdrop-blur-none text-terra-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M7 17L17 7M17 7H7M17 7V17" />
                   </svg>
@@ -191,13 +288,13 @@ export default function Home() {
 
 
       {/* ========== SERVICES SECTION ========== */}
-      <section className="py-24 bg-[#0B0F19]">
+      <section className="py-24 bg-peach-300">
         <div className="container mx-auto px-6">
           {/* Section Header */}
           <div className="text-center mb-12 md:mb-16 relative">
             {/* Watermark */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[5rem] md:text-[12rem] font-black text-[#F0F2F5]/5 pointer-events-none whitespace-nowrap">
-              GO!
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[5rem] md:text-[12rem] font-black text-olive-400/5 pointer-events-none whitespace-nowrap">
+              SOL
             </div>
 
             <motion.div
@@ -206,50 +303,79 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <span className="text-coral-400/50 text-2xl md:text-3xl font-light">+</span>
-              <h2 className="text-3xl md:text-6xl font-black mt-2">DO IT FOR YOURSELF!</h2>
-              <p className="text-[#8892A4] mt-4 tracking-wider text-xs md:text-sm">MAKE A DIFFERENCE IN YOUR LIFE</p>
+              <span className="text-terra-400/50 text-2xl md:text-3xl font-light">+</span>
+              <h2 className="text-3xl md:text-6xl font-black mt-2 text-olive-600 font-display">STRENGTHEN, SCULPT, TRANSFORM</h2>
+              <p className="text-olive-300 mt-4 tracking-wider text-xs md:text-sm">A SOPHISTICATED APPROACH TO PILATES & WELLNESS</p>
             </motion.div>
           </div>
 
-          {/* Service Cards Grid/Scroll */}
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:grid md:grid-cols-3 md:gap-6 pb-6 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
-            {SERVICES.map((service, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: idx * 0.2 }}
-                className="relative group overflow-hidden min-w-[85vw] md:min-w-0 snap-center rounded-2xl md:rounded-none"
+          {/* Service Slider */}
+          <div
+            className="relative"
+            onMouseEnter={() => setIsSliderPaused(true)}
+            onMouseLeave={() => setIsSliderPaused(false)}
+          >
+            {/* Slider Track */}
+            <div
+              className="overflow-hidden rounded-lg select-none"
+              style={{ cursor: isDragging ? "grabbing" : "grab" }}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={() => { if (isDragging) { setIsDragging(false); setIsSliderPaused(false); } }}
+            >
+              <div
+                ref={sliderTrackRef}
+                className="flex gap-4 md:gap-6 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
+                style={{ transform: `translateX(-${sliderOffset}px)` }}
               >
-                {/* Background Image */}
-                <div className="relative h-[450px] md:h-[600px] w-full">
-                  <Image
-                    src={service.image}
-                    alt={service.title}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/90 via-[#0B0F19]/20 to-transparent" />
+                {SERVICES.map((service, idx) => (
+                  <div
+                    key={idx}
+                    className="relative group overflow-hidden rounded-lg flex-shrink-0 w-full md:w-[calc(33.333%-16px)]"
+                  >
+                    <div className="relative h-[450px] md:h-[600px] w-full">
+                      <Image
+                        src={service.image}
+                        alt={service.title}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-warmDark-800/90 via-warmDark-800/20 to-transparent" />
 
-                  {/* Decorative Icon */}
-                  <div className="absolute top-6 left-6">
-                    <DecorativeIcon type={service.icon} className="w-12 h-12 md:w-16 md:h-16 text-coral-400/70" />
-                  </div>
+                      {/* Decorative Icon */}
+                      <div className="absolute top-6 left-6">
+                        <DecorativeIcon type={service.icon} className="w-12 h-12 md:w-16 md:h-16 text-terra-400/70" />
+                      </div>
 
-                  {/* Content */}
-                  <div className="absolute bottom-8 left-6 right-6">
-                    <h3 className="text-xl md:text-2xl font-black mb-4">{service.title}</h3>
-                    <button className="w-12 h-12 rounded-full border border-coral-400/50 flex items-center justify-center hover:bg-coral-400 hover:text-[#0B0F19] transition-all text-coral-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M7 17L17 7M17 7H7M17 7V17" />
-                      </svg>
-                    </button>
+                      {/* Content */}
+                      <div className="absolute bottom-8 left-6 right-6">
+                        <h3 className="text-xl md:text-2xl font-black mb-4 text-peach-50 font-display">{service.title}</h3>
+                        <button className="w-12 h-12 rounded-full border border-terra-400/50 flex items-center justify-center hover:bg-terra-400 hover:text-peach-50 transition-all text-terra-300">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M7 17L17 7M17 7H7M17 7V17" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Dot Indicators */}
+            <div className="flex justify-center gap-2 mt-10">
+              {Array.from({ length: dotCount }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    i === currentSlide
+                      ? "bg-terra-400 w-8"
+                      : "bg-olive-400/20 w-2 hover:bg-olive-400/40"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -258,16 +384,16 @@ export default function Home() {
       <FacilitiesSection />
 
       {/* ========== MENTORS STACK SECTION ========== */}
-      <section className="bg-[#090D16] py-24 border-t border-[#F0F2F5]/5 overflow-hidden">
+      <section className="bg-warmDark-800 py-24 border-t border-peach-200/5 overflow-hidden">
         <div className="container mx-auto px-4 flex flex-col items-center">
           <div className="text-center mb-16">
-            <span className="text-coral-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-3">Community</span>
-            <h2 className="text-4xl md:text-5xl font-black text-[#F0F2F5] tracking-tighter uppercase relative inline-block">
-              Elite Mentors
-              <svg className="absolute -right-8 -top-8 w-6 h-6 text-coral-400/30" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+            <span className="text-terra-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-3">Our Team</span>
+            <h2 className="text-4xl md:text-5xl font-black text-peach-200 tracking-tighter uppercase relative inline-block font-display">
+              Our Instructors
+              <svg className="absolute -right-8 -top-8 w-6 h-6 text-terra-400/30" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
             </h2>
-            <p className="text-[#8892A4] mt-4 max-w-sm mx-auto">
-              Swipe through our roster of world-champion coaches.
+            <p className="text-peach-400 mt-4 max-w-sm mx-auto">
+              Meet the instructors behind every transformative session at SOL.
             </p>
           </div>
 
@@ -277,27 +403,27 @@ export default function Home() {
               {
                 src: "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=600&auto=format&fit=crop",
                 name: "Marcus Cole",
-                role: "Crossfit Master" // Intense
+                role: "Reformer Specialist"
               },
               {
                 src: "https://images.unsplash.com/photo-1611672585731-fa10603fb9e0?q=80&w=600&auto=format&fit=crop",
                 name: "Elena Fox",
-                role: "Aerobics Lead" // Focus
+                role: "Mat Pilates Lead"
               },
               {
                 src: "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=600&auto=format&fit=crop",
                 name: "David Stone",
-                role: "Pure Strength" // Weights
+                role: "Strength & Conditioning"
               },
               {
                 src: "https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop",
                 name: "Sarah Jen",
-                role: "Gymnastics" // Session
+                role: "Flexibility & Barre"
               },
               {
                 src: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=600&auto=format&fit=crop",
                 name: "Maya Lee",
-                role: "Yoga Flow" // Female fitness
+                role: "Prenatal & Restorative"
               }
             ]} />
           </div>
@@ -317,12 +443,12 @@ export default function Home() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <Image
-            src="/images/performance-bg.png"
-            alt="Performance background"
+            src="/images/sol-pilates-mat-brown.jpeg"
+            alt="SOL Pilates mat session"
             fill
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-[#0B0F19]/80" />
+          <div className="absolute inset-0 bg-warmDark-800/80" />
         </div>
 
         <div className="container mx-auto px-6 relative z-10">
@@ -335,21 +461,21 @@ export default function Home() {
               transition={{ duration: 0.8 }}
             >
               {/* Watermark */}
-              <div className="text-[6rem] font-black text-[#F0F2F5]/5 absolute top-0 left-0 pointer-events-none hidden lg:block">
-                BOOST
+              <div className="text-[6rem] font-black text-peach-200/5 absolute top-0 left-0 pointer-events-none hidden lg:block">
+                PROGRESS
               </div>
 
-              <span className="text-coral-400/50 text-3xl font-light">+</span>
-              <h2 className="text-4xl md:text-5xl font-black mt-2 mb-6">BOOST PERFORMANCE</h2>
-              <p className="text-[#8892A4] mb-8 max-w-md">
-                Track your progress across every discipline. Our performance analytics capture strength gains, endurance metrics, and recovery scores in real time.
+              <span className="text-terra-400/50 text-3xl font-light">+</span>
+              <h2 className="text-4xl md:text-5xl font-black mt-2 mb-6 text-peach-200 font-display">IT IS STRENGTH.<br />IT IS CONTROL.<br />IT IS PROGRESS.</h2>
+              <p className="text-peach-400 mb-8 max-w-md">
+                At SOL, movement is more than exercise. Track your journey across every discipline — from core stability to full-body transformation.
               </p>
 
               <button className="group inline-flex items-center gap-4">
-                <span className="px-8 py-4 border border-coral-400 text-coral-400 font-bold text-sm tracking-wider hover:bg-coral-400 hover:text-[#0B0F19] transition-all">
+                <span className="px-8 py-4 border border-terra-400 text-terra-300 font-bold text-sm tracking-wider hover:bg-terra-400 hover:text-peach-50 transition-all">
                   VIEW MORE
                 </span>
-                <span className="w-12 h-12 rounded-full border border-coral-400 text-coral-400 flex items-center justify-center group-hover:bg-coral-400 group-hover:text-[#0B0F19] transition-all">
+                <span className="w-12 h-12 rounded-full border border-terra-400 text-terra-300 flex items-center justify-center group-hover:bg-terra-400 group-hover:text-peach-50 transition-all">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M7 17L17 7M17 7H7M17 7V17" />
                   </svg>
@@ -385,9 +511,9 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 bg-coral-400/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-coral-400/40 transition-all z-[60] border border-coral-400/30"
+          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-12 h-12 bg-terra-400/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-terra-400/40 transition-all z-[60] border border-terra-400/30"
         >
-          <svg className="w-5 h-5 text-coral-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-terra-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M5 15l7-7 7 7" />
           </svg>
         </motion.button>

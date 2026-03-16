@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 // Facility Data (single gym)
 const FACILITY = {
-    name: "FitConnect Pro",
+    name: "SOL Pilates",
     address: "250 West 54th Street, New York, NY 10019",
     rating: 4.9,
     reviewCount: 128,
@@ -32,7 +32,7 @@ const FACILITY = {
     },
     contact: {
         phone: "(212) 555-0180",
-        email: "hello@fitconnectpro.com"
+        email: "hello@solpilates.com"
     },
 }
 
@@ -157,27 +157,27 @@ export default function SchedulePage() {
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-1 rounded-md bg-coral-400 text-[#0B0F19] text-[10px] font-black uppercase tracking-wider">
+                        <span className="px-2 py-1 rounded-md bg-gold-400 text-forest-700 text-[10px] font-black uppercase tracking-wider">
                             FLAGSHIP
                         </span>
-                        <div className="flex items-center gap-1 text-[#F59E0B]">
+                        <div className="flex items-center gap-1 text-gold-300">
                             <Star className="w-3 h-3 fill-current" />
                             <span className="text-xs font-bold">{FACILITY.rating}</span>
-                            <span className="text-[#5A6478] text-xs">({FACILITY.reviewCount})</span>
+                            <span className="text-sage-500 text-xs">({FACILITY.reviewCount})</span>
                         </div>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter mb-2">
+                    <h1 className="text-3xl md:text-4xl font-black text-sand-200 tracking-tighter mb-2 font-display">
                         Class Schedule
                     </h1>
-                    <p className="text-[#8892A4] text-sm flex items-center gap-2">
-                        <MapPin className="w-3 h-3 text-[#FF6A3D]" />
+                    <p className="text-sage-400 text-sm flex items-center gap-2">
+                        <MapPin className="w-3 h-3 text-gold-400" />
                         {FACILITY.address}
                     </p>
                 </motion.div>
             </div>
 
             {/* Tabs */}
-            <div className="sticky top-0 z-30 bg-[#0B0F19]/80 backdrop-blur-xl border-b border-[#1A2238] -mx-4 lg:-mx-8 px-4 lg:px-8 py-4 overflow-x-auto mb-6">
+            <div className="sticky top-0 z-30 bg-forest-700/80 backdrop-blur-xl border-b border-forest-600 -mx-4 lg:-mx-8 px-4 lg:px-8 py-4 overflow-x-auto mb-6">
                 <div className="flex gap-2 min-w-max">
                     {[
                         { id: 'classes', label: 'Schedule' },
@@ -188,8 +188,8 @@ export default function SchedulePage() {
                             key={tab.id}
                             onClick={() => setSelectedTab(tab.id as any)}
                             className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all relative overflow-hidden ${selectedTab === tab.id
-                                    ? 'bg-coral-400 text-[#0B0F19] shadow-[0_0_20px_rgba(255,106,61,0.3)]'
-                                    : 'bg-[#F0F2F5]/5 text-[#5A6478] hover:text-[#F0F2F5] hover:bg-[#F0F2F5]/10'
+                                    ? 'bg-gold-400 text-forest-700 shadow-glow'
+                                    : 'bg-sand-200/5 text-sage-500 hover:text-sand-200 hover:bg-sand-200/10'
                                 }`}
                         >
                             {tab.label}
@@ -218,7 +218,7 @@ export default function SchedulePage() {
 
                             {/* Filters */}
                             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                                <Filter className="w-4 h-4 text-[#5A6478] shrink-0" />
+                                <Filter className="w-4 h-4 text-sage-500 shrink-0" />
                                 {[
                                     { id: 'instructor', label: 'Instructor' },
                                     { id: 'classType', label: 'Class Type' },
@@ -228,8 +228,8 @@ export default function SchedulePage() {
                                         key={filter.id}
                                         onClick={() => toggleFilter(filter.id as FilterType)}
                                         className={`px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${activeFilters.includes(filter.id as FilterType)
-                                                ? 'bg-[#FF6A3D]/20 border-[#FF6A3D] text-[#FF6A3D]'
-                                                : 'bg-transparent border-[#1A2238] text-[#5A6478] hover:border-[#F0F2F5]/20'
+                                                ? 'bg-gold-400/20 border-gold-400 text-gold-400'
+                                                : 'bg-transparent border-forest-600 text-sage-500 hover:border-sand-200/20'
                                             }`}
                                     >
                                         {filter.label}
@@ -246,43 +246,43 @@ export default function SchedulePage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.1 }}
                                         onClick={() => handleBook(cls)}
-                                        className="bg-[#F0F2F5]/5 border border-[#1A2238] rounded-2xl p-4 active:scale-[0.98] transition-all cursor-pointer hover:bg-[#F0F2F5]/10 group"
+                                        className="bg-forest-800 border border-forest-600 rounded-2xl p-4 active:scale-[0.98] transition-all cursor-pointer hover:bg-forest-800/80 group"
                                     >
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex gap-4">
                                                 <div className="flex flex-col items-center">
-                                                    <span className="text-lg font-black text-white leading-none">{cls.time}</span>
-                                                    <span className="text-[10px] text-[#5A6478] font-medium mt-1">{cls.duration}</span>
+                                                    <span className="text-lg font-black text-sand-200 leading-none">{cls.time}</span>
+                                                    <span className="text-[10px] text-sage-500 font-medium mt-1">{cls.duration}</span>
                                                 </div>
-                                                <div className="w-px h-10 bg-[#F0F2F5]/10" />
+                                                <div className="w-px h-10 bg-sand-200/10" />
                                                 <div>
-                                                    <h3 className="text-white font-bold group-hover:text-[#FF6A3D] transition-colors">{cls.name}</h3>
-                                                    <p className="text-[#5A6478] text-xs flex items-center gap-1 mt-0.5">
+                                                    <h3 className="text-sand-200 font-bold group-hover:text-gold-400 transition-colors">{cls.name}</h3>
+                                                    <p className="text-sage-500 text-xs flex items-center gap-1 mt-0.5">
                                                         {cls.location} · {cls.type}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end">
                                                 {cls.capacity - cls.booked === 0 ? (
-                                                    <span className="text-xs font-bold text-[#F0F2F5]/20 uppercase tracking-wider">Full</span>
+                                                    <span className="text-xs font-bold text-sand-200/20 uppercase tracking-wider">Full</span>
                                                 ) : (
-                                                    <span className="w-8 h-8 rounded-full bg-[#FF6A3D]/20 flex items-center justify-center text-[#FF6A3D]">
+                                                    <span className="w-8 h-8 rounded-full bg-gold-400/20 flex items-center justify-center text-gold-400">
                                                         <ChevronLeft className="w-4 h-4 rotate-180" />
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-3 border-t border-[#1A2238]">
+                                        <div className="flex items-center justify-between pt-3 border-t border-forest-600">
                                             <div className="flex items-center gap-2">
-                                                <Avatar className="w-6 h-6 border border-[#1A2238]">
+                                                <Avatar className="w-6 h-6 border border-forest-600">
                                                     <AvatarImage src={cls.trainerImage} />
-                                                    <AvatarFallback className="text-[8px] bg-[#F0F2F5]/10 text-white">{cls.trainer.charAt(0)}</AvatarFallback>
+                                                    <AvatarFallback className="text-[8px] bg-sand-200/10 text-sand-200">{cls.trainer.charAt(0)}</AvatarFallback>
                                                 </Avatar>
-                                                <span className="text-xs text-[#8892A4] font-medium">{cls.trainer}</span>
+                                                <span className="text-xs text-sage-400 font-medium">{cls.trainer}</span>
                                             </div>
                                             {cls.capacity - cls.booked < 3 && cls.capacity - cls.booked > 0 && (
-                                                <span className="text-[10px] text-[#F59E0B] font-bold uppercase tracking-wider">
+                                                <span className="text-[10px] text-gold-300 font-bold uppercase tracking-wider">
                                                     Only {cls.capacity - cls.booked} spots left
                                                 </span>
                                             )}
@@ -303,15 +303,15 @@ export default function SchedulePage() {
                         >
                             {TRAINERS.map((trainer) => (
                                 <div key={trainer.id} className="relative aspect-[3/4] rounded-2xl overflow-hidden group">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
-                                    <div className="absolute inset-0 bg-[#F0F2F5]/10 flex items-center justify-center text-[#F0F2F5]/20 font-bold text-4xl">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-transparent to-transparent z-10" />
+                                    <div className="absolute inset-0 bg-sand-200/10 flex items-center justify-center text-sand-200/20 font-bold text-4xl">
                                         {trainer.image ? (
                                             <Image src={trainer.image} alt={trainer.name} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
                                         ) : trainer.name.charAt(0)}
                                     </div>
                                     <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                                        <h3 className="text-white font-bold leading-none mb-1">{trainer.name}</h3>
-                                        <p className="text-[#FF6A3D] text-xs font-bold uppercase tracking-wider">{trainer.role}</p>
+                                        <h3 className="text-sand-200 font-bold leading-none mb-1">{trainer.name}</h3>
+                                        <p className="text-gold-400 text-xs font-bold uppercase tracking-wider">{trainer.role}</p>
                                     </div>
                                 </div>
                             ))}
@@ -326,41 +326,41 @@ export default function SchedulePage() {
                             exit={{ opacity: 0 }}
                             className="space-y-6"
                         >
-                            <div className="bg-[#F0F2F5]/5 rounded-2xl p-6 border border-[#1A2238]">
-                                <h3 className="text-white font-bold mb-3">About Our Facility</h3>
-                                <p className="text-[#8892A4] text-sm leading-relaxed mb-4">{FACILITY.description}</p>
-                                <h4 className="text-white font-bold mb-3 text-sm">Amenities</h4>
+                            <div className="bg-forest-800 rounded-2xl p-6 border border-forest-600">
+                                <h3 className="text-sand-200 font-bold mb-3">About Our Facility</h3>
+                                <p className="text-sage-400 text-sm leading-relaxed mb-4">{FACILITY.description}</p>
+                                <h4 className="text-sand-200 font-bold mb-3 text-sm">Amenities</h4>
                                 <div className="flex flex-wrap gap-2">
                                     {FACILITY.amenities.map(item => (
-                                        <span key={item} className="px-3 py-1.5 rounded-lg bg-[#F0F2F5]/5 text-[#F0F2F5]/70 text-xs font-medium border border-[#1A2238]">
+                                        <span key={item} className="px-3 py-1.5 rounded-lg bg-sand-200/5 text-sand-200/70 text-xs font-medium border border-forest-600">
                                             {item}
                                         </span>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="bg-[#F0F2F5]/5 rounded-2xl p-6 border border-[#1A2238]">
-                                <h3 className="text-white font-bold mb-4">Contact & Hours</h3>
+                            <div className="bg-forest-800 rounded-2xl p-6 border border-forest-600">
+                                <h3 className="text-sand-200 font-bold mb-4">Contact & Hours</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-[#FF6A3D]/20 flex items-center justify-center text-[#FF6A3D]">
+                                        <div className="w-8 h-8 rounded-lg bg-gold-400/20 flex items-center justify-center text-gold-400">
                                             <Phone className="w-4 h-4" />
                                         </div>
-                                        <span className="text-sm text-[#F0F2F5]/80">{FACILITY.contact.phone}</span>
+                                        <span className="text-sm text-sand-200/80">{FACILITY.contact.phone}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-[#FF6A3D]/20 flex items-center justify-center text-[#FF6A3D]">
+                                        <div className="w-8 h-8 rounded-lg bg-gold-400/20 flex items-center justify-center text-gold-400">
                                             <Mail className="w-4 h-4" />
                                         </div>
-                                        <span className="text-sm text-[#F0F2F5]/80">{FACILITY.contact.email}</span>
+                                        <span className="text-sm text-sand-200/80">{FACILITY.contact.email}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-[#FF6A3D]/20 flex items-center justify-center text-[#FF6A3D]">
+                                        <div className="w-8 h-8 rounded-lg bg-gold-400/20 flex items-center justify-center text-gold-400">
                                             <Clock className="w-4 h-4" />
                                         </div>
                                         <div className="flex flex-col text-sm">
-                                            <span className="text-[#F0F2F5]/80">Mon-Fri: {FACILITY.hours.weekday}</span>
-                                            <span className="text-[#F0F2F5]/80">Sat-Sun: {FACILITY.hours.weekend}</span>
+                                            <span className="text-sand-200/80">Mon-Fri: {FACILITY.hours.weekday}</span>
+                                            <span className="text-sand-200/80">Sat-Sun: {FACILITY.hours.weekend}</span>
                                         </div>
                                     </div>
                                 </div>

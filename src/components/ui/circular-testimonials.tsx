@@ -52,13 +52,13 @@ export const CircularTestimonials = ({
     colors = {},
     fontSizes = {},
 }: CircularTestimonialsProps) => {
-    // Color & font config
-    const colorName = colors.name ?? "#F0F2F5";
-    const colorDesignation = colors.designation ?? "#8892A4";
-    const colorTestimony = colors.testimony ?? "#8892A4";
-    const colorArrowBg = colors.arrowBackground ?? "#131A2B";
-    const colorArrowFg = colors.arrowForeground ?? "#F0F2F5";
-    const colorArrowHoverBg = colors.arrowHoverBackground ?? "#FF6A3D";
+    // Color & font config — SOL earth-tone defaults
+    const colorName = colors.name ?? "#EDE6DA";
+    const colorDesignation = colors.designation ?? "#7A8B6F";
+    const colorTestimony = colors.testimony ?? "#A8B89E";
+    const colorArrowBg = colors.arrowBackground ?? "#222B1E";
+    const colorArrowFg = colors.arrowForeground ?? "#EDE6DA";
+    const colorArrowHoverBg = colors.arrowHoverBackground ?? "#D4A24C";
     const fontSizeName = fontSizes.name ?? "1.5rem";
     const fontSizeDesignation = fontSizes.designation ?? "0.925rem";
     const fontSizeQuote = fontSizes.quote ?? "1.125rem";
@@ -127,8 +127,6 @@ export const CircularTestimonials = ({
     function getImageStyle(index: number): React.CSSProperties {
         const gap = calculateGap(containerWidth);
         const maxStickUp = gap * 0.8;
-        const offset = (index - activeIndex + testimonialsLength) % testimonialsLength;
-        // const zIndex = testimonialsLength - Math.abs(offset);
         const isActive = index === activeIndex;
         const isLeft = (activeIndex - 1 + testimonialsLength) % testimonialsLength === index;
         const isRight = (activeIndex + 1) % testimonialsLength === index;
@@ -255,7 +253,7 @@ export const CircularTestimonials = ({
                             onMouseLeave={() => setHoverPrev(false)}
                             aria-label="Previous testimonial"
                         >
-                            <FaArrowLeft size={28} color={hoverPrev ? "#0B0F19" : colorArrowFg} />
+                            <FaArrowLeft size={28} color={hoverPrev ? "#FAF3EB" : colorArrowFg} />
                         </button>
                         <button
                             className="arrow-button next-button"
@@ -267,7 +265,7 @@ export const CircularTestimonials = ({
                             onMouseLeave={() => setHoverNext(false)}
                             aria-label="Next testimonial"
                         >
-                            <FaArrowRight size={28} color={hoverNext ? "#0B0F19" : colorArrowFg} />
+                            <FaArrowRight size={28} color={hoverNext ? "#FAF3EB" : colorArrowFg} />
                         </button>
                     </div>
                 </div>
@@ -275,17 +273,17 @@ export const CircularTestimonials = ({
             <style jsx>{`
         .testimonial-container {
           width: 100%;
-          max-width: 75rem; /* Reduced from 80rem */
+          max-width: 75rem;
           padding: 2rem;
         }
         .testimonial-grid {
           display: grid;
-          gap: 4rem; /* Reduced gap slightly to fit larger text */
+          gap: 4rem;
         }
         .image-container {
           position: relative;
           width: 100%;
-          height: 28rem; /* Reduced from 32rem */
+          height: 28rem;
           perspective: 1000px;
         }
         .testimonial-image {
@@ -299,10 +297,10 @@ export const CircularTestimonials = ({
         .testimonial-content {
           display: flex;
           flex-direction: column;
-          justify-content: center; /* Center content vertically */
+          justify-content: center;
         }
         .name {
-          font-weight: 900; /* Extra bold */
+          font-weight: 900;
           margin-bottom: 0.5rem;
           line-height: 1;
         }
@@ -322,7 +320,7 @@ export const CircularTestimonials = ({
           padding-top: 3rem;
         }
         .arrow-button {
-          width: 3.5rem; /* Larger buttons */
+          width: 3.5rem;
           height: 3.5rem;
           border-radius: 50%;
           display: flex;
@@ -337,7 +335,7 @@ export const CircularTestimonials = ({
         }
         @media (min-width: 1024px) {
           .testimonial-grid {
-            grid-template-columns: 1.2fr 1fr; /* Image takes slightly more space */
+            grid-template-columns: 1.2fr 1fr;
             align-items: center;
           }
           .arrow-buttons {

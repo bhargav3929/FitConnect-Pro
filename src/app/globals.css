@@ -4,72 +4,108 @@
 
 @layer base {
   :root {
-    /* Ember & Midnight: Premium Fitness Palette */
-    --background: 223 39% 7%;
-    /* #0B0F19 Deep Warm Navy */
-    --foreground: 216 20% 95%;
-    /* #F0F2F5 Warm Off-White */
+    /* SOL Pilates Studio v2 — Warm Peach / Olive / Terracotta */
+    --background: 28 48% 90%;
+    /* #F0D8C0 Warm Peach */
+    --foreground: 82 16% 39%;
+    /* #6B7752 Olive Green */
 
-    --card: 222 38% 12%;
-    /* #131A2B Elevated Surface */
-    --card-foreground: 216 20% 95%;
+    --card: 28 38% 84%;
+    /* #E4C8AB Medium Peach */
+    --card-foreground: 82 16% 39%;
 
-    --popover: 222 38% 12%;
-    --popover-foreground: 216 20% 95%;
+    --popover: 28 38% 84%;
+    --popover-foreground: 82 16% 39%;
 
-    --primary: 14 100% 62%;
-    /* #FF6A3D Warm Coral-Orange */
-    --primary-foreground: 223 39% 7%;
+    --primary: 14 52% 36%;
+    /* #8B3F2C Deep Terracotta */
+    --primary-foreground: 30 58% 95%;
+    /* #FAF3EB Lightest Peach */
 
-    --secondary: 224 37% 16%;
-    /* #1A2238 Dark Elevated */
-    --secondary-foreground: 216 20% 95%;
+    --secondary: 28 32% 76%;
+    /* #D4B494 Darker Peach */
+    --secondary-foreground: 82 16% 39%;
 
-    --muted: 220 25% 18%;
-    --muted-foreground: 219 14% 59%;
-    /* #8892A4 */
+    --muted: 28 32% 76%;
+    /* #D4B494 */
+    --muted-foreground: 82 14% 54%;
+    /* #8A9A78 Muted Olive */
 
-    --accent: 35 100% 64%;
-    /* #FFB347 Warm Amber-Gold */
-    --accent-foreground: 223 39% 7%;
+    --accent: 14 52% 36%;
+    /* #8B3F2C Deep Terracotta */
+    --accent-foreground: 30 58% 95%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 216 20% 98%;
+    --destructive: 0 60% 49%;
+    /* #C93030 Muted Earth Red */
+    --destructive-foreground: 30 58% 95%;
 
-    --border: 220 25% 18%;
-    --input: 220 25% 20%;
-    --ring: 14 100% 62%;
+    --border: 28 32% 76%;
+    /* #D4B494 Darker Peach */
+    --input: 28 38% 84%;
+    --ring: 14 52% 36%;
 
-    --radius: 0rem;
+    --radius: 0.375rem;
 
     /* Chart Colors */
-    --chart-1: 14 100% 62%;
-    --chart-2: 35 100% 64%;
-    --chart-3: 160 84% 39%;
-    --chart-4: 219 14% 59%;
-    --chart-5: 0 72% 51%;
+    --chart-1: 14 52% 36%;
+    /* Terracotta */
+    --chart-2: 82 16% 39%;
+    /* Olive */
+    --chart-3: 28 48% 90%;
+    /* Peach */
+    --chart-4: 82 14% 54%;
+    /* Muted Olive */
+    --chart-5: 0 60% 49%;
+    /* Earth Red */
+
+    /* Font Variables */
+    --font-display: "DM Serif Display", serif;
+    --font-sans: "Plus Jakarta Sans", sans-serif;
   }
 
   .dark {
-    --background: 223 42% 5%;
-    --foreground: 216 20% 95%;
-    --card: 222 40% 10%;
-    --card-foreground: 216 20% 95%;
-    --popover: 222 40% 10%;
-    --popover-foreground: 216 20% 95%;
-    --primary: 14 100% 62%;
-    --primary-foreground: 223 39% 7%;
-    --secondary: 224 37% 14%;
-    --secondary-foreground: 216 20% 95%;
-    --muted: 220 25% 16%;
-    --muted-foreground: 219 14% 55%;
-    --accent: 35 100% 64%;
-    --accent-foreground: 223 39% 7%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 216 20% 98%;
-    --border: 220 25% 16%;
-    --input: 220 25% 18%;
-    --ring: 14 100% 62%;
+    --background: 20 18% 15%;
+    /* #2C2420 Dark Warm Brown */
+    --foreground: 28 48% 90%;
+    /* #F0D8C0 Warm Peach */
+
+    --card: 20 16% 19%;
+    /* #3B2F28 Elevated Brown */
+    --card-foreground: 28 48% 90%;
+
+    --popover: 20 16% 19%;
+    --popover-foreground: 28 48% 90%;
+
+    --primary: 14 52% 36%;
+    /* #8B3F2C Deep Terracotta */
+    --primary-foreground: 28 48% 90%;
+
+    --secondary: 20 14% 22%;
+    /* Dark Muted Brown */
+    --secondary-foreground: 28 48% 90%;
+
+    --muted: 20 14% 22%;
+    --muted-foreground: 82 14% 54%;
+    /* #8A9A78 Muted Olive */
+
+    --accent: 14 52% 36%;
+    /* #8B3F2C Deep Terracotta */
+    --accent-foreground: 28 48% 90%;
+
+    --destructive: 0 60% 49%;
+    --destructive-foreground: 28 48% 90%;
+
+    --border: 20 12% 24%;
+    /* Dark Brown Border */
+    --input: 20 14% 22%;
+    --ring: 14 52% 36%;
+
+    /* Chart Colors (same hues, adjusted for dark bg) */
+    --chart-1: 14 52% 42%;
+    --chart-2: 82 16% 50%;
+    --chart-3: 28 48% 70%;
+    --chart-4: 82 14% 60%;
+    --chart-5: 0 60% 49%;
   }
 }
 

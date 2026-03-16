@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { GymCenter } from '@/types/gym';
 
-// Single facility data for FitConnect Pro
+// Single facility data for SOL Pilates
 const GYM_DATA: GymCenter = {
-    id: 'fitconnect-pro',
-    name: 'FitConnect Pro',
+    id: 'sol-pilates',
+    name: 'SOL Pilates',
     address: {
         street: '250 West 54th Street',
         city: 'New York',
@@ -15,7 +15,7 @@ const GYM_DATA: GymCenter = {
     coordinates: { lat: 40.7638, lng: -73.9826 },
     contactInfo: {
         phone: '(212) 555-0180',
-        email: 'hello@fitconnectpro.com'
+        email: 'hello@solpilates.com'
     },
     operatingHours: {
         monday: { open: '05:00', close: '23:00' },

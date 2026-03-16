@@ -9,44 +9,44 @@ import Link from "next/link"
 
 const AMENITY_ZONES = [
     {
-        id: "strength",
-        name: "Strength Floor",
-        description: "12,000 sq ft of free weights, power racks, and plate-loaded machines. Rubberized Olympic platforms and dedicated deadlift zones.",
+        id: "reformer",
+        name: "Reformer Studio",
+        description: "State-of-the-art Balanced Body reformers in a boutique setting. Precision-guided spring resistance for full-body sculpting and core activation.",
         icon: Dumbbell,
         image: "/images/gyms/fitpro-downtown.png",
-        features: ["Olympic Platforms", "Power Racks", "Cable Machines", "Free Weights"],
+        features: ["Balanced Body Reformers", "Spring Resistance", "Tower Attachments", "Jump Boards"],
     },
     {
-        id: "cardio",
-        name: "Cardio Lab",
-        description: "Performance-tracked treadmills, assault bikes, rowers, and SkiErgs. Every machine connects to your profile for real-time metrics.",
-        icon: Zap,
-        image: "/images/gyms/fitpro-midtown.png",
-        features: ["Smart Treadmills", "Assault Bikes", "Rowing Machines", "SkiErgs"],
-    },
-    {
-        id: "yoga",
-        name: "Yoga & Pilates Studio",
-        description: "Infrared-heated hardwood studio with floor-to-ceiling mirrors. Reformer Pilates equipment and aerial yoga rigging.",
+        id: "mat",
+        name: "Mat Studio",
+        description: "A dedicated open-plan space for mat Pilates, floor work, and group sessions. Floor-to-ceiling mirrors with premium cushioned flooring.",
         icon: Heart,
-        image: "/images/gyms/fitpro-uptown.png",
-        features: ["Heated Studio", "Reformer Pilates", "Aerial Yoga", "Meditation Room"],
+        image: "/images/gyms/fitpro-midtown.png",
+        features: ["Premium Mats", "Resistance Bands", "Pilates Rings", "Stability Balls"],
     },
     {
-        id: "boxing",
-        name: "Combat Zone",
-        description: "Competition-grade boxing ring, heavy bags, speed bags, and MMA cage. Coached sessions available daily.",
+        id: "private",
+        name: "Private Suite",
+        description: "Intimate one-on-one training rooms equipped with reformer, Cadillac, and Wunda chair. Tailored sessions in a private, focused environment.",
         icon: Shield,
+        image: "/images/gyms/fitpro-uptown.png",
+        features: ["Private Reformer", "Cadillac/Trapeze", "Wunda Chair", "Spine Corrector"],
+    },
+    {
+        id: "barre",
+        name: "Barre & Stretch",
+        description: "Barre-fusion studio with ballet barres, TRX suspension, and dedicated flexibility zones. A graceful blend of Pilates principles and dance conditioning.",
+        icon: Zap,
         image: "/images/gyms/fitpro-brooklyn.png",
-        features: ["Boxing Ring", "Heavy Bags", "MMA Cage", "Speed Bags"],
+        features: ["Ballet Barres", "TRX Suspension", "Flexibility Zone", "Foam Rollers"],
     },
     {
         id: "recovery",
-        name: "Recovery Sanctuary",
-        description: "Full-spectrum recovery with cryotherapy chambers, compression boots, infrared saunas, and cold plunge pools.",
+        name: "Recovery Lounge",
+        description: "Post-session recovery with infrared sauna, relaxation seating, and self-massage tools. Designed to calm the body after every session.",
         icon: Waves,
         image: "/images/gyms/fitpro-queens.png",
-        features: ["Cryotherapy", "Infrared Sauna", "Cold Plunge", "Compression Boots"],
+        features: ["Infrared Sauna", "Relaxation Area", "Foam Rolling Zone", "Stretching Space"],
     },
 ]
 
@@ -57,12 +57,12 @@ const FACILITY_HOURS = [
 ]
 
 export default function FacilityPage() {
-    const [activeZone, setActiveZone] = useState<string>("strength")
+    const [activeZone, setActiveZone] = useState<string>("reformer")
 
     const selectedZone = AMENITY_ZONES.find(z => z.id === activeZone)
 
     return (
-        <div className="min-h-screen bg-[#0B0F19] pt-28 pb-20 px-4 md:px-8">
+        <div className="min-h-screen bg-forest-700 pt-28 pb-20 px-4 md:px-8">
             <div className="container mx-auto space-y-16">
                 {/* Hero Header */}
                 <div className="max-w-3xl">
@@ -70,14 +70,14 @@ export default function FacilityPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <span className="text-coral-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-4">Our Facility</span>
-                        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.95] mb-6">
-                            45,000 SQ FT OF<br />
-                            DEDICATED<br />
-                            TRAINING SPACE
+                        <span className="text-gold-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-4">Our Facility</span>
+                        <h1 className="text-4xl md:text-6xl font-black text-sand-200 tracking-tighter leading-[0.95] mb-6 font-display">
+                            SPACES DESIGNED<br />
+                            FOR STRENGTH,<br />
+                            CONTROL & CALM
                         </h1>
-                        <p className="text-[#8892A4] text-lg max-w-xl leading-relaxed">
-                            Five distinct training zones, each purpose-built and equipped with commercial-grade gear. Open 7 days a week with extended hours for early risers and night owls.
+                        <p className="text-sage-400 text-lg max-w-xl leading-relaxed">
+                            Five dedicated studios, each crafted for a specific Pilates discipline. Premium equipment, expert instruction, and an atmosphere built for focused, intentional movement.
                         </p>
                     </motion.div>
                 </div>
@@ -92,10 +92,10 @@ export default function FacilityPage() {
                                 <button
                                     key={zone.id}
                                     onClick={() => setActiveZone(zone.id)}
-                                    className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
+                                    className={`flex items-center gap-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
                                         activeZone === zone.id
-                                            ? "bg-coral-400 text-[#0B0F19] border-coral-400 shadow-[0_0_20px_rgba(255,106,61,0.3)]"
-                                            : "bg-transparent text-[#8892A4] border-[#1A2238] hover:border-[#F0F2F5]/20 hover:text-[#F0F2F5]"
+                                            ? "bg-gold-400 text-forest-700 border-gold-400 shadow-[0_0_20px_rgba(212,162,76,0.3)]"
+                                            : "bg-transparent text-sage-400 border-forest-600 hover:border-sand-200/20 hover:text-sand-200"
                                     }`}
                                 >
                                     <IconComp className="w-4 h-4" />
@@ -115,16 +115,16 @@ export default function FacilityPage() {
                             className="grid grid-cols-1 lg:grid-cols-2 gap-8"
                         >
                             {/* Image */}
-                            <div className="relative h-[320px] lg:h-[420px] overflow-hidden rounded-2xl border border-[#1A2238]">
+                            <div className="relative h-[320px] lg:h-[420px] overflow-hidden border border-forest-600">
                                 <Image
                                     src={selectedZone.image}
                                     alt={selectedZone.name}
                                     fill
                                     className="object-cover"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/70 via-transparent to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-forest-700/70 via-transparent to-transparent" />
                                 <div className="absolute bottom-6 left-6">
-                                    <span className="px-3 py-1.5 bg-coral-400 text-[#0B0F19] text-xs font-bold uppercase tracking-wider rounded-full">
+                                    <span className="px-3 py-1.5 bg-gold-400 text-forest-700 text-xs font-bold uppercase tracking-wider">
                                         {selectedZone.name}
                                     </span>
                                 </div>
@@ -133,24 +133,24 @@ export default function FacilityPage() {
                             {/* Content */}
                             <div className="flex flex-col justify-center space-y-6">
                                 <div>
-                                    <h3 className="text-3xl font-black text-white tracking-tight mb-4">{selectedZone.name}</h3>
-                                    <p className="text-[#8892A4] text-base leading-relaxed">{selectedZone.description}</p>
+                                    <h3 className="text-3xl font-black text-sand-200 tracking-tight mb-4 font-display">{selectedZone.name}</h3>
+                                    <p className="text-sage-400 text-base leading-relaxed">{selectedZone.description}</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     {selectedZone.features.map((feature) => (
                                         <div
                                             key={feature}
-                                            className="flex items-center gap-3 bg-[#F0F2F5]/5 border border-[#1A2238] px-4 py-3 rounded-xl"
+                                            className="flex items-center gap-3 bg-sand-200/5 border border-forest-600 px-4 py-3"
                                         >
-                                            <div className="w-2 h-2 bg-coral-400 rounded-full flex-shrink-0" />
-                                            <span className="text-sm text-[#F0F2F5]/80 font-medium">{feature}</span>
+                                            <div className="w-2 h-2 bg-gold-400 flex-shrink-0" />
+                                            <span className="text-sm text-sand-200/80 font-medium">{feature}</span>
                                         </div>
                                     ))}
                                 </div>
 
                                 <Link href="/user/schedule">
-                                    <Button className="bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold px-8 h-12 rounded-xl w-fit transition-all duration-200">
+                                    <Button className="bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold px-8 h-12 w-fit transition-all duration-200">
                                         Book a Class
                                         <ChevronRight className="w-4 h-4 ml-1" />
                                     </Button>
@@ -167,19 +167,19 @@ export default function FacilityPage() {
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="bg-[#131A2B] border border-[#1A2238] p-6 rounded-2xl"
+                        className="bg-forest-800 border border-forest-600 p-6"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-coral-400/10 rounded-xl flex items-center justify-center">
-                                <Clock className="w-5 h-5 text-coral-400" />
+                            <div className="w-10 h-10 bg-gold-400/10 flex items-center justify-center">
+                                <Clock className="w-5 h-5 text-gold-400" />
                             </div>
-                            <h3 className="text-lg font-bold text-white">Operating Hours</h3>
+                            <h3 className="text-lg font-bold text-sand-200">Operating Hours</h3>
                         </div>
                         <div className="space-y-4">
                             {FACILITY_HOURS.map((slot) => (
                                 <div key={slot.day} className="flex items-center justify-between">
-                                    <span className="text-[#8892A4] text-sm font-medium">{slot.day}</span>
-                                    <span className="text-white text-sm font-bold">{slot.hours}</span>
+                                    <span className="text-sage-400 text-sm font-medium">{slot.day}</span>
+                                    <span className="text-sand-200 text-sm font-bold">{slot.hours}</span>
                                 </div>
                             ))}
                         </div>
@@ -191,24 +191,24 @@ export default function FacilityPage() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="bg-[#131A2B] border border-[#1A2238] p-6 rounded-2xl"
+                        className="bg-forest-800 border border-forest-600 p-6"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-coral-400/10 rounded-xl flex items-center justify-center">
-                                <Phone className="w-5 h-5 text-coral-400" />
+                            <div className="w-10 h-10 bg-gold-400/10 flex items-center justify-center">
+                                <Phone className="w-5 h-5 text-gold-400" />
                             </div>
-                            <h3 className="text-lg font-bold text-white">Contact</h3>
+                            <h3 className="text-lg font-bold text-sand-200">Contact</h3>
                         </div>
                         <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-[#8892A4]">
+                            <div className="flex items-center gap-3 text-sage-400">
                                 <Phone className="w-4 h-4 flex-shrink-0" />
                                 <span className="text-sm">(212) 555-0180</span>
                             </div>
-                            <div className="flex items-center gap-3 text-[#8892A4]">
+                            <div className="flex items-center gap-3 text-sage-400">
                                 <Mail className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm">hello@fitconnectpro.com</span>
+                                <span className="text-sm">hello@solpilates.com</span>
                             </div>
-                            <div className="flex items-start gap-3 text-[#8892A4]">
+                            <div className="flex items-start gap-3 text-sage-400">
                                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                 <span className="text-sm">250 West 54th Street<br />New York, NY 10019</span>
                             </div>
@@ -221,22 +221,22 @@ export default function FacilityPage() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
-                        className="bg-gradient-to-br from-coral-400/20 to-coral-400/5 border border-coral-400/20 p-6 rounded-2xl flex flex-col justify-between"
+                        className="bg-gradient-to-br from-gold-400/20 to-gold-400/5 border border-gold-400/20 p-6 flex flex-col justify-between"
                     >
                         <div>
-                            <h3 className="text-lg font-bold text-white mb-3">Ready to Train?</h3>
-                            <p className="text-[#8892A4] text-sm leading-relaxed mb-6">
-                                Book your first class and experience what 45,000 sq ft of dedicated training space feels like.
+                            <h3 className="text-lg font-bold text-sand-200 mb-3">Ready to Move?</h3>
+                            <p className="text-sage-400 text-sm leading-relaxed mb-6">
+                                Book your first session and experience what intentional movement in a purpose-built Pilates studio feels like.
                             </p>
                         </div>
                         <div className="space-y-3">
                             <Link href="/subscription" className="block">
-                                <Button className="w-full bg-coral-400 text-[#0B0F19] hover:bg-coral-300 font-bold h-12 rounded-xl transition-all duration-200">
+                                <Button className="w-full bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold h-12 transition-all duration-200">
                                     View Membership Plans
                                 </Button>
                             </Link>
                             <Link href="/user/schedule" className="block">
-                                <Button variant="outline" className="w-full border-[#1A2238] text-[#F0F2F5] hover:bg-[#F0F2F5]/5 font-bold h-12 rounded-xl transition-all duration-200">
+                                <Button variant="outline" className="w-full border-forest-600 text-sand-200 hover:bg-sand-200/5 font-bold h-12 transition-all duration-200">
                                     Browse Class Schedule
                                 </Button>
                             </Link>

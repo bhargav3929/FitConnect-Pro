@@ -18,10 +18,10 @@ import { toast } from "sonner"
 
 // Single facility data
 const FACILITY_DATA = {
-    name: "FitConnect Pro",
+    name: "SOL Pilates",
     address: "250 West 54th Street, New York, NY 10019",
     phone: "(212) 555-0180",
-    email: "hello@fitconnectpro.com",
+    email: "hello@solpilates.com",
     hours: {
         weekday: "5:00 AM - 11:00 PM",
         saturday: "6:00 AM - 10:00 PM",
@@ -42,7 +42,7 @@ const FACILITY_DATA = {
         "Sauna & Steam Room",
     ],
     description:
-        "FitConnect Pro is a 45,000 sq ft premium fitness facility featuring five distinct training zones, each purpose-built and equipped with commercial-grade gear. Open 7 days a week with extended hours.",
+        "SOL Pilates is a 45,000 sq ft premium fitness facility featuring five distinct training zones, each purpose-built and equipped with commercial-grade gear. Open 7 days a week with extended hours.",
 }
 
 export default function FacilitySettingsPage() {
@@ -58,14 +58,14 @@ export default function FacilitySettingsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-white">Facility Settings</h2>
-                    <p className="text-[#5A6478] text-sm mt-1">
+                    <h2 className="text-2xl font-black text-sand-200 font-display">Facility Settings</h2>
+                    <p className="text-sage-500 text-sm mt-1">
                         Manage your facility details, hours, and amenities
                     </p>
                 </div>
                 <button
                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                    className="px-6 py-3 bg-coral-400 text-[#0B0F19] font-bold text-sm tracking-wider hover:bg-coral-300 transition-all flex items-center gap-2 w-fit"
+                    className="px-6 py-3 bg-gold-400 text-forest-700 font-bold text-sm tracking-wider hover:bg-gold-300 transition-all flex items-center gap-2 w-fit"
                 >
                     {isEditing ? (
                         <>
@@ -94,11 +94,11 @@ export default function FacilitySettingsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="bg-[#131A2B] border border-[#1A2238] p-5"
+                        className="bg-forest-800 border border-forest-600 p-5"
                     >
-                        <stat.icon className="w-5 h-5 text-[#8892A4] mb-3" />
-                        <p className="text-2xl font-black text-white">{stat.value}</p>
-                        <p className="text-xs text-[#5A6478] tracking-wider uppercase mt-1">{stat.label}</p>
+                        <stat.icon className="w-5 h-5 text-sage-400 mb-3" />
+                        <p className="text-2xl font-black text-sand-200">{stat.value}</p>
+                        <p className="text-xs text-sage-500 tracking-wider uppercase mt-1">{stat.label}</p>
                     </motion.div>
                 ))}
             </div>
@@ -108,66 +108,66 @@ export default function FacilitySettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                className="bg-forest-700 border border-forest-600 p-6"
             >
-                <h3 className="text-lg font-bold text-white mb-6">General Information</h3>
+                <h3 className="text-lg font-bold text-sand-200 mb-6">General Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
                             FACILITY NAME
                         </label>
                         <input
                             type="text"
                             defaultValue={FACILITY_DATA.name}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
                             ADDRESS
                         </label>
                         <input
                             type="text"
                             defaultValue={FACILITY_DATA.address}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
                             PHONE
                         </label>
                         <input
                             type="text"
                             defaultValue={FACILITY_DATA.phone}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
                             EMAIL
                         </label>
                         <input
                             type="text"
                             defaultValue={FACILITY_DATA.email}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                         />
                     </div>
                 </div>
 
                 {/* Description */}
                 <div className="mt-6">
-                    <label className="block text-xs font-bold text-[#8892A4] tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
                         DESCRIPTION
                     </label>
                     <textarea
                         defaultValue={FACILITY_DATA.description}
                         disabled={!isEditing}
                         rows={3}
-                        className={`w-full px-4 py-3 bg-[#F0F2F5]/5 border border-[#1A2238] text-white focus:border-coral-400/50 focus:outline-none resize-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                        className={`w-full px-4 py-3 bg-sand-200/5 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none resize-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                     />
                 </div>
             </motion.div>
@@ -177,11 +177,11 @@ export default function FacilitySettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                className="bg-forest-700 border border-forest-600 p-6"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <Clock className="w-5 h-5 text-[#8892A4]" />
-                    <h3 className="text-lg font-bold text-white">Operating Hours</h3>
+                    <Clock className="w-5 h-5 text-sage-400" />
+                    <h3 className="text-lg font-bold text-sand-200">Operating Hours</h3>
                 </div>
                 <div className="space-y-4">
                     {[
@@ -189,16 +189,16 @@ export default function FacilitySettingsPage() {
                         { label: "Saturday", value: FACILITY_DATA.hours.saturday },
                         { label: "Sunday", value: FACILITY_DATA.hours.sunday },
                     ].map((slot) => (
-                        <div key={slot.label} className="flex items-center justify-between py-3 border-b border-[#1A2238]/50 last:border-0">
-                            <span className="text-[#8892A4] font-medium">{slot.label}</span>
+                        <div key={slot.label} className="flex items-center justify-between py-3 border-b border-forest-600/50 last:border-0">
+                            <span className="text-sage-400 font-medium">{slot.label}</span>
                             {isEditing ? (
                                 <input
                                     type="text"
                                     defaultValue={slot.value}
-                                    className="w-48 h-10 px-4 bg-[#F0F2F5]/5 border border-[#1A2238] text-white text-right focus:border-coral-400/50 focus:outline-none"
+                                    className="w-48 h-10 px-4 bg-sand-200/5 border border-forest-600 text-sand-200 text-right focus:border-gold-400/50 focus:outline-none"
                                 />
                             ) : (
-                                <span className="text-white font-bold">{slot.value}</span>
+                                <span className="text-sand-200 font-bold">{slot.value}</span>
                             )}
                         </div>
                     ))}
@@ -210,23 +210,23 @@ export default function FacilitySettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                className="bg-forest-700 border border-forest-600 p-6"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <Dumbbell className="w-5 h-5 text-[#8892A4]" />
-                    <h3 className="text-lg font-bold text-white">Training Zones & Amenities</h3>
+                    <Dumbbell className="w-5 h-5 text-sage-400" />
+                    <h3 className="text-lg font-bold text-sand-200">Training Zones & Amenities</h3>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     {FACILITY_DATA.zones.map((zone) => (
                         <span
                             key={zone}
-                            className="px-4 py-2 bg-[#F0F2F5]/5 text-[#F0F2F5]/80 text-sm font-medium border border-[#1A2238] hover:border-coral-400/30 transition-colors"
+                            className="px-4 py-2 bg-sand-200/5 text-sand-200/80 text-sm font-medium border border-forest-600 hover:border-gold-400/30 transition-colors"
                         >
                             {zone}
                         </span>
                     ))}
                     {isEditing && (
-                        <button className="px-4 py-2 border border-dashed border-[#1A2238] text-[#5A6478] text-sm font-medium hover:border-coral-400/50 hover:text-coral-400 transition-colors">
+                        <button className="px-4 py-2 border border-dashed border-forest-600 text-sage-500 text-sm font-medium hover:border-gold-400/50 hover:text-gold-400 transition-colors">
                             + Add Zone
                         </button>
                     )}
@@ -238,19 +238,19 @@ export default function FacilitySettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                className="bg-forest-700 border border-forest-600 p-6"
             >
-                <h3 className="text-lg font-bold text-white mb-6">Quick Contact Reference</h3>
+                <h3 className="text-lg font-bold text-sand-200 mb-6">Quick Contact Reference</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex items-start gap-3 text-[#8892A4]">
+                    <div className="flex items-start gap-3 text-sage-400">
                         <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{FACILITY_DATA.address}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-[#8892A4]">
+                    <div className="flex items-center gap-3 text-sage-400">
                         <Phone className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm">{FACILITY_DATA.phone}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-[#8892A4]">
+                    <div className="flex items-center gap-3 text-sage-400">
                         <Mail className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm">{FACILITY_DATA.email}</span>
                     </div>

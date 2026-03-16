@@ -1,14 +1,15 @@
 "use client";
 import Link from 'next/link';
-import { Dumbbell, Instagram, Twitter, Facebook, Youtube, Linkedin, Mail } from 'lucide-react';
+import Image from 'next/image';
+import { Instagram, Twitter, Youtube, Linkedin, Mail } from 'lucide-react';
 
 export function Footer() {
     return (
-        <footer className="bg-[#070A12] text-[#F0F2F5] py-20 relative overflow-hidden">
+        <footer className="bg-warmDark-800 text-peach-200 py-20 relative overflow-hidden">
             {/* Cinematic Watermark */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none select-none flex items-center justify-center opacity-[0.03]">
-                <span className="text-[15vw] md:text-[20vw] font-black uppercase tracking-tighter text-[#F0F2F5] stroke-text leading-none whitespace-nowrap">
-                    FITCONNECT
+                <span className="text-[15vw] md:text-[20vw] font-black uppercase tracking-tighter text-peach-200 stroke-text leading-none whitespace-nowrap font-display">
+                    SOL PILATES
                 </span>
             </div>
 
@@ -18,14 +19,17 @@ export function Footer() {
 
                     {/* 1. Brand Section (Left) - Spans 4 columns */}
                     <div className="lg:col-span-4 space-y-8">
-                        <Link href="/" className="flex items-center gap-3 group">
-                            <div className="w-10 h-10 bg-coral-400 text-[#0B0F19] rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-                                <Dumbbell className="w-6 h-6 fill-current" />
-                            </div>
-                            <span className="text-2xl font-black tracking-tight group-hover:text-coral-300 transition-colors">FITCONNECT PRO.</span>
+                        <Link href="/" className="inline-block group">
+                            <Image
+                                src="/images/sol-logo-cream.png"
+                                alt="SOL Pilates Studio"
+                                width={400}
+                                height={400}
+                                className="h-28 md:h-32 w-auto group-hover:opacity-80 transition-opacity duration-300"
+                            />
                         </Link>
-                        <p className="text-[#8892A4] leading-relaxed max-w-sm font-medium">
-                            Empowering elite performance through connected luxury fitness. Join the revolution that's redefining what's possible.
+                        <p className="text-peach-400 leading-relaxed max-w-sm font-medium">
+                            A sophisticated Pilates studio blending strength, mindfulness, and elegance. Where controlled, intentional movement builds both physical and inner strength.
                         </p>
                         <div className="flex gap-4">
                             {[
@@ -37,7 +41,7 @@ export function Footer() {
                                 <Link
                                     key={i}
                                     href={social.href}
-                                    className="w-10 h-10 rounded-full bg-[#F0F2F5]/5 border border-[#F0F2F5]/10 flex items-center justify-center text-[#F0F2F5] hover:bg-coral-400 hover:text-[#0B0F19] hover:border-coral-400 hover:scale-110 transition-all duration-300"
+                                    className="w-10 h-10 rounded-full bg-peach-200/5 border border-peach-200/10 flex items-center justify-center text-peach-200 hover:bg-terra-400 hover:text-peach-50 hover:border-terra-400 hover:scale-110 transition-all duration-300"
                                 >
                                     <social.icon className="w-4 h-4" />
                                 </Link>
@@ -48,11 +52,11 @@ export function Footer() {
                     {/* 2. Links Section (Center) - Spans 5 columns */}
                     <div className="lg:col-span-5 grid grid-cols-2 md:grid-cols-3 gap-8">
                         <div>
-                            <h4 className="font-bold text-[#F0F2F5] mb-6 tracking-wide">PLATFORM</h4>
+                            <h4 className="font-bold text-peach-200 mb-6 tracking-wide">SERVICES</h4>
                             <ul className="space-y-4">
-                                {["Virtual Training", "Exclusive Content", "Wearable Integration", "Performance Analytics"].map(item => (
+                                {["Strength & Sculpt", "Cardio & Endurance", "Reset & Restore", "Muscle Recovery", "Intense Exercise"].map(item => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm text-[#8892A4] hover:text-coral-400 transition-colors block hover:translate-x-1 duration-200">
+                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200">
                                             {item}
                                         </Link>
                                     </li>
@@ -60,24 +64,23 @@ export function Footer() {
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-bold text-[#F0F2F5] mb-6 tracking-wide">COMPANY</h4>
+                            <h4 className="font-bold text-peach-200 mb-6 tracking-wide">COMPANY</h4>
                             <ul className="space-y-4">
-                                {["About Us", "Our Coaches", "Careers", "Press"].map(item => (
+                                {["About SOL", "Our Instructors", "Our Story", "Contact"].map(item => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm text-[#8892A4] hover:text-coral-400 transition-colors block hover:translate-x-1 duration-200">
+                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200">
                                             {item}
                                         </Link>
                                     </li>
                                 ))}
                             </ul>
                         </div>
-                        {/* Hidden on very small screens if needed, but keeping for completeness */}
                         <div>
-                            <h4 className="font-bold text-[#F0F2F5] mb-6 tracking-wide">LEGAL</h4>
+                            <h4 className="font-bold text-peach-200 mb-6 tracking-wide">LEGAL</h4>
                             <ul className="space-y-4">
                                 {["Privacy Policy", "Terms of Service", "Cookie Policy", "Accessibility"].map(item => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm text-[#8892A4] hover:text-coral-400 transition-colors block hover:translate-x-1 duration-200">
+                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200">
                                             {item}
                                         </Link>
                                     </li>
@@ -88,18 +91,18 @@ export function Footer() {
 
                     {/* 3. Newsletter Section (Right) - Spans 3 columns */}
                     <div className="lg:col-span-3 space-y-6">
-                        <h4 className="font-bold text-[#F0F2F5] tracking-wide">STAY CONNECTED</h4>
-                        <p className="text-sm text-[#8892A4]">
-                            Get early access to new features and exclusive fitness drops.
+                        <h4 className="font-bold text-peach-200 tracking-wide">STAY CONNECTED</h4>
+                        <p className="text-sm text-peach-400">
+                            Get updates on new classes, workshops, and studio events.
                         </p>
                         <form className="relative group">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6478] group-focus-within:text-coral-400 transition-colors" />
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-peach-400 group-focus-within:text-terra-400 transition-colors" />
                             <input
                                 type="email"
                                 placeholder="Enter your email"
-                                className="w-full bg-[#F0F2F5]/5 border border-[#F0F2F5]/10 rounded-full py-4 pl-12 pr-4 text-sm text-[#F0F2F5] placeholder:text-[#5A6478] focus:outline-none focus:border-coral-400/40 focus:bg-[#F0F2F5]/10 transition-all"
+                                className="w-full bg-peach-200/5 border border-peach-200/10 rounded-full py-4 pl-12 pr-4 text-sm text-peach-200 placeholder:text-peach-400 focus:outline-none focus:border-terra-400/40 focus:bg-peach-200/10 transition-all"
                             />
-                            <button className="absolute right-1 top-1 bottom-1 bg-coral-400 text-[#0B0F19] px-6 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-coral-300 transition-colors">
+                            <button className="absolute right-1 top-1 bottom-1 bg-terra-400 text-peach-50 px-6 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-terra-300 transition-colors">
                                 Subscribe
                             </button>
                         </form>
@@ -108,16 +111,16 @@ export function Footer() {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="border-t border-[#F0F2F5]/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-xs text-[#5A6478] font-medium">
-                        &copy; {new Date().getFullYear()} FitConnect Pro. All rights reserved.
+                <div className="border-t border-peach-200/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-xs text-peach-400 font-medium">
+                        &copy; {new Date().getFullYear()} SOL Pilates Studio. All rights reserved.
                     </p>
                     <div className="flex gap-6">
-                        <Link href="#" className="text-xs text-[#5A6478] hover:text-coral-400 transition-colors font-medium">Privacy</Link>
-                        <span className="text-[#1A2238]">&bull;</span>
-                        <Link href="#" className="text-xs text-[#5A6478] hover:text-coral-400 transition-colors font-medium">Terms</Link>
-                        <span className="text-[#1A2238]">&bull;</span>
-                        <Link href="#" className="text-xs text-[#5A6478] hover:text-coral-400 transition-colors font-medium">Sitemap</Link>
+                        <Link href="#" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Privacy</Link>
+                        <span className="text-warmDark-700">&bull;</span>
+                        <Link href="#" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Terms</Link>
+                        <span className="text-warmDark-700">&bull;</span>
+                        <Link href="#" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Sitemap</Link>
                     </div>
                 </div>
             </div>

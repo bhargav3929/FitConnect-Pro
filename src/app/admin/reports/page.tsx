@@ -39,9 +39,9 @@ const revenueData = [
 ]
 
 const membershipData = [
-    { name: "Weekly", value: 320, color: "#FF6A3D" },
-    { name: "Monthly", value: 1850, color: "#4CAF50" },
-    { name: "Quarterly", value: 677, color: "#FF9800" },
+    { name: "Weekly", value: 320, color: "#D4A24C" },
+    { name: "Monthly", value: 1850, color: "#7A8B6F" },
+    { name: "Quarterly", value: 677, color: "#C17A56" },
 ]
 
 const attendanceData = [
@@ -73,13 +73,13 @@ export default function ReportsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-white">Reports & Analytics</h2>
-                    <p className="text-[#5A6478] text-sm mt-1">
+                    <h2 className="text-2xl font-black text-sand-200 font-display">Reports & Analytics</h2>
+                    <p className="text-sage-500 text-sm mt-1">
                         Business performance insights and trends
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <select className="h-10 px-4 bg-[#0B0F19] border border-[#1A2238] text-[#F0F2F5]/70 text-sm focus:border-coral-400/50 focus:outline-none appearance-none cursor-pointer">
+                    <select className="h-10 px-4 bg-forest-700 border border-forest-600 text-sand-200/70 text-sm focus:border-gold-400/50 focus:outline-none appearance-none cursor-pointer">
                         <option>Last 30 Days</option>
                         <option>Last 90 Days</option>
                         <option>This Year</option>
@@ -100,11 +100,11 @@ export default function ReportsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                        className="bg-forest-700 border border-forest-600 p-6"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <div className="w-10 h-10 bg-[#F0F2F5]/5 flex items-center justify-center">
-                                <metric.icon className="w-5 h-5 text-[#8892A4]" />
+                            <div className="w-10 h-10 bg-sand-200/5 flex items-center justify-center">
+                                <metric.icon className="w-5 h-5 text-sage-400" />
                             </div>
                             <span className={`flex items-center gap-1 text-xs font-bold ${metric.positive ? 'text-green-400' : 'text-red-400'
                                 }`}>
@@ -112,8 +112,8 @@ export default function ReportsPage() {
                                 {metric.change}
                             </span>
                         </div>
-                        <p className="text-2xl font-black text-white">{metric.value}</p>
-                        <p className="text-xs text-[#5A6478] tracking-wider uppercase mt-1">{metric.label}</p>
+                        <p className="text-2xl font-black text-sand-200">{metric.value}</p>
+                        <p className="text-xs text-sage-500 tracking-wider uppercase mt-1">{metric.label}</p>
                     </motion.div>
                 ))}
             </div>
@@ -123,18 +123,18 @@ export default function ReportsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                className="bg-forest-700 border border-forest-600 p-6"
             >
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-white">Revenue vs Target</h3>
+                    <h3 className="text-lg font-bold text-sand-200">Revenue vs Target</h3>
                     <div className="flex items-center gap-4 text-xs">
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 bg-[#FF6A3D]" />
-                            <span className="text-[#8892A4]">Revenue</span>
+                            <div className="w-3 h-3 bg-gold-400" />
+                            <span className="text-sage-400">Revenue</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 bg-[#F0F2F5]/30" />
-                            <span className="text-[#8892A4]">Target</span>
+                            <div className="w-3 h-3 bg-sand-200/30" />
+                            <span className="text-sage-400">Target</span>
                         </div>
                     </div>
                 </div>
@@ -143,8 +143,8 @@ export default function ReportsPage() {
                         <AreaChart data={revenueData}>
                             <defs>
                                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#FF6A3D" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#FF6A3D" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#D4A24C" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#D4A24C" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -152,14 +152,14 @@ export default function ReportsPage() {
                             <YAxis stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
                             <Tooltip
                                 contentStyle={{
-                                    backgroundColor: '#000',
+                                    backgroundColor: '#222B1E',
                                     border: '1px solid rgba(255,255,255,0.2)',
                                     borderRadius: '0',
                                 }}
                                 formatter={(value) => value !== undefined ? [`$${value.toLocaleString()}`, ''] : ['', '']}
                             />
                             <Area type="monotone" dataKey="target" stroke="rgba(255,255,255,0.3)" fill="transparent" strokeDasharray="5 5" />
-                            <Area type="monotone" dataKey="revenue" stroke="#FF6A3D" fillOpacity={1} fill="url(#colorRevenue)" />
+                            <Area type="monotone" dataKey="revenue" stroke="#D4A24C" fillOpacity={1} fill="url(#colorRevenue)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
@@ -172,9 +172,9 @@ export default function ReportsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                    className="bg-forest-700 border border-forest-600 p-6"
                 >
-                    <h3 className="text-lg font-bold text-white mb-6">Membership Distribution</h3>
+                    <h3 className="text-lg font-bold text-sand-200 mb-6">Membership Distribution</h3>
                     <div className="h-64 flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -193,7 +193,7 @@ export default function ReportsPage() {
                                 </Pie>
                                 <Tooltip
                                     contentStyle={{
-                                        backgroundColor: '#000',
+                                        backgroundColor: '#222B1E',
                                         border: '1px solid rgba(255,255,255,0.2)',
                                     }}
                                 />
@@ -204,7 +204,7 @@ export default function ReportsPage() {
                         {membershipData.map(item => (
                             <div key={item.name} className="flex items-center gap-2">
                                 <div className="w-3 h-3" style={{ backgroundColor: item.color }} />
-                                <span className="text-xs text-[#8892A4]">{item.name} ({item.value})</span>
+                                <span className="text-xs text-sage-400">{item.name} ({item.value})</span>
                             </div>
                         ))}
                     </div>
@@ -215,9 +215,9 @@ export default function ReportsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                    className="bg-forest-700 border border-forest-600 p-6"
                 >
-                    <h3 className="text-lg font-bold text-white mb-6">Class Popularity</h3>
+                    <h3 className="text-lg font-bold text-sand-200 mb-6">Class Popularity</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={classPopularity} layout="vertical">
@@ -226,11 +226,11 @@ export default function ReportsPage() {
                                 <YAxis dataKey="name" type="category" stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} width={60} />
                                 <Tooltip
                                     contentStyle={{
-                                        backgroundColor: '#000',
+                                        backgroundColor: '#222B1E',
                                         border: '1px solid rgba(255,255,255,0.2)',
                                     }}
                                 />
-                                <Bar dataKey="bookings" fill="#FF6A3D" radius={[0, 4, 4, 0]} />
+                                <Bar dataKey="bookings" fill="#D4A24C" radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -242,32 +242,32 @@ export default function ReportsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="bg-[#0B0F19] border border-[#1A2238] p-6"
+                className="bg-forest-700 border border-forest-600 p-6"
             >
-                <h3 className="text-lg font-bold text-white mb-6">Zone Utilization</h3>
+                <h3 className="text-lg font-bold text-sand-200 mb-6">Zone Utilization</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-[#1A2238]">
-                                <th className="text-left text-xs font-bold text-[#8892A4] tracking-wider pb-4">ZONE</th>
-                                <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider pb-4">BOOKINGS</th>
-                                <th className="text-right text-xs font-bold text-[#8892A4] tracking-wider pb-4">UTILIZATION</th>
+                            <tr className="border-b border-forest-600">
+                                <th className="text-left text-xs font-bold text-sage-400 tracking-wider pb-4">ZONE</th>
+                                <th className="text-right text-xs font-bold text-sage-400 tracking-wider pb-4">BOOKINGS</th>
+                                <th className="text-right text-xs font-bold text-sage-400 tracking-wider pb-4">UTILIZATION</th>
                             </tr>
                         </thead>
                         <tbody>
                             {topZones.map((zone) => (
-                                <tr key={zone.name} className="border-b border-[#1A2238]/50">
-                                    <td className="py-4 font-medium text-white">{zone.name}</td>
-                                    <td className="py-4 text-right text-[#F0F2F5]/80">{zone.bookings.toLocaleString()}</td>
+                                <tr key={zone.name} className="border-b border-forest-600/50">
+                                    <td className="py-4 font-medium text-sand-200">{zone.name}</td>
+                                    <td className="py-4 text-right text-sand-200/80">{zone.bookings.toLocaleString()}</td>
                                     <td className="py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <div className="w-16 h-2 bg-[#F0F2F5]/10 overflow-hidden">
+                                            <div className="w-16 h-2 bg-sand-200/10 overflow-hidden">
                                                 <div
-                                                    className="h-full bg-[#FF6A3D]"
+                                                    className="h-full bg-gold-400"
                                                     style={{ width: `${zone.utilization}%` }}
                                                 />
                                             </div>
-                                            <span className="text-[#8892A4] text-sm w-12">{zone.utilization}%</span>
+                                            <span className="text-sage-400 text-sm w-12">{zone.utilization}%</span>
                                         </div>
                                     </td>
                                 </tr>

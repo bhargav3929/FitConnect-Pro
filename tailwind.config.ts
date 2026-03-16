@@ -9,6 +9,10 @@ const config: Config = {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                display: ['var(--font-display)', 'serif'],
+                sans: ['var(--font-sans)', 'sans-serif'],
+            },
             colors: {
                 background: 'hsl(var(--background))',
                 foreground: 'hsl(var(--foreground))',
@@ -50,31 +54,33 @@ const config: Config = {
                     '4': 'hsl(var(--chart-4))',
                     '5': 'hsl(var(--chart-5))'
                 },
-                midnight: {
-                    950: "#070A12",
-                    900: "#0B0F19",
-                    800: "#131A2B",
-                    700: "#1A2238",
+                /* SOL v2 — Warm Peach / Olive / Terracotta Named Scales */
+                peach: {
+                    50: "#FAF3EB",
+                    100: "#F5E8D8",
+                    200: "#F0D8C0",
+                    300: "#E4C8AB",
+                    400: "#D4B494",
+                    500: "#C4A080",
                 },
-                coral: {
-                    300: "#FF9A7A",
-                    400: "#FF6A3D",
-                    500: "#E85A30",
-                    600: "#D04A22",
+                olive: {
+                    300: "#8A9A78",
+                    400: "#6B7752",
+                    500: "#5A6645",
+                    600: "#4A5438",
+                    700: "#3A422C",
                 },
-                amber: {
-                    300: "#FFD08A",
-                    400: "#FFB347",
-                    500: "#F5A623",
+                terra: {
+                    300: "#A85A48",
+                    400: "#8B3F2C",
+                    500: "#6E3022",
+                    600: "#52231A",
                 },
-                navy: {
-                    900: "#0B0F19",
-                    800: "#131A2B",
+                warmDark: {
+                    700: "#3B2F28",
+                    800: "#2C2420",
+                    900: "#1E1815",
                 },
-                lime: {
-                    400: "#FF6A3D",
-                    500: "#E85A30",
-                }
             },
             borderRadius: {
                 lg: 'var(--radius)',
@@ -86,8 +92,8 @@ const config: Config = {
                 'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
                 'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
                 'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-                'glow': '0 0 24px rgba(255, 106, 61, 0.3)',
-                'glow-lg': '0 0 40px rgba(255, 106, 61, 0.5)',
+                'glow': '0 0 24px rgba(139, 63, 44, 0.25)',
+                'glow-lg': '0 0 40px rgba(139, 63, 44, 0.4)',
             },
             keyframes: {
                 "accordion-down": {
