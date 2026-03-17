@@ -121,7 +121,7 @@ export function AdminSidebar() {
                             href={item.href}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 px-3 py-3 transition-all group relative overflow-hidden ${isActive
-                                ? 'bg-gradient-to-r from-peach-200/10 to-transparent text-peach-200'
+                                ? 'bg-terra-400/10 text-peach-200'
                                 : 'text-peach-400/60 hover:text-peach-200 hover:bg-peach-200/5'
                                 }`}
                         >
@@ -144,7 +144,6 @@ export function AdminSidebar() {
 
             {/* Bottom Section */}
             <div className="py-4 px-3 border-t border-peach-400/10 space-y-1 relative">
-                {/* Glass Reflection */}
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-peach-200/5 to-transparent" />
 
                 {BOTTOM_ITEMS.map((item) => {
@@ -155,7 +154,7 @@ export function AdminSidebar() {
                             href={item.href}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 px-3 py-3 transition-all ${isActive
-                                ? 'bg-peach-200/10 text-peach-200'
+                                ? 'bg-terra-400/10 text-peach-200'
                                 : 'text-peach-400/60 hover:text-peach-200 hover:bg-peach-200/5'
                                 }`}
                         >
@@ -185,7 +184,7 @@ export function AdminSidebar() {
 
     return (
         <>
-            {/* Desktop Sidebar */}
+            {/* Desktop Sidebar — dark is correct for sidebar (creates contrast with light content) */}
             <aside
                 className={`fixed left-0 top-0 bottom-0 z-40 bg-warmDark-900/95 backdrop-blur-xl border-r border-peach-400/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hidden lg:flex flex-col ${collapsed ? 'w-20' : 'w-72'
                     }`}
@@ -202,7 +201,7 @@ export function AdminSidebar() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setSidebarOpen(false)}
-                            className="fixed inset-0 z-40 bg-warmDark-900/80 backdrop-blur-sm lg:hidden"
+                            className="fixed inset-0 z-40 bg-warmDark-800/60 backdrop-blur-sm lg:hidden"
                         />
                         <motion.aside
                             initial={{ x: "-100%" }}

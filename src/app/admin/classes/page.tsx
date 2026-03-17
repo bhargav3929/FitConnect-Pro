@@ -70,11 +70,11 @@ export default function ClassesPage() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'scheduled': return 'bg-blue-500/20 text-blue-400'
-            case 'ongoing': return 'bg-terra-400/20 text-terra-400'
-            case 'completed': return 'bg-green-500/20 text-green-400'
-            case 'canceled': return 'bg-red-500/20 text-red-400'
-            default: return 'bg-peach-200/10 text-peach-400'
+            case 'scheduled': return 'bg-blue-500/15 text-blue-600'
+            case 'ongoing': return 'bg-terra-400/15 text-terra-400'
+            case 'completed': return 'bg-green-500/15 text-green-600'
+            case 'canceled': return 'bg-red-500/15 text-red-600'
+            default: return 'bg-peach-300/30 text-olive-400'
         }
     }
 
@@ -96,8 +96,8 @@ export default function ClassesPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-peach-200 font-display">Classes</h2>
-                    <p className="text-olive-400 text-sm mt-1">
+                    <h2 className="text-2xl font-black text-olive-600 font-display">Classes</h2>
+                    <p className="text-olive-300 text-sm mt-1">
                         Manage all fitness classes and schedules
                     </p>
                 </div>
@@ -110,19 +110,19 @@ export default function ClassesPage() {
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300" />
                     <input
                         type="text"
                         placeholder="Search classes..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 bg-warmDark-800 border border-peach-400/10 text-peach-200 placeholder:text-olive-400 focus:border-terra-400/50 focus:outline-none"
+                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/50 focus:border-terra-400 focus:outline-none"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-12 px-4 bg-warmDark-800 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize"
+                    className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none appearance-none cursor-pointer capitalize"
                 >
                     {STATUSES.map(status => (
                         <option key={status} value={status} className="capitalize">{status}</option>
@@ -132,18 +132,18 @@ export default function ClassesPage() {
 
             {/* Loading State */}
             {isLoading && (
-                <div className="bg-warmDark-800 border border-peach-400/10 overflow-hidden">
-                    <div className="divide-y divide-peach-400/10">
+                <div className="bg-peach-50 border border-peach-400/20 overflow-hidden">
+                    <div className="divide-y divide-peach-400/15">
                         {[1, 2, 3, 4, 5].map(i => (
                             <div key={i} className="p-4 animate-pulse">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div>
-                                            <div className="h-5 w-32 bg-peach-200/10 rounded mb-2" />
-                                            <div className="h-3 w-24 bg-peach-200/5 rounded" />
+                                            <div className="h-5 w-32 bg-peach-300/40 rounded mb-2" />
+                                            <div className="h-3 w-24 bg-peach-200/60 rounded" />
                                         </div>
                                     </div>
-                                    <div className="h-6 w-20 bg-peach-200/5 rounded" />
+                                    <div className="h-6 w-20 bg-peach-200/60 rounded" />
                                 </div>
                             </div>
                         ))}
@@ -156,34 +156,34 @@ export default function ClassesPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-warmDark-800 border border-peach-400/10 overflow-hidden"
+                    className="bg-peach-50 border border-peach-400/20 overflow-hidden"
                 >
                     <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-peach-400/10">
-                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">CLASS</th>
-                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">SCHEDULE</th>
-                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">LOCATION</th>
-                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">CAPACITY</th>
-                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">STATUS</th>
-                                    <th className="text-right text-xs font-bold text-peach-400 tracking-wider p-4">ACTIONS</th>
+                                <tr className="border-b border-peach-400/20 bg-peach-300/30">
+                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">CLASS</th>
+                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">SCHEDULE</th>
+                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">LOCATION</th>
+                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">CAPACITY</th>
+                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">STATUS</th>
+                                    <th className="text-right text-xs font-bold text-olive-600 tracking-wider p-4">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredClasses.map((cls) => (
                                     <tr
                                         key={cls.id}
-                                        className="border-b border-peach-400/10/50 hover:bg-peach-200/5 transition-colors"
+                                        className="border-b border-peach-400/10 hover:bg-peach-100 transition-colors"
                                     >
                                         <td className="p-4">
                                             <div>
-                                                <p className="font-bold text-peach-200">{cls.classType || 'Pilates Class'}</p>
-                                                <p className="text-xs text-olive-400">{cls.duration}min{cls.difficultyLevel ? ` · ${cls.difficultyLevel}` : ''}</p>
+                                                <p className="font-bold text-olive-600">{cls.classType || 'Pilates Class'}</p>
+                                                <p className="text-xs text-olive-300">{cls.duration}min{cls.difficultyLevel ? ` · ${cls.difficultyLevel}` : ''}</p>
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <div className="flex items-center gap-2 text-peach-400">
+                                            <div className="flex items-center gap-2 text-olive-300">
                                                 <Calendar className="w-4 h-4" />
                                                 <span className="text-sm">{formatDate(cls.date)}</span>
                                                 <Clock className="w-4 h-4 ml-2" />
@@ -191,15 +191,15 @@ export default function ClassesPage() {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <div className="flex items-center gap-2 text-peach-400">
+                                            <div className="flex items-center gap-2 text-olive-300">
                                                 <MapPin className="w-4 h-4" />
                                                 <span className="text-sm">{cls.location || 'Main Studio'}</span>
                                             </div>
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">
-                                                <Users className="w-4 h-4 text-olive-400" />
-                                                <span className="text-peach-200/80">{cls.bookedCount}/{cls.totalSpots || cls.capacity}</span>
+                                                <Users className="w-4 h-4 text-olive-300" />
+                                                <span className="text-olive-400">{cls.bookedCount}/{cls.totalSpots || cls.capacity}</span>
                                             </div>
                                         </td>
                                         <td className="p-4">
@@ -210,17 +210,17 @@ export default function ClassesPage() {
                                         <td className="p-4 text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <button className="w-8 h-8 flex items-center justify-center text-olive-400 hover:text-peach-200 transition-colors">
+                                                    <button className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-olive-600 transition-colors">
                                                         <MoreVertical className="w-4 h-4" />
                                                     </button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-warmDark-800 border-peach-400/10">
-                                                    <DropdownMenuItem className="text-peach-200/70 focus:bg-peach-200/10 focus:text-peach-200 cursor-pointer">
+                                                <DropdownMenuContent align="end" className="bg-peach-50 border-peach-400/20">
+                                                    <DropdownMenuItem className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer">
                                                         <Edit className="w-4 h-4 mr-2" />
                                                         Edit Class
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
-                                                        className="text-red-400 focus:bg-red-500/20 focus:text-red-400 cursor-pointer"
+                                                        className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer"
                                                         onClick={() => handleDelete(cls.id)}
                                                         disabled={deletingId === cls.id}
                                                     >
@@ -241,19 +241,19 @@ export default function ClassesPage() {
                     </div>
 
                     {/* Mobile Cards */}
-                    <div className="lg:hidden divide-y divide-peach-400/10">
+                    <div className="lg:hidden divide-y divide-peach-400/15">
                         {filteredClasses.map((cls) => (
-                            <div key={cls.id} className="p-4 hover:bg-peach-200/5 transition-colors">
+                            <div key={cls.id} className="p-4 hover:bg-peach-100 transition-colors">
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
-                                        <p className="font-bold text-peach-200">{cls.classType || 'Pilates Class'}</p>
-                                        <p className="text-xs text-olive-400">{cls.duration}min</p>
+                                        <p className="font-bold text-olive-600">{cls.classType || 'Pilates Class'}</p>
+                                        <p className="text-xs text-olive-300">{cls.duration}min</p>
                                     </div>
                                     <span className={`px-2 py-1 text-xs font-bold tracking-wider uppercase ${getStatusColor(cls.status)}`}>
                                         {cls.status}
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm text-peach-400">
+                                <div className="grid grid-cols-2 gap-2 text-sm text-olive-300">
                                     <div className="flex items-center gap-2">
                                         <Users className="w-4 h-4" />
                                         {cls.bookedCount}/{cls.totalSpots || cls.capacity}
@@ -277,15 +277,15 @@ export default function ClassesPage() {
 
                     {filteredClasses.length === 0 && (
                         <div className="text-center py-12">
-                            <Calendar className="w-8 h-8 text-peach-200/20 mx-auto mb-3" />
-                            <p className="text-olive-400 text-sm">No classes found</p>
+                            <Calendar className="w-8 h-8 text-olive-300/30 mx-auto mb-3" />
+                            <p className="text-olive-300 text-sm">No classes found</p>
                         </div>
                     )}
                 </motion.div>
             )}
 
             {!isLoading && (
-                <div className="flex items-center justify-between text-olive-400 text-sm">
+                <div className="flex items-center justify-between text-olive-300 text-sm">
                     <span>Showing {filteredClasses.length} of {classes.length} classes</span>
                 </div>
             )}

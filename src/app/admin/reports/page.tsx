@@ -41,7 +41,7 @@ const revenueData = [
 const membershipData = [
     { name: "Weekly", value: 320, color: "#8B3F2C" },
     { name: "Monthly", value: 1850, color: "#6B7752" },
-    { name: "Quarterly", value: 677, color: "#A0654A" },
+    { name: "Quarterly", value: 677, color: "#D4B494" },
 ]
 
 const attendanceData = [
@@ -73,13 +73,13 @@ export default function ReportsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-peach-200 font-display">Reports & Analytics</h2>
-                    <p className="text-olive-400 text-sm mt-1">
+                    <h2 className="text-2xl font-black text-olive-600 font-display">Reports & Analytics</h2>
+                    <p className="text-olive-300 text-sm mt-1">
                         Business performance insights and trends
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <select className="h-10 px-4 bg-warmDark-800 border border-peach-400/10 text-peach-200/70 text-sm focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer">
+                    <select className="h-10 px-4 bg-peach-50 border border-peach-400/20 text-olive-400 text-sm focus:border-terra-400 focus:outline-none appearance-none cursor-pointer">
                         <option>Last 30 Days</option>
                         <option>Last 90 Days</option>
                         <option>This Year</option>
@@ -100,20 +100,20 @@ export default function ReportsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="bg-warmDark-800 border border-peach-400/10 p-6"
+                        className="bg-peach-50 border border-peach-400/20 p-6"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <div className="w-10 h-10 bg-peach-200/5 flex items-center justify-center">
-                                <metric.icon className="w-5 h-5 text-peach-400" />
+                            <div className="w-10 h-10 bg-peach-200/60 flex items-center justify-center">
+                                <metric.icon className="w-5 h-5 text-olive-400" />
                             </div>
-                            <span className={`flex items-center gap-1 text-xs font-bold ${metric.positive ? 'text-green-400' : 'text-red-400'
+                            <span className={`flex items-center gap-1 text-xs font-bold ${metric.positive ? 'text-green-600' : 'text-red-500'
                                 }`}>
                                 {metric.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                                 {metric.change}
                             </span>
                         </div>
-                        <p className="text-2xl font-black text-peach-200">{metric.value}</p>
-                        <p className="text-xs text-olive-400 tracking-wider uppercase mt-1">{metric.label}</p>
+                        <p className="text-2xl font-black text-olive-600">{metric.value}</p>
+                        <p className="text-xs text-olive-300 tracking-wider uppercase mt-1">{metric.label}</p>
                     </motion.div>
                 ))}
             </div>
@@ -123,18 +123,18 @@ export default function ReportsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-warmDark-800 border border-peach-400/10 p-6"
+                className="bg-peach-50 border border-peach-400/20 p-6"
             >
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-peach-200">Revenue vs Target</h3>
+                    <h3 className="text-lg font-bold text-olive-600">Revenue vs Target</h3>
                     <div className="flex items-center gap-4 text-xs">
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 bg-terra-400" />
-                            <span className="text-peach-400">Revenue</span>
+                            <span className="text-olive-300">Revenue</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 bg-peach-200/30" />
-                            <span className="text-peach-400">Target</span>
+                            <div className="w-3 h-3 bg-olive-300/30" />
+                            <span className="text-olive-300">Target</span>
                         </div>
                     </div>
                 </div>
@@ -143,22 +143,22 @@ export default function ReportsPage() {
                         <AreaChart data={revenueData}>
                             <defs>
                                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#8B3F2C" stopOpacity={0.3} />
+                                    <stop offset="5%" stopColor="#8B3F2C" stopOpacity={0.2} />
                                     <stop offset="95%" stopColor="#8B3F2C" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                            <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} />
-                            <YAxis stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(74,84,56,0.1)" />
+                            <XAxis dataKey="name" stroke="rgba(74,84,56,0.4)" fontSize={12} tickLine={false} />
+                            <YAxis stroke="rgba(74,84,56,0.4)" fontSize={12} tickLine={false} axisLine={false} />
                             <Tooltip
                                 contentStyle={{
-                                    backgroundColor: '#2C2420',
-                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    backgroundColor: '#FAF3EB',
+                                    border: '1px solid rgba(212,180,148,0.3)',
                                     borderRadius: '0',
                                 }}
                                 formatter={(value) => value !== undefined ? [`$${value.toLocaleString()}`, ''] : ['', '']}
                             />
-                            <Area type="monotone" dataKey="target" stroke="rgba(255,255,255,0.3)" fill="transparent" strokeDasharray="5 5" />
+                            <Area type="monotone" dataKey="target" stroke="rgba(74,84,56,0.3)" fill="transparent" strokeDasharray="5 5" />
                             <Area type="monotone" dataKey="revenue" stroke="#8B3F2C" fillOpacity={1} fill="url(#colorRevenue)" />
                         </AreaChart>
                     </ResponsiveContainer>
@@ -172,9 +172,9 @@ export default function ReportsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="bg-warmDark-800 border border-peach-400/10 p-6"
+                    className="bg-peach-50 border border-peach-400/20 p-6"
                 >
-                    <h3 className="text-lg font-bold text-peach-200 mb-6">Membership Distribution</h3>
+                    <h3 className="text-lg font-bold text-olive-600 mb-6">Membership Distribution</h3>
                     <div className="h-64 flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -193,8 +193,8 @@ export default function ReportsPage() {
                                 </Pie>
                                 <Tooltip
                                     contentStyle={{
-                                        backgroundColor: '#2C2420',
-                                        border: '1px solid rgba(255,255,255,0.2)',
+                                        backgroundColor: '#FAF3EB',
+                                        border: '1px solid rgba(212,180,148,0.3)',
                                     }}
                                 />
                             </PieChart>
@@ -204,7 +204,7 @@ export default function ReportsPage() {
                         {membershipData.map(item => (
                             <div key={item.name} className="flex items-center gap-2">
                                 <div className="w-3 h-3" style={{ backgroundColor: item.color }} />
-                                <span className="text-xs text-peach-400">{item.name} ({item.value})</span>
+                                <span className="text-xs text-olive-300">{item.name} ({item.value})</span>
                             </div>
                         ))}
                     </div>
@@ -215,19 +215,19 @@ export default function ReportsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="bg-warmDark-800 border border-peach-400/10 p-6"
+                    className="bg-peach-50 border border-peach-400/20 p-6"
                 >
-                    <h3 className="text-lg font-bold text-peach-200 mb-6">Class Popularity</h3>
+                    <h3 className="text-lg font-bold text-olive-600 mb-6">Class Popularity</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={classPopularity} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                                <XAxis type="number" stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} />
-                                <YAxis dataKey="name" type="category" stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} width={60} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(74,84,56,0.1)" />
+                                <XAxis type="number" stroke="rgba(74,84,56,0.4)" fontSize={12} tickLine={false} />
+                                <YAxis dataKey="name" type="category" stroke="rgba(74,84,56,0.4)" fontSize={12} tickLine={false} width={60} />
                                 <Tooltip
                                     contentStyle={{
-                                        backgroundColor: '#2C2420',
-                                        border: '1px solid rgba(255,255,255,0.2)',
+                                        backgroundColor: '#FAF3EB',
+                                        border: '1px solid rgba(212,180,148,0.3)',
                                     }}
                                 />
                                 <Bar dataKey="bookings" fill="#8B3F2C" radius={[0, 4, 4, 0]} />
@@ -242,32 +242,32 @@ export default function ReportsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="bg-warmDark-800 border border-peach-400/10 p-6"
+                className="bg-peach-50 border border-peach-400/20 p-6"
             >
-                <h3 className="text-lg font-bold text-peach-200 mb-6">Zone Utilization</h3>
+                <h3 className="text-lg font-bold text-olive-600 mb-6">Zone Utilization</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-peach-400/10">
-                                <th className="text-left text-xs font-bold text-peach-400 tracking-wider pb-4">ZONE</th>
-                                <th className="text-right text-xs font-bold text-peach-400 tracking-wider pb-4">BOOKINGS</th>
-                                <th className="text-right text-xs font-bold text-peach-400 tracking-wider pb-4">UTILIZATION</th>
+                            <tr className="border-b border-peach-400/20">
+                                <th className="text-left text-xs font-bold text-olive-600 tracking-wider pb-4">ZONE</th>
+                                <th className="text-right text-xs font-bold text-olive-600 tracking-wider pb-4">BOOKINGS</th>
+                                <th className="text-right text-xs font-bold text-olive-600 tracking-wider pb-4">UTILIZATION</th>
                             </tr>
                         </thead>
                         <tbody>
                             {topZones.map((zone) => (
-                                <tr key={zone.name} className="border-b border-peach-400/10/50">
-                                    <td className="py-4 font-medium text-peach-200">{zone.name}</td>
-                                    <td className="py-4 text-right text-peach-200/80">{zone.bookings.toLocaleString()}</td>
+                                <tr key={zone.name} className="border-b border-peach-400/10">
+                                    <td className="py-4 font-medium text-olive-600">{zone.name}</td>
+                                    <td className="py-4 text-right text-olive-400">{zone.bookings.toLocaleString()}</td>
                                     <td className="py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <div className="w-16 h-2 bg-peach-200/10 overflow-hidden">
+                                            <div className="w-16 h-2 bg-peach-300/40 overflow-hidden">
                                                 <div
                                                     className="h-full bg-terra-400"
                                                     style={{ width: `${zone.utilization}%` }}
                                                 />
                                             </div>
-                                            <span className="text-peach-400 text-sm w-12">{zone.utilization}%</span>
+                                            <span className="text-olive-300 text-sm w-12">{zone.utilization}%</span>
                                         </div>
                                     </td>
                                 </tr>

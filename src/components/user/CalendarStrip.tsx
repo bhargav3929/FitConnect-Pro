@@ -41,7 +41,7 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
             <div className="relative flex items-center mb-6">
                 <button
                     onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
-                    className="w-8 h-8 flex items-center justify-center text-olive-400 hover:text-peach-200 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center text-olive-400 hover:text-olive-600 transition-colors"
                 >
                     <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -76,7 +76,7 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
                                     {date.getDate()}
                                 </span>
                                 {isSelected && (
-                                    <div className="w-1 h-1 bg-warmDark-800 rounded-full mt-2" />
+                                    <div className="w-1 h-1 bg-peach-100 rounded-full mt-2" />
                                 )}
                             </button>
                         )
@@ -85,15 +85,15 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
 
                 <button
                     onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
-                    className="w-8 h-8 flex items-center justify-center text-olive-400 hover:text-peach-200 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center text-olive-400 hover:text-olive-600 transition-colors"
                 >
                     <ChevronRight className="w-5 h-5" />
                 </button>
             </div>
 
             {/* Date Header */}
-            <div className="flex items-center justify-between px-4 pb-4 border-b border-peach-400/10">
-                <h2 className="text-peach-200 font-bold text-sm sm:text-base">
+            <div className="flex items-center justify-between px-4 pb-4 border-b border-peach-400/20">
+                <h2 className="text-olive-600 font-bold text-sm sm:text-base">
                     {formatDateFull(selectedDate)}
                 </h2>
                 <button

@@ -60,13 +60,11 @@ export default function AdminLoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-warmDark-800 flex">
-            {/* Left Panel - Decorative */}
+        <div className="min-h-screen bg-peach-200 flex">
+            {/* Left Panel - Decorative (dark is appropriate here as a feature panel) */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-                {/* Gradient Background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-terra-400/20 via-warmDark-800 to-warmDark-900" />
 
-                {/* Grid Pattern */}
                 <div
                     className="absolute inset-0 opacity-20"
                     style={{
@@ -75,9 +73,7 @@ export default function AdminLoginPage() {
                     }}
                 />
 
-                {/* Content */}
                 <div className="relative z-10 flex flex-col justify-between p-16">
-                    {/* Logo */}
                     <div>
                         <Link href="/" className="inline-flex items-center gap-3 group">
                             <ArrowLeft className="w-5 h-5 text-peach-400 group-hover:text-peach-200 transition-colors" />
@@ -85,7 +81,6 @@ export default function AdminLoginPage() {
                         </Link>
                     </div>
 
-                    {/* Main Text */}
                     <div>
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
@@ -104,13 +99,11 @@ export default function AdminLoginPage() {
                         </motion.div>
                     </div>
 
-                    {/* Version */}
                     <div className="text-peach-400/50 text-xs tracking-wider">
                         SOL ADMIN v1.0
                     </div>
                 </div>
 
-                {/* Decorative Element */}
                 <div className="absolute bottom-0 right-0 w-64 h-64">
                     <svg viewBox="0 0 200 200" className="w-full h-full opacity-10">
                         <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="1" fill="none" className="text-peach-200" />
@@ -120,8 +113,8 @@ export default function AdminLoginPage() {
                 </div>
             </div>
 
-            {/* Right Panel - Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+            {/* Right Panel - Login Form (LIGHT) */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-peach-100">
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -131,20 +124,20 @@ export default function AdminLoginPage() {
                     {/* Mobile Logo */}
                     <div className="lg:hidden mb-12">
                         <Link href="/" className="inline-flex items-center gap-3 group">
-                            <ArrowLeft className="w-5 h-5 text-peach-400 group-hover:text-peach-200 transition-colors" />
-                            <Image src="/images/sol-logo-cream.png" alt="SOL Pilates Studio" width={400} height={400} className="h-16 w-auto" />
+                            <ArrowLeft className="w-5 h-5 text-olive-400 group-hover:text-olive-600 transition-colors" />
+                            <Image src="/images/sol-logo-terra.png" alt="SOL Pilates Studio" width={400} height={400} className="h-16 w-auto" />
                         </Link>
                     </div>
 
                     {/* Header */}
                     <div className="mb-10">
-                        <div className="w-16 h-16 bg-peach-200/10 flex items-center justify-center mb-6">
-                            <Shield className="w-8 h-8 text-peach-200" />
+                        <div className="w-16 h-16 bg-terra-400/10 flex items-center justify-center mb-6">
+                            <Shield className="w-8 h-8 text-terra-400" />
                         </div>
-                        <h2 className="text-3xl font-black text-peach-200 tracking-tight font-display">
+                        <h2 className="text-3xl font-black text-olive-600 tracking-tight font-display">
                             ADMIN LOGIN
                         </h2>
-                        <p className="text-peach-400 mt-2 text-sm tracking-wider">
+                        <p className="text-olive-300 mt-2 text-sm tracking-wider">
                             ENTER YOUR CREDENTIALS TO ACCESS THE DASHBOARD
                         </p>
                     </div>
@@ -157,17 +150,17 @@ export default function AdminLoginPage() {
                                 name="email"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-peach-200/70 text-xs font-bold tracking-wider">
+                                        <FormLabel className="text-olive-600 text-xs font-bold tracking-wider">
                                             EMAIL
                                         </FormLabel>
                                         <FormControl>
                                             <div className="relative">
-                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-peach-400/50" />
+                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300/60" />
                                                 <Input
                                                     placeholder="admin@solpilates.com"
                                                     type="email"
                                                     {...field}
-                                                    className="h-14 bg-peach-200/5 border-warmDark-700 text-peach-200 placeholder:text-peach-400/40 focus:border-terra-400/50 focus:ring-0 pl-11"
+                                                    className="h-14 bg-peach-50 border-peach-400/30 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400 focus:ring-0 pl-11"
                                                 />
                                             </div>
                                         </FormControl>
@@ -180,22 +173,22 @@ export default function AdminLoginPage() {
                                 name="password"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-peach-200/70 text-xs font-bold tracking-wider">
+                                        <FormLabel className="text-olive-600 text-xs font-bold tracking-wider">
                                             PASSWORD
                                         </FormLabel>
                                         <FormControl>
                                             <div className="relative">
-                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-peach-400/50" />
+                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300/60" />
                                                 <Input
                                                     placeholder="Enter password"
                                                     type={showPassword ? "text" : "password"}
                                                     {...field}
-                                                    className="h-14 bg-peach-200/5 border-warmDark-700 text-peach-200 placeholder:text-peach-400/40 focus:border-terra-400/50 focus:ring-0 pl-11 pr-12"
+                                                    className="h-14 bg-peach-50 border-peach-400/30 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400 focus:ring-0 pl-11 pr-12"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-peach-400/50 hover:text-peach-200/70 transition-colors"
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-olive-300/60 hover:text-olive-600 transition-colors"
                                                 >
                                                     {showPassword ? (
                                                         <EyeOff className="w-5 h-5" />
@@ -228,8 +221,8 @@ export default function AdminLoginPage() {
                     </Form>
 
                     {/* Footer */}
-                    <div className="mt-8 pt-8 border-t border-warmDark-700">
-                        <p className="text-peach-400/50 text-xs text-center tracking-wider">
+                    <div className="mt-8 pt-8 border-t border-peach-400/20">
+                        <p className="text-olive-300/60 text-xs text-center tracking-wider">
                             SECURE ADMIN ACCESS &bull; SOL PILATES &copy; {new Date().getFullYear()}
                         </p>
                     </div>

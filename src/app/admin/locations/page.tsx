@@ -58,8 +58,8 @@ export default function FacilitySettingsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-peach-200 font-display">Facility Settings</h2>
-                    <p className="text-olive-400 text-sm mt-1">
+                    <h2 className="text-2xl font-black text-olive-600 font-display">Facility Settings</h2>
+                    <p className="text-olive-300 text-sm mt-1">
                         Manage your facility details, hours, and amenities
                     </p>
                 </div>
@@ -94,11 +94,11 @@ export default function FacilitySettingsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="bg-warmDark-700 border border-peach-400/10 p-5"
+                        className="bg-peach-50 border border-peach-400/20 p-5"
                     >
-                        <stat.icon className="w-5 h-5 text-peach-400 mb-3" />
-                        <p className="text-2xl font-black text-peach-200">{stat.value}</p>
-                        <p className="text-xs text-olive-400 tracking-wider uppercase mt-1">{stat.label}</p>
+                        <stat.icon className="w-5 h-5 text-olive-400 mb-3" />
+                        <p className="text-2xl font-black text-olive-600">{stat.value}</p>
+                        <p className="text-xs text-olive-300 tracking-wider uppercase mt-1">{stat.label}</p>
                     </motion.div>
                 ))}
             </div>
@@ -108,66 +108,66 @@ export default function FacilitySettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-warmDark-800 border border-peach-400/10 p-6"
+                className="bg-peach-50 border border-peach-400/20 p-6"
             >
-                <h3 className="text-lg font-bold text-peach-200 mb-6">General Information</h3>
+                <h3 className="text-lg font-bold text-olive-600 mb-6">General Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-xs font-bold text-peach-400 tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
                             FACILITY NAME
                         </label>
                         <input
                             type="text"
                             defaultValue={FACILITY_DATA.name}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/5 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-peach-400 tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
                             ADDRESS
                         </label>
                         <input
                             type="text"
                             defaultValue={FACILITY_DATA.address}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/5 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-peach-400 tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
                             PHONE
                         </label>
                         <input
                             type="text"
                             defaultValue={FACILITY_DATA.phone}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/5 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-peach-400 tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
                             EMAIL
                         </label>
                         <input
                             type="text"
                             defaultValue={FACILITY_DATA.email}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/5 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                         />
                     </div>
                 </div>
 
                 {/* Description */}
                 <div className="mt-6">
-                    <label className="block text-xs font-bold text-peach-400 tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
                         DESCRIPTION
                     </label>
                     <textarea
                         defaultValue={FACILITY_DATA.description}
                         disabled={!isEditing}
                         rows={3}
-                        className={`w-full px-4 py-3 bg-peach-200/5 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none resize-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                        className={`w-full px-4 py-3 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none resize-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
                     />
                 </div>
             </motion.div>
@@ -177,11 +177,11 @@ export default function FacilitySettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-warmDark-800 border border-peach-400/10 p-6"
+                className="bg-peach-50 border border-peach-400/20 p-6"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <Clock className="w-5 h-5 text-peach-400" />
-                    <h3 className="text-lg font-bold text-peach-200">Operating Hours</h3>
+                    <Clock className="w-5 h-5 text-olive-400" />
+                    <h3 className="text-lg font-bold text-olive-600">Operating Hours</h3>
                 </div>
                 <div className="space-y-4">
                     {[
@@ -189,16 +189,16 @@ export default function FacilitySettingsPage() {
                         { label: "Saturday", value: FACILITY_DATA.hours.saturday },
                         { label: "Sunday", value: FACILITY_DATA.hours.sunday },
                     ].map((slot) => (
-                        <div key={slot.label} className="flex items-center justify-between py-3 border-b border-peach-400/10/50 last:border-0">
-                            <span className="text-peach-400 font-medium">{slot.label}</span>
+                        <div key={slot.label} className="flex items-center justify-between py-3 border-b border-peach-400/10 last:border-0">
+                            <span className="text-olive-400 font-medium">{slot.label}</span>
                             {isEditing ? (
                                 <input
                                     type="text"
                                     defaultValue={slot.value}
-                                    className="w-48 h-10 px-4 bg-peach-200/5 border border-peach-400/10 text-peach-200 text-right focus:border-terra-400/50 focus:outline-none"
+                                    className="w-48 h-10 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 text-right focus:border-terra-400 focus:outline-none"
                                 />
                             ) : (
-                                <span className="text-peach-200 font-bold">{slot.value}</span>
+                                <span className="text-olive-600 font-bold">{slot.value}</span>
                             )}
                         </div>
                     ))}
@@ -210,23 +210,23 @@ export default function FacilitySettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-warmDark-800 border border-peach-400/10 p-6"
+                className="bg-peach-50 border border-peach-400/20 p-6"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <Dumbbell className="w-5 h-5 text-peach-400" />
-                    <h3 className="text-lg font-bold text-peach-200">Training Zones & Amenities</h3>
+                    <Dumbbell className="w-5 h-5 text-olive-400" />
+                    <h3 className="text-lg font-bold text-olive-600">Training Zones & Amenities</h3>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     {FACILITY_DATA.zones.map((zone) => (
                         <span
                             key={zone}
-                            className="px-4 py-2 bg-peach-200/5 text-peach-200/80 text-sm font-medium border border-peach-400/10 hover:border-terra-400/30 transition-colors"
+                            className="px-4 py-2 bg-peach-200/50 text-olive-400 text-sm font-medium border border-peach-400/20 hover:border-terra-400/30 transition-colors"
                         >
                             {zone}
                         </span>
                     ))}
                     {isEditing && (
-                        <button className="px-4 py-2 border border-dashed border-peach-400/10 text-olive-400 text-sm font-medium hover:border-terra-400/50 hover:text-terra-400 transition-colors">
+                        <button className="px-4 py-2 border border-dashed border-peach-400/20 text-olive-300 text-sm font-medium hover:border-terra-400/50 hover:text-terra-400 transition-colors">
                             + Add Zone
                         </button>
                     )}
@@ -238,19 +238,19 @@ export default function FacilitySettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-warmDark-800 border border-peach-400/10 p-6"
+                className="bg-peach-50 border border-peach-400/20 p-6"
             >
-                <h3 className="text-lg font-bold text-peach-200 mb-6">Quick Contact Reference</h3>
+                <h3 className="text-lg font-bold text-olive-600 mb-6">Quick Contact Reference</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex items-start gap-3 text-peach-400">
+                    <div className="flex items-start gap-3 text-olive-300">
                         <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{FACILITY_DATA.address}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-peach-400">
+                    <div className="flex items-center gap-3 text-olive-300">
                         <Phone className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm">{FACILITY_DATA.phone}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-peach-400">
+                    <div className="flex items-center gap-3 text-olive-300">
                         <Mail className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm">{FACILITY_DATA.email}</span>
                     </div>

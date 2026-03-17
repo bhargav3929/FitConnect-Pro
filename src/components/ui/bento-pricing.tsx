@@ -38,7 +38,7 @@ function PricingCard({
     return (
         <div
             className={cn(
-                'bg-peach-200/5 border-peach-400/10 relative overflow-hidden rounded-2xl border flex flex-col',
+                'bg-peach-50 border-peach-400/20 relative overflow-hidden rounded-2xl border flex flex-col',
                 'hover:border-terra-400/30 transition-all duration-300',
                 className,
             )}
@@ -49,7 +49,7 @@ function PricingCard({
 
             <div className="p-6 pt-2">
                 <div className="flex items-end gap-2 mb-2">
-                    <span className="font-mono text-5xl font-bold tracking-tight text-peach-200">
+                    <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
                         {priceLabel}
                     </span>
                     <div className="flex flex-col leading-none pb-2">
@@ -62,12 +62,12 @@ function PricingCard({
                     </div>
                 </div>
                 {description && (
-                    <p className="text-peach-400 text-sm leading-relaxed mb-6 border-b border-peach-400/10 pb-6">
+                    <p className="text-olive-300 text-sm leading-relaxed mb-6 border-b border-peach-400/20 pb-6">
                         {description}
                     </p>
                 )}
 
-                <ul className="text-peach-400 space-y-4 text-sm mt-2 flex-grow">
+                <ul className="text-olive-300 space-y-4 text-sm mt-2 flex-grow">
                     {features.map((f, i) => (
                         <li key={i} className="flex items-start gap-3">
                             <FilledCheck />
@@ -90,14 +90,14 @@ export function BentoPricing() {
             {/* SECTION 1: MEMBERSHIPS */}
             <div className="space-y-8">
                 <div className="text-center space-y-2">
-                    <h2 className="text-3xl md:text-5xl font-black text-peach-200 tracking-tight uppercase font-display">Memberships</h2>
+                    <h2 className="text-3xl md:text-5xl font-black text-olive-600 tracking-tight uppercase font-display">Memberships</h2>
                     <p className="text-olive-400 max-w-2xl mx-auto">Flexible plans for your consistent training.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Unlimited - Featured */}
                     <div
                         className={cn(
-                            'bg-peach-200/5 border-peach-400/10 relative w-full overflow-hidden rounded-2xl border flex flex-col',
+                            'bg-peach-50 border-peach-400/20 relative w-full overflow-hidden rounded-2xl border flex flex-col',
                             'md:col-span-1 ring-1 ring-terra-400/30',
                         )}
                     >
@@ -111,7 +111,7 @@ export function BentoPricing() {
                         <div className="p-6 pt-2 flex flex-col h-full">
                             <div className="pb-4">
                                 <div className="flex items-end gap-2">
-                                    <span className="font-mono text-5xl font-bold tracking-tight text-peach-200">
+                                    <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
                                         $200
                                     </span>
                                     <div className="flex flex-col leading-none pb-2">
@@ -119,11 +119,11 @@ export function BentoPricing() {
                                         <span className="text-olive-300 text-[10px] font-bold uppercase">Best Value</span>
                                     </div>
                                 </div>
-                                <p className="text-peach-400 text-sm mt-4 border-b border-peach-400/10 pb-6">
+                                <p className="text-olive-300 text-sm mt-4 border-b border-peach-400/20 pb-6">
                                     Book as many sessions as you&apos;d like. The ultimate commitment to your fitness journey.
                                 </p>
                             </div>
-                            <ul className="text-peach-400 space-y-4 text-sm flex-grow">
+                            <ul className="text-olive-300 space-y-4 text-sm flex-grow">
                                 {[
                                     'Unlimited classes every 4 weeks',
                                     '14-day advance booking window',
@@ -174,7 +174,7 @@ export function BentoPricing() {
             {/* SECTION 2: SESSIONS */}
             <div className="space-y-8">
                 <div className="text-center space-y-2">
-                    <h2 className="text-2xl md:text-4xl font-black text-peach-200 tracking-tight uppercase font-display">Class Packs</h2>
+                    <h2 className="text-2xl md:text-4xl font-black text-olive-600 tracking-tight uppercase font-display">Class Packs</h2>
                     <p className="text-olive-400 max-w-2xl mx-auto">No commitment. Just train.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">

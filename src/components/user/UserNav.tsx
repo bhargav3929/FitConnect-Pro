@@ -54,11 +54,11 @@ export function UserNav() {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 transition-all group ${isActive
-                                        ? 'bg-terra-400 text-peach-50 font-bold'
+                                        ? 'bg-terra-400/10 text-terra-400 font-bold'
                                         : 'text-peach-400 hover:text-peach-200 hover:bg-peach-200/5'
                                     }`}
                             >
-                                <item.icon className={`w-5 h-5 ${isActive ? 'text-peach-50' : 'text-peach-400 group-hover:text-peach-200'}`} />
+                                <item.icon className={`w-5 h-5 ${isActive ? 'text-terra-400' : 'text-peach-400 group-hover:text-peach-200'}`} />
                                 <span className={isActive ? 'font-bold' : 'font-medium'}>{item.label}</span>
                                 {isActive && (
                                     <motion.div

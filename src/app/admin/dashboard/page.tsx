@@ -48,25 +48,25 @@ function StatCard({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay, ease: "easeOut" }}
-            className="group relative overflow-hidden bg-warmDark-700 border border-peach-400/10 p-6 sm:p-8 rounded-3xl hover:border-terra-400/30 transition-all duration-500 hover:bg-peach-200/5"
+            className="group relative overflow-hidden bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-terra-400/30 transition-all duration-500 hover:shadow-md"
         >
             <div className="absolute top-0 right-0 w-32 h-32 bg-terra-400/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
 
             <div className="flex items-start justify-between mb-6 relative z-10">
-                <div className="w-12 h-12 bg-peach-200/5 rounded-2xl flex items-center justify-center group-hover:bg-terra-400/20 group-hover:scale-110 transition-all duration-300">
-                    <Icon className="w-6 h-6 text-peach-400 group-hover:text-terra-400 transition-colors" />
+                <div className="w-12 h-12 bg-peach-200/60 flex items-center justify-center group-hover:bg-terra-400/15 group-hover:scale-110 transition-all duration-300">
+                    <Icon className="w-6 h-6 text-olive-400 group-hover:text-terra-400 transition-colors" />
                 </div>
             </div>
 
             <div className="relative z-10">
                 {isLoading ? (
-                    <div className="h-9 w-20 bg-peach-200/10 rounded animate-pulse mb-2" />
+                    <div className="h-9 w-20 bg-peach-300/40 rounded animate-pulse mb-2" />
                 ) : (
-                    <h3 className="text-3xl sm:text-4xl font-black text-peach-200 mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300">
+                    <h3 className="text-3xl sm:text-4xl font-black text-olive-600 mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300">
                         {value}
                     </h3>
                 )}
-                <p className="text-olive-400 text-xs font-semibold tracking-[0.2em] uppercase">
+                <p className="text-olive-300 text-xs font-semibold tracking-[0.2em] uppercase">
                     {title}
                 </p>
             </div>
@@ -96,16 +96,16 @@ function QuickAction({
         >
             <Link
                 href={href}
-                className="flex flex-col p-6 bg-warmDark-700 border border-peach-400/10 rounded-3xl hover:bg-peach-200/5 hover:border-terra-400/30 transition-all group relative overflow-hidden h-full"
+                className="flex flex-col p-6 bg-peach-50 border border-peach-400/20 hover:bg-peach-100 hover:border-terra-400/30 transition-all group relative overflow-hidden h-full"
             >
-                <div className="absolute top-4 right-4 text-peach-200/20 group-hover:text-peach-200 transition-colors">
+                <div className="absolute top-4 right-4 text-olive-300/30 group-hover:text-terra-400 transition-colors">
                     <ArrowUpRight className="w-5 h-5" />
                 </div>
-                <div className="w-12 h-12 bg-peach-200/5 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-peach-200/10 transition-colors">
-                    <Icon className="w-6 h-6 text-peach-200/70" />
+                <div className="w-12 h-12 bg-peach-200/60 flex items-center justify-center mb-4 group-hover:bg-terra-400/15 transition-colors">
+                    <Icon className="w-6 h-6 text-olive-400" />
                 </div>
-                <h4 className="text-lg font-bold text-peach-200 mb-1 group-hover:text-terra-400 transition-colors">{label}</h4>
-                <p className="text-olive-400 text-xs leading-relaxed">{desc}</p>
+                <h4 className="text-lg font-bold text-olive-600 mb-1 group-hover:text-terra-400 transition-colors">{label}</h4>
+                <p className="text-olive-300 text-xs leading-relaxed">{desc}</p>
             </Link>
         </motion.div>
     )
@@ -203,18 +203,18 @@ export default function AdminDashboardPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/10/50"
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-peach-200 tracking-tight mb-2 font-display">
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
                         Dashboard
                     </h2>
-                    <p className="text-olive-400 text-sm md:text-base tracking-wide max-w-lg">
+                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
                         Your studio performance, member activity, and daily operations at a glance.
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="text-peach-200/20 text-xs font-mono bg-peach-200/5 px-3 py-1 rounded-full border border-peach-400/10/50">
+                    <span className="text-olive-300 text-xs font-mono bg-peach-200/50 px-3 py-1 rounded-full border border-peach-400/20">
                         {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                 </div>
@@ -259,14 +259,14 @@ export default function AdminDashboardPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="xl:col-span-2 bg-warmDark-700 border border-peach-400/10 p-6 sm:p-8 rounded-3xl"
+                    className="xl:col-span-2 bg-peach-50 border border-peach-400/20 p-6 sm:p-8"
                 >
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h3 className="text-xl font-bold text-peach-200 mb-1">Weekly Attendance</h3>
-                            <p className="text-olive-400 text-xs tracking-wider uppercase">Classes attended this week</p>
+                            <h3 className="text-xl font-bold text-olive-600 mb-1">Weekly Attendance</h3>
+                            <p className="text-olive-300 text-xs tracking-wider uppercase">Classes attended this week</p>
                         </div>
-                        <button className="flex items-center gap-2 text-olive-400 hover:text-peach-200 transition-colors">
+                        <button className="flex items-center gap-2 text-olive-300 hover:text-olive-600 transition-colors">
                             <MoreHorizontal className="w-5 h-5" />
                         </button>
                     </div>
@@ -274,43 +274,43 @@ export default function AdminDashboardPage() {
                         {isLoading ? (
                             <div className="h-full flex items-end gap-4 px-4">
                                 {[40, 60, 30, 80, 50, 70, 45].map((h, i) => (
-                                    <div key={i} className="flex-1 bg-peach-200/5 rounded-t animate-pulse" style={{ height: `${h}%` }} />
+                                    <div key={i} className="flex-1 bg-peach-300/40 rounded-t animate-pulse" style={{ height: `${h}%` }} />
                                 ))}
                             </div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={weeklyData} barSize={40}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(74,84,56,0.1)" vertical={false} />
                                     <XAxis
                                         dataKey="name"
-                                        stroke="rgba(255,255,255,0.2)"
+                                        stroke="rgba(74,84,56,0.4)"
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
                                         dy={10}
                                     />
                                     <YAxis
-                                        stroke="rgba(255,255,255,0.2)"
+                                        stroke="rgba(74,84,56,0.4)"
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
                                         dx={-10}
                                     />
                                     <Tooltip
-                                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                        cursor={{ fill: 'rgba(74,84,56,0.05)' }}
                                         contentStyle={{
-                                            backgroundColor: '#2C2420',
-                                            border: '1px solid rgba(255,255,255,0.1)',
-                                            borderRadius: '12px',
-                                            boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
+                                            backgroundColor: '#FAF3EB',
+                                            border: '1px solid rgba(212,180,148,0.3)',
+                                            borderRadius: '0',
+                                            boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
                                             padding: '12px'
                                         }}
-                                        itemStyle={{ color: '#EDE6DA' }}
+                                        itemStyle={{ color: '#4A5438' }}
                                     />
                                     <Bar
                                         dataKey="value"
                                         fill="#8B3F2C"
-                                        radius={[8, 8, 8, 8]}
+                                        radius={[4, 4, 4, 4]}
                                         className="hover:opacity-80 transition-opacity cursor-pointer"
                                     />
                                 </BarChart>
@@ -320,8 +320,8 @@ export default function AdminDashboardPage() {
                 </motion.div>
 
                 {/* Quick Actions Grid */}
-                <div className="bg-warmDark-700 border border-peach-400/10 p-6 sm:p-8 rounded-3xl flex flex-col">
-                    <h3 className="text-xl font-bold text-peach-200 mb-6">Quick Actions</h3>
+                <div className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 flex flex-col">
+                    <h3 className="text-xl font-bold text-olive-600 mb-6">Quick Actions</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4 flex-1">
                         <QuickAction
                             label="Add Class"
@@ -353,13 +353,13 @@ export default function AdminDashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="bg-warmDark-700 border border-peach-400/10 p-6 sm:p-8 rounded-3xl"
+                className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8"
             >
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-peach-200">Recent Bookings</h3>
+                    <h3 className="text-xl font-bold text-olive-600">Recent Bookings</h3>
                     <Link
                         href="/admin/bookings"
-                        className="text-terra-400 text-xs font-bold tracking-widest hover:text-peach-200 transition-colors uppercase"
+                        className="text-terra-400 text-xs font-bold tracking-widest hover:text-terra-300 transition-colors uppercase"
                     >
                         View All
                     </Link>
@@ -369,17 +369,17 @@ export default function AdminDashboardPage() {
                     <div className="space-y-6">
                         {[1, 2, 3, 4, 5].map(i => (
                             <div key={i} className="flex items-start gap-4 animate-pulse">
-                                <div className="w-10 h-10 rounded-full bg-peach-200/5" />
+                                <div className="w-10 h-10 rounded-full bg-peach-300/40" />
                                 <div className="flex-1">
-                                    <div className="h-4 w-48 bg-peach-200/10 rounded mb-2" />
-                                    <div className="h-3 w-24 bg-peach-200/5 rounded" />
+                                    <div className="h-4 w-48 bg-peach-300/40 rounded mb-2" />
+                                    <div className="h-3 w-24 bg-peach-200/60 rounded" />
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : recentBookings.length > 0 ? (
                     <div className="space-y-6 relative">
-                        <div className="absolute left-[19px] top-4 bottom-4 w-px bg-peach-200/5" />
+                        <div className="absolute left-[19px] top-4 bottom-4 w-px bg-peach-400/15" />
                         {recentBookings.map((booking, index) => (
                             <motion.div
                                 key={booking.id}
@@ -388,16 +388,16 @@ export default function AdminDashboardPage() {
                                 transition={{ delay: 0.7 + (index * 0.1) }}
                                 className="flex items-start gap-4 relative"
                             >
-                                <div className={`relative z-10 w-10 h-10 rounded-full border-4 border-warmDark-700 flex items-center justify-center shrink-0 ${getActivityColor(booking.status)}`}>
+                                <div className={`relative z-10 w-10 h-10 rounded-full border-4 border-peach-50 flex items-center justify-center shrink-0 ${getActivityColor(booking.status)}`}>
                                     <span className="text-peach-50">
                                         {getActivityIcon(booking.status)}
                                     </span>
                                 </div>
                                 <div className="flex-1 pt-1">
-                                    <p className="text-sm font-medium text-peach-200">
-                                        Booking <span className="text-peach-400 capitalize">{booking.status}</span> — Spot {booking.spotNumber}
+                                    <p className="text-sm font-medium text-olive-600">
+                                        Booking <span className="text-olive-300 capitalize">{booking.status}</span> — Spot {booking.spotNumber}
                                     </p>
-                                    <p className="text-xs text-olive-400 mt-1 flex items-center gap-2">
+                                    <p className="text-xs text-olive-300 mt-1 flex items-center gap-2">
                                         <Clock className="w-3 h-3" />
                                         {formatTimeAgo(booking.bookingDate)}
                                     </p>
@@ -407,7 +407,7 @@ export default function AdminDashboardPage() {
                     </div>
                 ) : (
                     <div className="text-center py-8">
-                        <p className="text-olive-400 text-sm">No recent bookings</p>
+                        <p className="text-olive-300 text-sm">No recent bookings</p>
                     </div>
                 )}
             </motion.div>

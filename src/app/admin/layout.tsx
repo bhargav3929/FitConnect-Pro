@@ -32,20 +32,20 @@ export default function AdminLayout({
         return <>{children}</>
     }
 
-    // Show loading skeleton while checking auth
+    // Show loading skeleton while checking auth (LIGHT theme)
     if (isLoading || !isAdminAuthenticated) {
         return (
-            <div className="min-h-screen bg-warmDark-800 flex items-center justify-center">
+            <div className="min-h-screen bg-peach-100 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-8 h-8 border-2 border-peach-200/20 border-t-terra-400 rounded-full animate-spin" />
-                    <p className="text-peach-400 text-sm tracking-wider">LOADING...</p>
+                    <div className="w-8 h-8 border-2 border-peach-400/30 border-t-terra-400 rounded-full animate-spin" />
+                    <p className="text-olive-300 text-sm tracking-wider">LOADING...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-warmDark-800">
+        <div className="min-h-screen bg-peach-100">
             <AdminSidebar />
             <div className="lg:pl-72">
                 <AdminHeader />
