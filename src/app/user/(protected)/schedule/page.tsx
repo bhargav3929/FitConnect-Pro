@@ -193,27 +193,27 @@ export default function SchedulePage() {
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-1 rounded-md bg-gold-400 text-forest-700 text-[10px] font-black uppercase tracking-wider">
+                        <span className="px-2 py-1 rounded-md bg-terra-400 text-peach-50 text-[10px] font-black uppercase tracking-wider">
                             FLAGSHIP
                         </span>
-                        <div className="flex items-center gap-1 text-gold-300">
+                        <div className="flex items-center gap-1 text-terra-300">
                             <Star className="w-3 h-3 fill-current" />
                             <span className="text-xs font-bold">{FACILITY.rating}</span>
-                            <span className="text-sage-500 text-xs">({FACILITY.reviewCount})</span>
+                            <span className="text-olive-400 text-xs">({FACILITY.reviewCount})</span>
                         </div>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-sand-200 tracking-tighter mb-2 font-display">
+                    <h1 className="text-3xl md:text-4xl font-black text-peach-200 tracking-tighter mb-2 font-display">
                         Class Schedule
                     </h1>
-                    <p className="text-sage-400 text-sm flex items-center gap-2">
-                        <MapPin className="w-3 h-3 text-gold-400" />
+                    <p className="text-peach-400 text-sm flex items-center gap-2">
+                        <MapPin className="w-3 h-3 text-terra-400" />
                         {FACILITY.address}
                     </p>
                 </motion.div>
             </div>
 
             {/* Tabs */}
-            <div className="sticky top-0 z-30 bg-forest-700/80 backdrop-blur-xl border-b border-forest-600 -mx-4 lg:-mx-8 px-4 lg:px-8 py-4 overflow-x-auto mb-6">
+            <div className="sticky top-0 z-30 bg-warmDark-800/80 backdrop-blur-xl border-b border-peach-400/10 -mx-4 lg:-mx-8 px-4 lg:px-8 py-4 overflow-x-auto mb-6">
                 <div className="flex gap-2 min-w-max">
                     {[
                         { id: 'classes', label: 'Schedule' },
@@ -224,8 +224,8 @@ export default function SchedulePage() {
                             key={tab.id}
                             onClick={() => setSelectedTab(tab.id as 'classes' | 'trainers' | 'info')}
                             className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all relative overflow-hidden ${selectedTab === tab.id
-                                    ? 'bg-gold-400 text-forest-700 shadow-glow'
-                                    : 'bg-sand-200/5 text-sage-500 hover:text-sand-200 hover:bg-sand-200/10'
+                                    ? 'bg-terra-400 text-peach-50 shadow-glow'
+                                    : 'bg-peach-200/5 text-olive-400 hover:text-peach-200 hover:bg-peach-200/10'
                                 }`}
                         >
                             {tab.label}
@@ -255,7 +255,7 @@ export default function SchedulePage() {
                             {/* Filters */}
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                                    <Filter className="w-4 h-4 text-sage-500 shrink-0" />
+                                    <Filter className="w-4 h-4 text-olive-400 shrink-0" />
                                     {[
                                         { id: 'instructor', label: 'Instructor' },
                                         { id: 'classType', label: 'Class Type' },
@@ -265,8 +265,8 @@ export default function SchedulePage() {
                                             key={filter.id}
                                             onClick={() => toggleFilter(filter.id as FilterType)}
                                             className={`px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${activeFilters.includes(filter.id as FilterType)
-                                                    ? 'bg-gold-400/20 border-gold-400 text-gold-400'
-                                                    : 'bg-transparent border-forest-600 text-sage-500 hover:border-sand-200/20'
+                                                    ? 'bg-terra-400/20 border-terra-400 text-terra-400'
+                                                    : 'bg-transparent border-peach-400/10 text-olive-400 hover:border-peach-200/20'
                                                 }`}
                                         >
                                             {filter.label}
@@ -282,8 +282,8 @@ export default function SchedulePage() {
                                                 key={name}
                                                 onClick={() => selectFilterValue('instructor', name)}
                                                 className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.instructor === name
-                                                        ? 'bg-gold-400 text-forest-700'
-                                                        : 'bg-sand-200/5 text-sage-400 hover:bg-sand-200/10'
+                                                        ? 'bg-terra-400 text-peach-50'
+                                                        : 'bg-peach-200/5 text-peach-400 hover:bg-peach-200/10'
                                                     }`}
                                             >
                                                 {name}
@@ -298,8 +298,8 @@ export default function SchedulePage() {
                                                 key={type}
                                                 onClick={() => selectFilterValue('classType', type)}
                                                 className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.classType === type
-                                                        ? 'bg-gold-400 text-forest-700'
-                                                        : 'bg-sand-200/5 text-sage-400 hover:bg-sand-200/10'
+                                                        ? 'bg-terra-400 text-peach-50'
+                                                        : 'bg-peach-200/5 text-peach-400 hover:bg-peach-200/10'
                                                     }`}
                                             >
                                                 {type}
@@ -314,8 +314,8 @@ export default function SchedulePage() {
                                                 key={room}
                                                 onClick={() => selectFilterValue('rooms', room)}
                                                 className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.rooms === room
-                                                        ? 'bg-gold-400 text-forest-700'
-                                                        : 'bg-sand-200/5 text-sage-400 hover:bg-sand-200/10'
+                                                        ? 'bg-terra-400 text-peach-50'
+                                                        : 'bg-peach-200/5 text-peach-400 hover:bg-peach-200/10'
                                                     }`}
                                             >
                                                 {room}
@@ -329,24 +329,24 @@ export default function SchedulePage() {
                             {isLoadingClasses && (
                                 <div className="space-y-3">
                                     {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="bg-forest-800 border border-forest-600 rounded-2xl p-4 animate-pulse">
+                                        <div key={i} className="bg-warmDark-700 border border-peach-400/10 rounded-2xl p-4 animate-pulse">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex gap-4">
                                                     <div className="flex flex-col items-center">
-                                                        <div className="h-5 w-12 bg-sand-200/10 rounded" />
-                                                        <div className="h-3 w-10 bg-sand-200/5 rounded mt-1" />
+                                                        <div className="h-5 w-12 bg-peach-200/10 rounded" />
+                                                        <div className="h-3 w-10 bg-peach-200/5 rounded mt-1" />
                                                     </div>
-                                                    <div className="w-px h-10 bg-sand-200/10" />
+                                                    <div className="w-px h-10 bg-peach-200/10" />
                                                     <div>
-                                                        <div className="h-5 w-32 bg-sand-200/10 rounded" />
-                                                        <div className="h-3 w-40 bg-sand-200/5 rounded mt-1.5" />
+                                                        <div className="h-5 w-32 bg-peach-200/10 rounded" />
+                                                        <div className="h-3 w-40 bg-peach-200/5 rounded mt-1.5" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between pt-3 border-t border-forest-600">
+                                            <div className="flex items-center justify-between pt-3 border-t border-peach-400/10">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-sand-200/10" />
-                                                    <div className="h-3 w-20 bg-sand-200/5 rounded" />
+                                                    <div className="w-6 h-6 rounded-full bg-peach-200/10" />
+                                                    <div className="h-3 w-20 bg-peach-200/5 rounded" />
                                                 </div>
                                             </div>
                                         </div>
@@ -371,45 +371,45 @@ export default function SchedulePage() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: idx * 0.05 }}
                                                 onClick={() => handleBook(cls)}
-                                                className="bg-forest-800 border border-forest-600 rounded-2xl p-4 active:scale-[0.98] transition-all cursor-pointer hover:bg-forest-800/80 group"
+                                                className="bg-warmDark-700 border border-peach-400/10 rounded-2xl p-4 active:scale-[0.98] transition-all cursor-pointer hover:bg-warmDark-700/80 group"
                                             >
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div className="flex gap-4">
                                                         <div className="flex flex-col items-center">
-                                                            <span className="text-lg font-black text-sand-200 leading-none">{cls.startTime}</span>
-                                                            <span className="text-[10px] text-sage-500 font-medium mt-1">{cls.duration} min</span>
+                                                            <span className="text-lg font-black text-peach-200 leading-none">{cls.startTime}</span>
+                                                            <span className="text-[10px] text-olive-400 font-medium mt-1">{cls.duration} min</span>
                                                         </div>
-                                                        <div className="w-px h-10 bg-sand-200/10" />
+                                                        <div className="w-px h-10 bg-peach-200/10" />
                                                         <div>
-                                                            <h3 className="text-sand-200 font-bold group-hover:text-gold-400 transition-colors">
+                                                            <h3 className="text-peach-200 font-bold group-hover:text-terra-400 transition-colors">
                                                                 {cls.classType || 'Pilates Class'}
                                                             </h3>
-                                                            <p className="text-sage-500 text-xs flex items-center gap-1 mt-0.5">
+                                                            <p className="text-olive-400 text-xs flex items-center gap-1 mt-0.5">
                                                                 {cls.location || 'Main Studio'} · In-Studio
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-end">
                                                         {spotsLeft === 0 ? (
-                                                            <span className="text-xs font-bold text-sand-200/20 uppercase tracking-wider">Full</span>
+                                                            <span className="text-xs font-bold text-peach-200/20 uppercase tracking-wider">Full</span>
                                                         ) : (
-                                                            <span className="w-8 h-8 rounded-full bg-gold-400/20 flex items-center justify-center text-gold-400">
+                                                            <span className="w-8 h-8 rounded-full bg-terra-400/20 flex items-center justify-center text-terra-400">
                                                                 <ChevronLeft className="w-4 h-4 rotate-180" />
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center justify-between pt-3 border-t border-forest-600">
+                                                <div className="flex items-center justify-between pt-3 border-t border-peach-400/10">
                                                     <div className="flex items-center gap-2">
-                                                        <Avatar className="w-6 h-6 border border-forest-600">
+                                                        <Avatar className="w-6 h-6 border border-peach-400/10">
                                                             <AvatarImage src={trainerImage} />
-                                                            <AvatarFallback className="text-[8px] bg-sand-200/10 text-sand-200">{trainerName.charAt(0)}</AvatarFallback>
+                                                            <AvatarFallback className="text-[8px] bg-peach-200/10 text-peach-200">{trainerName.charAt(0)}</AvatarFallback>
                                                         </Avatar>
-                                                        <span className="text-xs text-sage-400 font-medium">{trainerName}</span>
+                                                        <span className="text-xs text-peach-400 font-medium">{trainerName}</span>
                                                     </div>
                                                     {spotsLeft < 3 && spotsLeft > 0 && (
-                                                        <span className="text-[10px] text-gold-300 font-bold uppercase tracking-wider">
+                                                        <span className="text-[10px] text-terra-300 font-bold uppercase tracking-wider">
                                                             Only {spotsLeft} spots left
                                                         </span>
                                                     )}
@@ -423,11 +423,11 @@ export default function SchedulePage() {
                             {/* Empty State */}
                             {!isLoadingClasses && filteredClasses.length === 0 && (
                                 <div className="text-center py-20">
-                                    <div className="w-16 h-16 bg-sand-200/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Calendar className="w-8 h-8 text-sand-200/20" />
+                                    <div className="w-16 h-16 bg-peach-200/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Calendar className="w-8 h-8 text-peach-200/20" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-sand-200">No classes scheduled</h3>
-                                    <p className="text-sage-500 text-sm mt-2 max-w-xs mx-auto">
+                                    <h3 className="text-lg font-bold text-peach-200">No classes scheduled</h3>
+                                    <p className="text-olive-400 text-sm mt-2 max-w-xs mx-auto">
                                         There are no classes available on this date. Try selecting a different day.
                                     </p>
                                 </div>
@@ -445,25 +445,25 @@ export default function SchedulePage() {
                         >
                             {isLoadingTrainers ? (
                                 [1, 2, 3].map(i => (
-                                    <div key={i} className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-forest-800 border border-forest-600 animate-pulse">
+                                    <div key={i} className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-warmDark-700 border border-peach-400/10 animate-pulse">
                                         <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                                            <div className="h-5 w-24 bg-sand-200/10 rounded" />
-                                            <div className="h-3 w-16 bg-sand-200/5 rounded mt-2" />
+                                            <div className="h-5 w-24 bg-peach-200/10 rounded" />
+                                            <div className="h-3 w-16 bg-peach-200/5 rounded mt-2" />
                                         </div>
                                     </div>
                                 ))
                             ) : trainers.length > 0 ? (
                                 trainers.map((trainer) => (
                                     <div key={trainer.id} className="relative aspect-[3/4] rounded-2xl overflow-hidden group">
-                                        <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-transparent to-transparent z-10" />
-                                        <div className="absolute inset-0 bg-sand-200/10 flex items-center justify-center text-sand-200/20 font-bold text-4xl">
+                                        <div className="absolute inset-0 bg-gradient-to-t from-warmDark-900/80 via-transparent to-transparent z-10" />
+                                        <div className="absolute inset-0 bg-peach-200/10 flex items-center justify-center text-peach-200/20 font-bold text-4xl">
                                             {trainer.profilePictureUrl ? (
                                                 <Image src={trainer.profilePictureUrl} alt={trainer.name} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
                                             ) : trainer.name.charAt(0)}
                                         </div>
                                         <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                                            <h3 className="text-sand-200 font-bold leading-none mb-1">{trainer.name}</h3>
-                                            <p className="text-gold-400 text-xs font-bold uppercase tracking-wider">
+                                            <h3 className="text-peach-200 font-bold leading-none mb-1">{trainer.name}</h3>
+                                            <p className="text-terra-400 text-xs font-bold uppercase tracking-wider">
                                                 {trainer.specialties?.[0] || 'Trainer'}
                                             </p>
                                         </div>
@@ -471,7 +471,7 @@ export default function SchedulePage() {
                                 ))
                             ) : (
                                 <div className="col-span-2 text-center py-20">
-                                    <p className="text-sage-500 text-sm">No trainers found</p>
+                                    <p className="text-olive-400 text-sm">No trainers found</p>
                                 </div>
                             )}
                         </motion.div>
@@ -485,41 +485,41 @@ export default function SchedulePage() {
                             exit={{ opacity: 0 }}
                             className="space-y-6"
                         >
-                            <div className="bg-forest-800 rounded-2xl p-6 border border-forest-600">
-                                <h3 className="text-sand-200 font-bold mb-3">About Our Facility</h3>
-                                <p className="text-sage-400 text-sm leading-relaxed mb-4">{FACILITY.description}</p>
-                                <h4 className="text-sand-200 font-bold mb-3 text-sm">Amenities</h4>
+                            <div className="bg-warmDark-700 rounded-2xl p-6 border border-peach-400/10">
+                                <h3 className="text-peach-200 font-bold mb-3">About Our Facility</h3>
+                                <p className="text-peach-400 text-sm leading-relaxed mb-4">{FACILITY.description}</p>
+                                <h4 className="text-peach-200 font-bold mb-3 text-sm">Amenities</h4>
                                 <div className="flex flex-wrap gap-2">
                                     {FACILITY.amenities.map(item => (
-                                        <span key={item} className="px-3 py-1.5 rounded-lg bg-sand-200/5 text-sand-200/70 text-xs font-medium border border-forest-600">
+                                        <span key={item} className="px-3 py-1.5 rounded-lg bg-peach-200/5 text-peach-200/70 text-xs font-medium border border-peach-400/10">
                                             {item}
                                         </span>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="bg-forest-800 rounded-2xl p-6 border border-forest-600">
-                                <h3 className="text-sand-200 font-bold mb-4">Contact & Hours</h3>
+                            <div className="bg-warmDark-700 rounded-2xl p-6 border border-peach-400/10">
+                                <h3 className="text-peach-200 font-bold mb-4">Contact & Hours</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-gold-400/20 flex items-center justify-center text-gold-400">
+                                        <div className="w-8 h-8 rounded-lg bg-terra-400/20 flex items-center justify-center text-terra-400">
                                             <Phone className="w-4 h-4" />
                                         </div>
-                                        <span className="text-sm text-sand-200/80">{FACILITY.contact.phone}</span>
+                                        <span className="text-sm text-peach-200/80">{FACILITY.contact.phone}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-gold-400/20 flex items-center justify-center text-gold-400">
+                                        <div className="w-8 h-8 rounded-lg bg-terra-400/20 flex items-center justify-center text-terra-400">
                                             <Mail className="w-4 h-4" />
                                         </div>
-                                        <span className="text-sm text-sand-200/80">{FACILITY.contact.email}</span>
+                                        <span className="text-sm text-peach-200/80">{FACILITY.contact.email}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-gold-400/20 flex items-center justify-center text-gold-400">
+                                        <div className="w-8 h-8 rounded-lg bg-terra-400/20 flex items-center justify-center text-terra-400">
                                             <Clock className="w-4 h-4" />
                                         </div>
                                         <div className="flex flex-col text-sm">
-                                            <span className="text-sand-200/80">Mon-Fri: {FACILITY.hours.weekday}</span>
-                                            <span className="text-sand-200/80">Sat-Sun: {FACILITY.hours.weekend}</span>
+                                            <span className="text-peach-200/80">Mon-Fri: {FACILITY.hours.weekday}</span>
+                                            <span className="text-peach-200/80">Sat-Sun: {FACILITY.hours.weekend}</span>
                                         </div>
                                     </div>
                                 </div>

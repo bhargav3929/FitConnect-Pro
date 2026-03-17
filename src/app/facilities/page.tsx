@@ -62,7 +62,7 @@ export default function FacilityPage() {
     const selectedZone = AMENITY_ZONES.find(z => z.id === activeZone)
 
     return (
-        <div className="min-h-screen bg-forest-700 pt-28 pb-20 px-4 md:px-8">
+        <div className="min-h-screen bg-warmDark-800 pt-28 pb-20 px-4 md:px-8">
             <div className="container mx-auto space-y-16">
                 {/* Hero Header */}
                 <div className="max-w-3xl">
@@ -70,13 +70,13 @@ export default function FacilityPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <span className="text-gold-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-4">Our Facility</span>
-                        <h1 className="text-4xl md:text-6xl font-black text-sand-200 tracking-tighter leading-[0.95] mb-6 font-display">
+                        <span className="text-terra-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-4">Our Facility</span>
+                        <h1 className="text-4xl md:text-6xl font-black text-peach-200 tracking-tighter leading-[0.95] mb-6 font-display">
                             SPACES DESIGNED<br />
                             FOR STRENGTH,<br />
                             CONTROL & CALM
                         </h1>
-                        <p className="text-sage-400 text-lg max-w-xl leading-relaxed">
+                        <p className="text-peach-400 text-lg max-w-xl leading-relaxed">
                             Five dedicated studios, each crafted for a specific Pilates discipline. Premium equipment, expert instruction, and an atmosphere built for focused, intentional movement.
                         </p>
                     </motion.div>
@@ -94,8 +94,8 @@ export default function FacilityPage() {
                                     onClick={() => setActiveZone(zone.id)}
                                     className={`flex items-center gap-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
                                         activeZone === zone.id
-                                            ? "bg-gold-400 text-forest-700 border-gold-400 shadow-[0_0_20px_rgba(212,162,76,0.3)]"
-                                            : "bg-transparent text-sage-400 border-forest-600 hover:border-sand-200/20 hover:text-sand-200"
+                                            ? "bg-terra-400 text-peach-50 border-terra-400 shadow-[0_0_20px_rgba(212,162,76,0.3)]"
+                                            : "bg-transparent text-peach-400 border-peach-400/10 hover:border-peach-200/20 hover:text-peach-200"
                                     }`}
                                 >
                                     <IconComp className="w-4 h-4" />
@@ -115,16 +115,16 @@ export default function FacilityPage() {
                             className="grid grid-cols-1 lg:grid-cols-2 gap-8"
                         >
                             {/* Image */}
-                            <div className="relative h-[320px] lg:h-[420px] overflow-hidden border border-forest-600">
+                            <div className="relative h-[320px] lg:h-[420px] overflow-hidden border border-peach-400/10">
                                 <Image
                                     src={selectedZone.image}
                                     alt={selectedZone.name}
                                     fill
                                     className="object-cover"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-forest-700/70 via-transparent to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-warmDark-800/70 via-transparent to-transparent" />
                                 <div className="absolute bottom-6 left-6">
-                                    <span className="px-3 py-1.5 bg-gold-400 text-forest-700 text-xs font-bold uppercase tracking-wider">
+                                    <span className="px-3 py-1.5 bg-terra-400 text-peach-50 text-xs font-bold uppercase tracking-wider">
                                         {selectedZone.name}
                                     </span>
                                 </div>
@@ -133,24 +133,24 @@ export default function FacilityPage() {
                             {/* Content */}
                             <div className="flex flex-col justify-center space-y-6">
                                 <div>
-                                    <h3 className="text-3xl font-black text-sand-200 tracking-tight mb-4 font-display">{selectedZone.name}</h3>
-                                    <p className="text-sage-400 text-base leading-relaxed">{selectedZone.description}</p>
+                                    <h3 className="text-3xl font-black text-peach-200 tracking-tight mb-4 font-display">{selectedZone.name}</h3>
+                                    <p className="text-peach-400 text-base leading-relaxed">{selectedZone.description}</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     {selectedZone.features.map((feature) => (
                                         <div
                                             key={feature}
-                                            className="flex items-center gap-3 bg-sand-200/5 border border-forest-600 px-4 py-3"
+                                            className="flex items-center gap-3 bg-peach-200/5 border border-peach-400/10 px-4 py-3"
                                         >
-                                            <div className="w-2 h-2 bg-gold-400 flex-shrink-0" />
-                                            <span className="text-sm text-sand-200/80 font-medium">{feature}</span>
+                                            <div className="w-2 h-2 bg-terra-400 flex-shrink-0" />
+                                            <span className="text-sm text-peach-200/80 font-medium">{feature}</span>
                                         </div>
                                     ))}
                                 </div>
 
                                 <Link href="/user/schedule">
-                                    <Button className="bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold px-8 h-12 w-fit transition-all duration-200">
+                                    <Button className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold px-8 h-12 w-fit transition-all duration-200">
                                         Book a Class
                                         <ChevronRight className="w-4 h-4 ml-1" />
                                     </Button>
@@ -167,19 +167,19 @@ export default function FacilityPage() {
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="bg-forest-800 border border-forest-600 p-6"
+                        className="bg-warmDark-700 border border-peach-400/10 p-6"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-gold-400/10 flex items-center justify-center">
-                                <Clock className="w-5 h-5 text-gold-400" />
+                            <div className="w-10 h-10 bg-terra-400/10 flex items-center justify-center">
+                                <Clock className="w-5 h-5 text-terra-400" />
                             </div>
-                            <h3 className="text-lg font-bold text-sand-200">Operating Hours</h3>
+                            <h3 className="text-lg font-bold text-peach-200">Operating Hours</h3>
                         </div>
                         <div className="space-y-4">
                             {FACILITY_HOURS.map((slot) => (
                                 <div key={slot.day} className="flex items-center justify-between">
-                                    <span className="text-sage-400 text-sm font-medium">{slot.day}</span>
-                                    <span className="text-sand-200 text-sm font-bold">{slot.hours}</span>
+                                    <span className="text-peach-400 text-sm font-medium">{slot.day}</span>
+                                    <span className="text-peach-200 text-sm font-bold">{slot.hours}</span>
                                 </div>
                             ))}
                         </div>
@@ -191,24 +191,24 @@ export default function FacilityPage() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="bg-forest-800 border border-forest-600 p-6"
+                        className="bg-warmDark-700 border border-peach-400/10 p-6"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-gold-400/10 flex items-center justify-center">
-                                <Phone className="w-5 h-5 text-gold-400" />
+                            <div className="w-10 h-10 bg-terra-400/10 flex items-center justify-center">
+                                <Phone className="w-5 h-5 text-terra-400" />
                             </div>
-                            <h3 className="text-lg font-bold text-sand-200">Contact</h3>
+                            <h3 className="text-lg font-bold text-peach-200">Contact</h3>
                         </div>
                         <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-sage-400">
+                            <div className="flex items-center gap-3 text-peach-400">
                                 <Phone className="w-4 h-4 flex-shrink-0" />
                                 <span className="text-sm">(212) 555-0180</span>
                             </div>
-                            <div className="flex items-center gap-3 text-sage-400">
+                            <div className="flex items-center gap-3 text-peach-400">
                                 <Mail className="w-4 h-4 flex-shrink-0" />
                                 <span className="text-sm">hello@solpilates.com</span>
                             </div>
-                            <div className="flex items-start gap-3 text-sage-400">
+                            <div className="flex items-start gap-3 text-peach-400">
                                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                 <span className="text-sm">250 West 54th Street<br />New York, NY 10019</span>
                             </div>
@@ -221,22 +221,22 @@ export default function FacilityPage() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
-                        className="bg-gradient-to-br from-gold-400/20 to-gold-400/5 border border-gold-400/20 p-6 flex flex-col justify-between"
+                        className="bg-gradient-to-br from-terra-400/20 to-terra-400/5 border border-terra-400/20 p-6 flex flex-col justify-between"
                     >
                         <div>
-                            <h3 className="text-lg font-bold text-sand-200 mb-3">Ready to Move?</h3>
-                            <p className="text-sage-400 text-sm leading-relaxed mb-6">
+                            <h3 className="text-lg font-bold text-peach-200 mb-3">Ready to Move?</h3>
+                            <p className="text-peach-400 text-sm leading-relaxed mb-6">
                                 Book your first session and experience what intentional movement in a purpose-built Pilates studio feels like.
                             </p>
                         </div>
                         <div className="space-y-3">
                             <Link href="/subscription" className="block">
-                                <Button className="w-full bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold h-12 transition-all duration-200">
+                                <Button className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold h-12 transition-all duration-200">
                                     View Membership Plans
                                 </Button>
                             </Link>
                             <Link href="/user/schedule" className="block">
-                                <Button variant="outline" className="w-full border-forest-600 text-sand-200 hover:bg-sand-200/5 font-bold h-12 transition-all duration-200">
+                                <Button variant="outline" className="w-full border-peach-400/10 text-peach-200 hover:bg-peach-200/5 font-bold h-12 transition-all duration-200">
                                     Browse Class Schedule
                                 </Button>
                             </Link>

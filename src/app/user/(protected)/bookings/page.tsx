@@ -65,11 +65,11 @@ export default function BookingsPage() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'confirmed': return 'bg-gold-400/20 text-gold-400'
+            case 'confirmed': return 'bg-terra-400/20 text-terra-400'
             case 'attended': return 'bg-green-500/20 text-green-400'
             case 'canceled': return 'bg-red-500/20 text-red-400'
             case 'no-show': return 'bg-red-500/20 text-red-400'
-            default: return 'bg-sand-200/10 text-sage-400'
+            default: return 'bg-peach-200/10 text-peach-400'
         }
     }
 
@@ -87,21 +87,21 @@ export default function BookingsPage() {
         <div className="space-y-8 pb-20">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-sand-200 tracking-tight font-display">My Bookings</h1>
-                <p className="text-sage-500 text-sm mt-1">
+                <h1 className="text-3xl font-black text-peach-200 tracking-tight font-display">My Bookings</h1>
+                <p className="text-olive-400 text-sm mt-1">
                     Manage your upcoming classes and view history
                 </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex p-1 bg-sand-200/5 rounded-xl w-fit">
+            <div className="flex p-1 bg-peach-200/5 rounded-xl w-fit">
                 {(['upcoming', 'past'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${activeTab === tab
-                                ? 'bg-gold-400 text-forest-700 shadow-lg'
-                                : 'text-sage-400 hover:text-sand-200'
+                                ? 'bg-terra-400 text-peach-50 shadow-lg'
+                                : 'text-peach-400 hover:text-peach-200'
                             }`}
                     >
                         {tab}
@@ -113,23 +113,23 @@ export default function BookingsPage() {
             {isLoading && (
                 <div className="grid md:grid-cols-2 gap-6">
                     {[1, 2].map(i => (
-                        <div key={i} className="bg-forest-800 border border-forest-600 rounded-2xl p-6 animate-pulse">
+                        <div key={i} className="bg-warmDark-700 border border-peach-400/10 rounded-2xl p-6 animate-pulse">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <div className="h-5 w-20 bg-sand-200/10 rounded-full mb-3" />
-                                    <div className="h-6 w-36 bg-sand-200/10 rounded mb-2" />
-                                    <div className="h-4 w-24 bg-sand-200/5 rounded" />
+                                    <div className="h-5 w-20 bg-peach-200/10 rounded-full mb-3" />
+                                    <div className="h-6 w-36 bg-peach-200/10 rounded mb-2" />
+                                    <div className="h-4 w-24 bg-peach-200/5 rounded" />
                                 </div>
                                 <div className="text-right">
-                                    <div className="h-8 w-14 bg-sand-200/10 rounded" />
-                                    <div className="h-3 w-8 bg-sand-200/5 rounded mt-1" />
+                                    <div className="h-8 w-14 bg-peach-200/10 rounded" />
+                                    <div className="h-3 w-8 bg-peach-200/5 rounded mt-1" />
                                 </div>
                             </div>
-                            <div className="bg-sand-200/5 rounded-xl p-4 space-y-3 mb-6">
+                            <div className="bg-peach-200/5 rounded-xl p-4 space-y-3 mb-6">
                                 {[1, 2, 3].map(j => (
                                     <div key={j} className="flex items-center justify-between">
-                                        <div className="h-4 w-16 bg-sand-200/5 rounded" />
-                                        <div className="h-4 w-24 bg-sand-200/10 rounded" />
+                                        <div className="h-4 w-16 bg-peach-200/5 rounded" />
+                                        <div className="h-4 w-24 bg-peach-200/10 rounded" />
                                     </div>
                                 ))}
                             </div>
@@ -149,7 +149,7 @@ export default function BookingsPage() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ delay: idx * 0.05 }}
-                                className="bg-forest-800 border border-forest-600 rounded-2xl p-6 group hover:border-gold-400/30 transition-all"
+                                className="bg-warmDark-700 border border-peach-400/10 rounded-2xl p-6 group hover:border-terra-400/30 transition-all"
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
@@ -157,49 +157,49 @@ export default function BookingsPage() {
                                             {getStatusIcon(booking.status)}
                                             {booking.status}
                                         </div>
-                                        <h3 className="text-xl font-bold text-sand-200 mb-1 group-hover:text-gold-400 transition-colors">
+                                        <h3 className="text-xl font-bold text-peach-200 mb-1 group-hover:text-terra-400 transition-colors">
                                             {booking.classType || 'Pilates Class'}
                                         </h3>
-                                        <div className="flex items-center gap-2 text-sage-400 text-sm">
+                                        <div className="flex items-center gap-2 text-peach-400 text-sm">
                                             <User className="w-3 h-3" />
                                             <span>{booking.trainerName || 'Instructor'}</span>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-black text-2xl text-sand-200">
+                                        <p className="font-black text-2xl text-peach-200">
                                             {booking.classStartTime || booking.spotNumber}
                                         </p>
-                                        <p className="text-xs font-bold text-sage-500 uppercase">
+                                        <p className="text-xs font-bold text-olive-400 uppercase">
                                             Spot {booking.spotNumber}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="bg-sand-200/5 rounded-xl p-4 space-y-3 mb-6">
+                                <div className="bg-peach-200/5 rounded-xl p-4 space-y-3 mb-6">
                                     <div className="flex items-center justify-between text-sm">
-                                        <span className="flex items-center gap-2 text-sage-400">
+                                        <span className="flex items-center gap-2 text-peach-400">
                                             <Calendar className="w-4 h-4" />
                                             Date
                                         </span>
-                                        <span className="font-medium text-sand-200">
+                                        <span className="font-medium text-peach-200">
                                             {formatDate(booking.classDate)}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between text-sm">
-                                        <span className="flex items-center gap-2 text-sage-400">
+                                        <span className="flex items-center gap-2 text-peach-400">
                                             <Clock className="w-4 h-4" />
                                             Duration
                                         </span>
-                                        <span className="font-medium text-sand-200">
+                                        <span className="font-medium text-peach-200">
                                             {booking.classDuration ? `${booking.classDuration} min` : '--'}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between text-sm">
-                                        <span className="flex items-center gap-2 text-sage-400">
+                                        <span className="flex items-center gap-2 text-peach-400">
                                             <MapPin className="w-4 h-4" />
                                             Location
                                         </span>
-                                        <span className="font-medium text-sand-200">
+                                        <span className="font-medium text-peach-200">
                                             {booking.classLocation || 'Main Studio'}
                                         </span>
                                     </div>
@@ -221,7 +221,7 @@ export default function BookingsPage() {
                                         </Button>
                                         <Button
                                             onClick={() => window.open('https://maps.google.com/?q=250+West+54th+Street+New+York+NY+10019', '_blank')}
-                                            className="flex-1 h-12 bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold rounded-xl"
+                                            className="flex-1 h-12 bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold rounded-xl"
                                         >
                                             Get Directions
                                         </Button>
@@ -230,7 +230,7 @@ export default function BookingsPage() {
 
                                 {activeTab === 'past' && booking.status === 'attended' && (
                                     <Link href="/user/schedule">
-                                        <Button className="w-full h-12 bg-sand-200/5 text-sand-200 hover:bg-sand-200/10 font-bold rounded-xl border border-forest-600">
+                                        <Button className="w-full h-12 bg-peach-200/5 text-peach-200 hover:bg-peach-200/10 font-bold rounded-xl border border-peach-400/10">
                                             Book Again
                                         </Button>
                                     </Link>
@@ -243,11 +243,11 @@ export default function BookingsPage() {
 
             {!isLoading && filteredBookings.length === 0 && (
                 <div className="text-center py-20">
-                    <div className="w-16 h-16 bg-sand-200/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Calendar className="w-8 h-8 text-sand-200/20" />
+                    <div className="w-16 h-16 bg-peach-200/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="w-8 h-8 text-peach-200/20" />
                     </div>
-                    <h3 className="text-lg font-bold text-sand-200">No bookings found</h3>
-                    <p className="text-sage-500 text-sm mb-6">
+                    <h3 className="text-lg font-bold text-peach-200">No bookings found</h3>
+                    <p className="text-olive-400 text-sm mb-6">
                         {activeTab === 'upcoming'
                             ? "You don't have any upcoming classes scheduled."
                             : "You haven't completed any classes yet."
@@ -255,7 +255,7 @@ export default function BookingsPage() {
                     </p>
                     {activeTab === 'upcoming' && (
                         <Link href="/user/schedule">
-                            <Button className="font-bold rounded-xl px-8 bg-gold-400 text-forest-700 hover:bg-gold-300">
+                            <Button className="font-bold rounded-xl px-8 bg-terra-400 text-peach-50 hover:bg-terra-300">
                                 Browse Schedule
                             </Button>
                         </Link>

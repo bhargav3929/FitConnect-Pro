@@ -47,16 +47,16 @@ export default function TrainersExpandSection() {
     const [activeId, setActiveId] = useState<number>(1);
 
     return (
-        <section className="bg-forest-700 py-24 relative overflow-hidden">
+        <section className="bg-warmDark-800 py-24 relative overflow-hidden">
             {/* Header */}
             <div className="container px-4 mx-auto mb-12 flex flex-col items-center text-center">
-                <div className="border border-gold-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-gold-400 bg-gold-400/10 mb-6">
+                <div className="border border-terra-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-terra-400 bg-terra-400/10 mb-6">
                     Our Team
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black text-sand-200 tracking-tight mb-4 font-display">
+                <h2 className="text-4xl md:text-5xl font-black text-peach-200 tracking-tight mb-4 font-display">
                     MEET THE EXPERTS
                 </h2>
-                <p className="text-sage-400 max-w-lg text-lg">
+                <p className="text-peach-400 max-w-lg text-lg">
                     World-class trainers dedicated to pushing your limits.
                 </p>
             </div>
@@ -80,20 +80,20 @@ export default function TrainersExpandSection() {
                             className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105"
                         />
                         <div className={cn(
-                            "absolute inset-0 bg-gradient-to-t from-forest-700/95 via-forest-700/40 to-transparent transition-opacity duration-500",
+                            "absolute inset-0 bg-gradient-to-t from-warmDark-800/95 via-warmDark-800/40 to-transparent transition-opacity duration-500",
                             activeId === trainer.id ? "opacity-100" : "opacity-70"
                         )} />
                         <div className={cn(
                             "absolute bottom-0 left-0 w-full p-8 flex flex-col justify-end transition-all duration-500 overflow-hidden",
                             activeId === trainer.id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                         )}>
-                            <h3 className="text-3xl font-bold text-sand-200 mb-1 leading-tight drop-shadow-lg font-display">{trainer.name}</h3>
-                            <p className="text-primary font-medium tracking-wide uppercase text-base text-gold-300 drop-shadow-md">{trainer.role}</p>
+                            <h3 className="text-3xl font-bold text-peach-200 mb-1 leading-tight drop-shadow-lg font-display">{trainer.name}</h3>
+                            <p className="text-primary font-medium tracking-wide uppercase text-base text-terra-300 drop-shadow-md">{trainer.role}</p>
                             <div className={cn(
                                 "overflow-hidden transition-all duration-500 delay-75 ease-in-out",
                                 activeId === trainer.id ? "max-h-20 mt-4 opacity-100" : "max-h-0 opacity-0"
                             )}>
-                                <button className="text-xs font-bold bg-gold-400 text-forest-700 px-5 py-2.5 rounded-full hover:bg-gold-300 transition-colors uppercase tracking-wider">
+                                <button className="text-xs font-bold bg-terra-400 text-peach-50 px-5 py-2.5 rounded-full hover:bg-terra-300 transition-colors uppercase tracking-wider">
                                     View Profile
                                 </button>
                             </div>
@@ -125,7 +125,7 @@ export default function TrainersExpandSection() {
 
                         {/* Overlay Gradients */}
                         <div className={cn(
-                            "absolute inset-0 bg-gradient-to-b from-forest-700/0 via-forest-700/20 to-forest-700/90 transition-opacity duration-500",
+                            "absolute inset-0 bg-gradient-to-b from-warmDark-800/0 via-warmDark-800/20 to-warmDark-800/90 transition-opacity duration-500",
                             activeId === trainer.id ? "opacity-100" : "opacity-80"
                         )} />
 
@@ -134,8 +134,8 @@ export default function TrainersExpandSection() {
                             "absolute inset-0 flex items-center px-8 transition-all duration-500",
                             activeId === trainer.id ? "opacity-0 translate-x-10" : "opacity-100 translate-x-0"
                         )}>
-                            <span className="text-3xl font-black text-sage-400 tracking-tighter uppercase mr-6">0{trainer.id}</span>
-                            <h3 className="text-2xl font-bold text-sand-200 tracking-tight uppercase font-display">{trainer.name}</h3>
+                            <span className="text-3xl font-black text-peach-400 tracking-tighter uppercase mr-6">0{trainer.id}</span>
+                            <h3 className="text-2xl font-bold text-peach-200 tracking-tight uppercase font-display">{trainer.name}</h3>
                         </div>
 
                         {/* Active State Content */}
@@ -143,19 +143,19 @@ export default function TrainersExpandSection() {
                             "absolute bottom-0 left-0 w-full p-8 flex flex-col justify-end transition-all duration-700 delay-100",
                             activeId === trainer.id ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
                         )}>
-                            <div className="border-l-2 border-sand-200/30 pl-4 mb-4">
-                                <span className="text-sage-400 text-xs font-bold tracking-[0.2em] uppercase block mb-1">
+                            <div className="border-l-2 border-peach-200/30 pl-4 mb-4">
+                                <span className="text-peach-400 text-xs font-bold tracking-[0.2em] uppercase block mb-1">
                                     Expert 0{trainer.id}
                                 </span>
-                                <h3 className="text-4xl font-black text-sand-200 uppercase leading-[0.9] tracking-tight mb-2 font-display">
+                                <h3 className="text-4xl font-black text-peach-200 uppercase leading-[0.9] tracking-tight mb-2 font-display">
                                     {trainer.name}
                                 </h3>
-                                <p className="text-sand-200/80 font-medium tracking-wide text-sm">
+                                <p className="text-peach-200/80 font-medium tracking-wide text-sm">
                                     {trainer.role}
                                 </p>
                             </div>
 
-                            <button className="w-full bg-gold-400 text-forest-700 font-bold py-4 rounded-xl uppercase tracking-widest text-xs hover:bg-gold-300 transition-colors">
+                            <button className="w-full bg-terra-400 text-peach-50 font-bold py-4 rounded-xl uppercase tracking-widest text-xs hover:bg-terra-300 transition-colors">
                                 View Full Profile
                             </button>
                         </div>

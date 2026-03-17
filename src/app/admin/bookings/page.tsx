@@ -94,7 +94,7 @@ export default function BookingsPage() {
             case 'attended': return 'bg-green-500/20 text-green-400'
             case 'canceled': return 'bg-red-500/20 text-red-400'
             case 'no-show': return 'bg-yellow-500/20 text-yellow-400'
-            default: return 'bg-sand-200/10 text-sage-400'
+            default: return 'bg-peach-200/10 text-peach-400'
         }
     }
 
@@ -116,8 +116,8 @@ export default function BookingsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-sand-200 font-display">Bookings</h2>
-                    <p className="text-sage-500 text-sm mt-1">
+                    <h2 className="text-2xl font-black text-peach-200 font-display">Bookings</h2>
+                    <p className="text-olive-400 text-sm mt-1">
                         View and manage class bookings
                     </p>
                 </div>
@@ -125,15 +125,15 @@ export default function BookingsPage() {
                     <div className="flex items-center gap-6 text-sm">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4 text-green-400" />
-                            <span className="text-sage-400">{statusCounts.attended} Attended</span>
+                            <span className="text-peach-400">{statusCounts.attended} Attended</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <AlertCircle className="w-4 h-4 text-blue-400" />
-                            <span className="text-sage-400">{statusCounts.confirmed} Confirmed</span>
+                            <span className="text-peach-400">{statusCounts.confirmed} Confirmed</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <XCircle className="w-4 h-4 text-red-400" />
-                            <span className="text-sage-400">{statusCounts.canceled} Canceled</span>
+                            <span className="text-peach-400">{statusCounts.canceled} Canceled</span>
                         </div>
                     </div>
                 )}
@@ -142,19 +142,19 @@ export default function BookingsPage() {
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-400" />
                     <input
                         type="text"
                         placeholder="Search by user or class ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 bg-forest-700 border border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/50 focus:outline-none"
+                        className="w-full h-12 pl-11 pr-4 bg-warmDark-800 border border-peach-400/10 text-peach-200 placeholder:text-olive-400 focus:border-terra-400/50 focus:outline-none"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-12 px-4 bg-forest-700 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none appearance-none cursor-pointer capitalize"
+                    className="h-12 px-4 bg-warmDark-800 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize"
                 >
                     {STATUS_FILTERS.map(status => (
                         <option key={status} value={status} className="capitalize">{status}</option>
@@ -164,19 +164,19 @@ export default function BookingsPage() {
 
             {/* Loading State */}
             {isLoading && (
-                <div className="bg-forest-700 border border-forest-600 overflow-hidden">
-                    <div className="divide-y divide-forest-600">
+                <div className="bg-warmDark-800 border border-peach-400/10 overflow-hidden">
+                    <div className="divide-y divide-peach-400/10">
                         {[1, 2, 3, 4, 5].map(i => (
                             <div key={i} className="p-4 animate-pulse">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-sand-200/5 rounded-full" />
+                                        <div className="w-8 h-8 bg-peach-200/5 rounded-full" />
                                         <div>
-                                            <div className="h-4 w-32 bg-sand-200/10 rounded mb-2" />
-                                            <div className="h-3 w-24 bg-sand-200/5 rounded" />
+                                            <div className="h-4 w-32 bg-peach-200/10 rounded mb-2" />
+                                            <div className="h-3 w-24 bg-peach-200/5 rounded" />
                                         </div>
                                     </div>
-                                    <div className="h-6 w-20 bg-sand-200/5 rounded" />
+                                    <div className="h-6 w-20 bg-peach-200/5 rounded" />
                                 </div>
                             </div>
                         ))}
@@ -189,40 +189,40 @@ export default function BookingsPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-forest-700 border border-forest-600 overflow-hidden"
+                    className="bg-warmDark-800 border border-peach-400/10 overflow-hidden"
                 >
                     <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-forest-600">
-                                    <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">USER</th>
-                                    <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">SPOT</th>
-                                    <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">CLASS DATE</th>
-                                    <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">STATUS</th>
-                                    <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">BOOKED AT</th>
-                                    <th className="text-left text-xs font-bold text-sage-400 tracking-wider p-4">GUEST</th>
-                                    <th className="text-right text-xs font-bold text-sage-400 tracking-wider p-4">ACTIONS</th>
+                                <tr className="border-b border-peach-400/10">
+                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">USER</th>
+                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">SPOT</th>
+                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">CLASS DATE</th>
+                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">STATUS</th>
+                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">BOOKED AT</th>
+                                    <th className="text-left text-xs font-bold text-peach-400 tracking-wider p-4">GUEST</th>
+                                    <th className="text-right text-xs font-bold text-peach-400 tracking-wider p-4">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredBookings.map((booking) => (
                                     <tr
                                         key={booking.id}
-                                        className="border-b border-forest-600/50 hover:bg-sand-200/5 transition-colors"
+                                        className="border-b border-peach-400/10/50 hover:bg-peach-200/5 transition-colors"
                                     >
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">
-                                                <User className="w-4 h-4 text-sage-500" />
-                                                <span className="font-medium text-sand-200 text-sm truncate max-w-[160px]">
+                                                <User className="w-4 h-4 text-olive-400" />
+                                                <span className="font-medium text-peach-200 text-sm truncate max-w-[160px]">
                                                     {booking.userId}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-sand-200 font-bold">#{booking.spotNumber}</span>
+                                            <span className="text-peach-200 font-bold">#{booking.spotNumber}</span>
                                         </td>
                                         <td className="p-4">
-                                            <div className="flex items-center gap-2 text-sage-400">
+                                            <div className="flex items-center gap-2 text-peach-400">
                                                 <Calendar className="w-4 h-4" />
                                                 <span className="text-sm">{formatDate(booking.classDate)}</span>
                                             </div>
@@ -234,25 +234,25 @@ export default function BookingsPage() {
                                             </span>
                                         </td>
                                         <td className="p-4">
-                                            <div className="flex items-center gap-2 text-sage-500 text-sm">
+                                            <div className="flex items-center gap-2 text-olive-400 text-sm">
                                                 <Clock className="w-3 h-3" />
                                                 {formatDateTime(booking.bookingDate)}
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`text-xs font-bold ${booking.isGuest ? 'text-gold-400' : 'text-sage-500'}`}>
+                                            <span className={`text-xs font-bold ${booking.isGuest ? 'text-terra-400' : 'text-olive-400'}`}>
                                                 {booking.isGuest ? 'Yes' : 'No'}
                                             </span>
                                         </td>
                                         <td className="p-4 text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <button className="w-8 h-8 flex items-center justify-center text-sage-500 hover:text-sand-200 transition-colors">
+                                                    <button className="w-8 h-8 flex items-center justify-center text-olive-400 hover:text-peach-200 transition-colors">
                                                         <MoreVertical className="w-4 h-4" />
                                                     </button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-forest-700 border-forest-600">
-                                                    <DropdownMenuItem className="text-sand-200/70 focus:bg-sand-200/10 focus:text-sand-200 cursor-pointer">
+                                                <DropdownMenuContent align="end" className="bg-warmDark-800 border-peach-400/10">
+                                                    <DropdownMenuItem className="text-peach-200/70 focus:bg-peach-200/10 focus:text-peach-200 cursor-pointer">
                                                         <Eye className="w-4 h-4 mr-2" />
                                                         View Details
                                                     </DropdownMenuItem>
@@ -280,20 +280,20 @@ export default function BookingsPage() {
                     </div>
 
                     {/* Mobile Cards */}
-                    <div className="lg:hidden divide-y divide-forest-600">
+                    <div className="lg:hidden divide-y divide-peach-400/10">
                         {filteredBookings.map((booking) => (
-                            <div key={booking.id} className="p-4 hover:bg-sand-200/5 transition-colors">
+                            <div key={booking.id} className="p-4 hover:bg-peach-200/5 transition-colors">
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
-                                        <p className="font-bold text-sand-200 text-sm truncate max-w-[200px]">{booking.userId}</p>
-                                        <p className="text-sm text-sage-500">Spot #{booking.spotNumber}</p>
+                                        <p className="font-bold text-peach-200 text-sm truncate max-w-[200px]">{booking.userId}</p>
+                                        <p className="text-sm text-olive-400">Spot #{booking.spotNumber}</p>
                                     </div>
                                     <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-bold tracking-wider uppercase ${getStatusColor(booking.status)}`}>
                                         {getStatusIcon(booking.status)}
                                         {booking.status}
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm text-sage-400">
+                                <div className="grid grid-cols-2 gap-2 text-sm text-peach-400">
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4" />
                                         {formatDate(booking.classDate)}
@@ -309,15 +309,15 @@ export default function BookingsPage() {
 
                     {filteredBookings.length === 0 && (
                         <div className="text-center py-12">
-                            <Calendar className="w-8 h-8 text-sand-200/20 mx-auto mb-3" />
-                            <p className="text-sage-500 text-sm">No bookings found</p>
+                            <Calendar className="w-8 h-8 text-peach-200/20 mx-auto mb-3" />
+                            <p className="text-olive-400 text-sm">No bookings found</p>
                         </div>
                     )}
                 </motion.div>
             )}
 
             {!isLoading && (
-                <div className="flex items-center justify-between text-sage-500 text-sm">
+                <div className="flex items-center justify-between text-olive-400 text-sm">
                     <span>Showing {filteredBookings.length} of {bookings.length} bookings</span>
                 </div>
             )}

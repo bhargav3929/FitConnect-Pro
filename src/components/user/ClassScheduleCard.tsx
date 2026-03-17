@@ -38,15 +38,15 @@ export function ClassScheduleCard({
     const spotsLeft = capacity - booked
 
     return (
-        <div className="flex bg-forest-800 border border-forest-600 rounded-none sm:rounded-xl p-6 relative overflow-hidden group hover:bg-forest-800/80 transition-colors">
+        <div className="flex bg-warmDark-700 border border-peach-400/10 rounded-none sm:rounded-xl p-6 relative overflow-hidden group hover:bg-warmDark-700/80 transition-colors">
             {/* Left Column: Time & Avatar */}
             <div className="flex flex-col items-center mr-6 min-w-[60px] pt-1">
-                <span className="text-xl font-black text-sand-200 leading-none mb-1">{time}</span>
-                <span className="text-xs text-sage-500 font-medium mb-4">{duration}</span>
+                <span className="text-xl font-black text-peach-200 leading-none mb-1">{time}</span>
+                <span className="text-xs text-olive-400 font-medium mb-4">{duration}</span>
 
-                <Avatar className="w-12 h-12 border-2 border-forest-600">
+                <Avatar className="w-12 h-12 border-2 border-peach-400/10">
                     <AvatarImage src={trainerImage} className="object-cover" />
-                    <AvatarFallback className="bg-forest-600 text-sage-500 text-xs">
+                    <AvatarFallback className="bg-peach-400/10 text-olive-400 text-xs">
                         {trainer.charAt(0)}
                     </AvatarFallback>
                 </Avatar>
@@ -56,7 +56,7 @@ export function ClassScheduleCard({
             <div className="flex-1 flex flex-col justify-between">
                 <div className="mb-4">
                     <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-bold text-sand-200 leading-tight">
+                        <h3 className="text-lg font-bold text-peach-200 leading-tight">
                             {name.replace('Class: ', '')}
                         </h3>
                         {intensityLevel > 1 && (
@@ -64,18 +64,18 @@ export function ClassScheduleCard({
                         )}
                     </div>
 
-                    <p className="text-sage-400 text-sm font-medium mb-1">{trainer}</p>
-                    <p className="text-sage-500 text-xs mb-1">{type}</p>
-                    <p className="text-sage-500 text-xs">{location}</p>
+                    <p className="text-peach-400 text-sm font-medium mb-1">{trainer}</p>
+                    <p className="text-olive-400 text-xs mb-1">{type}</p>
+                    <p className="text-olive-400 text-xs">{location}</p>
                 </div>
 
                 <div className="mt-2">
                     {isFull ? (
                         <div className="space-y-2">
-                            <span className="text-xs text-sage-500 font-medium">Waitlist Only</span>
+                            <span className="text-xs text-olive-400 font-medium">Waitlist Only</span>
                             <Button
                                 variant="outline"
-                                className="w-full h-10 border-forest-600 bg-transparent text-sand-200 hover:bg-sand-200/5 hover:text-sand-200 uppercase tracking-wider text-xs font-bold rounded-sm"
+                                className="w-full h-10 border-peach-400/10 bg-transparent text-peach-200 hover:bg-peach-200/5 hover:text-peach-200 uppercase tracking-wider text-xs font-bold rounded-sm"
                                 onClick={onBook}
                             >
                                 Join Waitlist
@@ -84,10 +84,10 @@ export function ClassScheduleCard({
                     ) : (
                         <div className="space-y-2">
                             {spotsLeft <= 5 && (
-                                <span className="text-xs text-gold-300 font-medium">Only {spotsLeft} spots left</span>
+                                <span className="text-xs text-terra-300 font-medium">Only {spotsLeft} spots left</span>
                             )}
                             <Button
-                                className="w-full h-10 bg-gold-400 text-forest-700 hover:bg-gold-300 uppercase tracking-wider text-xs font-bold rounded-sm"
+                                className="w-full h-10 bg-terra-400 text-peach-50 hover:bg-terra-300 uppercase tracking-wider text-xs font-bold rounded-sm"
                                 onClick={onBook}
                             >
                                 Book Class

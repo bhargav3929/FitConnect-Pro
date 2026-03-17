@@ -38,8 +38,8 @@ export default function SettingsPage() {
         <div className="max-w-4xl space-y-8 pb-20 lg:pb-0">
             {/* Header */}
             <div>
-                <h2 className="text-2xl font-black text-sand-200 font-display">Settings</h2>
-                <p className="text-sage-500 text-sm mt-1">
+                <h2 className="text-2xl font-black text-peach-200 font-display">Settings</h2>
+                <p className="text-olive-400 text-sm mt-1">
                     Manage your account and preferences
                 </p>
             </div>
@@ -48,43 +48,43 @@ export default function SettingsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-forest-700 border border-forest-600 p-6"
+                className="bg-warmDark-800 border border-peach-400/10 p-6"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <User className="w-5 h-5 text-sage-400" />
-                    <h3 className="text-lg font-bold text-sand-200">Profile</h3>
+                    <User className="w-5 h-5 text-peach-400" />
+                    <h3 className="text-lg font-bold text-peach-200">Profile</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-peach-400 tracking-wider mb-2">
                             DISPLAY NAME
                         </label>
                         <input
                             type="text"
                             defaultValue={adminUser?.name || "Super Admin"}
-                            className="w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none"
+                            className="w-full h-12 px-4 bg-peach-200/5 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-peach-400 tracking-wider mb-2">
                             EMAIL
                         </label>
                         <input
                             type="email"
                             defaultValue={adminUser?.email || "admin@solpilates.com"}
-                            className="w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none"
+                            className="w-full h-12 px-4 bg-peach-200/5 border border-peach-400/10 text-peach-200 focus:border-terra-400/50 focus:outline-none"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-peach-400 tracking-wider mb-2">
                             ROLE
                         </label>
                         <input
                             type="text"
                             defaultValue="Super Admin"
                             disabled
-                            className="w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sage-400 cursor-not-allowed"
+                            className="w-full h-12 px-4 bg-peach-200/5 border border-peach-400/10 text-peach-400 cursor-not-allowed"
                         />
                     </div>
                 </div>
@@ -95,11 +95,11 @@ export default function SettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-forest-700 border border-forest-600 p-6"
+                className="bg-warmDark-800 border border-peach-400/10 p-6"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <Bell className="w-5 h-5 text-sage-400" />
-                    <h3 className="text-lg font-bold text-sand-200">Notifications</h3>
+                    <Bell className="w-5 h-5 text-peach-400" />
+                    <h3 className="text-lg font-bold text-peach-200">Notifications</h3>
                 </div>
 
                 <div className="space-y-4">
@@ -109,10 +109,10 @@ export default function SettingsPage() {
                         { key: 'memberJoined', label: 'New Members', description: 'Get notified when new members join' },
                         { key: 'classReminders', label: 'Class Reminders', description: 'Receive reminders before classes start' },
                     ].map(item => (
-                        <div key={item.key} className="flex items-center justify-between py-3 border-b border-forest-600/50 last:border-0">
+                        <div key={item.key} className="flex items-center justify-between py-3 border-b border-peach-400/10/50 last:border-0">
                             <div>
-                                <p className="text-sand-200 font-medium">{item.label}</p>
-                                <p className="text-sage-500 text-sm">{item.description}</p>
+                                <p className="text-peach-200 font-medium">{item.label}</p>
+                                <p className="text-olive-400 text-sm">{item.description}</p>
                             </div>
                             <button
                                 onClick={() => setNotifications(prev => ({
@@ -120,8 +120,8 @@ export default function SettingsPage() {
                                     [item.key]: !prev[item.key as keyof typeof notifications]
                                 }))}
                                 className={`w-12 h-6 rounded-full transition-colors relative ${notifications[item.key as keyof typeof notifications]
-                                        ? 'bg-gold-400'
-                                        : 'bg-sand-200/20'
+                                        ? 'bg-terra-400'
+                                        : 'bg-peach-200/20'
                                     }`}
                             >
                                 <span
@@ -141,25 +141,25 @@ export default function SettingsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-forest-700 border border-forest-600 p-6"
+                className="bg-warmDark-800 border border-peach-400/10 p-6"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <Lock className="w-5 h-5 text-sage-400" />
-                    <h3 className="text-lg font-bold text-sand-200">Security</h3>
+                    <Lock className="w-5 h-5 text-peach-400" />
+                    <h3 className="text-lg font-bold text-peach-200">Security</h3>
                 </div>
 
                 <div className="space-y-4">
-                    <button className="w-full flex items-center justify-between p-4 bg-sand-200/5 hover:bg-sand-200/10 transition-colors text-left">
+                    <button className="w-full flex items-center justify-between p-4 bg-peach-200/5 hover:bg-peach-200/10 transition-colors text-left">
                         <div>
-                            <p className="text-sand-200 font-medium">Change Password</p>
-                            <p className="text-sage-500 text-sm">Update your admin password</p>
+                            <p className="text-peach-200 font-medium">Change Password</p>
+                            <p className="text-olive-400 text-sm">Update your admin password</p>
                         </div>
-                        <span className="text-sage-500">→</span>
+                        <span className="text-olive-400">→</span>
                     </button>
-                    <button className="w-full flex items-center justify-between p-4 bg-sand-200/5 hover:bg-sand-200/10 transition-colors text-left">
+                    <button className="w-full flex items-center justify-between p-4 bg-peach-200/5 hover:bg-peach-200/10 transition-colors text-left">
                         <div>
-                            <p className="text-sand-200 font-medium">Two-Factor Authentication</p>
-                            <p className="text-sage-500 text-sm">Add an extra layer of security</p>
+                            <p className="text-peach-200 font-medium">Two-Factor Authentication</p>
+                            <p className="text-olive-400 text-sm">Add an extra layer of security</p>
                         </div>
                         <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-bold">COMING SOON</span>
                     </button>
@@ -170,7 +170,7 @@ export default function SettingsPage() {
             <div className="flex flex-col sm:flex-row gap-4">
                 <button
                     onClick={handleSave}
-                    className="px-8 py-4 bg-gold-400 text-forest-700 font-bold text-sm tracking-wider hover:bg-gold-300 transition-all flex items-center justify-center gap-2"
+                    className="px-8 py-4 bg-terra-400 text-peach-50 font-bold text-sm tracking-wider hover:bg-terra-300 transition-all flex items-center justify-center gap-2"
                 >
                     <Save className="w-4 h-4" />
                     SAVE CHANGES

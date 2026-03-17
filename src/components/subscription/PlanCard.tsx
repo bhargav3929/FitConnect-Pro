@@ -24,7 +24,7 @@ export default function PlanCard({ plan, onSelect, loading }: PlanCardProps) {
         >
             {isRecommended && (
                 <div className="absolute -top-4 inset-x-0 flex justify-center z-10">
-                    <span className="bg-gradient-to-r from-secondary to-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                    <span className="bg-gradient-to-r from-secondary to-green-500 text-peach-50 text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
                         <Star className="h-3 w-3 fill-white" />
                         MOST POPULAR
                     </span>

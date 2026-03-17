@@ -41,7 +41,7 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
             <div className="relative flex items-center mb-6">
                 <button
                     onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
-                    className="w-8 h-8 flex items-center justify-center text-sage-500 hover:text-sand-200 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center text-olive-400 hover:text-peach-200 transition-colors"
                 >
                     <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -61,8 +61,8 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
                                 className={`
                                     flex flex-col items-center justify-center min-w-[50px] py-3 rounded-xl transition-all snap-center
                                     ${isSelected
-                                        ? 'bg-gold-400 text-forest-700 shadow-lg scale-105'
-                                        : 'bg-transparent text-sage-500 hover:text-sand-200'
+                                        ? 'bg-terra-400 text-peach-50 shadow-lg scale-105'
+                                        : 'bg-transparent text-olive-400 hover:text-peach-200'
                                     }
                                 `}
                             >
@@ -76,7 +76,7 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
                                     {date.getDate()}
                                 </span>
                                 {isSelected && (
-                                    <div className="w-1 h-1 bg-forest-700 rounded-full mt-2" />
+                                    <div className="w-1 h-1 bg-warmDark-800 rounded-full mt-2" />
                                 )}
                             </button>
                         )
@@ -85,20 +85,20 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
 
                 <button
                     onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
-                    className="w-8 h-8 flex items-center justify-center text-sage-500 hover:text-sand-200 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center text-olive-400 hover:text-peach-200 transition-colors"
                 >
                     <ChevronRight className="w-5 h-5" />
                 </button>
             </div>
 
             {/* Date Header */}
-            <div className="flex items-center justify-between px-4 pb-4 border-b border-forest-600">
-                <h2 className="text-sand-200 font-bold text-sm sm:text-base">
+            <div className="flex items-center justify-between px-4 pb-4 border-b border-peach-400/10">
+                <h2 className="text-peach-200 font-bold text-sm sm:text-base">
                     {formatDateFull(selectedDate)}
                 </h2>
                 <button
                     onClick={() => onDateSelect(new Date())}
-                    className="px-4 py-1.5 rounded-md border border-gold-400/30 text-xs font-bold text-gold-400 hover:bg-gold-400 hover:text-forest-700 transition-colors"
+                    className="px-4 py-1.5 rounded-md border border-terra-400/30 text-xs font-bold text-terra-400 hover:bg-terra-400 hover:text-peach-50 transition-colors"
                 >
                     Today
                 </button>

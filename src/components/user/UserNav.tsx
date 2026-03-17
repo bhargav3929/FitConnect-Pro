@@ -35,8 +35,8 @@ export function UserNav() {
     return (
         <>
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-forest-700 border-r border-forest-600 flex-col z-50">
-                <div className="p-6 border-b border-forest-600 flex items-center">
+            <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-warmDark-900 border-r border-peach-400/10 flex-col z-50">
+                <div className="p-6 border-b border-peach-400/10 flex items-center">
                     <Image
                         src="/images/sol-logo-gold.png"
                         alt="SOL Pilates Studio"
@@ -53,17 +53,17 @@ export function UserNav() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${isActive
-                                        ? 'bg-gold-400 text-forest-700 font-bold'
-                                        : 'text-sage-400 hover:text-sand-200 hover:bg-sand-200/5'
+                                className={`flex items-center gap-3 px-4 py-3 transition-all group ${isActive
+                                        ? 'bg-terra-400 text-peach-50 font-bold'
+                                        : 'text-peach-400 hover:text-peach-200 hover:bg-peach-200/5'
                                     }`}
                             >
-                                <item.icon className={`w-5 h-5 ${isActive ? 'text-forest-700' : 'text-sage-400 group-hover:text-sand-200'}`} />
+                                <item.icon className={`w-5 h-5 ${isActive ? 'text-peach-50' : 'text-peach-400 group-hover:text-peach-200'}`} />
                                 <span className={isActive ? 'font-bold' : 'font-medium'}>{item.label}</span>
                                 {isActive && (
                                     <motion.div
                                         layoutId="sidebar-active"
-                                        className="absolute left-0 w-1 h-8 bg-gold-400 rounded-r-full"
+                                        className="absolute left-0 w-1 h-8 bg-terra-400 rounded-r-full"
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ duration: 0.2 }}
@@ -74,10 +74,10 @@ export function UserNav() {
                     })}
                 </div>
 
-                <div className="p-4 border-t border-forest-600">
+                <div className="p-4 border-t border-peach-400/10">
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors font-medium"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-[#A0453A] hover:bg-[#A0453A]/10 transition-colors font-medium"
                     >
                         <LogOut className="w-5 h-5" />
                         Sign Out
@@ -86,7 +86,7 @@ export function UserNav() {
             </aside>
 
             {/* Mobile Bottom Nav */}
-            <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-forest-700/90 backdrop-blur-xl border-t border-forest-600 z-50 safe-area-bottom">
+            <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-warmDark-900/90 backdrop-blur-xl border-t border-peach-400/10 z-50 safe-area-bottom">
                 <div className="flex justify-around items-center h-16 px-2">
                     {NAV_ITEMS.map((item) => {
                         const isActive = pathname === item.href
@@ -94,12 +94,12 @@ export function UserNav() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-gold-400' : 'text-sage-500'
+                                className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-terra-400' : 'text-peach-400/50'
                                     }`}
                             >
                                 <motion.div
                                     whileTap={{ scale: 0.9 }}
-                                    className={`p-1 rounded-lg ${isActive ? 'bg-gold-400/20' : 'bg-transparent'}`}
+                                    className={`p-1 rounded-lg ${isActive ? 'bg-terra-400/20' : 'bg-transparent'}`}
                                 >
                                     <item.icon className="w-5 h-5" />
                                 </motion.div>

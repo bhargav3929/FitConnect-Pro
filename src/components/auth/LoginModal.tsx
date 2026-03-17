@@ -81,7 +81,7 @@ export function LoginModal({ trigger, defaultOpen = false, isOpenOverride, onClo
                     {trigger || <Button variant="ghost">Log in</Button>}
                 </DialogTrigger>
             )}
-            <DialogContent className="sm:max-w-[425px] bg-forest-700 border-forest-600">
+            <DialogContent className="sm:max-w-[425px] bg-warmDark-800 border-peach-400/10">
                 <DialogHeader>
                     <DialogTitle>Welcome back</DialogTitle>
                     <DialogDescription>
@@ -116,7 +116,7 @@ export function LoginModal({ trigger, defaultOpen = false, isOpenOverride, onClo
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold" disabled={isLoading}>
+                        <Button type="submit" className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Log In
                         </Button>
