@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import {
     Flame,
@@ -11,27 +12,79 @@ import {
     Star,
 } from "lucide-react"
 import { useClientAuthStore } from "@/lib/store/clientAuthStore"
+import { getUserBookings, getClassesByDate } from "@/lib/firebase/firestore"
+import { Booking } from "@/types/booking"
+import { ClassSession } from "@/types/class"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-const UPCOMING_CLASS = {
-    name: "HIIT Intensity",
-    location: "Performance Floor",
-    time: "Today, 6:00 PM",
-    duration: "45 min",
-    spot: "Spot 12"
-}
-
-const TODAYS_CLASSES = [
-    { id: "1", name: "Strength & Sculpt", time: "06:00 AM", trainer: "Melinda H", location: "Performance Floor", spotsLeft: 0 },
-    { id: "2", name: "Morning Flow", time: "07:30 AM", trainer: "Sarah C", location: "Heated Yoga Studio", spotsLeft: 5 },
-    { id: "3", name: "Power Cycling", time: "09:00 AM", trainer: "David R", location: "Cycling Theater", spotsLeft: 7 },
-]
-
 export default function UserDashboard() {
-    const user = useClientAuthStore(state => state.clientUser)
+    const clientUser = useClientAuthStore(state => state.clientUser)
+    const firebaseUser = useClientAuthStore(state => state.firebaseUser)
+    const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null)
+    const [todaysClasses, setTodaysClasses] = useState<ClassSession[]>([])
+    const [isLoadingBookings, setIsLoadingBookings] = useState(true)
+    const [isLoadingClasses, setIsLoadingClasses] = useState(true)
 
-    if (!user) return null
+    useEffect(() => {
+        if (!firebaseUser) return
+
+        getUserBookings(firebaseUser.uid).then((bookings) => {
+            const upcoming = bookings.find(b => b.status === 'confirmed')
+            setUpcomingBooking(upcoming || null)
+            setIsLoadingBookings(false)
+        }).catch(() => {
+            setIsLoadingBookings(false)
+        })
+
+        getClassesByDate(new Date()).then((classes) => {
+            setTodaysClasses(classes)
+            setIsLoadingClasses(false)
+        }).catch(() => {
+            setIsLoadingClasses(false)
+        })
+    }, [firebaseUser])
+
+    const formatTime = (time: string) => {
+        const [h, m] = time.split(':')
+        const hour = parseInt(h, 10)
+        const ampm = hour >= 12 ? 'PM' : 'AM'
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+        return `${displayHour}:${m} ${ampm}`
+    }
+
+    const formatDate = (date: Date | string) => {
+        const d = typeof date === 'string' ? new Date(date) : date
+        const now = new Date()
+        const isToday = d.toDateString() === now.toDateString()
+        if (isToday) return `Today, ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    }
+
+    // Skeleton loader while user profile loads
+    if (!clientUser) {
+        return (
+            <div className="space-y-8 pb-20">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="h-8 w-48 bg-sand-200/10 rounded animate-pulse" />
+                        <div className="h-4 w-32 bg-sand-200/5 rounded mt-2 animate-pulse" />
+                    </div>
+                    <div className="h-9 w-36 bg-sand-200/5 rounded-full animate-pulse" />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-forest-800 border border-forest-600 p-4 rounded-2xl animate-pulse">
+                            <div className="h-8 w-8 bg-sand-200/5 rounded-lg mb-3" />
+                            <div className="h-7 w-16 bg-sand-200/10 rounded mb-1" />
+                            <div className="h-3 w-24 bg-sand-200/5 rounded" />
+                        </div>
+                    ))}
+                </div>
+                <div className="h-40 bg-sand-200/5 rounded-3xl animate-pulse" />
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-8 pb-20">
@@ -39,7 +92,7 @@ export default function UserDashboard() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black text-sand-200 tracking-tight font-display">
-                        Hello, {user.name.split(' ')[0]}
+                        Hello, {clientUser.name.split(' ')[0]}
                     </h1>
                     <p className="text-sage-500 text-sm mt-1">
                         Ready for your workout today?
@@ -47,17 +100,17 @@ export default function UserDashboard() {
                 </div>
                 <div className="flex items-center gap-2 bg-gold-400/10 border border-gold-400/20 px-4 py-2 rounded-full">
                     <Flame className="w-4 h-4 text-gold-400" />
-                    <span className="text-gold-400 font-bold text-sm">{user.stats.streak} Day Streak</span>
+                    <span className="text-gold-400 font-bold text-sm">{clientUser.stats.currentStreak} Day Streak</span>
                 </div>
             </div>
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                    { label: "Classes Attended", value: user.stats.classesAttended, icon: Trophy, color: "text-gold-400" },
-                    { label: "Loyalty Points", value: user.stats.points, icon: Star, color: "text-terracotta-400" },
-                    { label: "Membership", value: user.membership.type, icon: Calendar, color: "text-sage-300" },
-                    { label: "Next Goal", value: "20 Classes", icon: Dumbbell, color: "text-gold-300" },
+                    { label: "Classes Attended", value: clientUser.stats.totalClassesAttended, icon: Trophy, color: "text-gold-400" },
+                    { label: "Classes Left", value: clientUser.subscription.classesRemaining, icon: Star, color: "text-terracotta-400" },
+                    { label: "Plan", value: clientUser.subscription.planType || 'None', icon: Calendar, color: "text-sage-300" },
+                    { label: "Next Goal", value: `${Math.ceil((clientUser.stats.totalClassesAttended + 1) / 10) * 10} Classes`, icon: Dumbbell, color: "text-gold-300" },
                 ].map((stat, idx) => (
                     <motion.div
                         key={stat.label}
@@ -78,89 +131,153 @@ export default function UserDashboard() {
             </div>
 
             {/* Upcoming Class Banner */}
-            <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-gold-400 to-gold-500 p-6 text-forest-700"
-            >
-                <div className="absolute top-0 right-0 p-32 bg-sand-200/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            {isLoadingBookings ? (
+                <div className="h-40 bg-sand-200/5 rounded-3xl animate-pulse" />
+            ) : upcomingBooking ? (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-gold-400 to-gold-500 p-6 text-forest-700"
+                >
+                    <div className="absolute top-0 right-0 p-32 bg-sand-200/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                        <div className="inline-flex items-center gap-2 bg-forest-700/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold mb-3">
-                            <Clock className="w-3 h-3" />
-                            UPCOMING CLASS
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <div className="inline-flex items-center gap-2 bg-forest-700/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold mb-3">
+                                <Clock className="w-3 h-3" />
+                                UPCOMING CLASS
+                            </div>
+                            <h2 className="text-2xl font-black mb-1">
+                                {(upcomingBooking as Booking & { classType?: string }).classType || 'Pilates Class'}
+                            </h2>
+                            <div className="flex items-center gap-4 text-forest-700/80 text-sm font-medium">
+                                <span>{formatDate(upcomingBooking.classDate)}</span>
+                            </div>
                         </div>
-                        <h2 className="text-2xl font-black mb-1">{UPCOMING_CLASS.name}</h2>
-                        <div className="flex items-center gap-4 text-forest-700/80 text-sm font-medium">
-                            <span className="flex items-center gap-1">
-                                <Dumbbell className="w-4 h-4" />
-                                {UPCOMING_CLASS.location}
-                            </span>
-                            <span className="w-1 h-1 bg-forest-700/40 rounded-full" />
-                            <span>{UPCOMING_CLASS.time}</span>
+                        <div className="flex items-center gap-4">
+                            <div className="text-center bg-forest-700/10 backdrop-blur-sm rounded-xl p-3 min-w-[80px]">
+                                <p className="text-xs font-bold opacity-60 uppercase">Spot</p>
+                                <p className="text-lg font-black">{upcomingBooking.spotNumber}</p>
+                            </div>
+                            <Link href="/user/bookings">
+                                <Button className="bg-forest-700 text-sand-200 hover:bg-forest-800 font-bold px-6 h-12 rounded-xl">
+                                    VIEW BOOKING
+                                </Button>
+                            </Link>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-center bg-forest-700/10 backdrop-blur-sm rounded-xl p-3 min-w-[80px]">
-                            <p className="text-xs font-bold opacity-60 uppercase">Duration</p>
-                            <p className="text-lg font-black">{UPCOMING_CLASS.duration}</p>
+                </motion.div>
+            ) : (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="relative overflow-hidden rounded-3xl bg-forest-800 border border-forest-600 p-6"
+                >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <div className="inline-flex items-center gap-2 bg-sand-200/5 px-3 py-1 rounded-full text-xs font-bold text-sage-500 mb-3">
+                                <Calendar className="w-3 h-3" />
+                                NO UPCOMING CLASSES
+                            </div>
+                            <h2 className="text-xl font-black text-sand-200 mb-1">Book your next session</h2>
+                            <p className="text-sage-500 text-sm">Browse the schedule and reserve your spot</p>
                         </div>
-                        <Button className="bg-forest-700 text-sand-200 hover:bg-forest-800 font-bold px-6 h-12 rounded-xl">
-                            CHECK IN
-                        </Button>
+                        <Link href="/user/schedule">
+                            <Button className="bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold px-6 h-12 rounded-xl">
+                                BROWSE SCHEDULE
+                            </Button>
+                        </Link>
                     </div>
-                </div>
-            </motion.div>
+                </motion.div>
+            )}
 
             {/* Today's Schedule */}
             <div>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-sand-200 font-display">Today at the Facility</h2>
+                    <h2 className="text-xl font-bold text-sand-200 font-display">Today at the Studio</h2>
                     <Link href="/user/schedule" className="text-sm font-bold text-gold-400 hover:text-sand-200 transition-colors flex items-center gap-1">
                         FULL SCHEDULE <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
-                <div className="space-y-3">
-                    {TODAYS_CLASSES.map((cls, idx) => (
-                        <motion.div
-                            key={cls.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 + (idx * 0.1) }}
-                        >
-                            <Link href="/user/schedule" className="block">
-                                <div className="bg-forest-800 border border-forest-600 rounded-2xl p-4 hover:border-gold-400/30 transition-all group">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex flex-col items-center min-w-[56px]">
-                                                <span className="text-lg font-black text-sand-200 leading-none">{cls.time.split(' ')[0]}</span>
-                                                <span className="text-[10px] text-sage-500 font-bold mt-1">{cls.time.split(' ')[1]}</span>
-                                            </div>
-                                            <div className="w-px h-10 bg-sand-200/10" />
-                                            <div>
-                                                <h3 className="text-sand-200 font-bold group-hover:text-gold-400 transition-colors">{cls.name}</h3>
-                                                <p className="text-sage-500 text-xs mt-0.5">
-                                                    {cls.trainer} · {cls.location}
-                                                </p>
-                                            </div>
+
+                {isLoadingClasses ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="bg-forest-800 border border-forest-600 rounded-2xl p-4 animate-pulse">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex flex-col items-center min-w-[56px]">
+                                            <div className="h-5 w-12 bg-sand-200/10 rounded" />
+                                            <div className="h-3 w-6 bg-sand-200/5 rounded mt-1" />
                                         </div>
+                                        <div className="w-px h-10 bg-sand-200/10" />
                                         <div>
-                                            {cls.spotsLeft === 0 ? (
-                                                <span className="text-xs font-bold text-sand-200/20 uppercase tracking-wider">Full</span>
-                                            ) : (
-                                                <span className="text-xs font-bold text-gold-400">
-                                                    {cls.spotsLeft} spots
-                                                </span>
-                                            )}
+                                            <div className="h-5 w-32 bg-sand-200/10 rounded mb-1" />
+                                            <div className="h-3 w-24 bg-sand-200/5 rounded" />
                                         </div>
                                     </div>
+                                    <div className="h-4 w-16 bg-sand-200/5 rounded" />
                                 </div>
-                            </Link>
-                        </motion.div>
-                    ))}
-                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : todaysClasses.length > 0 ? (
+                    <div className="space-y-3">
+                        {todaysClasses.map((cls, idx) => {
+                            const spotsLeft = (cls.totalSpots || cls.capacity) - cls.bookedCount
+                            return (
+                                <motion.div
+                                    key={cls.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 + (idx * 0.1) }}
+                                >
+                                    <Link href="/user/schedule" className="block">
+                                        <div className="bg-forest-800 border border-forest-600 rounded-2xl p-4 hover:border-gold-400/30 transition-all group">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex flex-col items-center min-w-[56px]">
+                                                        <span className="text-lg font-black text-sand-200 leading-none">
+                                                            {formatTime(cls.startTime).split(' ')[0]}
+                                                        </span>
+                                                        <span className="text-[10px] text-sage-500 font-bold mt-1">
+                                                            {formatTime(cls.startTime).split(' ')[1]}
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-px h-10 bg-sand-200/10" />
+                                                    <div>
+                                                        <h3 className="text-sand-200 font-bold group-hover:text-gold-400 transition-colors">
+                                                            {cls.classType || 'Pilates Class'}
+                                                        </h3>
+                                                        <p className="text-sage-500 text-xs mt-0.5">
+                                                            {cls.location || 'Main Studio'} · {cls.duration} min
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    {spotsLeft <= 0 ? (
+                                                        <span className="text-xs font-bold text-sand-200/20 uppercase tracking-wider">Full</span>
+                                                    ) : (
+                                                        <span className="text-xs font-bold text-gold-400">
+                                                            {spotsLeft} spots
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </motion.div>
+                            )
+                        })}
+                    </div>
+                ) : (
+                    <div className="bg-forest-800 border border-forest-600 rounded-2xl p-8 text-center">
+                        <Calendar className="w-8 h-8 text-sand-200/20 mx-auto mb-3" />
+                        <p className="text-sage-500 text-sm">No classes scheduled for today</p>
+                    </div>
+                )}
             </div>
 
             {/* Quick Actions */}

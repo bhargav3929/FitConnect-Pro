@@ -11,26 +11,29 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode
 }) {
-    const { isAdminAuthenticated } = useAdminAuthStore()
+    const { isAdminAuthenticated, isLoading, initAuth } = useAdminAuthStore()
     const router = useRouter()
     const pathname = usePathname()
 
     useEffect(() => {
-        // Don't redirect if on the login page
-        if (pathname === '/admin/login') return
+        const unsubscribe = initAuth()
+        return () => unsubscribe()
+    }, [initAuth])
 
-        if (!isAdminAuthenticated) {
+    useEffect(() => {
+        if (pathname === '/admin/login') return
+        if (!isLoading && !isAdminAuthenticated) {
             router.push('/admin/login')
         }
-    }, [isAdminAuthenticated, router, pathname])
+    }, [isAdminAuthenticated, isLoading, router, pathname])
 
     // Show login page without admin layout
     if (pathname === '/admin/login') {
         return <>{children}</>
     }
 
-    // Show nothing while checking auth
-    if (!isAdminAuthenticated) {
+    // Show loading skeleton while checking auth
+    if (isLoading || !isAdminAuthenticated) {
         return (
             <div className="min-h-screen bg-forest-700 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">

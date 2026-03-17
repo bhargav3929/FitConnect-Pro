@@ -48,11 +48,11 @@ export default function ImgStack({ items }: ImgStackProps) {
         };
     };
 
-    const handleDragStart = (_: any, info: PanInfo) => {
+    const handleDragStart = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         dragStartPos.current = { x: info.point.x, y: info.point.y };
     };
 
-    const handleDragEnd = (_: any, info: PanInfo) => {
+    const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         const dragDistance = Math.sqrt(
             Math.pow(info.point.x - dragStartPos.current.x, 2) +
             Math.pow(info.point.y - dragStartPos.current.y, 2)

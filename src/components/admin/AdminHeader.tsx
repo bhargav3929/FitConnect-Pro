@@ -34,8 +34,8 @@ export function AdminHeader() {
 
     const pageTitle = PAGE_TITLES[pathname] || 'Admin'
 
-    const handleLogout = () => {
-        logoutAdmin()
+    const handleLogout = async () => {
+        await logoutAdmin()
         router.push('/')
     }
 

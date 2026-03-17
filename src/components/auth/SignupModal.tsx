@@ -28,13 +28,12 @@ import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { auth, db } from "@/lib/firebase/config"
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { toast } from "sonner"
-import { useAuthStore } from "@/lib/store/authStore"
 
 const signupSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
-    age: z.coerce.number().min(16, "Must be at least 16 years old"),
+    age: z.number().min(16, "Must be at least 16 years old"),
 })
 
 interface SignupModalProps {
@@ -43,16 +42,14 @@ interface SignupModalProps {
     trigger?: React.ReactNode
 }
 
-// Define the form data type
 type SignupFormValues = z.infer<typeof signupSchema>
 
 export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
     const [open, setOpen] = React.useState(false)
     const [isLoading, setIsLoading] = React.useState(false)
-    const { setUser } = useAuthStore()
 
     const form = useForm<SignupFormValues>({
-        resolver: zodResolver(signupSchema) as any,
+        resolver: zodResolver(signupSchema),
         defaultValues: {
             name: "",
             email: "",
@@ -102,17 +99,13 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
 
             await setDoc(doc(db, "users", userCredential.user.uid), userData)
 
-            // Update local store immediately for snappiness
-            // @ts-ignore - Timestamp type mismatch between local and server
-            setUser(userData);
-
             toast.success("Account created successfully!")
             setOpen(false)
             onSuccess?.()
             onClose?.()
-        } catch (error: any) {
-            console.error(error)
-            toast.error(error.message || "Something went wrong")
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Something went wrong"
+            toast.error(message)
         } finally {
             setIsLoading(false)
         }
@@ -178,7 +171,11 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
                                 <FormItem>
                                     <FormLabel>Age</FormLabel>
                                     <FormControl>
-                                        <Input type="number" {...field} />
+                                        <Input
+                                            type="number"
+                                            {...field}
+                                            onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

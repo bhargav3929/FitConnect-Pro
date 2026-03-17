@@ -21,12 +21,40 @@ export default function ProfilePage() {
     const { clientUser, logoutClient } = useClientAuthStore()
     const router = useRouter()
 
-    const handleLogout = () => {
-        logoutClient()
+    const handleLogout = async () => {
+        await logoutClient()
         router.push('/')
     }
 
-    if (!clientUser) return null
+    if (!clientUser) {
+        return (
+            <div className="max-w-3xl mx-auto space-y-8 pb-20">
+                {/* Skeleton loader */}
+                <div>
+                    <div className="h-8 w-40 bg-sand-200/10 rounded animate-pulse" />
+                    <div className="h-4 w-64 bg-sand-200/5 rounded animate-pulse mt-2" />
+                </div>
+                <div className="bg-forest-800 border border-forest-600 rounded-3xl p-8 animate-pulse">
+                    <div className="flex items-center gap-6">
+                        <div className="h-24 w-24 rounded-full bg-sand-200/10" />
+                        <div className="space-y-3 flex-1">
+                            <div className="h-6 w-48 bg-sand-200/10 rounded" />
+                            <div className="h-4 w-64 bg-sand-200/5 rounded" />
+                        </div>
+                    </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="bg-forest-800 border border-forest-600 rounded-2xl p-4 animate-pulse">
+                            <div className="h-5 w-5 mx-auto mb-2 bg-sand-200/10 rounded" />
+                            <div className="h-8 w-12 mx-auto bg-sand-200/10 rounded" />
+                            <div className="h-3 w-16 mx-auto bg-sand-200/5 rounded mt-2" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="max-w-3xl mx-auto space-y-8 pb-20">
@@ -58,11 +86,6 @@ export default function ProfilePage() {
                         <h2 className="text-2xl font-bold text-sand-200 mb-1">{clientUser.name}</h2>
                         <div className="flex flex-col md:flex-row items-center gap-4 text-sage-400 text-sm">
                             <span className="flex items-center gap-1.5">
-                                <User className="w-3 h-3" />
-                                {clientUser.username}
-                            </span>
-                            <span className="hidden md:inline">•</span>
-                            <span className="flex items-center gap-1.5">
                                 <Mail className="w-3 h-3" />
                                 {clientUser.email}
                             </span>
@@ -78,9 +101,9 @@ export default function ProfilePage() {
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4">
                 {[
-                    { label: "Total Classes", value: clientUser.stats.classesAttended, icon: Trophy, color: "text-gold-400" },
-                    { label: "Points", value: clientUser.stats.points, icon: Target, color: "text-terracotta-400" },
-                    { label: "Current Streak", value: clientUser.stats.streak, icon: Trophy, color: "text-sage-300" }
+                    { label: "Total Classes", value: clientUser.stats.totalClassesAttended, icon: Trophy, color: "text-gold-400" },
+                    { label: "Longest Streak", value: clientUser.stats.longestStreak, icon: Target, color: "text-terracotta-400" },
+                    { label: "Current Streak", value: clientUser.stats.currentStreak, icon: Trophy, color: "text-sage-300" }
                 ].map((stat, idx) => (
                     <motion.div
                         key={stat.label}
@@ -108,7 +131,7 @@ export default function ProfilePage() {
                             </div>
                             <div className="text-left">
                                 <p className="font-bold text-sand-200">Membership Plan</p>
-                                <p className="text-xs text-sage-500">{clientUser.membership.type} • Expires {clientUser.membership.expiresAt}</p>
+                                <p className="text-xs text-sage-500">{clientUser.subscription.planType || 'No Plan'} {clientUser.subscription.endDate ? `• Expires ${new Date(clientUser.subscription.endDate).toLocaleDateString()}` : ''}</p>
                             </div>
                         </div>
                         <ChevronRight className="w-5 h-5 text-sand-200/20 group-hover:text-sand-200/60" />

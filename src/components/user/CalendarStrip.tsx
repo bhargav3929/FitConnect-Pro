@@ -39,7 +39,10 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
         <div className="w-full">
             {/* Days Strip */}
             <div className="relative flex items-center mb-6">
-                <button className="w-8 h-8 flex items-center justify-center text-sage-500">
+                <button
+                    onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
+                    className="w-8 h-8 flex items-center justify-center text-sage-500 hover:text-sand-200 transition-colors"
+                >
                     <ChevronLeft className="w-5 h-5" />
                 </button>
 
@@ -80,7 +83,10 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
                     })}
                 </div>
 
-                <button className="w-8 h-8 flex items-center justify-center text-sage-500">
+                <button
+                    onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
+                    className="w-8 h-8 flex items-center justify-center text-sage-500 hover:text-sand-200 transition-colors"
+                >
                     <ChevronRight className="w-5 h-5" />
                 </button>
             </div>

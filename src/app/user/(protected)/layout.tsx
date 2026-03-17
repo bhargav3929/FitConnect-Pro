@@ -1,34 +1,36 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useClientAuthStore } from "@/lib/store/clientAuthStore"
 import { UserNav } from "@/components/user/UserNav"
-import { Loader2 } from "lucide-react"
 
 export default function UserLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const { isAuthenticated } = useClientAuthStore()
+    const { isAuthenticated, isLoading, initAuth } = useClientAuthStore()
     const router = useRouter()
-    const [isChecking, setIsChecking] = useState(true)
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            if (!isAuthenticated) {
-                router.push('/user/login')
-            }
-            setIsChecking(false)
-        }, 100)
-        return () => clearTimeout(timer)
-    }, [isAuthenticated, router])
+        const unsubscribe = initAuth()
+        return () => unsubscribe()
+    }, [initAuth])
 
-    if (isChecking) {
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            router.push('/user/login')
+        }
+    }, [isAuthenticated, isLoading, router])
+
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-forest-700 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-gold-400/40 animate-spin" />
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-2 border-sand-200/20 border-t-gold-400 rounded-full animate-spin" />
+                    <p className="text-sage-400 text-sm tracking-wider">LOADING...</p>
+                </div>
             </div>
         )
     }

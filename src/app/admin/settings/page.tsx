@@ -29,8 +29,8 @@ export default function SettingsPage() {
         toast.success("Settings saved successfully!")
     }
 
-    const handleLogout = () => {
-        logoutAdmin()
+    const handleLogout = async () => {
+        await logoutAdmin()
         router.push('/')
     }
 
@@ -74,17 +74,6 @@ export default function SettingsPage() {
                             type="email"
                             defaultValue={adminUser?.email || "admin@solpilates.com"}
                             className="w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sand-200 focus:border-gold-400/50 focus:outline-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-sage-400 tracking-wider mb-2">
-                            USERNAME
-                        </label>
-                        <input
-                            type="text"
-                            defaultValue={adminUser?.username || "admin"}
-                            disabled
-                            className="w-full h-12 px-4 bg-sand-200/5 border border-forest-600 text-sage-400 cursor-not-allowed"
                         />
                     </div>
                     <div>

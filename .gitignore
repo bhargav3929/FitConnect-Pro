@@ -48,3 +48,6 @@ ui-debug.log
 functions/lib/
 functions/node_modules/
 .env*.local
+*firebase-adminsdk*
+*service-account*
+*.key.json

@@ -7,32 +7,32 @@ import { cn } from "@/lib/utils";
 const amenities = [
     {
         id: 1,
-        name: "Reformer Studio",
-        tagline: "State-of-the-art Balanced Body reformers",
+        name: "Reformer Pilates",
+        tagline: "Full-body resistance training on state-of-the-art reformer machines",
         image: "/images/gyms/fitpro-downtown.png",
     },
     {
         id: 2,
-        name: "Mat Studio",
-        tagline: "Dedicated space for mat Pilates & floor work",
+        name: "Mat Pilates",
+        tagline: "Core-focused floor work using body weight and props",
         image: "/images/gyms/fitpro-midtown.png",
     },
     {
         id: 3,
-        name: "Private Suite",
-        tagline: "One-on-one sessions in an intimate setting",
+        name: "Private Pilates",
+        tagline: "Personalised one-on-one sessions tailored to your goals",
         image: "/images/gyms/fitpro-uptown.png",
     },
     {
         id: 4,
-        name: "Barre & Stretch",
-        tagline: "Barre-fusion and deep flexibility training",
+        name: "Barre Pilates",
+        tagline: "Ballet-inspired movements fused with Pilates precision",
         image: "/images/gyms/fitpro-brooklyn.png",
     },
     {
         id: 5,
-        name: "Recovery Lounge",
-        tagline: "Post-session recovery and relaxation",
+        name: "Prenatal Pilates",
+        tagline: "Safe, gentle sessions designed for expecting mothers",
         image: "/images/gyms/fitpro-queens.png",
     }
 ];
@@ -79,13 +79,13 @@ export default function FacilitiesSection() {
             {/* Header */}
             <div className="container px-4 mx-auto mb-12 flex flex-col items-center text-center">
                 <div className="border border-terra-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-terra-400 bg-terra-400/10 mb-6">
-                    Our Studios
+                    Our Studio
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-4 font-display">
-                    SPACES DESIGNED FOR YOU
+                    OUR PILATES STUDIO
                 </h2>
                 <p className="text-olive-300 max-w-lg text-lg">
-                    Five dedicated studios, each crafted for a specific Pilates discipline.
+                    Five dedicated Pilates disciplines, each designed to transform your body and mind.
                 </p>
             </div>
 

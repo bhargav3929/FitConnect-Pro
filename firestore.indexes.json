@@ -1,4 +1,46 @@
 {
-    "indexes": [],
+    "indexes": [
+        {
+            "collectionGroup": "bookings",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "userId", "order": "ASCENDING" },
+                { "fieldPath": "classDate", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "bookings",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "classId", "order": "ASCENDING" },
+                { "fieldPath": "status", "order": "ASCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "classes",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "date", "order": "ASCENDING" },
+                { "fieldPath": "status", "order": "ASCENDING" },
+                { "fieldPath": "startTime", "order": "ASCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "classes",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "trainerId", "order": "ASCENDING" },
+                { "fieldPath": "date", "order": "ASCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "users",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "subscription.status", "order": "ASCENDING" },
+                { "fieldPath": "subscription.endDate", "order": "ASCENDING" }
+            ]
+        }
+    ],
     "fieldOverrides": []
 }

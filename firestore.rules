@@ -1,65 +1,81 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
+    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isAdmin() {
-      // For Phase 1, we might rely on a custom claim or specific UID
-      // return request.auth.token.admin == true;
-      return isAuthenticated() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return isAuthenticated() && request.auth.token.admin == true;
     }
-    
+
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     // Users collection
+    // - Read: only the owner can read their own profile
+    // - Create: authenticated users can create their own profile (via onUserCreate trigger or client)
+    // - Update: only the owner can update their own profile (non-subscription fields)
+    // - Subscription and stats fields are updated by Cloud Functions (Admin SDK bypasses rules)
     match /users/{userId} {
-      allow read: if isAuthenticated() && isOwner(userId);
-      // Allow create only by Admin or Backend (Cloud Functions usually bypass rules, but client-side creation needs this)
-      // Actually strictly, user creation should be done by triggers, but for our 'optimistic' client side write:
-      allow create: if isAuthenticated() && isOwner(userId); 
-      allow update: if isAuthenticated() && isOwner(userId);
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
     }
-    
-    // Single-facility model: gymCenters contains exactly one document (the gym config)
-    match /gymCenters/{gymId} {
-      allow read: if true;
-      allow write: if false; // Only Admin via Admin SDK or Console for now
-    }
-    
-    match /trainers/{trainerId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    
+
+    // Classes collection
+    // - Read: any authenticated user can browse classes
+    // - Write: admin only (via Cloud Functions with Admin SDK)
     match /classes/{classId} {
-      allow read: if true;
-      allow write: if false;
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
     }
-    
-    match /subscriptionPlans/{planId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    
-    // User-specific collections
+
+    // Bookings collection
+    // - Read: owner can read their own bookings; admin can read all
+    // - Create/Update/Delete: handled exclusively by Cloud Functions (Admin SDK)
+    // - Client-side writes are blocked to ensure transactional integrity
     match /bookings/{bookingId} {
       allow read: if isAuthenticated() && (
-        isOwner(resource.data.userId)
+        resource.data.userId == request.auth.uid || isAdmin()
       );
-      // Validation logic for creation would go here (or be handled by Cloud Function)
-      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
-      allow update: if false; // Bookings should be modified via Functions usually to handle capacity
+      allow create: if false;
+      allow update: if false;
       allow delete: if false;
     }
-    
-    // Admin access to everything (Fallback)
-    // match /{document=**} {
-    //   allow read, write: if isAdmin();
-    // }
+
+    // Trainers collection
+    // - Read: any authenticated user
+    // - Write: admin only
+    match /trainers/{trainerId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Gym Centers (single facility)
+    // - Read: public (for marketing/info pages)
+    // - Write: admin only
+    match /gymCenters/{gymId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Subscription Plans
+    // - Read: public (for pricing page)
+    // - Write: admin only
+    match /subscriptionPlans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Admins collection
+    // - Read/Write: admin only
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
   }
 }

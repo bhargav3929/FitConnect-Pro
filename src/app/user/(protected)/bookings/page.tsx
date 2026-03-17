@@ -1,72 +1,74 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, Clock, MapPin, User, CheckCircle2, AlertCircle, XCircle } from "lucide-react"
+import { Calendar, Clock, MapPin, User, CheckCircle2, AlertCircle, XCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useClientAuthStore } from "@/lib/store/clientAuthStore"
+import { subscribeToUserBookings, callCancelBooking } from "@/lib/firebase/firestore"
+import { Booking } from "@/types/booking"
+import { toast } from "sonner"
 
-// Mock Bookings Data
-const BOOKINGS = [
-    {
-        id: "b1",
-        className: "Morning HIIT",
-        zone: "Performance Floor",
-        trainer: "John Smith",
-        date: "Today, Jan 6",
-        time: "06:00 AM",
-        duration: "45 min",
-        status: "confirmed",
-        image: "/gym-1.jpg"
-    },
-    {
-        id: "b2",
-        className: "Power Yoga",
-        zone: "Heated Yoga Studio",
-        trainer: "Sarah Chen",
-        date: "Thu, Jan 8",
-        time: "06:00 PM",
-        duration: "60 min",
-        status: "confirmed",
-        image: "/gym-2.jpg"
-    },
-    {
-        id: "b3",
-        className: "Boxing Basics",
-        zone: "Combat Zone",
-        trainer: "Mike Johnson",
-        date: "Dec 28, 2023",
-        time: "10:00 AM",
-        duration: "60 min",
-        status: "attended",
-        image: "/gym-1.jpg"
-    },
-    {
-        id: "b4",
-        className: "Spin Class",
-        zone: "Cycling Theater",
-        trainer: "Emily Brown",
-        date: "Dec 20, 2023",
-        time: "05:00 PM",
-        duration: "45 min",
-        status: "cancelled",
-        image: "/gym-3.jpg"
-    }
-]
+interface EnrichedBooking extends Booking {
+    classType?: string
+    classStartTime?: string
+    classDuration?: number
+    classLocation?: string
+    trainerName?: string
+}
 
 export default function BookingsPage() {
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
+    const [bookings, setBookings] = useState<EnrichedBooking[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [cancelingId, setCancelingId] = useState<string | null>(null)
+    const { firebaseUser } = useClientAuthStore()
 
-    const filteredBookings = BOOKINGS.filter(booking => {
+    useEffect(() => {
+        if (!firebaseUser) return
+
+        const unsubscribe = subscribeToUserBookings(firebaseUser.uid, (data) => {
+            setBookings(data as EnrichedBooking[])
+            setIsLoading(false)
+        })
+        return () => unsubscribe()
+    }, [firebaseUser])
+
+    const filteredBookings = bookings.filter(booking => {
         if (activeTab === 'upcoming') return booking.status === 'confirmed'
-        return booking.status === 'attended' || booking.status === 'cancelled'
+        return booking.status === 'attended' || booking.status === 'canceled' || booking.status === 'no-show'
     })
+
+    const handleCancel = async (bookingId: string) => {
+        setCancelingId(bookingId)
+        try {
+            await callCancelBooking(bookingId)
+            toast.success("Booking cancelled", {
+                description: "Your booking has been cancelled and your class credit has been restored.",
+            })
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to cancel booking"
+            toast.error("Cancel failed", { description: message })
+        } finally {
+            setCancelingId(null)
+        }
+    }
+
+    const formatDate = (date: Date | string) => {
+        const d = typeof date === 'string' ? new Date(date) : date
+        const now = new Date()
+        const isToday = d.toDateString() === now.toDateString()
+        if (isToday) return `Today, ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    }
 
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'confirmed': return 'bg-gold-400/20 text-gold-400'
             case 'attended': return 'bg-green-500/20 text-green-400'
-            case 'cancelled': return 'bg-red-500/20 text-red-400'
+            case 'canceled': return 'bg-red-500/20 text-red-400'
+            case 'no-show': return 'bg-red-500/20 text-red-400'
             default: return 'bg-sand-200/10 text-sage-400'
         }
     }
@@ -75,7 +77,8 @@ export default function BookingsPage() {
         switch (status) {
             case 'confirmed': return <AlertCircle className="w-3 h-3" />
             case 'attended': return <CheckCircle2 className="w-3 h-3" />
-            case 'cancelled': return <XCircle className="w-3 h-3" />
+            case 'canceled': return <XCircle className="w-3 h-3" />
+            case 'no-show': return <XCircle className="w-3 h-3" />
             default: return null
         }
     }
@@ -92,10 +95,10 @@ export default function BookingsPage() {
 
             {/* Tabs */}
             <div className="flex p-1 bg-sand-200/5 rounded-xl w-fit">
-                {['upcoming', 'past'].map((tab) => (
+                {(['upcoming', 'past'] as const).map((tab) => (
                     <button
                         key={tab}
-                        onClick={() => setActiveTab(tab as any)}
+                        onClick={() => setActiveTab(tab)}
                         className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${activeTab === tab
                                 ? 'bg-gold-400 text-forest-700 shadow-lg'
                                 : 'text-sage-400 hover:text-sand-200'
@@ -106,87 +109,139 @@ export default function BookingsPage() {
                 ))}
             </div>
 
-            {/* Bookings Grid */}
-            <div className="grid md:grid-cols-2 gap-6">
-                <AnimatePresence mode="popLayout">
-                    {filteredBookings.map((booking, idx) => (
-                        <motion.div
-                            key={booking.id}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ delay: idx * 0.05 }}
-                            className="bg-forest-800 border border-forest-600 rounded-2xl p-6 group hover:border-gold-400/30 transition-all"
-                        >
+            {/* Loading */}
+            {isLoading && (
+                <div className="grid md:grid-cols-2 gap-6">
+                    {[1, 2].map(i => (
+                        <div key={i} className="bg-forest-800 border border-forest-600 rounded-2xl p-6 animate-pulse">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 ${getStatusColor(booking.status)}`}>
-                                        {getStatusIcon(booking.status)}
-                                        {booking.status}
-                                    </div>
-                                    <h3 className="text-xl font-bold text-sand-200 mb-1 group-hover:text-gold-400 transition-colors">
-                                        {booking.className}
-                                    </h3>
-                                    <div className="flex items-center gap-2 text-sage-400 text-sm">
-                                        <User className="w-3 h-3" />
-                                        <span>{booking.trainer}</span>
-                                    </div>
+                                    <div className="h-5 w-20 bg-sand-200/10 rounded-full mb-3" />
+                                    <div className="h-6 w-36 bg-sand-200/10 rounded mb-2" />
+                                    <div className="h-4 w-24 bg-sand-200/5 rounded" />
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-black text-2xl text-sand-200">{booking.time.split(' ')[0]}</p>
-                                    <p className="text-xs font-bold text-sage-500 uppercase">{booking.time.split(' ')[1]}</p>
+                                    <div className="h-8 w-14 bg-sand-200/10 rounded" />
+                                    <div className="h-3 w-8 bg-sand-200/5 rounded mt-1" />
                                 </div>
                             </div>
-
                             <div className="bg-sand-200/5 rounded-xl p-4 space-y-3 mb-6">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="flex items-center gap-2 text-sage-400">
-                                        <Calendar className="w-4 h-4" />
-                                        Date
-                                    </span>
-                                    <span className="font-medium text-sand-200">{booking.date}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="flex items-center gap-2 text-sage-400">
-                                        <Clock className="w-4 h-4" />
-                                        Duration
-                                    </span>
-                                    <span className="font-medium text-sand-200">{booking.duration}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="flex items-center gap-2 text-sage-400">
-                                        <MapPin className="w-4 h-4" />
-                                        Zone
-                                    </span>
-                                    <span className="font-medium text-sand-200">{booking.zone}</span>
-                                </div>
+                                {[1, 2, 3].map(j => (
+                                    <div key={j} className="flex items-center justify-between">
+                                        <div className="h-4 w-16 bg-sand-200/5 rounded" />
+                                        <div className="h-4 w-24 bg-sand-200/10 rounded" />
+                                    </div>
+                                ))}
                             </div>
-
-                            {activeTab === 'upcoming' && (
-                                <div className="flex gap-3">
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1 h-12 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 font-bold rounded-xl"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button className="flex-1 h-12 bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold rounded-xl">
-                                        Get Directions
-                                    </Button>
-                                </div>
-                            )}
-
-                            {activeTab === 'past' && booking.status === 'attended' && (
-                                <Button className="w-full h-12 bg-sand-200/5 text-sand-200 hover:bg-sand-200/10 font-bold rounded-xl border border-forest-600">
-                                    Book Again
-                                </Button>
-                            )}
-                        </motion.div>
+                        </div>
                     ))}
-                </AnimatePresence>
-            </div>
+                </div>
+            )}
 
-            {filteredBookings.length === 0 && (
+            {/* Bookings Grid */}
+            {!isLoading && (
+                <div className="grid md:grid-cols-2 gap-6">
+                    <AnimatePresence mode="popLayout">
+                        {filteredBookings.map((booking, idx) => (
+                            <motion.div
+                                key={booking.id}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ delay: idx * 0.05 }}
+                                className="bg-forest-800 border border-forest-600 rounded-2xl p-6 group hover:border-gold-400/30 transition-all"
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 ${getStatusColor(booking.status)}`}>
+                                            {getStatusIcon(booking.status)}
+                                            {booking.status}
+                                        </div>
+                                        <h3 className="text-xl font-bold text-sand-200 mb-1 group-hover:text-gold-400 transition-colors">
+                                            {booking.classType || 'Pilates Class'}
+                                        </h3>
+                                        <div className="flex items-center gap-2 text-sage-400 text-sm">
+                                            <User className="w-3 h-3" />
+                                            <span>{booking.trainerName || 'Instructor'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-black text-2xl text-sand-200">
+                                            {booking.classStartTime || booking.spotNumber}
+                                        </p>
+                                        <p className="text-xs font-bold text-sage-500 uppercase">
+                                            Spot {booking.spotNumber}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-sand-200/5 rounded-xl p-4 space-y-3 mb-6">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="flex items-center gap-2 text-sage-400">
+                                            <Calendar className="w-4 h-4" />
+                                            Date
+                                        </span>
+                                        <span className="font-medium text-sand-200">
+                                            {formatDate(booking.classDate)}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="flex items-center gap-2 text-sage-400">
+                                            <Clock className="w-4 h-4" />
+                                            Duration
+                                        </span>
+                                        <span className="font-medium text-sand-200">
+                                            {booking.classDuration ? `${booking.classDuration} min` : '--'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="flex items-center gap-2 text-sage-400">
+                                            <MapPin className="w-4 h-4" />
+                                            Location
+                                        </span>
+                                        <span className="font-medium text-sand-200">
+                                            {booking.classLocation || 'Main Studio'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {activeTab === 'upcoming' && (
+                                    <div className="flex gap-3">
+                                        <Button
+                                            variant="outline"
+                                            className="flex-1 h-12 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 font-bold rounded-xl"
+                                            onClick={() => handleCancel(booking.id)}
+                                            disabled={cancelingId === booking.id}
+                                        >
+                                            {cancelingId === booking.id ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                "Cancel"
+                                            )}
+                                        </Button>
+                                        <Button
+                                            onClick={() => window.open('https://maps.google.com/?q=250+West+54th+Street+New+York+NY+10019', '_blank')}
+                                            className="flex-1 h-12 bg-gold-400 text-forest-700 hover:bg-gold-300 font-bold rounded-xl"
+                                        >
+                                            Get Directions
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {activeTab === 'past' && booking.status === 'attended' && (
+                                    <Link href="/user/schedule">
+                                        <Button className="w-full h-12 bg-sand-200/5 text-sand-200 hover:bg-sand-200/10 font-bold rounded-xl border border-forest-600">
+                                            Book Again
+                                        </Button>
+                                    </Link>
+                                )}
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </div>
+            )}
+
+            {!isLoading && filteredBookings.length === 0 && (
                 <div className="text-center py-20">
                     <div className="w-16 h-16 bg-sand-200/5 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Calendar className="w-8 h-8 text-sand-200/20" />
@@ -200,7 +255,7 @@ export default function BookingsPage() {
                     </p>
                     {activeTab === 'upcoming' && (
                         <Link href="/user/schedule">
-                            <Button className="font-bold rounded-xl px-8">
+                            <Button className="font-bold rounded-xl px-8 bg-gold-400 text-forest-700 hover:bg-gold-300">
                                 Browse Schedule
                             </Button>
                         </Link>

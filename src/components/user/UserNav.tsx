@@ -27,8 +27,8 @@ export function UserNav() {
     const router = useRouter()
     const logoutClient = useClientAuthStore(state => state.logoutClient)
 
-    const handleLogout = () => {
-        logoutClient()
+    const handleLogout = async () => {
+        await logoutClient()
         router.push('/')
     }
 

@@ -25,8 +25,8 @@ export function Header() {
 
                     {/* Desktop Nav Links */}
                     <nav className="hidden md:flex items-center gap-8">
-                        <Link href="#" className="nav-link group flex items-center gap-1 text-olive-400 font-medium text-sm tracking-wider">
-                            HOME <span className="text-[10px] opacity-50 group-hover:translate-y-0.5 transition-transform">&#9660;</span>
+                        <Link href="/" className="nav-link group flex items-center gap-1 text-olive-400 font-medium text-sm tracking-wider">
+                            HOME
                         </Link>
                         <Link href="/subscription" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
                             PRICING
@@ -44,9 +44,9 @@ export function Header() {
 
                     {/* Right side */}
                     <div className="flex items-center gap-4">
-                        <button className="hidden md:block px-6 py-3 border border-terra-400 text-terra-400 font-bold text-sm tracking-wider hover:bg-terra-400 hover:text-peach-50 transition-all">
+                        <Link href="/subscription" className="hidden md:block px-6 py-3 border border-terra-400 text-terra-400 font-bold text-sm tracking-wider hover:bg-terra-400 hover:text-peach-50 transition-all">
                             BOOK NOW
-                        </button>
+                        </Link>
                         <button
                             onClick={() => setIsMenuOpen(true)}
                             className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 group p-2 hover:bg-olive-400/10 rounded-full transition-colors"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     MapPin,
@@ -10,21 +10,24 @@ import {
     Filter,
     Star,
     ChevronLeft,
+    Calendar,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { ClassScheduleCard } from "@/components/user/ClassScheduleCard"
 import { CalendarStrip } from "@/components/user/CalendarStrip"
 import { SpotSelectionModal } from "@/components/user/SpotSelectionModal"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getClassesByDate, getTrainers, callBookClass } from "@/lib/firebase/firestore"
+import { ClassSession } from "@/types/class"
+import { Trainer } from "@/types/trainer"
+import { toast } from "sonner"
 
-// Facility Data (single gym)
 const FACILITY = {
     name: "SOL Pilates",
     address: "250 West 54th Street, New York, NY 10019",
     rating: 4.9,
     reviewCount: 128,
-    description: "45,000 sq ft of dedicated training space with five distinct zones: Strength Floor, Heated Yoga Studio, Cycling Theater, Combat Zone, and Recovery Sanctuary.",
+    description: "45,000 sq ft of dedicated training space with five distinct zones: Strength Floor, Heated Yoga Studio, Cycling Theater, Olympic Lifting Platform, and Recovery Sanctuary.",
     amenities: ["Performance Floor", "Heated Yoga Studio", "Cycling Theater", "Olympic Lifting Platform", "Recovery Lounge", "Smoothie Bar", "Private Training Suites"],
     hours: {
         weekday: "05:00 - 23:00",
@@ -36,109 +39,142 @@ const FACILITY = {
     },
 }
 
-// Mock Classes
-const CLASSES = [
-    {
-        id: "c1",
-        name: "Strength & Sculpt",
-        time: "06:00",
-        duration: "50 min",
-        trainer: "Melinda H",
-        trainerImage: "/trainer-1.jpg",
-        capacity: 12,
-        booked: 12,
-        bookedSpots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        type: "In-Studio",
-        location: "Performance Floor",
-        intensityLevel: 2 as 1 | 2 | 3
-    },
-    {
-        id: "c2",
-        name: "HIIT Burn",
-        time: "07:00",
-        duration: "45 min",
-        trainer: "Mike J",
-        trainerImage: "/trainer-3.jpg",
-        capacity: 15,
-        booked: 8,
-        bookedSpots: [1, 3, 4, 5, 8, 9, 10, 12],
-        type: "In-Studio",
-        location: "Performance Floor",
-        intensityLevel: 3 as 1 | 2 | 3
-    },
-    {
-        id: "c3",
-        name: "Morning Flow",
-        time: "07:30",
-        duration: "60 min",
-        trainer: "Sarah C",
-        trainerImage: "/trainer-2.jpg",
-        capacity: 20,
-        booked: 15,
-        bookedSpots: [1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19],
-        type: "In-Studio",
-        location: "Heated Yoga Studio",
-        intensityLevel: 1 as 1 | 2 | 3
-    },
-    {
-        id: "c4",
-        name: "Power Cycling",
-        time: "09:00",
-        duration: "45 min",
-        trainer: "David R",
-        trainerImage: "/trainer-1.jpg",
-        capacity: 25,
-        booked: 18,
-        bookedSpots: [1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 14, 15, 16, 18, 19, 20, 22, 24],
-        type: "In-Studio",
-        location: "Cycling Theater",
-        intensityLevel: 2 as 1 | 2 | 3
-    },
-]
-
-const TRAINERS = [
-    { id: "t1", name: "Melinda H", role: "Head Coach", image: "/trainer-1.jpg" },
-    { id: "t2", name: "Sarah Chen", role: "Yoga Lead", image: "/trainer-2.jpg" },
-    { id: "t3", name: "Mike Johnson", role: "Boxing Coach", image: "/trainer-3.jpg" },
-]
-
 type FilterType = 'instructor' | 'classType' | 'rooms'
 
 export default function SchedulePage() {
     const [selectedTab, setSelectedTab] = useState<'classes' | 'trainers' | 'info'>('classes')
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [spotModalOpen, setSpotModalOpen] = useState(false)
-    const [selectedClass, setSelectedClass] = useState<any>(null)
+    const [selectedClass, setSelectedClass] = useState<{
+        id: string
+        name: string
+        date: string
+        time: string
+        duration: string
+        location: string
+        instructor: string
+        totalSpots: number
+        bookedSpots: number[]
+    } | null>(null)
     const [activeFilters, setActiveFilters] = useState<FilterType[]>([])
+    const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterType, string>>({
+        instructor: '',
+        classType: '',
+        rooms: '',
+    })
+    const [classes, setClasses] = useState<ClassSession[]>([])
+    const [trainers, setTrainers] = useState<Trainer[]>([])
+    const [isLoadingClasses, setIsLoadingClasses] = useState(true)
+    const [isLoadingTrainers, setIsLoadingTrainers] = useState(true)
 
     const formatDate = (date: Date) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         return `${date.getDate()} ${months[date.getMonth()]}`
     }
 
-    const handleBook = (cls: any) => {
+    const fetchClasses = useCallback(async (date: Date) => {
+        setIsLoadingClasses(true)
+        try {
+            const result = await getClassesByDate(date)
+            setClasses(result)
+        } catch {
+            setClasses([])
+        } finally {
+            setIsLoadingClasses(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchClasses(selectedDate)
+    }, [selectedDate, fetchClasses])
+
+    useEffect(() => {
+        async function loadTrainers() {
+            setIsLoadingTrainers(true)
+            try {
+                const result = await getTrainers()
+                setTrainers(result)
+            } catch {
+                setTrainers([])
+            } finally {
+                setIsLoadingTrainers(false)
+            }
+        }
+        loadTrainers()
+    }, [])
+
+    const handleBook = (cls: ClassSession) => {
+        const totalSpots = cls.totalSpots || cls.capacity || 12
         setSelectedClass({
             id: cls.id,
-            name: cls.name,
+            name: cls.classType || 'Pilates Class',
             date: formatDate(selectedDate),
-            time: cls.time,
-            duration: cls.duration,
-            location: cls.location,
-            instructor: cls.trainer,
-            totalSpots: cls.capacity,
+            time: cls.startTime,
+            duration: `${cls.duration} min`,
+            location: cls.location || 'Main Studio',
+            instructor: trainers.find(t => t.id === cls.trainerId)?.name || 'Instructor',
+            totalSpots,
             bookedSpots: cls.bookedSpots || []
         })
         setSpotModalOpen(true)
     }
 
-    const handleSpotConfirm = (spotNumber: number, isGuest: boolean) => {
-        // Spot reservation handled by SpotSelectionModal
+    const handleSpotConfirm = async (spotNumber: number, isGuest: boolean) => {
+        if (!selectedClass) return
+        try {
+            await callBookClass(selectedClass.id, spotNumber, isGuest)
+            toast.success("Booking confirmed!", {
+                description: `Spot ${spotNumber} reserved for ${selectedClass.name}`,
+            })
+            fetchClasses(selectedDate)
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to book class"
+            toast.error("Booking failed", { description: message })
+        }
     }
 
     const toggleFilter = (filter: FilterType) => {
-        setActiveFilters(prev =>
-            prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
-        )
+        setActiveFilters(prev => {
+            if (prev.includes(filter)) {
+                setSelectedFilterValues(v => ({ ...v, [filter]: '' }))
+                return prev.filter(f => f !== filter)
+            }
+            return [...prev, filter]
+        })
+    }
+
+    const selectFilterValue = (filter: FilterType, value: string) => {
+        setSelectedFilterValues(prev => ({
+            ...prev,
+            [filter]: prev[filter] === value ? '' : value,
+        }))
+    }
+
+    // Derive unique filter options from classes
+    const uniqueClassTypes = [...new Set(classes.map(c => c.classType).filter(Boolean))] as string[]
+    const uniqueRooms = [...new Set(classes.map(c => c.location).filter(Boolean))] as string[]
+    const uniqueInstructors = [...new Set(classes.map(c => {
+        const t = trainers.find(t => t.id === c.trainerId)
+        return t ? t.name : null
+    }).filter(Boolean))] as string[]
+
+    // Apply filters to classes
+    const filteredClasses = classes.filter(cls => {
+        if (selectedFilterValues.classType && cls.classType !== selectedFilterValues.classType) return false
+        if (selectedFilterValues.rooms && cls.location !== selectedFilterValues.rooms) return false
+        if (selectedFilterValues.instructor) {
+            const trainerName = trainers.find(t => t.id === cls.trainerId)?.name
+            if (trainerName !== selectedFilterValues.instructor) return false
+        }
+        return true
+    })
+
+    const getTrainerName = (trainerId: string) => {
+        return trainers.find(t => t.id === trainerId)?.name || 'Instructor'
+    }
+
+    const getTrainerImage = (trainerId: string) => {
+        return trainers.find(t => t.id === trainerId)?.profilePictureUrl || ''
     }
 
     return (
@@ -186,7 +222,7 @@ export default function SchedulePage() {
                     ].map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setSelectedTab(tab.id as any)}
+                            onClick={() => setSelectedTab(tab.id as 'classes' | 'trainers' | 'info')}
                             className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all relative overflow-hidden ${selectedTab === tab.id
                                     ? 'bg-gold-400 text-forest-700 shadow-glow'
                                     : 'bg-sand-200/5 text-sage-500 hover:text-sand-200 hover:bg-sand-200/10'
@@ -217,79 +253,185 @@ export default function SchedulePage() {
                             </div>
 
                             {/* Filters */}
-                            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                                <Filter className="w-4 h-4 text-sage-500 shrink-0" />
-                                {[
-                                    { id: 'instructor', label: 'Instructor' },
-                                    { id: 'classType', label: 'Class Type' },
-                                    { id: 'rooms', label: 'Room' },
-                                ].map(filter => (
-                                    <button
-                                        key={filter.id}
-                                        onClick={() => toggleFilter(filter.id as FilterType)}
-                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${activeFilters.includes(filter.id as FilterType)
-                                                ? 'bg-gold-400/20 border-gold-400 text-gold-400'
-                                                : 'bg-transparent border-forest-600 text-sage-500 hover:border-sand-200/20'
-                                            }`}
-                                    >
-                                        {filter.label}
-                                    </button>
-                                ))}
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                                    <Filter className="w-4 h-4 text-sage-500 shrink-0" />
+                                    {[
+                                        { id: 'instructor', label: 'Instructor' },
+                                        { id: 'classType', label: 'Class Type' },
+                                        { id: 'rooms', label: 'Room' },
+                                    ].map(filter => (
+                                        <button
+                                            key={filter.id}
+                                            onClick={() => toggleFilter(filter.id as FilterType)}
+                                            className={`px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${activeFilters.includes(filter.id as FilterType)
+                                                    ? 'bg-gold-400/20 border-gold-400 text-gold-400'
+                                                    : 'bg-transparent border-forest-600 text-sage-500 hover:border-sand-200/20'
+                                                }`}
+                                        >
+                                            {filter.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Active filter value pills */}
+                                {activeFilters.includes('instructor') && uniqueInstructors.length > 0 && (
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pl-6">
+                                        {uniqueInstructors.map(name => (
+                                            <button
+                                                key={name}
+                                                onClick={() => selectFilterValue('instructor', name)}
+                                                className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.instructor === name
+                                                        ? 'bg-gold-400 text-forest-700'
+                                                        : 'bg-sand-200/5 text-sage-400 hover:bg-sand-200/10'
+                                                    }`}
+                                            >
+                                                {name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                {activeFilters.includes('classType') && uniqueClassTypes.length > 0 && (
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pl-6">
+                                        {uniqueClassTypes.map(type => (
+                                            <button
+                                                key={type}
+                                                onClick={() => selectFilterValue('classType', type)}
+                                                className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.classType === type
+                                                        ? 'bg-gold-400 text-forest-700'
+                                                        : 'bg-sand-200/5 text-sage-400 hover:bg-sand-200/10'
+                                                    }`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                {activeFilters.includes('rooms') && uniqueRooms.length > 0 && (
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pl-6">
+                                        {uniqueRooms.map(room => (
+                                            <button
+                                                key={room}
+                                                onClick={() => selectFilterValue('rooms', room)}
+                                                className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.rooms === room
+                                                        ? 'bg-gold-400 text-forest-700'
+                                                        : 'bg-sand-200/5 text-sage-400 hover:bg-sand-200/10'
+                                                    }`}
+                                            >
+                                                {room}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Loading Skeletons */}
+                            {isLoadingClasses && (
+                                <div className="space-y-3">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className="bg-forest-800 border border-forest-600 rounded-2xl p-4 animate-pulse">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex gap-4">
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="h-5 w-12 bg-sand-200/10 rounded" />
+                                                        <div className="h-3 w-10 bg-sand-200/5 rounded mt-1" />
+                                                    </div>
+                                                    <div className="w-px h-10 bg-sand-200/10" />
+                                                    <div>
+                                                        <div className="h-5 w-32 bg-sand-200/10 rounded" />
+                                                        <div className="h-3 w-40 bg-sand-200/5 rounded mt-1.5" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-3 border-t border-forest-600">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-sand-200/10" />
+                                                    <div className="h-3 w-20 bg-sand-200/5 rounded" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Classes List */}
-                            <div className="space-y-3">
-                                {CLASSES.map((cls, idx) => (
-                                    <motion.div
-                                        key={cls.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.1 }}
-                                        onClick={() => handleBook(cls)}
-                                        className="bg-forest-800 border border-forest-600 rounded-2xl p-4 active:scale-[0.98] transition-all cursor-pointer hover:bg-forest-800/80 group"
-                                    >
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className="flex gap-4">
-                                                <div className="flex flex-col items-center">
-                                                    <span className="text-lg font-black text-sand-200 leading-none">{cls.time}</span>
-                                                    <span className="text-[10px] text-sage-500 font-medium mt-1">{cls.duration}</span>
-                                                </div>
-                                                <div className="w-px h-10 bg-sand-200/10" />
-                                                <div>
-                                                    <h3 className="text-sand-200 font-bold group-hover:text-gold-400 transition-colors">{cls.name}</h3>
-                                                    <p className="text-sage-500 text-xs flex items-center gap-1 mt-0.5">
-                                                        {cls.location} · {cls.type}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col items-end">
-                                                {cls.capacity - cls.booked === 0 ? (
-                                                    <span className="text-xs font-bold text-sand-200/20 uppercase tracking-wider">Full</span>
-                                                ) : (
-                                                    <span className="w-8 h-8 rounded-full bg-gold-400/20 flex items-center justify-center text-gold-400">
-                                                        <ChevronLeft className="w-4 h-4 rotate-180" />
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
+                            {!isLoadingClasses && filteredClasses.length > 0 && (
+                                <div className="space-y-3">
+                                    {filteredClasses.map((cls, idx) => {
+                                        const totalSpots = cls.totalSpots || cls.capacity || 12
+                                        const bookedCount = cls.bookedCount || 0
+                                        const spotsLeft = totalSpots - bookedCount
+                                        const trainerName = getTrainerName(cls.trainerId)
+                                        const trainerImage = getTrainerImage(cls.trainerId)
 
-                                        <div className="flex items-center justify-between pt-3 border-t border-forest-600">
-                                            <div className="flex items-center gap-2">
-                                                <Avatar className="w-6 h-6 border border-forest-600">
-                                                    <AvatarImage src={cls.trainerImage} />
-                                                    <AvatarFallback className="text-[8px] bg-sand-200/10 text-sand-200">{cls.trainer.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <span className="text-xs text-sage-400 font-medium">{cls.trainer}</span>
-                                            </div>
-                                            {cls.capacity - cls.booked < 3 && cls.capacity - cls.booked > 0 && (
-                                                <span className="text-[10px] text-gold-300 font-bold uppercase tracking-wider">
-                                                    Only {cls.capacity - cls.booked} spots left
-                                                </span>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
+                                        return (
+                                            <motion.div
+                                                key={cls.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                onClick={() => handleBook(cls)}
+                                                className="bg-forest-800 border border-forest-600 rounded-2xl p-4 active:scale-[0.98] transition-all cursor-pointer hover:bg-forest-800/80 group"
+                                            >
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex gap-4">
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="text-lg font-black text-sand-200 leading-none">{cls.startTime}</span>
+                                                            <span className="text-[10px] text-sage-500 font-medium mt-1">{cls.duration} min</span>
+                                                        </div>
+                                                        <div className="w-px h-10 bg-sand-200/10" />
+                                                        <div>
+                                                            <h3 className="text-sand-200 font-bold group-hover:text-gold-400 transition-colors">
+                                                                {cls.classType || 'Pilates Class'}
+                                                            </h3>
+                                                            <p className="text-sage-500 text-xs flex items-center gap-1 mt-0.5">
+                                                                {cls.location || 'Main Studio'} · In-Studio
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end">
+                                                        {spotsLeft === 0 ? (
+                                                            <span className="text-xs font-bold text-sand-200/20 uppercase tracking-wider">Full</span>
+                                                        ) : (
+                                                            <span className="w-8 h-8 rounded-full bg-gold-400/20 flex items-center justify-center text-gold-400">
+                                                                <ChevronLeft className="w-4 h-4 rotate-180" />
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-3 border-t border-forest-600">
+                                                    <div className="flex items-center gap-2">
+                                                        <Avatar className="w-6 h-6 border border-forest-600">
+                                                            <AvatarImage src={trainerImage} />
+                                                            <AvatarFallback className="text-[8px] bg-sand-200/10 text-sand-200">{trainerName.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="text-xs text-sage-400 font-medium">{trainerName}</span>
+                                                    </div>
+                                                    {spotsLeft < 3 && spotsLeft > 0 && (
+                                                        <span className="text-[10px] text-gold-300 font-bold uppercase tracking-wider">
+                                                            Only {spotsLeft} spots left
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Empty State */}
+                            {!isLoadingClasses && filteredClasses.length === 0 && (
+                                <div className="text-center py-20">
+                                    <div className="w-16 h-16 bg-sand-200/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Calendar className="w-8 h-8 text-sand-200/20" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-sand-200">No classes scheduled</h3>
+                                    <p className="text-sage-500 text-sm mt-2 max-w-xs mx-auto">
+                                        There are no classes available on this date. Try selecting a different day.
+                                    </p>
+                                </div>
+                            )}
                         </motion.div>
                     )}
 
@@ -301,20 +443,37 @@ export default function SchedulePage() {
                             exit={{ opacity: 0 }}
                             className="grid grid-cols-2 gap-4"
                         >
-                            {TRAINERS.map((trainer) => (
-                                <div key={trainer.id} className="relative aspect-[3/4] rounded-2xl overflow-hidden group">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-transparent to-transparent z-10" />
-                                    <div className="absolute inset-0 bg-sand-200/10 flex items-center justify-center text-sand-200/20 font-bold text-4xl">
-                                        {trainer.image ? (
-                                            <Image src={trainer.image} alt={trainer.name} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                                        ) : trainer.name.charAt(0)}
+                            {isLoadingTrainers ? (
+                                [1, 2, 3].map(i => (
+                                    <div key={i} className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-forest-800 border border-forest-600 animate-pulse">
+                                        <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+                                            <div className="h-5 w-24 bg-sand-200/10 rounded" />
+                                            <div className="h-3 w-16 bg-sand-200/5 rounded mt-2" />
+                                        </div>
                                     </div>
-                                    <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                                        <h3 className="text-sand-200 font-bold leading-none mb-1">{trainer.name}</h3>
-                                        <p className="text-gold-400 text-xs font-bold uppercase tracking-wider">{trainer.role}</p>
+                                ))
+                            ) : trainers.length > 0 ? (
+                                trainers.map((trainer) => (
+                                    <div key={trainer.id} className="relative aspect-[3/4] rounded-2xl overflow-hidden group">
+                                        <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-transparent to-transparent z-10" />
+                                        <div className="absolute inset-0 bg-sand-200/10 flex items-center justify-center text-sand-200/20 font-bold text-4xl">
+                                            {trainer.profilePictureUrl ? (
+                                                <Image src={trainer.profilePictureUrl} alt={trainer.name} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
+                                            ) : trainer.name.charAt(0)}
+                                        </div>
+                                        <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+                                            <h3 className="text-sand-200 font-bold leading-none mb-1">{trainer.name}</h3>
+                                            <p className="text-gold-400 text-xs font-bold uppercase tracking-wider">
+                                                {trainer.specialties?.[0] || 'Trainer'}
+                                            </p>
+                                        </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="col-span-2 text-center py-20">
+                                    <p className="text-sage-500 text-sm">No trainers found</p>
                                 </div>
-                            ))}
+                            )}
                         </motion.div>
                     )}
 

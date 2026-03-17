@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
-import AuthProvider from "@/components/layout/AuthProvider";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { LayoutContent } from "@/components/layout/LayoutContent";
@@ -31,10 +30,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn("min-h-screen bg-background font-sans antialiased", dmSerifDisplay.variable, plusJakartaSans.variable)}>
-        <AuthProvider>
-          <LayoutContent>{children}</LayoutContent>
+        <LayoutContent>{children}</LayoutContent>
           <Toaster richColors position="top-right" closeButton />
-        </AuthProvider>
       </body>
     </html>
   );

@@ -27,7 +27,6 @@ import { Input } from "@/components/ui/input"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "@/lib/firebase/config"
 import { toast } from "sonner"
-import { useAuthStore } from "@/lib/store/authStore"
 
 const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -68,8 +67,7 @@ export function LoginModal({ trigger, defaultOpen = false, isOpenOverride, onClo
             await signInWithEmailAndPassword(auth, values.email, values.password)
             toast.success("Welcome back!")
             setModalOpen(false)
-        } catch (error: any) {
-            console.error(error)
+        } catch {
             toast.error("Invalid email or password")
         } finally {
             setIsLoading(false)

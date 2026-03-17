@@ -1,76 +1,48 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import {
     Users,
     CalendarDays,
-    DollarSign,
     TrendingUp,
     ArrowUpRight,
     Clock,
     MoreHorizontal,
     Dumbbell,
-    MapPin
+    MapPin,
+    type LucideIcon,
+    CheckCircle2,
+    XCircle,
+    AlertCircle,
 } from "lucide-react"
 import {
-    AreaChart,
-    Area,
+    BarChart,
+    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    BarChart,
-    Bar,
 } from "recharts"
 import Link from "next/link"
-
-// Mock data for charts
-const revenueData = [
-    { name: "Jan", value: 4200 },
-    { name: "Feb", value: 3800 },
-    { name: "Mar", value: 5100 },
-    { name: "Apr", value: 4800 },
-    { name: "May", value: 6400 },
-    { name: "Jun", value: 5900 },
-    { name: "Jul", value: 7200 },
-]
-
-const attendanceData = [
-    { name: "Mon", value: 45 },
-    { name: "Tue", value: 52 },
-    { name: "Wed", value: 48 },
-    { name: "Thu", value: 65 },
-    { name: "Fri", value: 58 },
-    { name: "Sat", value: 75 },
-    { name: "Sun", value: 42 },
-]
-
-// Mock recent activities
-const recentActivities = [
-    { id: 1, type: "booking", message: "John Doe booked HIIT Class", time: "2 min ago", status: "success", avatar: "JD" },
-    { id: 2, type: "member", message: "New member Sarah Chen joined", time: "15 min ago", status: "success", avatar: "SC" },
-    { id: 3, type: "class", message: "Yoga Session was completed", time: "1 hour ago", status: "success", avatar: "YS" },
-    { id: 4, type: "booking", message: "Mike Wilson cancelled booking", time: "2 hours ago", status: "canceled", avatar: "MW" },
-    { id: 5, type: "trainer", message: "Trainer James updated schedule", time: "3 hours ago", status: "success", avatar: "TJ" },
-]
+import { getBookingStats, getAllMembers, getClassesByDate, getAllBookings } from "@/lib/firebase/firestore"
+import { Booking } from "@/types/booking"
 
 // Animated Stat Card
 function StatCard({
     title,
     value,
-    change,
     icon: Icon,
-    delay = 0
+    delay = 0,
+    isLoading = false,
 }: {
     title: string
     value: string
-    change: string
-    icon: any
+    icon: LucideIcon
     delay?: number
+    isLoading?: boolean
 }) {
-    const isPositive = change.startsWith('+')
-
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -78,26 +50,22 @@ function StatCard({
             transition={{ duration: 0.5, delay, ease: "easeOut" }}
             className="group relative overflow-hidden bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl hover:border-gold-400/30 transition-all duration-500 hover:bg-sand-200/5"
         >
-            {/* Gradient Background Effect */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-gold-400/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
 
             <div className="flex items-start justify-between mb-6 relative z-10">
                 <div className="w-12 h-12 bg-sand-200/5 rounded-2xl flex items-center justify-center group-hover:bg-gold-400/20 group-hover:scale-110 transition-all duration-300">
                     <Icon className="w-6 h-6 text-sage-400 group-hover:text-gold-400 transition-colors" />
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 border ${isPositive
-                    ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                    : 'bg-red-500/10 text-red-400 border-red-500/20'
-                    }`}>
-                    {change}
-                    <TrendingUp className={`w-3 h-3 ${!isPositive && 'rotate-180'}`} />
-                </div>
             </div>
 
             <div className="relative z-10">
-                <h3 className="text-3xl sm:text-4xl font-black text-sand-200 mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300">
-                    {value}
-                </h3>
+                {isLoading ? (
+                    <div className="h-9 w-20 bg-sand-200/10 rounded animate-pulse mb-2" />
+                ) : (
+                    <h3 className="text-3xl sm:text-4xl font-black text-sand-200 mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300">
+                        {value}
+                    </h3>
+                )}
                 <p className="text-sage-500 text-xs font-semibold tracking-[0.2em] uppercase">
                     {title}
                 </p>
@@ -117,7 +85,7 @@ function QuickAction({
     label: string
     desc: string
     href: string
-    icon: any
+    icon: LucideIcon
     delay: number
 }) {
     return (
@@ -144,6 +112,91 @@ function QuickAction({
 }
 
 export default function AdminDashboardPage() {
+    const [stats, setStats] = useState({
+        totalMembers: 0,
+        todaysClasses: 0,
+        todayBookings: 0,
+        totalBookings: 0,
+    })
+    const [recentBookings, setRecentBookings] = useState<Booking[]>([])
+    const [weeklyData, setWeeklyData] = useState<{ name: string; value: number }[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        async function fetchDashboardData() {
+            try {
+                const [bookingStats, members, todaysClasses, allBookings] = await Promise.all([
+                    getBookingStats(),
+                    getAllMembers(),
+                    getClassesByDate(new Date()),
+                    getAllBookings(),
+                ])
+
+                setStats({
+                    totalMembers: members.length,
+                    todaysClasses: todaysClasses.length,
+                    todayBookings: bookingStats.todayBookings,
+                    totalBookings: bookingStats.totalBookings,
+                })
+
+                // Recent bookings (last 5)
+                setRecentBookings(allBookings.slice(0, 5))
+
+                // Build weekly attendance from bookings
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                const dayCounts = new Array(7).fill(0)
+                const now = new Date()
+                const weekAgo = new Date(now)
+                weekAgo.setDate(weekAgo.getDate() - 7)
+
+                allBookings.forEach((b) => {
+                    const d = b.classDate instanceof Date ? b.classDate : new Date(b.classDate)
+                    if (d >= weekAgo && d <= now && b.status === 'attended') {
+                        dayCounts[d.getDay()]++
+                    }
+                })
+
+                setWeeklyData(days.map((name, i) => ({ name, value: dayCounts[i] })))
+            } catch {
+                // Silently handle — dashboard will show zeros
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchDashboardData()
+    }, [])
+
+    const getActivityIcon = (status: string) => {
+        switch (status) {
+            case 'confirmed': return <AlertCircle className="w-3 h-3" />
+            case 'attended': return <CheckCircle2 className="w-3 h-3" />
+            case 'canceled': return <XCircle className="w-3 h-3" />
+            default: return <AlertCircle className="w-3 h-3" />
+        }
+    }
+
+    const getActivityColor = (status: string) => {
+        switch (status) {
+            case 'confirmed': return 'bg-gold-400'
+            case 'attended': return 'bg-green-500'
+            case 'canceled': return 'bg-red-500/80'
+            default: return 'bg-sage-400'
+        }
+    }
+
+    const formatTimeAgo = (date: Date | string) => {
+        const d = typeof date === 'string' ? new Date(date) : date
+        const now = new Date()
+        const diff = now.getTime() - d.getTime()
+        const mins = Math.floor(diff / 60000)
+        if (mins < 60) return `${mins} min ago`
+        const hours = Math.floor(mins / 60)
+        if (hours < 24) return `${hours}h ago`
+        const days = Math.floor(hours / 24)
+        return `${days}d ago`
+    }
+
     return (
         <div className="space-y-8 max-w-[1600px] mx-auto pb-20 lg:pb-0">
             {/* Welcome Section */}
@@ -157,7 +210,7 @@ export default function AdminDashboardPage() {
                         Dashboard
                     </h2>
                     <p className="text-sage-500 text-sm md:text-base tracking-wide max-w-lg">
-                        Your facility performance, member activity, and daily operations at a glance.
+                        Your studio performance, member activity, and daily operations at a glance.
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -171,37 +224,37 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
                 <StatCard
                     title="Active Members"
-                    value="2,847"
-                    change="+12.5%"
+                    value={stats.totalMembers.toLocaleString()}
                     icon={Users}
                     delay={0}
+                    isLoading={isLoading}
                 />
                 <StatCard
                     title="Today's Classes"
-                    value="24"
-                    change="+3"
+                    value={String(stats.todaysClasses)}
                     icon={Dumbbell}
                     delay={0.1}
+                    isLoading={isLoading}
                 />
                 <StatCard
-                    title="Revenue (Mo)"
-                    value="$48.2k"
-                    change="+8.2%"
-                    icon={DollarSign}
+                    title="Today's Bookings"
+                    value={String(stats.todayBookings)}
+                    icon={CalendarDays}
                     delay={0.2}
+                    isLoading={isLoading}
                 />
                 <StatCard
-                    title="New Leads"
-                    value="186"
-                    change="+24.1%"
+                    title="Total Bookings"
+                    value={stats.totalBookings.toLocaleString()}
                     icon={TrendingUp}
                     delay={0.3}
+                    isLoading={isLoading}
                 />
             </div>
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* Revenue Chart */}
+                {/* Weekly Attendance Chart */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -210,63 +263,59 @@ export default function AdminDashboardPage() {
                 >
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h3 className="text-xl font-bold text-sand-200 mb-1">Financial Performance</h3>
-                            <p className="text-sage-500 text-xs tracking-wider uppercase">Revenue vs Previous Period</p>
+                            <h3 className="text-xl font-bold text-sand-200 mb-1">Weekly Attendance</h3>
+                            <p className="text-sage-500 text-xs tracking-wider uppercase">Classes attended this week</p>
                         </div>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-1 rounded-lg bg-sand-200/10 text-sand-200 text-xs font-medium hover:bg-sand-200/20 transition-colors">7D</button>
-                            <button className="px-3 py-1 rounded-lg bg-transparent text-sage-500 text-xs font-medium hover:text-sand-200 transition-colors">1M</button>
-                            <button className="px-3 py-1 rounded-lg bg-transparent text-sage-500 text-xs font-medium hover:text-sand-200 transition-colors">1Y</button>
-                        </div>
+                        <button className="flex items-center gap-2 text-sage-500 hover:text-sand-200 transition-colors">
+                            <MoreHorizontal className="w-5 h-5" />
+                        </button>
                     </div>
                     <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={revenueData}>
-                                <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#D4A24C" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#D4A24C" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                <XAxis
-                                    dataKey="name"
-                                    stroke="rgba(255,255,255,0.2)"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    stroke="rgba(255,255,255,0.2)"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    dx={-10}
-                                    tickFormatter={(value) => `$${value}`}
-                                />
-                                <Tooltip
-                                    cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 2 }}
-                                    contentStyle={{
-                                        backgroundColor: '#222B1E',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
-                                        padding: '12px'
-                                    }}
-                                    itemStyle={{ color: '#EDE6DA' }}
-                                    formatter={(value) => [`$${value ?? 0}`, 'Revenue']}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="value"
-                                    stroke="#D4A24C"
-                                    strokeWidth={3}
-                                    fillOpacity={1}
-                                    fill="url(#colorValue)"
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {isLoading ? (
+                            <div className="h-full flex items-end gap-4 px-4">
+                                {[40, 60, 30, 80, 50, 70, 45].map((h, i) => (
+                                    <div key={i} className="flex-1 bg-sand-200/5 rounded-t animate-pulse" style={{ height: `${h}%` }} />
+                                ))}
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={weeklyData} barSize={40}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                                    <XAxis
+                                        dataKey="name"
+                                        stroke="rgba(255,255,255,0.2)"
+                                        fontSize={12}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        stroke="rgba(255,255,255,0.2)"
+                                        fontSize={12}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        dx={-10}
+                                    />
+                                    <Tooltip
+                                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                        contentStyle={{
+                                            backgroundColor: '#222B1E',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
+                                            padding: '12px'
+                                        }}
+                                        itemStyle={{ color: '#EDE6DA' }}
+                                    />
+                                    <Bar
+                                        dataKey="value"
+                                        fill="#D4A24C"
+                                        radius={[8, 8, 8, 8]}
+                                        className="hover:opacity-80 transition-opacity cursor-pointer"
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </motion.div>
 
@@ -282,15 +331,15 @@ export default function AdminDashboardPage() {
                             delay={0.5}
                         />
                         <QuickAction
-                            label="New Member"
-                            desc="Register a signup"
+                            label="Members"
+                            desc="View all members"
                             href="/admin/members"
                             icon={Users}
                             delay={0.6}
                         />
                         <QuickAction
                             label="Facility Settings"
-                            desc="Manage facility details"
+                            desc="Manage studio details"
                             href="/admin/locations"
                             icon={MapPin}
                             delay={0.7}
@@ -299,108 +348,69 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
-            {/* Bottom Section: Activity & Attendance */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* Recent Activity */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="xl:col-span-1 bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl"
-                >
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold text-sand-200">Recent Activity</h3>
-                        <Link
-                            href="/admin/bookings"
-                            className="text-gold-400 text-xs font-bold tracking-widest hover:text-sand-200 transition-colors uppercase"
-                        >
-                            View All
-                        </Link>
-                    </div>
-                    <div className="space-y-6 relative">
-                        {/* Timeline Line */}
-                        <div className="absolute left-[19px] top-4 bottom-4 w-px bg-sand-200/5" />
+            {/* Recent Activity */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl"
+            >
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-sand-200">Recent Bookings</h3>
+                    <Link
+                        href="/admin/bookings"
+                        className="text-gold-400 text-xs font-bold tracking-widest hover:text-sand-200 transition-colors uppercase"
+                    >
+                        View All
+                    </Link>
+                </div>
 
-                        {recentActivities.map((activity, index) => (
+                {isLoading ? (
+                    <div className="space-y-6">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="flex items-start gap-4 animate-pulse">
+                                <div className="w-10 h-10 rounded-full bg-sand-200/5" />
+                                <div className="flex-1">
+                                    <div className="h-4 w-48 bg-sand-200/10 rounded mb-2" />
+                                    <div className="h-3 w-24 bg-sand-200/5 rounded" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : recentBookings.length > 0 ? (
+                    <div className="space-y-6 relative">
+                        <div className="absolute left-[19px] top-4 bottom-4 w-px bg-sand-200/5" />
+                        {recentBookings.map((booking, index) => (
                             <motion.div
-                                key={activity.id}
+                                key={booking.id}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.7 + (index * 0.1) }}
                                 className="flex items-start gap-4 relative"
                             >
-                                <div className={`relative z-10 w-10 h-10 rounded-full border-4 border-forest-800 flex items-center justify-center shrink-0 ${activity.status === 'success' ? 'bg-gold-400' : 'bg-red-500/80'
-                                    }`}>
-                                    <span className="text-[10px] font-bold text-forest-700">{activity.avatar}</span>
+                                <div className={`relative z-10 w-10 h-10 rounded-full border-4 border-forest-800 flex items-center justify-center shrink-0 ${getActivityColor(booking.status)}`}>
+                                    <span className="text-forest-700">
+                                        {getActivityIcon(booking.status)}
+                                    </span>
                                 </div>
                                 <div className="flex-1 pt-1">
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-sm font-medium text-sand-200">{activity.message}</p>
-                                    </div>
+                                    <p className="text-sm font-medium text-sand-200">
+                                        Booking <span className="text-sage-400 capitalize">{booking.status}</span> — Spot {booking.spotNumber}
+                                    </p>
                                     <p className="text-xs text-sage-500 mt-1 flex items-center gap-2">
                                         <Clock className="w-3 h-3" />
-                                        {activity.time}
+                                        {formatTimeAgo(booking.bookingDate)}
                                     </p>
                                 </div>
                             </motion.div>
                         ))}
                     </div>
-                </motion.div>
-
-                {/* Attendance Chart */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                    className="xl:col-span-2 bg-forest-800 border border-forest-600 p-6 sm:p-8 rounded-3xl"
-                >
-                    <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-xl font-bold text-sand-200">Weekly Attendance</h3>
-                        <button className="flex items-center gap-2 text-sage-500 hover:text-sand-200 transition-colors">
-                            <MoreHorizontal className="w-5 h-5" />
-                        </button>
+                ) : (
+                    <div className="text-center py-8">
+                        <p className="text-sage-500 text-sm">No recent bookings</p>
                     </div>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={attendanceData} barSize={40}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                <XAxis
-                                    dataKey="name"
-                                    stroke="rgba(255,255,255,0.2)"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    stroke="rgba(255,255,255,0.2)"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    dx={-10}
-                                />
-                                <Tooltip
-                                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                    contentStyle={{
-                                        backgroundColor: '#222B1E',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
-                                        padding: '12px'
-                                    }}
-                                    itemStyle={{ color: '#EDE6DA' }}
-                                />
-                                <Bar
-                                    dataKey="value"
-                                    fill="#D4A24C"
-                                    radius={[8, 8, 8, 8]}
-                                    className="hover:opacity-80 transition-opacity cursor-pointer"
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </motion.div>
-            </div>
+                )}
+            </motion.div>
         </div>
     )
 }

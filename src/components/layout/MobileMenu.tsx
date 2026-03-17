@@ -10,6 +10,7 @@ interface MobileMenuProps {
 }
 
 const MENU_ITEMS = [
+    { label: "HOME", href: "/" },
     { label: "PRICING", href: "/subscription" },
     { label: "FACILITIES", href: "/facilities" },
     { label: "ABOUT US", href: "/about" },
@@ -97,19 +98,23 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                 className="mt-8 p-6 bg-peach-300 rounded-lg border border-peach-400"
                             >
                                 <h4 className="text-xs font-bold text-olive-300 tracking-wider mb-4">CONTACT</h4>
-                                <p className="text-olive-400 text-sm mb-2">hello@solpilates.com</p>
+                                <p className="text-olive-400 text-sm mb-2">solpilatesstudio.in@gmail.com</p>
                                 <p className="text-olive-400 text-sm">(212) 555-0180</p>
                             </motion.div>
                         </div>
 
                         {/* Footer CTA */}
                         <div className="p-6 border-t border-peach-400">
-                            <button className="w-full py-4 bg-terra-400 text-peach-50 font-black text-sm tracking-wider hover:bg-terra-300 transition-colors flex items-center justify-center gap-2 shadow-glow">
+                            <Link
+                                href="/subscription"
+                                onClick={onClose}
+                                className="w-full py-4 bg-terra-400 text-peach-50 font-black text-sm tracking-wider hover:bg-terra-300 transition-colors flex items-center justify-center gap-2 shadow-glow"
+                            >
                                 <span>BOOK A SESSION</span>
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                     <path d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
-                            </button>
+                            </Link>
                         </div>
                     </motion.div>
                 </>

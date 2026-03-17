@@ -6,7 +6,7 @@ import { motion } from "framer-motion"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, Shield, Eye, EyeOff, ArrowLeft } from "lucide-react"
+import { Loader2, Shield, Eye, EyeOff, ArrowLeft, Mail, Lock } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -24,7 +24,7 @@ import { useAdminAuthStore } from "@/lib/store/adminAuthStore"
 import { toast } from "sonner"
 
 const loginSchema = z.object({
-    username: z.string().min(1, "Username is required"),
+    email: z.string().email("Please enter a valid email address"),
     password: z.string().min(1, "Password is required"),
 })
 
@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
     const form = useForm<z.infer<typeof loginSchema>>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            username: "",
+            email: "",
             password: "",
         },
     })
@@ -45,16 +45,15 @@ export default function AdminLoginPage() {
     async function onSubmit(values: z.infer<typeof loginSchema>) {
         setIsLoading(true)
 
-        // Simulate network delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 800))
+        const result = await loginAdmin(values.email, values.password)
 
-        const success = loginAdmin(values.username, values.password)
-
-        if (success) {
+        if (result.success) {
             toast.success("Welcome back, Admin!")
             router.push('/admin/dashboard')
         } else {
-            toast.error("Invalid credentials")
+            toast.error("Authentication failed", {
+                description: result.error,
+            })
         }
 
         setIsLoading(false)
@@ -155,18 +154,22 @@ export default function AdminLoginPage() {
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                             <FormField
                                 control={form.control}
-                                name="username"
+                                name="email"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
-                                            USERNAME
+                                            EMAIL
                                         </FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="Enter username"
-                                                {...field}
-                                                className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/50 focus:ring-0"
-                                            />
+                                            <div className="relative">
+                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
+                                                <Input
+                                                    placeholder="admin@solpilates.com"
+                                                    type="email"
+                                                    {...field}
+                                                    className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/50 focus:ring-0 pl-11"
+                                                />
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -182,11 +185,12 @@ export default function AdminLoginPage() {
                                         </FormLabel>
                                         <FormControl>
                                             <div className="relative">
+                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
                                                 <Input
                                                     placeholder="Enter password"
                                                     type={showPassword ? "text" : "password"}
                                                     {...field}
-                                                    className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/50 focus:ring-0 pr-12"
+                                                    className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/50 focus:ring-0 pl-11 pr-12"
                                                 />
                                                 <button
                                                     type="button"
@@ -226,7 +230,7 @@ export default function AdminLoginPage() {
                     {/* Footer */}
                     <div className="mt-8 pt-8 border-t border-forest-600">
                         <p className="text-sage-500 text-xs text-center tracking-wider">
-                            SECURE ADMIN ACCESS &bull; SOL PILATES &copy; 2024
+                            SECURE ADMIN ACCESS &bull; SOL PILATES &copy; {new Date().getFullYear()}
                         </p>
                     </div>
                 </motion.div>

@@ -20,7 +20,7 @@ interface SpotSelectionModalProps {
         totalSpots: number
         bookedSpots: number[]
     } | null
-    onConfirm: (spotNumber: number, isGuest: boolean) => void
+    onConfirm: (spotNumber: number, isGuest: boolean) => void | Promise<void>
 }
 
 type SpotState = 'available' | 'unavailable' | 'selected' | 'guest'
@@ -64,15 +64,17 @@ export function SpotSelectionModal({
     }
 
     const handleConfirm = async () => {
-        if (!selectedSpot) return
+        if (!selectedSpot || !classDetails) return
         setIsLoading(true)
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        setIsLoading(false)
-        setStep('success')
-        toast.success("Spot Reserved!", {
-            description: `Spot ${selectedSpot} has been reserved.`,
-            className: "bg-forest-700 text-sand-200 border-forest-600"
-        })
+        try {
+            await onConfirm(selectedSpot, reserveFor === 'guest')
+            setStep('success')
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to reserve spot"
+            toast.error("Reservation failed", { description: message })
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleClose = () => {
@@ -80,9 +82,6 @@ export function SpotSelectionModal({
     }
 
     const handleFinalConfirm = () => {
-        if (selectedSpot) {
-            onConfirm(selectedSpot, reserveFor === 'guest')
-        }
         handleClose()
     }
 
@@ -260,7 +259,7 @@ export function SpotSelectionModal({
                                         </div>
                                         <h2 className="text-3xl font-black text-sand-200 mb-2 font-display">You're In!</h2>
                                         <p className="text-sage-400 text-lg mb-8 max-w-xs">
-                                            Spot <span className="text-gold-400 font-bold">{selectedSpot}</span> confirmed for Class.
+                                            Spot <span className="text-gold-400 font-bold">{selectedSpot}</span> confirmed for {classDetails?.name || 'your class'}.
                                         </p>
 
                                         <div className="bg-sand-200/5 rounded-2xl p-6 w-full max-w-sm mb-8 border border-forest-600">

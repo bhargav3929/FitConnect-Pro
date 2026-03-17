@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, User, Eye, EyeOff, ArrowLeft } from "lucide-react"
+import { Loader2, User, Eye, EyeOff, ArrowLeft, Mail, Lock, UserPlus } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -24,43 +24,69 @@ import { useClientAuthStore } from "@/lib/store/clientAuthStore"
 import { toast } from "sonner"
 
 const loginSchema = z.object({
-    username: z.string().min(1, "Username is required"),
+    email: z.string().email("Please enter a valid email address"),
     password: z.string().min(1, "Password is required"),
 })
+
+const signupSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+})
+
+type LoginValues = z.infer<typeof loginSchema>
+type SignupValues = z.infer<typeof signupSchema>
 
 export default function UserLoginPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login')
     const router = useRouter()
-    const { loginClient } = useClientAuthStore()
+    const { loginClient, signupClient } = useClientAuthStore()
 
-    const form = useForm<z.infer<typeof loginSchema>>({
+    const loginForm = useForm<LoginValues>({
         resolver: zodResolver(loginSchema),
-        defaultValues: {
-            username: "",
-            password: "",
-        },
+        defaultValues: { email: "", password: "" },
     })
 
-    async function onSubmit(values: z.infer<typeof loginSchema>) {
+    const signupForm = useForm<SignupValues>({
+        resolver: zodResolver(signupSchema),
+        defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    })
+
+    async function onLogin(values: LoginValues) {
         setIsLoading(true)
-
-        // Simulate network delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 800))
-
-        const success = loginClient(values.username, values.password)
-
-        if (success) {
+        const result = await loginClient(values.email, values.password)
+        if (result.success) {
             toast.success("Welcome back!", {
                 description: "Successfully logged in to your member account.",
             })
             router.push('/user/dashboard')
         } else {
-            toast.error("Invalid credentials", {
-                description: "Try user: client / pass: client123",
+            toast.error("Login failed", {
+                description: result.error,
             })
         }
+        setIsLoading(false)
+    }
 
+    async function onSignup(values: SignupValues) {
+        setIsLoading(true)
+        const result = await signupClient(values.email, values.password, values.name)
+        if (result.success) {
+            toast.success("Account created!", {
+                description: "Welcome to SOL Pilates Studio.",
+            })
+            router.push('/user/dashboard')
+        } else {
+            toast.error("Signup failed", {
+                description: result.error,
+            })
+        }
         setIsLoading(false)
     }
 
@@ -124,7 +150,7 @@ export default function UserLoginPage() {
                 </div>
             </div>
 
-            {/* Right Panel - Login Form */}
+            {/* Right Panel - Login/Signup Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-forest-950">
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
@@ -141,95 +167,265 @@ export default function UserLoginPage() {
                     </div>
 
                     {/* Header */}
-                    <div className="mb-10">
+                    <div className="mb-8">
                         <div className="w-16 h-16 bg-sand-200/10 flex items-center justify-center mb-6 rounded-2xl">
-                            <User className="w-8 h-8 text-sand-200" />
+                            {activeTab === 'login' ? (
+                                <User className="w-8 h-8 text-sand-200" />
+                            ) : (
+                                <UserPlus className="w-8 h-8 text-sand-200" />
+                            )}
                         </div>
                         <h2 className="text-3xl font-black text-sand-200 tracking-tight font-display">
-                            MEMBER LOGIN
+                            {activeTab === 'login' ? 'MEMBER LOGIN' : 'CREATE ACCOUNT'}
                         </h2>
                         <p className="text-sage-400 mt-2 text-sm tracking-wider">
-                            ENTER YOUR CREDENTIALS
+                            {activeTab === 'login' ? 'SIGN IN TO YOUR ACCOUNT' : 'JOIN SOL PILATES STUDIO'}
                         </p>
-
-                        {/* Test Credentials Hint */}
-                        <div className="mt-4 inline-block px-3 py-1 bg-gold-400/5 rounded border border-gold-400/20 text-xs text-gold-400/60 font-mono">
-                            user: client / pass: client123
-                        </div>
                     </div>
 
-                    {/* Form */}
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <FormField
-                                control={form.control}
-                                name="username"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
-                                            USERNAME
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="Enter username"
-                                                {...field}
-                                                className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/40 focus:ring-0 rounded-xl"
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
-                                            PASSWORD
-                                        </FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                <Input
-                                                    placeholder="Enter password"
-                                                    type={showPassword ? "text" : "password"}
-                                                    {...field}
-                                                    className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/40 focus:ring-0 pr-12 rounded-xl"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-sage-500 hover:text-sand-200/70 transition-colors"
-                                                >
-                                                    {showPassword ? (
-                                                        <EyeOff className="w-5 h-5" />
-                                                    ) : (
-                                                        <Eye className="w-5 h-5" />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                    {/* Tab Switcher */}
+                    <div className="flex mb-8 bg-sand-200/5 rounded-xl p-1">
+                        <button
+                            onClick={() => { setActiveTab('login'); setShowPassword(false) }}
+                            className={`flex-1 py-3 text-xs font-bold tracking-wider rounded-lg transition-all ${
+                                activeTab === 'login'
+                                    ? 'bg-gold-400 text-forest-700'
+                                    : 'text-sage-400 hover:text-sand-200'
+                            }`}
+                        >
+                            SIGN IN
+                        </button>
+                        <button
+                            onClick={() => { setActiveTab('signup'); setShowPassword(false) }}
+                            className={`flex-1 py-3 text-xs font-bold tracking-wider rounded-lg transition-all ${
+                                activeTab === 'signup'
+                                    ? 'bg-gold-400 text-forest-700'
+                                    : 'text-sage-400 hover:text-sand-200'
+                            }`}
+                        >
+                            SIGN UP
+                        </button>
+                    </div>
 
-                            <Button
-                                type="submit"
-                                className="w-full h-14 bg-gold-400 text-forest-700 font-black text-sm tracking-wider hover:bg-gold-300 transition-all rounded-xl mt-2"
-                                disabled={isLoading}
+                    {/* Forms */}
+                    <AnimatePresence mode="wait">
+                        {activeTab === 'login' ? (
+                            <motion.div
+                                key="login"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                transition={{ duration: 0.2 }}
                             >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        VERIFYING...
-                                    </>
-                                ) : (
-                                    "SIGN IN"
-                                )}
-                            </Button>
-                        </form>
-                    </Form>
+                                <Form {...loginForm}>
+                                    <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-6">
+                                        <FormField
+                                            control={loginForm.control}
+                                            name="email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
+                                                        EMAIL
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
+                                                            <Input
+                                                                placeholder="you@example.com"
+                                                                type="email"
+                                                                {...field}
+                                                                className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/40 focus:ring-0 rounded-xl pl-11"
+                                                            />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={loginForm.control}
+                                            name="password"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
+                                                        PASSWORD
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
+                                                            <Input
+                                                                placeholder="Enter password"
+                                                                type={showPassword ? "text" : "password"}
+                                                                {...field}
+                                                                className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/40 focus:ring-0 pl-11 pr-12 rounded-xl"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowPassword(!showPassword)}
+                                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-sage-500 hover:text-sand-200/70 transition-colors"
+                                                            >
+                                                                {showPassword ? (
+                                                                    <EyeOff className="w-5 h-5" />
+                                                                ) : (
+                                                                    <Eye className="w-5 h-5" />
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <Button
+                                            type="submit"
+                                            className="w-full h-14 bg-gold-400 text-forest-700 font-black text-sm tracking-wider hover:bg-gold-300 transition-all rounded-xl mt-2"
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    VERIFYING...
+                                                </>
+                                            ) : (
+                                                "SIGN IN"
+                                            )}
+                                        </Button>
+                                    </form>
+                                </Form>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="signup"
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <Form {...signupForm}>
+                                    <form onSubmit={signupForm.handleSubmit(onSignup)} className="space-y-5">
+                                        <FormField
+                                            control={signupForm.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
+                                                        FULL NAME
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
+                                                            <Input
+                                                                placeholder="Your full name"
+                                                                {...field}
+                                                                className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/40 focus:ring-0 rounded-xl pl-11"
+                                                            />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={signupForm.control}
+                                            name="email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
+                                                        EMAIL
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
+                                                            <Input
+                                                                placeholder="you@example.com"
+                                                                type="email"
+                                                                {...field}
+                                                                className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/40 focus:ring-0 rounded-xl pl-11"
+                                                            />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={signupForm.control}
+                                            name="password"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
+                                                        PASSWORD
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
+                                                            <Input
+                                                                placeholder="At least 6 characters"
+                                                                type={showPassword ? "text" : "password"}
+                                                                {...field}
+                                                                className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/40 focus:ring-0 pl-11 pr-12 rounded-xl"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowPassword(!showPassword)}
+                                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-sage-500 hover:text-sand-200/70 transition-colors"
+                                                            >
+                                                                {showPassword ? (
+                                                                    <EyeOff className="w-5 h-5" />
+                                                                ) : (
+                                                                    <Eye className="w-5 h-5" />
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={signupForm.control}
+                                            name="confirmPassword"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-sand-200/70 text-xs font-bold tracking-wider">
+                                                        CONFIRM PASSWORD
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-500" />
+                                                            <Input
+                                                                placeholder="Repeat password"
+                                                                type={showPassword ? "text" : "password"}
+                                                                {...field}
+                                                                className="h-14 bg-sand-200/5 border-forest-600 text-sand-200 placeholder:text-sage-500 focus:border-gold-400/40 focus:ring-0 rounded-xl pl-11"
+                                                            />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <Button
+                                            type="submit"
+                                            className="w-full h-14 bg-gold-400 text-forest-700 font-black text-sm tracking-wider hover:bg-gold-300 transition-all rounded-xl mt-2"
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    CREATING ACCOUNT...
+                                                </>
+                                            ) : (
+                                                "CREATE ACCOUNT"
+                                            )}
+                                        </Button>
+                                    </form>
+                                </Form>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Footer */}
                     <div className="mt-8 pt-8 border-t border-forest-600 flex justify-between items-center">

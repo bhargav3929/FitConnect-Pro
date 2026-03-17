@@ -81,6 +81,29 @@ const config: Config = {
                     800: "#2C2420",
                     900: "#1E1815",
                 },
+                /* SOL Member/Admin Area — Dark Earthy Palette */
+                forest: {
+                    600: "#2A3328",
+                    700: "#1E2620",
+                    800: "#171E16",
+                    950: "#0C120B",
+                },
+                gold: {
+                    300: "#E2C476",
+                    400: "#D4A24C",
+                    500: "#B8862E",
+                },
+                sand: {
+                    200: "#EDE6DA",
+                },
+                sage: {
+                    300: "#9DAA8F",
+                    400: "#7A8A6C",
+                    500: "#5E6D52",
+                },
+                terracotta: {
+                    400: "#C06744",
+                },
             },
             borderRadius: {
                 lg: 'var(--radius)',

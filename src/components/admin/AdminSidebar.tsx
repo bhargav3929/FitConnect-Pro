@@ -76,8 +76,8 @@ export function AdminSidebar() {
     const { isSidebarOpen, setSidebarOpen } = useUIStore()
     const [collapsed, setCollapsed] = useState(false)
 
-    const handleLogout = () => {
-        logoutAdmin()
+    const handleLogout = async () => {
+        await logoutAdmin()
         router.push('/')
     }
 

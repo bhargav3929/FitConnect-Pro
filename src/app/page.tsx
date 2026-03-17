@@ -12,26 +12,31 @@ const SERVICES = [
     title: "STRENGTH & SCULPT",
     icon: "asterisk",
     image: "/images/service-strength-sculpt.jpg",
+    description: "Build lean muscle and define your physique through targeted Pilates exercises. Using reformer resistance and controlled mat work, this discipline focuses on sculpting long, toned muscles while building functional strength from your deep core outward.",
   },
   {
     title: "CARDIO & ENDURANCE",
     icon: "triangle",
     image: "/images/service-cardio-endurance.jpg",
+    description: "Elevate your heart rate and stamina with high-energy Pilates sequences. Dynamic jumpboard work, circuit-style reformer flows, and tempo-driven mat routines push your cardiovascular limits while maintaining the precision Pilates is known for.",
   },
   {
     title: "RESET & RESTORE",
     icon: "plus",
     image: "/images/service-reset-restore.jpg",
+    description: "Reconnect with your body through mindful, restorative Pilates movement. Gentle stretching, breathwork, and slow-flow sequences release tension, improve mobility, and bring your nervous system back into balance — perfect for recovery days.",
   },
   {
     title: "MUSCLE RECOVERY",
     icon: "circle",
     image: "/images/service-muscle-recovery.jpg",
+    description: "Accelerate healing and prevent injury with targeted recovery techniques. Foam rolling, myofascial release, and therapeutic Pilates movements help flush lactic acid, restore range of motion, and keep your body performing at its best.",
   },
   {
     title: "INTENSE EXERCISE",
     icon: "diamond",
     image: "/images/service-intense-exercise.jpg",
+    description: "Push your limits with advanced Pilates challenges designed for peak performance. Combining explosive power moves, heavy spring resistance, and complex coordination drills — this is Pilates at its most demanding and rewarding.",
   },
 ];
 
@@ -126,6 +131,7 @@ export default function Home() {
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showGetStarted, setShowGetStarted] = useState(false);
+  const [expandedService, setExpandedService] = useState<number | null>(null);
 
   // --- Service Slider State ---
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -331,16 +337,17 @@ export default function Home() {
                 {SERVICES.map((service, idx) => (
                   <div
                     key={idx}
-                    className="relative group overflow-hidden rounded-lg flex-shrink-0 w-full md:w-[calc(33.333%-16px)]"
+                    className="relative group overflow-hidden rounded-lg flex-shrink-0 w-full md:w-[calc(33.333%-16px)] cursor-pointer"
+                    onClick={() => setExpandedService(expandedService === idx ? null : idx)}
                   >
                     <div className="relative h-[450px] md:h-[600px] w-full">
                       <Image
                         src={service.image}
                         alt={service.title}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        className={`object-cover transition-transform duration-700 ${expandedService === idx ? "scale-110" : "group-hover:scale-110"}`}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-warmDark-800/90 via-warmDark-800/20 to-transparent" />
+                      <div className={`absolute inset-0 transition-all duration-500 ${expandedService === idx ? "bg-gradient-to-t from-warmDark-800/95 via-warmDark-800/70 to-warmDark-800/40" : "bg-gradient-to-t from-warmDark-800/90 via-warmDark-800/20 to-transparent"}`} />
 
                       {/* Decorative Icon */}
                       <div className="absolute top-6 left-6">
@@ -349,10 +356,16 @@ export default function Home() {
 
                       {/* Content */}
                       <div className="absolute bottom-8 left-6 right-6">
-                        <h3 className="text-xl md:text-2xl font-black mb-4 text-peach-50 font-display">{service.title}</h3>
-                        <button className="w-12 h-12 rounded-full border border-terra-400/50 flex items-center justify-center hover:bg-terra-400 hover:text-peach-50 transition-all text-terra-300">
+                        <h3 className="text-xl md:text-2xl font-black mb-3 text-peach-50 font-display">{service.title}</h3>
+
+                        {/* Expandable Description */}
+                        <div className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ${expandedService === idx ? "max-h-[200px] opacity-100 mb-4" : "max-h-0 opacity-0 mb-0"}`}>
+                          <p className="text-peach-300 text-sm leading-relaxed">{service.description}</p>
+                        </div>
+
+                        <button className={`w-12 h-12 rounded-full border border-terra-400/50 flex items-center justify-center transition-all duration-300 ${expandedService === idx ? "bg-terra-400 text-peach-50 rotate-45" : "hover:bg-terra-400 hover:text-peach-50 text-terra-300"}`}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path d="M7 17L17 7M17 7H7M17 7V17" />
+                            <path d="M12 5v14M5 12h14" />
                           </svg>
                         </button>
                       </div>
@@ -403,27 +416,27 @@ export default function Home() {
               {
                 src: "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=600&auto=format&fit=crop",
                 name: "Marcus Cole",
-                role: "Reformer Specialist"
+                role: "Reformer Specialist — Footwork, Long Stretch, Elephant"
               },
               {
                 src: "https://images.unsplash.com/photo-1611672585731-fa10603fb9e0?q=80&w=600&auto=format&fit=crop",
                 name: "Elena Fox",
-                role: "Mat Pilates Lead"
+                role: "Mat Pilates Lead — The Hundred, Roll-Up, Teaser"
               },
               {
                 src: "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=600&auto=format&fit=crop",
                 name: "David Stone",
-                role: "Strength & Conditioning"
+                role: "Strength & Core — Plank Series, Side Kick, Leg Pull"
               },
               {
                 src: "https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop",
                 name: "Sarah Jen",
-                role: "Flexibility & Barre"
+                role: "Barre & Flexibility — Spine Stretch, Swan Dive, Mermaid"
               },
               {
                 src: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=600&auto=format&fit=crop",
                 name: "Maya Lee",
-                role: "Prenatal & Restorative"
+                role: "Prenatal & Restorative — Pelvic Curl, Cat-Cow, Side Lying"
               }
             ]} />
           </div>
