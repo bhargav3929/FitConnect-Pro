@@ -91,9 +91,13 @@ export default function FacilitySettingsPage() {
         ? `${facility.address.street}, ${facility.address.city}, ${facility.address.state} ${facility.address.zip}`
         : ""
 
-    // Parse facilities string into zones array
+    // Parse facilities into zones array (may be string or array)
     const zones = facility?.facilities
-        ? facility.facilities.split(/[,\n]/).map(s => s.trim()).filter(Boolean)
+        ? Array.isArray(facility.facilities)
+            ? facility.facilities
+            : typeof facility.facilities === 'string'
+                ? facility.facilities.split(/[,\n]/).map((s: string) => s.trim()).filter(Boolean)
+                : []
         : []
 
     if (isLoading) {
