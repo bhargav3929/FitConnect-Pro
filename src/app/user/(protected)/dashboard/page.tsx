@@ -10,6 +10,8 @@ import {
     Dumbbell,
     Clock,
     Star,
+    Sparkles,
+    Target,
 } from "lucide-react"
 import { useClientAuthStore } from "@/lib/store/clientAuthStore"
 import { getUserBookings, getClassesByDate } from "@/lib/firebase/firestore"
@@ -17,6 +19,13 @@ import { Booking } from "@/types/booking"
 import { ClassSession } from "@/types/class"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+
+const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return "Good morning"
+    if (hour < 17) return "Good afternoon"
+    return "Good evening"
+}
 
 export default function UserDashboard() {
     const clientUser = useClientAuthStore(state => state.clientUser)
@@ -61,242 +70,288 @@ export default function UserDashboard() {
         return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     }
 
-    // Skeleton loader while user profile loads
+    // Skeleton loader
     if (!clientUser) {
         return (
-            <div className="space-y-8 pb-20">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <div className="h-8 w-48 bg-peach-300/40 rounded animate-pulse" />
-                        <div className="h-4 w-32 bg-peach-200/60 rounded mt-2 animate-pulse" />
+            <div className="space-y-6 pb-20">
+                <div className="rounded-2xl bg-gradient-to-br from-peach-300/60 via-peach-200 to-peach-100 p-8 md:p-10 animate-pulse">
+                    <div className="h-4 w-24 bg-olive-400/10 rounded mb-2" />
+                    <div className="h-10 w-48 bg-olive-400/10 rounded mb-8" />
+                    <div className="flex gap-8 pt-6 border-t border-olive-400/5">
+                        {[1, 2, 3].map(i => (
+                            <div key={i}>
+                                <div className="h-8 w-12 bg-olive-400/10 rounded mb-1" />
+                                <div className="h-3 w-20 bg-olive-400/5 rounded" />
+                            </div>
+                        ))}
                     </div>
-                    <div className="h-9 w-36 bg-peach-200/60 rounded-full animate-pulse" />
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="bg-peach-50 border border-peach-400/20 p-4 animate-pulse">
-                            <div className="h-8 w-8 bg-peach-300/40 rounded-lg mb-3" />
-                            <div className="h-7 w-16 bg-peach-300/40 rounded mb-1" />
-                            <div className="h-3 w-24 bg-peach-200/60 rounded" />
-                        </div>
-                    ))}
-                </div>
-                <div className="h-40 bg-peach-200/60 rounded-3xl animate-pulse" />
+                <div className="h-28 bg-peach-200/40 rounded-2xl animate-pulse" />
+                <div className="h-48 bg-peach-200/40 rounded-2xl animate-pulse" />
             </div>
         )
     }
 
+    const streakPercentage = Math.min((clientUser.stats.currentStreak / 30) * 100, 100)
+
     return (
-        <div className="space-y-8 pb-20">
-            {/* User Welcome Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-black text-olive-600 tracking-tight font-display">
-                        Hello, {clientUser.name.split(' ')[0]}
-                    </h1>
-                    <p className="text-olive-300 text-sm mt-1">
-                        Ready for your workout today?
-                    </p>
-                </div>
-                <div className="flex items-center gap-2 bg-terra-400/10 border border-terra-400/20 px-4 py-2 rounded-full">
-                    <Flame className="w-4 h-4 text-terra-400" />
-                    <span className="text-terra-400 font-bold text-sm">{clientUser.stats.currentStreak} Day Streak</span>
-                </div>
-            </div>
+        <div className="space-y-6 pb-20">
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                    { label: "Classes Attended", value: clientUser.stats.totalClassesAttended, icon: Trophy, color: "text-terra-400" },
-                    { label: "Classes Left", value: clientUser.subscription.classesRemaining, icon: Star, color: "text-terra-300" },
-                    { label: "Plan", value: clientUser.subscription.planType || 'None', icon: Calendar, color: "text-olive-300" },
-                    { label: "Next Goal", value: `${Math.ceil((clientUser.stats.totalClassesAttended + 1) / 10) * 10} Classes`, icon: Dumbbell, color: "text-olive-400" },
-                ].map((stat, idx) => (
-                    <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="bg-peach-50 border border-peach-400/20 p-4"
-                    >
-                        <div className="flex items-start justify-between mb-3">
-                            <div className={`p-2 bg-peach-200/50 ${stat.color}`}>
-                                <stat.icon className="w-5 h-5" />
-                            </div>
+            {/* ═══════════ WELCOME BANNER ═══════════ */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-peach-300 via-peach-200 to-peach-100 p-8 md:p-10"
+            >
+                {/* Decorative circles */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-terra-400/5" />
+                <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-olive-400/5" />
+                <div className="absolute top-1/2 right-1/4 w-32 h-32 rounded-full bg-terra-400/3" />
+
+                <div className="relative z-10">
+                    {/* Top row: Greeting + Streak */}
+                    <div className="flex items-start justify-between mb-1">
+                        <div>
+                            <p className="text-olive-300 text-sm font-medium tracking-wide">{getGreeting()}</p>
+                            <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-tight font-display mt-1">
+                                {clientUser.name.split(' ')[0]}
+                            </h1>
                         </div>
-                        <p className="text-2xl font-black text-olive-600">{stat.value}</p>
-                        <p className="text-xs text-olive-300 font-medium uppercase tracking-wider">{stat.label}</p>
-                    </motion.div>
-                ))}
-            </div>
 
-            {/* Upcoming Class Banner */}
+                        {/* Streak Ring */}
+                        <div className="flex flex-col items-center">
+                            <div className="relative w-[72px] h-[72px]">
+                                {/* Background ring */}
+                                <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
+                                    <circle cx="36" cy="36" r="30" fill="none" stroke="currentColor" strokeWidth="4" className="text-olive-400/10" />
+                                    <circle
+                                        cx="36" cy="36" r="30" fill="none"
+                                        stroke="currentColor" strokeWidth="4"
+                                        strokeLinecap="round"
+                                        className="text-terra-400"
+                                        strokeDasharray={`${2 * Math.PI * 30}`}
+                                        strokeDashoffset={`${2 * Math.PI * 30 * (1 - streakPercentage / 100)}`}
+                                        style={{ transition: 'stroke-dashoffset 1s ease' }}
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <Flame className="w-4 h-4 text-terra-400 mb-0.5" />
+                                    <span className="text-lg font-black text-olive-600 leading-none">{clientUser.stats.currentStreak}</span>
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-olive-300 font-bold tracking-wider mt-1.5 uppercase">Streak</p>
+                        </div>
+                    </div>
+
+                    {/* Stats row — integrated into the banner */}
+                    <div className="flex items-center gap-6 md:gap-10 mt-8 pt-6 border-t border-olive-400/8">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Trophy className="w-3.5 h-3.5 text-terra-400" />
+                                <p className="text-2xl font-black text-olive-600 leading-none">{clientUser.stats.totalClassesAttended}</p>
+                            </div>
+                            <p className="text-[11px] text-olive-300 font-medium">Classes Attended</p>
+                        </div>
+                        <div className="w-px h-10 bg-olive-400/10" />
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Star className="w-3.5 h-3.5 text-terra-300" />
+                                <p className="text-2xl font-black text-olive-600 leading-none">{clientUser.subscription.classesRemaining}</p>
+                            </div>
+                            <p className="text-[11px] text-olive-300 font-medium">Classes Left</p>
+                        </div>
+                        <div className="w-px h-10 bg-olive-400/10" />
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Sparkles className="w-3.5 h-3.5 text-olive-300" />
+                                <p className="text-2xl font-black text-olive-600 leading-none capitalize">{clientUser.subscription.planType || 'Free'}</p>
+                            </div>
+                            <p className="text-[11px] text-olive-300 font-medium">Current Plan</p>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* ═══════════ NEXT SESSION / BOOKING CTA ═══════════ */}
             {isLoadingBookings ? (
-                <div className="h-40 bg-peach-200/60 rounded-3xl animate-pulse" />
+                <div className="h-28 bg-peach-200/40 rounded-2xl animate-pulse" />
             ) : upcomingBooking ? (
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-terra-400 to-terra-300 p-6 text-peach-50"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-terra-400 to-terra-300 p-6 md:p-8"
                 >
-                    <div className="absolute top-0 right-0 p-32 bg-peach-200/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-peach-200/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
 
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
                         <div>
-                            <div className="inline-flex items-center gap-2 bg-warmDark-900/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold mb-3">
+                            <div className="inline-flex items-center gap-2 bg-peach-50/15 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-bold text-peach-50 mb-3 tracking-wider">
                                 <Clock className="w-3 h-3" />
-                                UPCOMING CLASS
+                                UPCOMING SESSION
                             </div>
-                            <h2 className="text-2xl font-black mb-1">
+                            <h2 className="text-2xl font-black text-peach-50 mb-1">
                                 {(upcomingBooking as Booking & { classType?: string }).classType || 'Pilates Class'}
                             </h2>
-                            <div className="flex items-center gap-4 text-peach-50/80 text-sm font-medium">
-                                <span>{formatDate(upcomingBooking.classDate)}</span>
-                            </div>
+                            <p className="text-peach-50/70 text-sm font-medium">
+                                {formatDate(upcomingBooking.classDate)} · Spot #{upcomingBooking.spotNumber}
+                            </p>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="text-center bg-warmDark-900/10 backdrop-blur-sm rounded-xl p-3 min-w-[80px]">
-                                <p className="text-xs font-bold opacity-60 uppercase">Spot</p>
-                                <p className="text-lg font-black">{upcomingBooking.spotNumber}</p>
-                            </div>
-                            <Link href="/user/bookings">
-                                <Button className="bg-warmDark-900 text-peach-200 hover:bg-warmDark-800 font-bold px-6 h-12 rounded-xl">
-                                    VIEW BOOKING
-                                </Button>
-                            </Link>
-                        </div>
+                        <Link href="/user/bookings">
+                            <Button className="bg-peach-50 text-terra-400 hover:bg-peach-100 font-bold px-6 h-11 rounded-xl transition-all hover:shadow-lg">
+                                VIEW DETAILS
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                        </Link>
                     </div>
                 </motion.div>
             ) : (
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="relative overflow-hidden rounded-3xl bg-peach-50 border border-peach-400/20 p-6"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="relative overflow-hidden rounded-2xl border border-peach-400/15 bg-peach-50 p-6 md:p-8"
                 >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-terra-400/5" />
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <div className="inline-flex items-center gap-2 bg-peach-200/50 px-3 py-1 rounded-full text-xs font-bold text-olive-300 mb-3">
-                                <Calendar className="w-3 h-3" />
-                                NO UPCOMING CLASSES
-                            </div>
-                            <h2 className="text-xl font-black text-olive-600 mb-1">Book your next session</h2>
-                            <p className="text-olive-300 text-sm">Browse the schedule and reserve your spot</p>
+                            <h2 className="text-lg font-bold text-olive-600">Your Next Move</h2>
+                            <p className="text-olive-300 text-sm mt-1 max-w-md">
+                                No upcoming sessions. Browse the schedule to find your perfect class.
+                            </p>
                         </div>
                         <Link href="/user/schedule">
-                            <Button className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold px-6 h-12 rounded-xl">
+                            <Button className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold px-6 h-11 rounded-xl transition-all hover:shadow-lg hover:shadow-terra-400/20 flex items-center gap-2">
                                 BROWSE SCHEDULE
+                                <ArrowRight className="w-4 h-4" />
                             </Button>
                         </Link>
                     </div>
                 </motion.div>
             )}
 
-            {/* Today's Schedule */}
-            <div>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-olive-600 font-display">Today at the Studio</h2>
-                    <Link href="/user/schedule" className="text-sm font-bold text-terra-400 hover:text-terra-300 transition-colors flex items-center gap-1">
-                        FULL SCHEDULE <ArrowRight className="w-4 h-4" />
+            {/* ═══════════ TODAY'S CLASSES ═══════════ */}
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-olive-600 font-display">Today at the Studio</h2>
+                    <Link href="/user/schedule" className="text-xs font-bold text-terra-400 hover:text-terra-300 transition-colors flex items-center gap-1 tracking-wider">
+                        FULL SCHEDULE <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                 </div>
 
                 {isLoadingClasses ? (
-                    <div className="space-y-3">
+                    <div className="rounded-2xl border border-peach-400/15 bg-peach-50 divide-y divide-peach-400/10">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="bg-peach-50 border border-peach-400/20 p-4 animate-pulse">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex flex-col items-center min-w-[56px]">
-                                            <div className="h-5 w-12 bg-peach-300/40 rounded" />
-                                            <div className="h-3 w-6 bg-peach-200/60 rounded mt-1" />
-                                        </div>
-                                        <div className="w-px h-10 bg-peach-400/20" />
-                                        <div>
-                                            <div className="h-5 w-32 bg-peach-300/40 rounded mb-1" />
-                                            <div className="h-3 w-24 bg-peach-200/60 rounded" />
-                                        </div>
-                                    </div>
-                                    <div className="h-4 w-16 bg-peach-200/60 rounded" />
+                            <div key={i} className="p-4 animate-pulse flex items-center gap-4">
+                                <div className="w-14 h-10 bg-peach-300/30 rounded-lg" />
+                                <div className="flex-1">
+                                    <div className="h-4 w-32 bg-peach-300/30 rounded mb-1" />
+                                    <div className="h-3 w-24 bg-peach-200/40 rounded" />
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : todaysClasses.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="rounded-2xl border border-peach-400/15 bg-peach-50 divide-y divide-peach-400/10 overflow-hidden">
                         {todaysClasses.map((cls, idx) => {
                             const spotsLeft = (cls.totalSpots || cls.capacity) - cls.bookedCount
                             return (
-                                <motion.div
-                                    key={cls.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 + (idx * 0.1) }}
-                                >
-                                    <Link href="/user/schedule" className="block">
-                                        <div className="bg-peach-50 border border-peach-400/20 p-4 hover:border-terra-400/30 transition-all group">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex flex-col items-center min-w-[56px]">
-                                                        <span className="text-lg font-black text-olive-600 leading-none">
-                                                            {formatTime(cls.startTime).split(' ')[0]}
-                                                        </span>
-                                                        <span className="text-[10px] text-olive-300 font-bold mt-1">
-                                                            {formatTime(cls.startTime).split(' ')[1]}
-                                                        </span>
-                                                    </div>
-                                                    <div className="w-px h-10 bg-peach-400/20" />
-                                                    <div>
-                                                        <h3 className="text-olive-600 font-bold group-hover:text-terra-400 transition-colors">
-                                                            {cls.classType || 'Pilates Class'}
-                                                        </h3>
-                                                        <p className="text-olive-300 text-xs mt-0.5">
-                                                            {cls.location || 'Main Studio'} · {cls.duration} min
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    {spotsLeft <= 0 ? (
-                                                        <span className="text-xs font-bold text-olive-300/40 uppercase tracking-wider">Full</span>
-                                                    ) : (
-                                                        <span className="text-xs font-bold text-terra-400">
-                                                            {spotsLeft} spots
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
+                                <Link key={cls.id} href="/user/schedule" className="block">
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.3 + (idx * 0.08) }}
+                                        className="p-4 hover:bg-peach-100/60 transition-colors group flex items-center gap-4"
+                                    >
+                                        {/* Time block */}
+                                        <div className="flex flex-col items-center min-w-[56px] py-1 px-2 rounded-lg bg-peach-200/50">
+                                            <span className="text-base font-black text-olive-600 leading-none">
+                                                {formatTime(cls.startTime).split(' ')[0]}
+                                            </span>
+                                            <span className="text-[9px] text-olive-300 font-bold mt-0.5">
+                                                {formatTime(cls.startTime).split(' ')[1]}
+                                            </span>
                                         </div>
-                                    </Link>
-                                </motion.div>
+
+                                        {/* Class info */}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-olive-600 font-bold text-sm group-hover:text-terra-400 transition-colors truncate">
+                                                {cls.classType || 'Pilates Class'}
+                                            </h3>
+                                            <p className="text-olive-300 text-xs mt-0.5">
+                                                {cls.location || 'Main Studio'} · {cls.duration}min
+                                            </p>
+                                        </div>
+
+                                        {/* Spots indicator */}
+                                        <div className="flex items-center gap-2">
+                                            {spotsLeft <= 0 ? (
+                                                <span className="text-[10px] font-bold text-olive-300/50 uppercase tracking-wider bg-peach-200/50 px-2 py-1 rounded">Full</span>
+                                            ) : spotsLeft <= 3 ? (
+                                                <span className="text-[10px] font-bold text-terra-400 bg-terra-400/10 px-2 py-1 rounded">{spotsLeft} left</span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-olive-300 bg-peach-200/50 px-2 py-1 rounded">{spotsLeft} spots</span>
+                                            )}
+                                            <ArrowRight className="w-4 h-4 text-olive-300/30 group-hover:text-terra-400 group-hover:translate-x-0.5 transition-all" />
+                                        </div>
+                                    </motion.div>
+                                </Link>
                             )
                         })}
                     </div>
                 ) : (
-                    <div className="bg-peach-50 border border-peach-400/20 p-8 text-center">
-                        <Calendar className="w-8 h-8 text-olive-300/30 mx-auto mb-3" />
-                        <p className="text-olive-300 text-sm">No classes scheduled for today</p>
+                    <div className="rounded-2xl border border-peach-400/15 bg-peach-50 p-10 text-center">
+                        <div className="w-12 h-12 rounded-full bg-peach-200/60 flex items-center justify-center mx-auto mb-4">
+                            <Calendar className="w-5 h-5 text-olive-300/50" />
+                        </div>
+                        <p className="text-olive-400 font-medium text-sm">No classes scheduled for today</p>
+                        <p className="text-olive-300 text-xs mt-1">Check the full schedule for upcoming sessions</p>
                     </div>
                 )}
-            </div>
+            </motion.div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
-                <Link href="/user/schedule">
-                    <div className="bg-peach-50 border border-peach-400/20 p-5 hover:border-terra-400/30 transition-all group cursor-pointer">
-                        <Calendar className="w-6 h-6 text-olive-400 mb-3 group-hover:text-terra-400 transition-colors" />
-                        <h3 className="text-olive-600 font-bold mb-1">Book a Class</h3>
-                        <p className="text-olive-300 text-xs">Browse the full schedule and reserve your spot</p>
+            {/* ═══════════ QUICK ACTIONS — ASYMMETRIC ═══════════ */}
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
+                {/* Primary CTA — spans 2 columns, has gradient */}
+                <Link href="/user/schedule" className="md:col-span-2 group">
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-olive-600 to-olive-400 p-6 md:p-8 h-full transition-all hover:shadow-lg hover:shadow-olive-600/15">
+                        <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-peach-200/10" />
+                        <div className="absolute top-4 right-4">
+                            <div className="w-10 h-10 rounded-full bg-peach-200/10 flex items-center justify-center group-hover:bg-peach-200/20 transition-colors">
+                                <ArrowRight className="w-5 h-5 text-peach-200/80 group-hover:translate-x-0.5 transition-transform" />
+                            </div>
+                        </div>
+                        <Calendar className="w-7 h-7 text-peach-200/60 mb-4" />
+                        <h3 className="text-peach-50 font-bold text-lg">Book Your Next Class</h3>
+                        <p className="text-peach-200/60 text-sm mt-1 max-w-sm">
+                            Browse available sessions, pick your spot, and reserve your reformer.
+                        </p>
                     </div>
                 </Link>
-                <Link href="/user/bookings">
-                    <div className="bg-peach-50 border border-peach-400/20 p-5 hover:border-terra-400/30 transition-all group cursor-pointer">
-                        <Dumbbell className="w-6 h-6 text-olive-400 mb-3 group-hover:text-terra-400 transition-colors" />
-                        <h3 className="text-olive-600 font-bold mb-1">My Bookings</h3>
-                        <p className="text-olive-300 text-xs">View upcoming sessions and booking history</p>
+
+                {/* Secondary CTA — 1 column, light */}
+                <Link href="/user/bookings" className="group">
+                    <div className="rounded-2xl border border-peach-400/15 bg-peach-50 p-6 h-full hover:border-terra-400/25 transition-all flex flex-col">
+                        <div className="w-10 h-10 rounded-xl bg-terra-400/8 flex items-center justify-center mb-4 group-hover:bg-terra-400/15 transition-colors">
+                            <Target className="w-5 h-5 text-terra-400" />
+                        </div>
+                        <h3 className="text-olive-600 font-bold">My Bookings</h3>
+                        <p className="text-olive-300 text-xs mt-1 flex-1">Upcoming sessions and past history</p>
+                        <div className="flex items-center gap-1 text-terra-400 text-xs font-bold mt-4 group-hover:gap-2 transition-all">
+                            VIEW ALL <ArrowRight className="w-3 h-3" />
+                        </div>
                     </div>
                 </Link>
-            </div>
+            </motion.div>
         </div>
     )
 }

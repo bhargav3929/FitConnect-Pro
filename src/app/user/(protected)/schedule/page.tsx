@@ -23,19 +23,19 @@ import { Trainer } from "@/types/trainer"
 import { toast } from "sonner"
 
 const FACILITY = {
-    name: "SOL Pilates",
+    name: "SOL Pilates Studio",
     address: "250 West 54th Street, New York, NY 10019",
     rating: 4.9,
     reviewCount: 128,
-    description: "45,000 sq ft of dedicated training space with five distinct zones: Strength Floor, Heated Yoga Studio, Cycling Theater, Olympic Lifting Platform, and Recovery Sanctuary.",
-    amenities: ["Performance Floor", "Heated Yoga Studio", "Cycling Theater", "Olympic Lifting Platform", "Recovery Lounge", "Smoothie Bar", "Private Training Suites"],
+    description: "A sophisticated Pilates studio blending strength, mindfulness, and elegance. Five dedicated disciplines — Reformer, Mat, Private Sessions, Barre, and Prenatal — each designed to transform your body and mind.",
+    amenities: ["Reformer Studio", "Mat Studio", "Private Suite", "Barre & Stretch", "Recovery Lounge", "Prenatal Room", "Changing Rooms"],
     hours: {
-        weekday: "05:00 - 23:00",
-        weekend: "06:00 - 21:00"
+        weekday: "06:00 - 21:00",
+        weekend: "07:00 - 18:00"
     },
     contact: {
         phone: "(212) 555-0180",
-        email: "hello@solpilates.com"
+        email: "solpilatesstudio.in@gmail.com"
     },
 }
 

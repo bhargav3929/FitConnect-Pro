@@ -59,24 +59,23 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
                                 key={i}
                                 onClick={() => onDateSelect(date)}
                                 className={`
-                                    flex flex-col items-center justify-center min-w-[50px] py-3 rounded-xl transition-all snap-center
+                                    flex flex-col items-center justify-center min-w-[56px] min-h-[72px] py-3 px-1 rounded-2xl transition-all snap-center active:scale-95
                                     ${isSelected
-                                        ? 'bg-terra-400 text-peach-50 shadow-lg scale-105'
-                                        : 'bg-transparent text-olive-400 hover:text-peach-200'
+                                        ? 'bg-terra-400 text-peach-50 shadow-lg shadow-terra-400/20'
+                                        : isToday
+                                            ? 'bg-peach-200/60 text-olive-600'
+                                            : 'bg-transparent text-olive-400 hover:bg-peach-200/40'
                                     }
                                 `}
                             >
-                                {isToday && isSelected && (
-                                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1">Today</span>
-                                )}
-                                <span className={`text-xs font-medium mb-1 ${isSelected ? 'opacity-100' : 'opacity-60'}`}>
-                                    {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                                <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-peach-50/70' : 'text-olive-300'}`}>
+                                    {isToday && isSelected ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}
                                 </span>
-                                <span className="text-xl font-bold leading-none">
+                                <span className="text-xl font-black leading-none">
                                     {date.getDate()}
                                 </span>
-                                {isSelected && (
-                                    <div className="w-1 h-1 bg-peach-100 rounded-full mt-2" />
+                                {isToday && !isSelected && (
+                                    <div className="w-1 h-1 bg-terra-400 rounded-full mt-1.5" />
                                 )}
                             </button>
                         )

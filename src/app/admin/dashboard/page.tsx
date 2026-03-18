@@ -3,19 +3,21 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import {
-    Users,
-    CalendarDays,
-    TrendingUp,
-    ArrowUpRight,
+    ArrowRight,
     Clock,
-    MoreHorizontal,
-    Dumbbell,
-    MapPin,
-    type LucideIcon,
     CheckCircle2,
     XCircle,
     AlertCircle,
 } from "lucide-react"
+import {
+    UsersThree,
+    CalendarDots,
+    ChartLineUp,
+    Barbell,
+    MapPin,
+    ArrowUpRight,
+    type Icon as PhosphorIcon,
+} from "@phosphor-icons/react"
 import {
     BarChart,
     Bar,
@@ -29,86 +31,11 @@ import Link from "next/link"
 import { getBookingStats, getAllMembers, getClassesByDate, getAllBookings } from "@/lib/firebase/firestore"
 import { Booking } from "@/types/booking"
 
-// Animated Stat Card
-function StatCard({
-    title,
-    value,
-    icon: Icon,
-    delay = 0,
-    isLoading = false,
-}: {
-    title: string
-    value: string
-    icon: LucideIcon
-    delay?: number
-    isLoading?: boolean
-}) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay, ease: "easeOut" }}
-            className="group relative overflow-hidden bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-terra-400/30 transition-all duration-500 hover:shadow-md"
-        >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-terra-400/5 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
-
-            <div className="flex items-start justify-between mb-6 relative z-10">
-                <div className="w-12 h-12 bg-peach-200/60 flex items-center justify-center group-hover:bg-terra-400/15 group-hover:scale-110 transition-all duration-300">
-                    <Icon className="w-6 h-6 text-olive-400 group-hover:text-terra-400 transition-colors" />
-                </div>
-            </div>
-
-            <div className="relative z-10">
-                {isLoading ? (
-                    <div className="h-9 w-20 bg-peach-300/40 rounded animate-pulse mb-2" />
-                ) : (
-                    <h3 className="text-3xl sm:text-4xl font-black text-olive-600 mb-2 tracking-tight group-hover:translate-x-1 transition-transform duration-300">
-                        {value}
-                    </h3>
-                )}
-                <p className="text-olive-300 text-xs font-semibold tracking-[0.2em] uppercase">
-                    {title}
-                </p>
-            </div>
-        </motion.div>
-    )
-}
-
-// Quick Action Card
-function QuickAction({
-    label,
-    desc,
-    href,
-    icon: Icon,
-    delay = 0
-}: {
-    label: string
-    desc: string
-    href: string
-    icon: LucideIcon
-    delay: number
-}) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay }}
-        >
-            <Link
-                href={href}
-                className="flex flex-col p-6 bg-peach-50 border border-peach-400/20 hover:bg-peach-100 hover:border-terra-400/30 transition-all group relative overflow-hidden h-full"
-            >
-                <div className="absolute top-4 right-4 text-olive-300/30 group-hover:text-terra-400 transition-colors">
-                    <ArrowUpRight className="w-5 h-5" />
-                </div>
-                <div className="w-12 h-12 bg-peach-200/60 flex items-center justify-center mb-4 group-hover:bg-terra-400/15 transition-colors">
-                    <Icon className="w-6 h-6 text-olive-400" />
-                </div>
-                <h4 className="text-lg font-bold text-olive-600 mb-1 group-hover:text-terra-400 transition-colors">{label}</h4>
-                <p className="text-olive-300 text-xs leading-relaxed">{desc}</p>
-            </Link>
-        </motion.div>
-    )
+const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return "Good morning"
+    if (hour < 17) return "Good afternoon"
+    return "Good evening"
 }
 
 export default function AdminDashboardPage() {
@@ -139,10 +66,8 @@ export default function AdminDashboardPage() {
                     totalBookings: bookingStats.totalBookings,
                 })
 
-                // Recent bookings (last 5)
                 setRecentBookings(allBookings.slice(0, 5))
 
-                // Build weekly attendance from bookings
                 const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
                 const dayCounts = new Array(7).fill(0)
                 const now = new Date()
@@ -158,7 +83,7 @@ export default function AdminDashboardPage() {
 
                 setWeeklyData(days.map((name, i) => ({ name, value: dayCounts[i] })))
             } catch {
-                // Silently handle — dashboard will show zeros
+                // Dashboard will show zeros
             } finally {
                 setIsLoading(false)
             }
@@ -166,15 +91,6 @@ export default function AdminDashboardPage() {
 
         fetchDashboardData()
     }, [])
-
-    const getActivityIcon = (status: string) => {
-        switch (status) {
-            case 'confirmed': return <AlertCircle className="w-3 h-3" />
-            case 'attended': return <CheckCircle2 className="w-3 h-3" />
-            case 'canceled': return <XCircle className="w-3 h-3" />
-            default: return <AlertCircle className="w-3 h-3" />
-        }
-    }
 
     const getActivityColor = (status: string) => {
         switch (status) {
@@ -185,133 +101,148 @@ export default function AdminDashboardPage() {
         }
     }
 
+    const getActivityIcon = (status: string) => {
+        switch (status) {
+            case 'confirmed': return <AlertCircle className="w-3 h-3" />
+            case 'attended': return <CheckCircle2 className="w-3 h-3" />
+            case 'canceled': return <XCircle className="w-3 h-3" />
+            default: return <AlertCircle className="w-3 h-3" />
+        }
+    }
+
     const formatTimeAgo = (date: Date | string) => {
         const d = typeof date === 'string' ? new Date(date) : date
         const now = new Date()
         const diff = now.getTime() - d.getTime()
         const mins = Math.floor(diff / 60000)
-        if (mins < 60) return `${mins} min ago`
+        if (mins < 60) return `${mins}m ago`
         const hours = Math.floor(mins / 60)
         if (hours < 24) return `${hours}h ago`
         const days = Math.floor(hours / 24)
         return `${days}d ago`
     }
 
+    const statItems: { label: string; value: string | number; icon: PhosphorIcon; color: string }[] = [
+        { label: "Active Members", value: stats.totalMembers, icon: UsersThree, color: "text-terra-400" },
+        { label: "Today's Classes", value: stats.todaysClasses, icon: Barbell, color: "text-terra-300" },
+        { label: "Today's Bookings", value: stats.todayBookings, icon: CalendarDots, color: "text-olive-400" },
+        { label: "Total Bookings", value: stats.totalBookings, icon: ChartLineUp, color: "text-olive-300" },
+    ]
+
     return (
-        <div className="space-y-8 max-w-[1600px] mx-auto pb-20 lg:pb-0">
-            {/* Welcome Section */}
+        <div className="space-y-6 max-w-[1600px] mx-auto pb-20 lg:pb-0">
+
+            {/* ═══════════ WELCOME BANNER ═══════════ */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
+                className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-peach-300 via-peach-200 to-peach-100 p-6 md:p-10"
             >
-                <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
-                        Dashboard
-                    </h2>
-                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
-                        Your studio performance, member activity, and daily operations at a glance.
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <span className="text-olive-300 text-xs font-mono bg-peach-200/50 px-3 py-1 rounded-full border border-peach-400/20">
-                        {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </span>
+                <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-terra-400/5" />
+                <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-olive-400/5" />
+
+                <div className="relative z-10">
+                    {/* Greeting + Date */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                        <div>
+                            <p className="text-olive-300 text-sm font-medium tracking-wide">{getGreeting()}, Admin</p>
+                            <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-tight font-display mt-1">
+                                Studio Dashboard
+                            </h1>
+                        </div>
+                        <span className="text-olive-300/60 text-xs font-mono bg-peach-50/50 px-3 py-1.5 rounded-full border border-peach-400/15 w-fit">
+                            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                        </span>
+                    </div>
+
+                    {/* Stats Row — inside the banner */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+                        {statItems.map((stat, idx) => (
+                            <motion.div
+                                key={stat.label}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.08 }}
+                                className="bg-peach-50/60 backdrop-blur-sm rounded-xl p-4 border border-peach-400/10"
+                            >
+                                <div className="flex items-center gap-2 mb-2">
+                                    <stat.icon weight="duotone" className={`w-4 h-4 ${stat.color}`} />
+                                    <p className="text-[10px] text-olive-300 font-bold uppercase tracking-wider">{stat.label}</p>
+                                </div>
+                                {isLoading ? (
+                                    <div className="h-8 w-16 bg-peach-300/30 rounded animate-pulse" />
+                                ) : (
+                                    <p className="text-2xl md:text-3xl font-black text-olive-600 leading-none">
+                                        {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                                    </p>
+                                )}
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </motion.div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
-                <StatCard
-                    title="Active Members"
-                    value={stats.totalMembers.toLocaleString()}
-                    icon={Users}
-                    delay={0}
-                    isLoading={isLoading}
-                />
-                <StatCard
-                    title="Today's Classes"
-                    value={String(stats.todaysClasses)}
-                    icon={Dumbbell}
-                    delay={0.1}
-                    isLoading={isLoading}
-                />
-                <StatCard
-                    title="Today's Bookings"
-                    value={String(stats.todayBookings)}
-                    icon={CalendarDays}
-                    delay={0.2}
-                    isLoading={isLoading}
-                />
-                <StatCard
-                    title="Total Bookings"
-                    value={stats.totalBookings.toLocaleString()}
-                    icon={TrendingUp}
-                    delay={0.3}
-                    isLoading={isLoading}
-                />
-            </div>
-
-            {/* Charts Section */}
+            {/* ═══════════ CHART + ACTIVITY ═══════════ */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
                 {/* Weekly Attendance Chart */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="xl:col-span-2 bg-peach-50 border border-peach-400/20 p-6 sm:p-8"
+                    transition={{ delay: 0.15 }}
+                    className="xl:col-span-2 bg-peach-50 border border-peach-400/15 rounded-2xl p-6 md:p-8"
                 >
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-xl font-bold text-olive-600 mb-1">Weekly Attendance</h3>
-                            <p className="text-olive-300 text-xs tracking-wider uppercase">Classes attended this week</p>
+                            <h3 className="text-lg font-bold text-olive-600">Weekly Attendance</h3>
+                            <p className="text-olive-300 text-xs mt-0.5">Classes attended this week</p>
                         </div>
-                        <button className="flex items-center gap-2 text-olive-300 hover:text-olive-600 transition-colors">
-                            <MoreHorizontal className="w-5 h-5" />
-                        </button>
+                        <Link href="/admin/reports" className="text-xs font-bold text-terra-400 hover:text-terra-300 transition-colors flex items-center gap-1 tracking-wider">
+                            REPORTS <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
                     </div>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[260px] md:h-[300px] w-full">
                         {isLoading ? (
                             <div className="h-full flex items-end gap-4 px-4">
                                 {[40, 60, 30, 80, 50, 70, 45].map((h, i) => (
-                                    <div key={i} className="flex-1 bg-peach-300/40 rounded-t animate-pulse" style={{ height: `${h}%` }} />
+                                    <div key={i} className="flex-1 bg-peach-300/30 rounded-t-lg animate-pulse" style={{ height: `${h}%` }} />
                                 ))}
                             </div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={weeklyData} barSize={40}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(74,84,56,0.1)" vertical={false} />
+                                <BarChart data={weeklyData} barSize={32}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(74,84,56,0.08)" vertical={false} />
                                     <XAxis
                                         dataKey="name"
-                                        stroke="rgba(74,84,56,0.4)"
-                                        fontSize={12}
+                                        stroke="rgba(74,84,56,0.3)"
+                                        fontSize={11}
                                         tickLine={false}
                                         axisLine={false}
-                                        dy={10}
+                                        dy={8}
                                     />
                                     <YAxis
-                                        stroke="rgba(74,84,56,0.4)"
-                                        fontSize={12}
+                                        stroke="rgba(74,84,56,0.3)"
+                                        fontSize={11}
                                         tickLine={false}
                                         axisLine={false}
-                                        dx={-10}
+                                        dx={-8}
                                     />
                                     <Tooltip
-                                        cursor={{ fill: 'rgba(74,84,56,0.05)' }}
+                                        cursor={{ fill: 'rgba(74,84,56,0.04)' }}
                                         contentStyle={{
-                                            backgroundColor: '#FAF3EB',
-                                            border: '1px solid rgba(212,180,148,0.3)',
-                                            borderRadius: '0',
-                                            boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
-                                            padding: '12px'
+                                            backgroundColor: '#FAF5EF',
+                                            border: '1px solid rgba(212,180,148,0.2)',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 8px 32px -8px rgba(0,0,0,0.08)',
+                                            padding: '10px 14px',
+                                            fontSize: '12px',
                                         }}
-                                        itemStyle={{ color: '#4A5438' }}
+                                        itemStyle={{ color: '#4A5738' }}
                                     />
                                     <Bar
                                         dataKey="value"
                                         fill="#8B3F2C"
-                                        radius={[4, 4, 4, 4]}
-                                        className="hover:opacity-80 transition-opacity cursor-pointer"
+                                        radius={[6, 6, 6, 6]}
                                     />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -319,97 +250,114 @@ export default function AdminDashboardPage() {
                     </div>
                 </motion.div>
 
-                {/* Quick Actions Grid */}
-                <div className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 flex flex-col">
-                    <h3 className="text-xl font-bold text-olive-600 mb-6">Quick Actions</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4 flex-1">
-                        <QuickAction
-                            label="Add Class"
-                            desc="Schedule a new session"
-                            href="/admin/classes"
-                            icon={CalendarDays}
-                            delay={0.5}
-                        />
-                        <QuickAction
-                            label="Members"
-                            desc="View all members"
-                            href="/admin/members"
-                            icon={Users}
-                            delay={0.6}
-                        />
-                        <QuickAction
-                            label="Facility Settings"
-                            desc="Manage studio details"
-                            href="/admin/locations"
-                            icon={MapPin}
-                            delay={0.7}
-                        />
+                {/* Recent Activity */}
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-peach-50 border border-peach-400/15 rounded-2xl p-6 md:p-8 flex flex-col"
+                >
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-olive-600">Recent Activity</h3>
+                        <Link href="/admin/bookings" className="text-xs font-bold text-terra-400 hover:text-terra-300 transition-colors tracking-wider">
+                            ALL
+                        </Link>
                     </div>
-                </div>
+
+                    {isLoading ? (
+                        <div className="space-y-5 flex-1">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="flex items-center gap-3 animate-pulse">
+                                    <div className="w-8 h-8 rounded-full bg-peach-300/30" />
+                                    <div className="flex-1">
+                                        <div className="h-3.5 w-32 bg-peach-300/30 rounded mb-1.5" />
+                                        <div className="h-2.5 w-20 bg-peach-200/40 rounded" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : recentBookings.length > 0 ? (
+                        <div className="space-y-4 flex-1">
+                            {recentBookings.map((booking, index) => (
+                                <motion.div
+                                    key={booking.id}
+                                    initial={{ opacity: 0, x: -8 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.25 + (index * 0.06) }}
+                                    className="flex items-center gap-3"
+                                >
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-peach-50 ${getActivityColor(booking.status)}`}>
+                                        {getActivityIcon(booking.status)}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-olive-600 font-medium truncate">
+                                            Spot {booking.spotNumber} <span className="text-olive-300 capitalize">· {booking.status}</span>
+                                        </p>
+                                        <p className="text-[11px] text-olive-300 flex items-center gap-1">
+                                            <Clock className="w-2.5 h-2.5" />
+                                            {formatTimeAgo(booking.bookingDate)}
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex items-center justify-center">
+                            <p className="text-olive-300 text-sm">No recent activity</p>
+                        </div>
+                    )}
+                </motion.div>
             </div>
 
-            {/* Recent Activity */}
+            {/* ═══════════ QUICK ACTIONS — ASYMMETRIC ═══════════ */}
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8"
+                transition={{ delay: 0.3 }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4"
             >
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-olive-600">Recent Bookings</h3>
-                    <Link
-                        href="/admin/bookings"
-                        className="text-terra-400 text-xs font-bold tracking-widest hover:text-terra-300 transition-colors uppercase"
-                    >
-                        View All
+                {/* Primary — spans 2 cols */}
+                <Link href="/admin/classes" className="md:col-span-2 group">
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-olive-600 to-olive-400 p-6 md:p-8 h-full transition-all hover:shadow-lg hover:shadow-olive-600/15">
+                        <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-peach-200/10" />
+                        <div className="absolute top-5 right-5">
+                            <div className="w-10 h-10 rounded-full bg-peach-200/10 flex items-center justify-center group-hover:bg-peach-200/20 transition-colors">
+                                <ArrowUpRight weight="bold" className="w-5 h-5 text-peach-200/70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                            </div>
+                        </div>
+                        <CalendarDots weight="duotone" className="w-7 h-7 text-peach-200/50 mb-4" />
+                        <h3 className="text-peach-50 font-bold text-lg">Manage Classes</h3>
+                        <p className="text-peach-200/50 text-sm mt-1 max-w-sm">
+                            Add new sessions, update schedules, and manage trainer assignments.
+                        </p>
+                    </div>
+                </Link>
+
+                {/* Secondary actions stacked */}
+                <div className="flex flex-col gap-4">
+                    <Link href="/admin/members" className="group flex-1">
+                        <div className="rounded-2xl border border-peach-400/15 bg-peach-50 p-5 h-full hover:border-terra-400/25 transition-all flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-terra-400/8 flex items-center justify-center flex-shrink-0 group-hover:bg-terra-400/15 transition-colors">
+                                <UsersThree weight="duotone" className="w-5 h-5 text-terra-400" />
+                            </div>
+                            <div className="min-w-0">
+                                <h4 className="text-olive-600 font-bold text-sm">Members</h4>
+                                <p className="text-olive-300 text-xs truncate">View & manage</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/admin/locations" className="group flex-1">
+                        <div className="rounded-2xl border border-peach-400/15 bg-peach-50 p-5 h-full hover:border-terra-400/25 transition-all flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-olive-400/8 flex items-center justify-center flex-shrink-0 group-hover:bg-olive-400/15 transition-colors">
+                                <MapPin weight="duotone" className="w-5 h-5 text-olive-400" />
+                            </div>
+                            <div className="min-w-0">
+                                <h4 className="text-olive-600 font-bold text-sm">Facility</h4>
+                                <p className="text-olive-300 text-xs truncate">Studio settings</p>
+                            </div>
+                        </div>
                     </Link>
                 </div>
-
-                {isLoading ? (
-                    <div className="space-y-6">
-                        {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="flex items-start gap-4 animate-pulse">
-                                <div className="w-10 h-10 rounded-full bg-peach-300/40" />
-                                <div className="flex-1">
-                                    <div className="h-4 w-48 bg-peach-300/40 rounded mb-2" />
-                                    <div className="h-3 w-24 bg-peach-200/60 rounded" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : recentBookings.length > 0 ? (
-                    <div className="space-y-6 relative">
-                        <div className="absolute left-[19px] top-4 bottom-4 w-px bg-peach-400/15" />
-                        {recentBookings.map((booking, index) => (
-                            <motion.div
-                                key={booking.id}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.7 + (index * 0.1) }}
-                                className="flex items-start gap-4 relative"
-                            >
-                                <div className={`relative z-10 w-10 h-10 rounded-full border-4 border-peach-50 flex items-center justify-center shrink-0 ${getActivityColor(booking.status)}`}>
-                                    <span className="text-peach-50">
-                                        {getActivityIcon(booking.status)}
-                                    </span>
-                                </div>
-                                <div className="flex-1 pt-1">
-                                    <p className="text-sm font-medium text-olive-600">
-                                        Booking <span className="text-olive-300 capitalize">{booking.status}</span> — Spot {booking.spotNumber}
-                                    </p>
-                                    <p className="text-xs text-olive-300 mt-1 flex items-center gap-2">
-                                        <Clock className="w-3 h-3" />
-                                        {formatTimeAgo(booking.bookingDate)}
-                                    </p>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-8">
-                        <p className="text-olive-300 text-sm">No recent bookings</p>
-                    </div>
-                )}
             </motion.div>
         </div>
     )

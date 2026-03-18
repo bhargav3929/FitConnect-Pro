@@ -40,7 +40,7 @@ export default function UserLayout({
     return (
         <div className="min-h-screen bg-peach-100 text-olive-600">
             <UserNav />
-            <main className="lg:pl-64 min-h-screen pb-20 lg:pb-0">
+            <main className="lg:pl-72 min-h-screen pt-16 pb-24 lg:pt-0 lg:pb-0">
                 <div className="container mx-auto p-4 lg:p-8 max-w-7xl">
                     {children}
                 </div>
