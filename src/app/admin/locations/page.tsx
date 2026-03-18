@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import {
     MapPin,
@@ -13,247 +13,416 @@ import {
     Users,
     Calendar,
     Shield,
+    Building2,
+    Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
-
-// Single facility data
-const FACILITY_DATA = {
-    name: "SOL Pilates",
-    address: "250 West 54th Street, New York, NY 10019",
-    phone: "(212) 555-0180",
-    email: "hello@solpilates.com",
-    hours: {
-        weekday: "5:00 AM - 11:00 PM",
-        saturday: "6:00 AM - 10:00 PM",
-        sunday: "7:00 AM - 9:00 PM",
-    },
-    trainers: 8,
-    activeClasses: 24,
-    totalMembers: 2847,
-    sqft: "45,000",
-    zones: [
-        "Performance Training Floor",
-        "Heated Yoga Studio",
-        "Indoor Cycling Theater",
-        "Olympic Lifting Platform",
-        "Recovery Lounge",
-        "Private Training Suites",
-        "Smoothie Bar",
-        "Sauna & Steam Room",
-    ],
-    description:
-        "SOL Pilates is a 45,000 sq ft premium fitness facility featuring five distinct training zones, each purpose-built and equipped with commercial-grade gear. Open 7 days a week with extended hours.",
-}
+import { getFacility, callUpdateFacility, getTrainers } from "@/lib/firebase/firestore"
+import { GymCenter } from "@/types/gym"
 
 export default function FacilitySettingsPage() {
+    const [isLoading, setIsLoading] = useState(true)
     const [isEditing, setIsEditing] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [facility, setFacility] = useState<GymCenter | null>(null)
+    const [trainerCount, setTrainerCount] = useState(0)
 
-    const handleSave = () => {
-        setIsEditing(false)
-        toast.success("Facility details updated successfully")
+    // Form refs for editable fields
+    const nameRef = useRef<HTMLInputElement>(null)
+    const streetRef = useRef<HTMLInputElement>(null)
+    const cityRef = useRef<HTMLInputElement>(null)
+    const stateRef = useRef<HTMLInputElement>(null)
+    const zipRef = useRef<HTMLInputElement>(null)
+    const phoneRef = useRef<HTMLInputElement>(null)
+    const emailRef = useRef<HTMLInputElement>(null)
+    const facilitiesRef = useRef<HTMLTextAreaElement>(null)
+
+    useEffect(() => {
+        async function load() {
+            try {
+                const [facilityData, trainers] = await Promise.all([
+                    getFacility(),
+                    getTrainers(),
+                ])
+                setFacility(facilityData)
+                setTrainerCount(trainers.length)
+            } catch {
+                toast.error("Failed to load facility data")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        load()
+    }, [])
+
+    const handleSave = async () => {
+        if (!facility) return
+        setIsSaving(true)
+        try {
+            await callUpdateFacility({
+                facilityId: facility.id,
+                name: nameRef.current?.value ?? facility.name,
+                address: {
+                    street: streetRef.current?.value ?? facility.address.street,
+                    city: cityRef.current?.value ?? facility.address.city,
+                    state: stateRef.current?.value ?? facility.address.state,
+                    zip: zipRef.current?.value ?? facility.address.zip,
+                    country: facility.address.country,
+                },
+                contactInfo: {
+                    phone: phoneRef.current?.value ?? facility.contactInfo.phone,
+                    email: emailRef.current?.value ?? facility.contactInfo.email,
+                },
+                facilities: facilitiesRef.current?.value ?? facility.facilities,
+            })
+            // Reload to get updated data
+            const updated = await getFacility()
+            setFacility(updated)
+            setIsEditing(false)
+            toast.success("Facility details updated successfully")
+        } catch {
+            toast.error("Failed to save facility details")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const fullAddress = facility
+        ? `${facility.address.street}, ${facility.address.city}, ${facility.address.state} ${facility.address.zip}`
+        : ""
+
+    // Parse facilities string into zones array
+    const zones = facility?.facilities
+        ? facility.facilities.split(/[,\n]/).map(s => s.trim()).filter(Boolean)
+        : []
+
+    if (isLoading) {
+        return (
+            <div className="space-y-8 pb-20 lg:pb-0 max-w-5xl">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20">
+                    <div>
+                        <div className="h-12 w-48 bg-peach-300/30 rounded animate-pulse mb-2" />
+                        <div className="h-5 w-80 bg-peach-300/20 rounded animate-pulse" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-peach-50 border border-peach-400/20 p-5">
+                            <div className="w-5 h-5 bg-peach-300/30 rounded animate-pulse mb-3" />
+                            <div className="h-8 w-16 bg-peach-300/30 rounded animate-pulse mb-1" />
+                            <div className="h-3 w-24 bg-peach-300/20 rounded animate-pulse" />
+                        </div>
+                    ))}
+                </div>
+                <div className="bg-peach-50 border border-peach-400/20 p-8">
+                    <div className="h-6 w-48 bg-peach-300/30 rounded animate-pulse mb-6" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i}>
+                                <div className="h-3 w-24 bg-peach-300/20 rounded animate-pulse mb-2.5" />
+                                <div className="h-12 bg-peach-200/30 rounded animate-pulse" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    if (!facility) {
+        return (
+            <div className="space-y-8 pb-20 lg:pb-0 max-w-5xl">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="pb-6 border-b border-peach-400/20"
+                >
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">Facility</h2>
+                    <p className="text-olive-300 text-sm tracking-wide">No facility has been configured yet.</p>
+                </motion.div>
+                <div className="bg-peach-50 border border-peach-400/20 p-12 text-center">
+                    <Building2 className="w-12 h-12 text-olive-300/40 mx-auto mb-4" />
+                    <p className="text-olive-400 font-medium mb-1">No Facility Found</p>
+                    <p className="text-olive-300 text-sm">Add a gym center in Firestore to manage facility details here.</p>
+                </div>
+            </div>
+        )
     }
 
     return (
-        <div className="space-y-6 pb-20 lg:pb-0 max-w-5xl">
+        <div className="space-y-8 pb-20 lg:pb-0 max-w-5xl">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
+            >
                 <div>
-                    <h2 className="text-2xl font-black text-olive-600 font-display">Facility Settings</h2>
-                    <p className="text-olive-300 text-sm mt-1">
-                        Manage your facility details, hours, and amenities
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
+                        Facility
+                    </h2>
+                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
+                        Manage your facility details, operating hours, training zones, and amenities.
                     </p>
                 </div>
                 <button
                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                    className="px-6 py-3 bg-terra-400 text-peach-50 font-bold text-sm tracking-wider hover:bg-terra-300 transition-all flex items-center gap-2 w-fit"
+                    disabled={isSaving}
+                    className="px-6 py-3.5 bg-terra-400 text-peach-50 font-bold text-xs tracking-[0.2em] uppercase hover:bg-terra-300 transition-all flex items-center gap-2.5 w-fit hover:shadow-lg hover:shadow-terra-400/15 active:scale-[0.98] disabled:opacity-60"
                 >
-                    {isEditing ? (
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving...
+                        </>
+                    ) : isEditing ? (
                         <>
                             <Save className="w-4 h-4" />
-                            SAVE CHANGES
+                            Save Changes
                         </>
                     ) : (
                         <>
                             <Edit className="w-4 h-4" />
-                            EDIT DETAILS
+                            Edit Details
                         </>
                     )}
                 </button>
-            </div>
+            </motion.div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="grid grid-cols-2 md:grid-cols-4 gap-4"
+            >
                 {[
-                    { label: "Active Trainers", value: FACILITY_DATA.trainers, icon: Users },
-                    { label: "Weekly Classes", value: FACILITY_DATA.activeClasses, icon: Calendar },
-                    { label: "Active Members", value: FACILITY_DATA.totalMembers.toLocaleString(), icon: Shield },
-                    { label: "Facility Size", value: `${FACILITY_DATA.sqft} sqft`, icon: Dumbbell },
-                ].map((stat, idx) => (
-                    <motion.div
+                    { label: "Active Trainers", value: trainerCount, icon: Users },
+                    { label: "Training Zones", value: zones.length, icon: Calendar },
+                    { label: "Status", value: facility.isActive ? "Active" : "Inactive", icon: Shield },
+                    { label: "Location", value: facility.address.city, icon: Building2 },
+                ].map((stat) => (
+                    <div
                         key={stat.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="bg-peach-50 border border-peach-400/20 p-5"
+                        className="group relative overflow-hidden bg-peach-50 border border-peach-400/20 p-5 hover:border-terra-400/30 transition-all duration-500"
                     >
-                        <stat.icon className="w-5 h-5 text-olive-400 mb-3" />
-                        <p className="text-2xl font-black text-olive-600">{stat.value}</p>
-                        <p className="text-xs text-olive-300 tracking-wider uppercase mt-1">{stat.label}</p>
-                    </motion.div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-terra-400/5 rounded-full blur-2xl -mr-12 -mt-12 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
+                        <stat.icon className="w-5 h-5 text-olive-300 mb-3 group-hover:text-terra-400 transition-colors" />
+                        <p className="text-2xl font-black text-olive-600 tracking-tight">{stat.value}</p>
+                        <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
+                    </div>
                 ))}
-            </div>
+            </motion.div>
 
-            {/* Facility Details */}
+            {/* General Information */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-peach-50 border border-peach-400/20 p-6"
+                className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors"
             >
-                <h3 className="text-lg font-bold text-olive-600 mb-6">General Information</h3>
+                <div className="mb-8">
+                    <h3 className="text-xl font-bold text-olive-600 mb-1">General Information</h3>
+                    <p className="text-olive-300 text-xs tracking-wider uppercase">Core facility details</p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
-                            FACILITY NAME
+                        <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                            Facility Name
                         </label>
                         <input
+                            ref={nameRef}
                             type="text"
-                            defaultValue={FACILITY_DATA.name}
+                            defaultValue={facility.name}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
-                            ADDRESS
+                        <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                            Street Address
                         </label>
                         <input
+                            ref={streetRef}
                             type="text"
-                            defaultValue={FACILITY_DATA.address}
+                            defaultValue={facility.address.street}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                         />
                     </div>
-                    <div>
-                        <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
-                            PHONE
-                        </label>
-                        <input
-                            type="text"
-                            defaultValue={FACILITY_DATA.phone}
-                            disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
-                        />
+                    <div className="grid grid-cols-3 gap-3">
+                        <div>
+                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">City</label>
+                            <input
+                                ref={cityRef}
+                                type="text"
+                                defaultValue={facility.address.city}
+                                disabled={!isEditing}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">State</label>
+                            <input
+                                ref={stateRef}
+                                type="text"
+                                defaultValue={facility.address.state}
+                                disabled={!isEditing}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">ZIP</label>
+                            <input
+                                ref={zipRef}
+                                type="text"
+                                defaultValue={facility.address.zip}
+                                disabled={!isEditing}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
-                            EMAIL
-                        </label>
-                        <input
-                            type="text"
-                            defaultValue={FACILITY_DATA.email}
-                            disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
-                        />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">Phone</label>
+                            <input
+                                ref={phoneRef}
+                                type="text"
+                                defaultValue={facility.contactInfo.phone}
+                                disabled={!isEditing}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">Email</label>
+                            <input
+                                ref={emailRef}
+                                type="text"
+                                defaultValue={facility.contactInfo.email}
+                                disabled={!isEditing}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                {/* Description */}
+                {/* Facilities / Description */}
                 <div className="mt-6">
-                    <label className="block text-xs font-bold text-olive-600 tracking-wider mb-2">
-                        DESCRIPTION
+                    <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                        Facilities & Description
                     </label>
                     <textarea
-                        defaultValue={FACILITY_DATA.description}
+                        ref={facilitiesRef}
+                        defaultValue={facility.facilities}
                         disabled={!isEditing}
                         rows={3}
-                        className={`w-full px-4 py-3 bg-peach-200/40 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none resize-none ${!isEditing && 'opacity-70 cursor-not-allowed'}`}
+                        className={`w-full px-4 py-3 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 resize-none ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                     />
                 </div>
             </motion.div>
 
             {/* Operating Hours */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-peach-50 border border-peach-400/20 p-6"
-            >
-                <div className="flex items-center gap-3 mb-6">
-                    <Clock className="w-5 h-5 text-olive-400" />
-                    <h3 className="text-lg font-bold text-olive-600">Operating Hours</h3>
-                </div>
-                <div className="space-y-4">
-                    {[
-                        { label: "Monday - Friday", value: FACILITY_DATA.hours.weekday },
-                        { label: "Saturday", value: FACILITY_DATA.hours.saturday },
-                        { label: "Sunday", value: FACILITY_DATA.hours.sunday },
-                    ].map((slot) => (
-                        <div key={slot.label} className="flex items-center justify-between py-3 border-b border-peach-400/10 last:border-0">
-                            <span className="text-olive-400 font-medium">{slot.label}</span>
-                            {isEditing ? (
-                                <input
-                                    type="text"
-                                    defaultValue={slot.value}
-                                    className="w-48 h-10 px-4 bg-peach-200/40 border border-peach-400/20 text-olive-600 text-right focus:border-terra-400 focus:outline-none"
-                                />
-                            ) : (
-                                <span className="text-olive-600 font-bold">{slot.value}</span>
-                            )}
+            {facility.operatingHours && Object.keys(facility.operatingHours).length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors"
+                >
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-peach-200/60 flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-olive-400" />
                         </div>
-                    ))}
-                </div>
-            </motion.div>
+                        <div>
+                            <h3 className="text-lg font-bold text-olive-600">Operating Hours</h3>
+                            <p className="text-olive-300 text-xs tracking-wider uppercase">Weekly schedule</p>
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        {Object.entries(facility.operatingHours).map(([day, hours], idx) => (
+                            <motion.div
+                                key={day}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.35 + idx * 0.05 }}
+                                className="flex items-center justify-between py-4 border-b border-peach-400/8 last:border-0 hover:bg-peach-100/40 -mx-2 px-2 transition-colors rounded-sm"
+                            >
+                                <span className="text-olive-400 font-medium text-sm capitalize">{day}</span>
+                                <span className="text-olive-600 font-bold text-sm">
+                                    {hours.open} - {hours.close}
+                                </span>
+                            </motion.div>
+                        ))}
+                    </div>
+                </motion.div>
+            )}
 
-            {/* Amenities & Zones */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-peach-50 border border-peach-400/20 p-6"
-            >
-                <div className="flex items-center gap-3 mb-6">
-                    <Dumbbell className="w-5 h-5 text-olive-400" />
-                    <h3 className="text-lg font-bold text-olive-600">Training Zones & Amenities</h3>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                    {FACILITY_DATA.zones.map((zone) => (
-                        <span
-                            key={zone}
-                            className="px-4 py-2 bg-peach-200/50 text-olive-400 text-sm font-medium border border-peach-400/20 hover:border-terra-400/30 transition-colors"
-                        >
-                            {zone}
-                        </span>
-                    ))}
-                    {isEditing && (
-                        <button className="px-4 py-2 border border-dashed border-peach-400/20 text-olive-300 text-sm font-medium hover:border-terra-400/50 hover:text-terra-400 transition-colors">
-                            + Add Zone
-                        </button>
-                    )}
-                </div>
-            </motion.div>
+            {/* Training Zones & Amenities */}
+            {zones.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors"
+                >
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-peach-200/60 flex items-center justify-center">
+                            <Dumbbell className="w-5 h-5 text-olive-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-olive-600">Training Zones & Amenities</h3>
+                            <p className="text-olive-300 text-xs tracking-wider uppercase">{zones.length} areas configured</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                        {zones.map((zone, idx) => (
+                            <motion.span
+                                key={zone}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.45 + idx * 0.04 }}
+                                className="px-4 py-2.5 bg-peach-200/40 text-olive-400 text-sm font-medium border border-peach-400/15 hover:border-terra-400/30 hover:bg-peach-200/60 transition-all cursor-default"
+                            >
+                                {zone}
+                            </motion.span>
+                        ))}
+                    </div>
+                </motion.div>
+            )}
 
-            {/* Contact Information */}
+            {/* Contact Reference */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-peach-50 border border-peach-400/20 p-6"
+                className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors"
             >
-                <h3 className="text-lg font-bold text-olive-600 mb-6">Quick Contact Reference</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex items-start gap-3 text-olive-300">
-                        <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{FACILITY_DATA.address}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-olive-300">
-                        <Phone className="w-4 h-4 flex-shrink-0" />
-                        <span className="text-sm">{FACILITY_DATA.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-olive-300">
-                        <Mail className="w-4 h-4 flex-shrink-0" />
-                        <span className="text-sm">{FACILITY_DATA.email}</span>
-                    </div>
+                <div className="mb-8">
+                    <h3 className="text-xl font-bold text-olive-600 mb-1">Quick Contact Reference</h3>
+                    <p className="text-olive-300 text-xs tracking-wider uppercase">Facility contact details at a glance</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                        { icon: MapPin, value: fullAddress, label: "Address" },
+                        { icon: Phone, value: facility.contactInfo.phone, label: "Phone" },
+                        { icon: Mail, value: facility.contactInfo.email, label: "Email" },
+                    ].map((item, idx) => (
+                        <motion.div
+                            key={item.label}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.55 + idx * 0.05 }}
+                            className="flex items-start gap-3 group"
+                        >
+                            <div className="w-8 h-8 bg-peach-200/50 flex items-center justify-center flex-shrink-0 group-hover:bg-terra-400/10 transition-colors">
+                                <item.icon className="w-4 h-4 text-olive-300 group-hover:text-terra-400 transition-colors" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-olive-300 tracking-wider uppercase font-semibold mb-1">{item.label}</p>
+                                <p className="text-olive-400 text-sm font-medium">{item.value}</p>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
             </motion.div>
         </div>

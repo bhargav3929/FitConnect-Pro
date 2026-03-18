@@ -10,6 +10,9 @@ import {
     UserX,
     Calendar,
     Activity,
+    Users,
+    CreditCard,
+    UserPlus,
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -54,11 +57,14 @@ export default function MembersPage() {
         return matchesSearch && matchesPlan && matchesStatus
     })
 
+    const activeCount = members.filter(m => m.subscription.status === 'active').length
+    const totalCredits = members.reduce((sum, m) => sum + (m.subscription.classesRemaining || 0), 0)
+
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'active': return 'bg-green-500/15 text-green-600'
-            case 'expired': return 'bg-red-500/15 text-red-600'
-            case 'canceled': return 'bg-yellow-500/15 text-yellow-600'
+            case 'active': return 'bg-green-500/10 text-green-700 ring-1 ring-green-500/20'
+            case 'expired': return 'bg-red-500/10 text-red-600 ring-1 ring-red-500/20'
+            case 'canceled': return 'bg-yellow-500/10 text-yellow-700 ring-1 ring-yellow-500/20'
             default: return 'bg-peach-300/30 text-olive-400'
         }
     }
@@ -70,36 +76,92 @@ export default function MembersPage() {
     }
 
     return (
-        <div className="space-y-6 pb-20 lg:pb-0">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-8 max-w-[1600px] mx-auto pb-20 lg:pb-0">
+            {/* Premium Header */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
+            >
                 <div>
-                    <h2 className="text-2xl font-black text-olive-600 font-display">Members</h2>
-                    <p className="text-olive-300 text-sm mt-1">
-                        View and manage member accounts
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
+                        Members
+                    </h2>
+                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
+                        Manage member accounts, subscriptions, and class attendance across your studio.
                     </p>
                 </div>
-                <div className="flex items-center gap-3 text-olive-300 text-sm">
-                    {!isLoading && <span>{members.length} total members</span>}
+                <div className="flex items-center gap-3 flex-wrap">
+                    {!isLoading && (
+                        <>
+                            <span className="text-olive-300 text-xs font-mono bg-peach-200/50 px-3 py-1.5 rounded-full border border-peach-400/20 flex items-center gap-2">
+                                <Users className="w-3 h-3" />
+                                {members.length} total
+                            </span>
+                            <span className="text-olive-300 text-xs font-mono bg-green-500/8 px-3 py-1.5 rounded-full border border-green-500/15 flex items-center gap-2">
+                                <Activity className="w-3 h-3 text-green-600" />
+                                {activeCount} active
+                            </span>
+                        </>
+                    )}
                 </div>
-            </div>
+            </motion.div>
+
+            {/* Summary Stats */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+            >
+                {[
+                    { label: "Total Members", value: members.length, icon: Users },
+                    { label: "Active", value: activeCount, icon: Activity },
+                    { label: "Credits Remaining", value: totalCredits, icon: CreditCard },
+                    { label: "New This Month", value: members.filter(m => {
+                        if (!m.createdAt) return false
+                        const d = typeof m.createdAt === 'string' ? new Date(m.createdAt) : m.createdAt
+                        const now = new Date()
+                        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+                    }).length, icon: UserPlus },
+                ].map((stat, idx) => (
+                    <div
+                        key={stat.label}
+                        className="group relative overflow-hidden bg-peach-50 border border-peach-400/20 p-5 hover:border-terra-400/30 transition-all duration-500"
+                    >
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-terra-400/5 rounded-full blur-2xl -mr-12 -mt-12 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
+                        <stat.icon className="w-5 h-5 text-olive-300 mb-3 group-hover:text-terra-400 transition-colors" />
+                        {isLoading ? (
+                            <div className="h-8 w-16 bg-peach-300/40 rounded animate-pulse mb-1" />
+                        ) : (
+                            <p className="text-2xl font-black text-olive-600 tracking-tight">{stat.value.toLocaleString()}</p>
+                        )}
+                        <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
+                    </div>
+                ))}
+            </motion.div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300" />
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-col sm:flex-row gap-4"
+            >
+                <div className="relative flex-1 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300 group-focus-within:text-terra-400 transition-colors" />
                     <input
                         type="text"
                         placeholder="Search by name or email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/50 focus:border-terra-400 focus:outline-none"
+                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-white transition-all duration-300"
                     />
                 </div>
                 <select
                     value={planFilter}
                     onChange={(e) => setPlanFilter(e.target.value)}
-                    className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none appearance-none cursor-pointer capitalize"
+                    className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {PLAN_FILTERS.map(plan => (
                         <option key={plan} value={plan} className="capitalize">{plan}</option>
@@ -108,25 +170,30 @@ export default function MembersPage() {
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400 focus:outline-none appearance-none cursor-pointer capitalize"
+                    className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {STATUS_FILTERS.map(status => (
                         <option key={status} value={status} className="capitalize">{status}</option>
                     ))}
                 </select>
-            </div>
+            </motion.div>
 
             {/* Loading State */}
             {isLoading && (
                 <div className="bg-peach-50 border border-peach-400/20 overflow-hidden">
-                    <div className="divide-y divide-peach-400/15">
-                        {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="p-4 animate-pulse">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-peach-300/40 rounded-full" />
-                                    <div>
-                                        <div className="h-4 w-32 bg-peach-300/40 rounded mb-2" />
-                                        <div className="h-3 w-44 bg-peach-200/60 rounded" />
+                    <div className="divide-y divide-peach-400/10">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="p-5 animate-pulse" style={{ animationDelay: `${i * 100}ms` }}>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 bg-peach-300/30 rounded-full" />
+                                    <div className="flex-1">
+                                        <div className="h-4 w-36 bg-peach-300/30 rounded mb-2" />
+                                        <div className="h-3 w-48 bg-peach-200/50 rounded" />
+                                    </div>
+                                    <div className="hidden lg:flex items-center gap-8">
+                                        <div className="h-5 w-16 bg-peach-200/50 rounded" />
+                                        <div className="h-5 w-20 bg-peach-200/50 rounded" />
+                                        <div className="h-5 w-24 bg-peach-200/50 rounded" />
                                     </div>
                                 </div>
                             </div>
@@ -140,139 +207,168 @@ export default function MembersPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
                     className="bg-peach-50 border border-peach-400/20 overflow-hidden"
                 >
                     {/* Desktop Table */}
                     <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-peach-400/20 bg-peach-300/30">
-                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">MEMBER</th>
-                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">PLAN</th>
-                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">STATUS</th>
-                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">JOINED</th>
-                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">CREDITS</th>
-                                    <th className="text-left text-xs font-bold text-olive-600 tracking-wider p-4">CLASSES</th>
-                                    <th className="text-right text-xs font-bold text-olive-600 tracking-wider p-4">ACTIONS</th>
+                                <tr className="border-b border-peach-400/15 bg-peach-200/30">
+                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4 pl-6">Member</th>
+                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Plan</th>
+                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Status</th>
+                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Joined</th>
+                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Credits</th>
+                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Classes</th>
+                                    <th className="text-right text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4 pr-6">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredMembers.map((member) => (
-                                    <tr
+                                {filteredMembers.map((member, idx) => (
+                                    <motion.tr
                                         key={member.uid}
-                                        className="border-b border-peach-400/10 hover:bg-peach-100 transition-colors"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.35 + idx * 0.03 }}
+                                        className="border-b border-peach-400/8 hover:bg-peach-100/80 transition-colors duration-200 group"
                                     >
-                                        <td className="p-4">
+                                        <td className="p-4 pl-6">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-10 w-10 bg-peach-200/60">
-                                                    <AvatarFallback className="bg-transparent text-olive-600 font-bold text-sm">
+                                                <Avatar className="h-10 w-10 ring-2 ring-peach-400/10 group-hover:ring-terra-400/20 transition-all">
+                                                    <AvatarFallback className="bg-peach-200/60 text-olive-600 font-bold text-sm">
                                                         {member.name.split(' ').map(n => n[0]).join('')}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className="font-bold text-olive-600">{member.name}</p>
-                                                    <p className="text-xs text-olive-300">{member.email}</p>
+                                                    <p className="font-bold text-olive-600 text-sm">{member.name}</p>
+                                                    <p className="text-xs text-olive-300 mt-0.5">{member.email}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-olive-400 capitalize">{member.subscription.planType || 'None'}</span>
+                                            <span className="text-olive-400 capitalize text-sm font-medium">{member.subscription.planType || 'None'}</span>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`px-3 py-1 text-xs font-bold tracking-wider uppercase ${getStatusColor(member.subscription.status)}`}>
+                                            <span className={`inline-flex px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(member.subscription.status)}`}>
                                                 {member.subscription.status}
                                             </span>
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-2 text-olive-300">
-                                                <Calendar className="w-4 h-4" />
+                                                <Calendar className="w-3.5 h-3.5" />
                                                 <span className="text-sm">{formatDate(member.createdAt)}</span>
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-olive-600 font-bold">
+                                            <span className="text-olive-600 font-black text-lg tracking-tight">
                                                 {member.subscription.classesRemaining}
                                             </span>
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">
-                                                <Activity className="w-4 h-4 text-olive-300" />
-                                                <span className="text-olive-400">{member.stats.totalClassesAttended}</span>
+                                                <Activity className="w-3.5 h-3.5 text-olive-300" />
+                                                <span className="text-olive-400 text-sm font-medium">{member.stats.totalClassesAttended}</span>
                                             </div>
                                         </td>
-                                        <td className="p-4 text-right">
+                                        <td className="p-4 pr-6 text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <button className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-olive-600 transition-colors">
+                                                    <button className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-olive-600 hover:bg-peach-200/50 rounded-md transition-all">
                                                         <MoreVertical className="w-4 h-4" />
                                                     </button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-peach-50 border-peach-400/20">
-                                                    <DropdownMenuItem className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer">
-                                                        <Eye className="w-4 h-4 mr-2" />
+                                                <DropdownMenuContent align="end" className="bg-peach-50/95 backdrop-blur-xl border-peach-400/15 shadow-xl shadow-black/5">
+                                                    <DropdownMenuItem className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer gap-2">
+                                                        <Eye className="w-4 h-4" />
                                                         View Profile
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer">
-                                                        <Mail className="w-4 h-4 mr-2" />
+                                                    <DropdownMenuItem className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer gap-2">
+                                                        <Mail className="w-4 h-4" />
                                                         Send Email
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer">
-                                                        <UserX className="w-4 h-4 mr-2" />
+                                                    <DropdownMenuItem className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer gap-2">
+                                                        <UserX className="w-4 h-4" />
                                                         Suspend Account
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </td>
-                                    </tr>
+                                    </motion.tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
 
                     {/* Mobile Cards */}
-                    <div className="lg:hidden divide-y divide-peach-400/15">
-                        {filteredMembers.map((member) => (
-                            <div key={member.uid} className="p-4 hover:bg-peach-100 transition-colors">
+                    <div className="lg:hidden divide-y divide-peach-400/10">
+                        {filteredMembers.map((member, idx) => (
+                            <motion.div
+                                key={member.uid}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 + idx * 0.05 }}
+                                className="p-4 hover:bg-peach-100/60 transition-colors relative"
+                            >
+                                <div className="absolute left-0 top-4 bottom-4 w-[3px] bg-transparent group-hover:bg-terra-400/30 transition-colors rounded-r" />
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex items-center gap-3">
-                                        <Avatar className="h-10 w-10 bg-peach-200/60">
-                                            <AvatarFallback className="bg-transparent text-olive-600 font-bold text-sm">
+                                        <Avatar className="h-10 w-10 ring-2 ring-peach-400/10">
+                                            <AvatarFallback className="bg-peach-200/60 text-olive-600 font-bold text-sm">
                                                 {member.name.split(' ').map(n => n[0]).join('')}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-bold text-olive-600">{member.name}</p>
-                                            <p className="text-xs text-olive-300">{member.email}</p>
+                                            <p className="font-bold text-olive-600 text-sm">{member.name}</p>
+                                            <p className="text-xs text-olive-300 mt-0.5">{member.email}</p>
                                         </div>
                                     </div>
-                                    <span className={`px-2 py-1 text-xs font-bold tracking-wider uppercase ${getStatusColor(member.subscription.status)}`}>
+                                    <span className={`inline-flex px-2 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(member.subscription.status)}`}>
                                         {member.subscription.status}
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2 text-sm text-olive-400">
+                                <div className="grid grid-cols-3 gap-2 text-sm ml-[52px]">
                                     <div>
-                                        <p className="text-olive-300 text-xs">Plan</p>
-                                        <p className="capitalize">{member.subscription.planType || 'None'}</p>
+                                        <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Plan</p>
+                                        <p className="text-olive-400 font-medium capitalize">{member.subscription.planType || 'None'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-olive-300 text-xs">Classes</p>
-                                        <p>{member.stats.totalClassesAttended}</p>
+                                        <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Classes</p>
+                                        <p className="text-olive-400 font-medium">{member.stats.totalClassesAttended}</p>
                                     </div>
                                     <div>
-                                        <p className="text-olive-300 text-xs">Credits</p>
-                                        <p>{member.subscription.classesRemaining}</p>
+                                        <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Credits</p>
+                                        <p className="text-olive-600 font-black">{member.subscription.classesRemaining}</p>
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
 
                     {filteredMembers.length === 0 && (
-                        <div className="text-center py-12">
-                            <Activity className="w-8 h-8 text-olive-300/30 mx-auto mb-3" />
-                            <p className="text-olive-300 text-sm">No members found</p>
+                        <div className="text-center py-16">
+                            <div className="w-16 h-16 bg-peach-200/40 flex items-center justify-center mx-auto mb-4">
+                                <Users className="w-8 h-8 text-olive-300/30" />
+                            </div>
+                            <p className="text-olive-600 font-bold mb-1">No members found</p>
+                            <p className="text-olive-300 text-sm">Try adjusting your search or filter criteria</p>
                         </div>
                     )}
+                </motion.div>
+            )}
+
+            {/* Footer Summary */}
+            {!isLoading && filteredMembers.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="flex items-center justify-between text-olive-300 text-xs tracking-wider"
+                >
+                    <span>Showing {filteredMembers.length} of {members.length} members</span>
+                    <span className="font-mono bg-peach-200/30 px-3 py-1 rounded-full border border-peach-400/15">
+                        {activeCount} active &bull; {members.length - activeCount} inactive
+                    </span>
                 </motion.div>
             )}
         </div>

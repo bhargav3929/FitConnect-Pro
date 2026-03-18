@@ -16,6 +16,7 @@ import { UserProfile } from '@/types/user';
 import { ClassSession, SpotSelection } from '@/types/class';
 import { Booking } from '@/types/booking';
 import { Trainer } from '@/types/trainer';
+import { GymCenter } from '@/types/gym';
 
 // ---------------------------------------------------------------------------
 // API call helper — gets ID token and calls our Next.js API routes
@@ -440,6 +441,311 @@ export async function callSeedDatabase(): Promise<{
         method: 'POST',
         body: {},
     });
+}
+
+// ---------------------------------------------------------------------------
+// 21. getAllTrainers — Admin: all trainers (including inactive)
+// ---------------------------------------------------------------------------
+
+export async function getAllTrainers(): Promise<Trainer[]> {
+    const snapshot = await getDocs(collection(db, 'trainers'));
+    return snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return convertTimestamps({ ...data, id: doc.id }) as unknown as Trainer;
+    });
+}
+
+// ---------------------------------------------------------------------------
+// 22. callCreateTrainer — API route wrapper for admin
+// ---------------------------------------------------------------------------
+
+interface CreateTrainerInput {
+    name: string;
+    email: string;
+    phone?: string;
+    bio?: string;
+    certifications?: string[];
+    specialties?: string[];
+    profilePictureUrl?: string;
+    experienceYears?: number;
+    rating?: number;
+}
+
+export async function callCreateTrainer(
+    trainerData: CreateTrainerInput,
+): Promise<{ success: boolean; trainerId: string }> {
+    return apiFetch<{ success: boolean; trainerId: string }>('/api/admin/trainers', {
+        method: 'POST',
+        body: trainerData,
+    });
+}
+
+// ---------------------------------------------------------------------------
+// 23. callUpdateTrainer — API route wrapper for admin
+// ---------------------------------------------------------------------------
+
+interface UpdateTrainerInput extends Partial<CreateTrainerInput> {
+    trainerId: string;
+    isActive?: boolean;
+}
+
+export async function callUpdateTrainer(
+    trainerData: UpdateTrainerInput,
+): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>('/api/admin/trainers', {
+        method: 'PUT',
+        body: trainerData,
+    });
+}
+
+// ---------------------------------------------------------------------------
+// 24. callDeleteTrainer — API route wrapper for admin (soft delete)
+// ---------------------------------------------------------------------------
+
+export async function callDeleteTrainer(
+    trainerId: string,
+): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>('/api/admin/trainers', {
+        method: 'DELETE',
+        body: { trainerId },
+    });
+}
+
+// ---------------------------------------------------------------------------
+// 25. getFacility — Get the single gym center from Firestore
+// ---------------------------------------------------------------------------
+
+export async function getFacility(): Promise<GymCenter | null> {
+    const snapshot = await getDocs(collection(db, 'gymCenters'));
+    if (snapshot.empty) return null;
+    const doc = snapshot.docs[0];
+    return convertTimestamps({ ...doc.data(), id: doc.id }) as unknown as GymCenter;
+}
+
+// ---------------------------------------------------------------------------
+// 26. callUpdateFacility — API route wrapper for admin
+// ---------------------------------------------------------------------------
+
+interface UpdateFacilityInput {
+    facilityId: string;
+    name?: string;
+    address?: GymCenter['address'];
+    coordinates?: GymCenter['coordinates'];
+    contactInfo?: GymCenter['contactInfo'];
+    operatingHours?: GymCenter['operatingHours'];
+    facilities?: string;
+    photos?: string[];
+    isActive?: boolean;
+}
+
+export async function callUpdateFacility(
+    facilityData: UpdateFacilityInput,
+): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>('/api/admin/facility', {
+        method: 'PUT',
+        body: facilityData,
+    });
+}
+
+// ---------------------------------------------------------------------------
+// 27. Real-time listeners for admin pages
+// ---------------------------------------------------------------------------
+
+export function subscribeToAllClasses(
+    callback: (classes: ClassSession[]) => void,
+): Unsubscribe {
+    const q = query(
+        collection(db, 'classes'),
+        orderBy('date', 'desc'),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const classes = snapshot.docs.map((d) => {
+            const data = d.data();
+            return convertTimestamps({ ...data, id: d.id }) as unknown as ClassSession;
+        });
+        callback(classes);
+    });
+}
+
+export function subscribeToAllBookings(
+    callback: (bookings: Booking[]) => void,
+): Unsubscribe {
+    const q = query(
+        collection(db, 'bookings'),
+        orderBy('classDate', 'desc'),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const bookings = snapshot.docs.map((d) => {
+            const data = d.data();
+            return convertTimestamps({ ...data, id: d.id }) as unknown as Booking;
+        });
+        callback(bookings);
+    });
+}
+
+export function subscribeToTrainers(
+    callback: (trainers: Trainer[]) => void,
+    activeOnly = false,
+): Unsubscribe {
+    const q = activeOnly
+        ? query(collection(db, 'trainers'), where('isActive', '==', true))
+        : query(collection(db, 'trainers'));
+    return onSnapshot(q, (snapshot) => {
+        const trainers = snapshot.docs.map((d) => {
+            const data = d.data();
+            return convertTimestamps({ ...data, id: d.id }) as unknown as Trainer;
+        });
+        callback(trainers);
+    });
+}
+
+// ---------------------------------------------------------------------------
+// 28. Report stats — computed from Firestore data
+// ---------------------------------------------------------------------------
+
+export interface MembershipDistribution {
+    name: string;
+    value: number;
+    color: string;
+}
+
+export async function getMembershipDistribution(): Promise<MembershipDistribution[]> {
+    const snapshot = await getDocs(collection(db, 'users'));
+    let weekly = 0;
+    let monthly = 0;
+    let quarterly = 0;
+
+    snapshot.docs.forEach((d) => {
+        const data = d.data();
+        const plan = data.subscription?.planType;
+        if (plan === 'weekly') weekly++;
+        else if (plan === 'monthly') monthly++;
+        else if (plan === 'quarterly') quarterly++;
+    });
+
+    return [
+        { name: 'Weekly', value: weekly, color: '#8B3F2C' },
+        { name: 'Monthly', value: monthly, color: '#6B7752' },
+        { name: 'Quarterly', value: quarterly, color: '#D4B494' },
+    ];
+}
+
+export interface ClassPopularityItem {
+    name: string;
+    bookings: number;
+}
+
+export async function getClassPopularity(): Promise<ClassPopularityItem[]> {
+    const snapshot = await getDocs(collection(db, 'classes'));
+    const typeMap: Record<string, number> = {};
+
+    snapshot.docs.forEach((d) => {
+        const data = d.data();
+        const classType = (data.classType as string) || 'Unknown';
+        const booked = (data.bookedCount as number) || 0;
+        typeMap[classType] = (typeMap[classType] || 0) + booked;
+    });
+
+    return Object.entries(typeMap)
+        .map(([name, bookings]) => ({ name, bookings }))
+        .sort((a, b) => b.bookings - a.bookings)
+        .slice(0, 8);
+}
+
+export interface LocationUtilization {
+    name: string;
+    bookings: number;
+    utilization: number;
+}
+
+export async function getLocationUtilization(): Promise<LocationUtilization[]> {
+    const snapshot = await getDocs(collection(db, 'classes'));
+    const locationMap: Record<string, { booked: number; capacity: number }> = {};
+
+    snapshot.docs.forEach((d) => {
+        const data = d.data();
+        const location = (data.location as string) || 'Main Studio';
+        const booked = (data.bookedCount as number) || 0;
+        const capacity = (data.totalSpots as number) || (data.capacity as number) || 12;
+
+        if (!locationMap[location]) {
+            locationMap[location] = { booked: 0, capacity: 0 };
+        }
+        locationMap[location].booked += booked;
+        locationMap[location].capacity += capacity;
+    });
+
+    return Object.entries(locationMap)
+        .map(([name, stats]) => ({
+            name,
+            bookings: stats.booked,
+            utilization: stats.capacity > 0 ? Math.round((stats.booked / stats.capacity) * 100) : 0,
+        }))
+        .sort((a, b) => b.bookings - a.bookings);
+}
+
+export interface AttendanceStats {
+    totalAttended: number;
+    totalClasses: number;
+    avgAttendanceRate: number;
+    thisMonthClasses: number;
+    activeMembers: number;
+}
+
+export async function getAttendanceStats(): Promise<AttendanceStats> {
+    const [bookingsSnap, classesSnap, usersSnap] = await Promise.all([
+        getDocs(collection(db, 'bookings')),
+        getDocs(collection(db, 'classes')),
+        getDocs(collection(db, 'users')),
+    ]);
+
+    const totalAttended = bookingsSnap.docs.filter(
+        (d) => d.data().status === 'attended',
+    ).length;
+
+    const totalClasses = classesSnap.size;
+
+    const totalCapacity = classesSnap.docs.reduce(
+        (sum, d) => sum + ((d.data().totalSpots as number) || (d.data().capacity as number) || 0),
+        0,
+    );
+
+    const totalBooked = classesSnap.docs.reduce(
+        (sum, d) => sum + ((d.data().bookedCount as number) || 0),
+        0,
+    );
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const thisMonthClasses = classesSnap.docs.filter((d) => {
+        const dateVal = d.data().date;
+        const date = toDate(dateVal);
+        return date >= startOfMonth && date <= now;
+    }).length;
+
+    const activeMembers = usersSnap.docs.filter(
+        (d) => d.data().subscription?.status === 'active',
+    ).length;
+
+    return {
+        totalAttended,
+        totalClasses,
+        avgAttendanceRate: totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0,
+        thisMonthClasses,
+        activeMembers,
+    };
+}
+
+// ---------------------------------------------------------------------------
+// 29. callUpdateUserProfile — Admin: update member profile
+// ---------------------------------------------------------------------------
+
+export async function callUpdateUserProfile(
+    uid: string,
+    updates: Partial<Pick<UserProfile, 'name' | 'age' | 'fitnessGoals'>>,
+): Promise<void> {
+    const userRef = doc(db, 'users', uid);
+    await setDoc(userRef, { ...updates, updatedAt: new Date() }, { merge: true });
 }
 
 // ---------------------------------------------------------------------------
