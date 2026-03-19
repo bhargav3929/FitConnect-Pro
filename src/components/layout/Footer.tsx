@@ -56,7 +56,7 @@ export function Footer() {
                             <ul className="space-y-4">
                                 {["Strength & Sculpt", "Cardio & Endurance", "Reset & Restore", "Muscle Recovery", "Intense Exercise"].map(item => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200">
+                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
                                             {item}
                                         </Link>
                                     </li>
@@ -68,7 +68,7 @@ export function Footer() {
                             <ul className="space-y-4">
                                 {["About SOL", "Our Instructors", "Our Story", "Contact"].map(item => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200">
+                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
                                             {item}
                                         </Link>
                                     </li>
@@ -80,7 +80,7 @@ export function Footer() {
                             <ul className="space-y-4">
                                 {["Privacy Policy", "Terms of Service", "Cookie Policy", "Accessibility"].map(item => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200">
+                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
                                             {item}
                                         </Link>
                                     </li>

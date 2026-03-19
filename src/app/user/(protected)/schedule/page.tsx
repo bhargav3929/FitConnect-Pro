@@ -267,7 +267,7 @@ export default function SchedulePage() {
                         <button
                             key={tab.id}
                             onClick={() => setSelectedTab(tab.id as 'classes' | 'trainers' | 'info')}
-                            className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all relative overflow-hidden ${selectedTab === tab.id
+                            className={`px-6 py-3 rounded-full text-sm font-bold transition-all relative overflow-hidden ${selectedTab === tab.id
                                     ? 'bg-terra-400 text-peach-50 shadow-glow'
                                     : 'bg-peach-200/50 text-olive-400 hover:text-olive-600 hover:bg-peach-200/80'
                                 }`}
@@ -308,7 +308,7 @@ export default function SchedulePage() {
                                         <button
                                             key={filter.id}
                                             onClick={() => toggleFilter(filter.id as FilterType)}
-                                            className={`px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${activeFilters.includes(filter.id as FilterType)
+                                            className={`px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${activeFilters.includes(filter.id as FilterType)
                                                     ? 'bg-terra-400/20 border-terra-400 text-terra-400'
                                                     : 'bg-transparent border-peach-400/20 text-olive-400 hover:border-olive-300/30'
                                                 }`}

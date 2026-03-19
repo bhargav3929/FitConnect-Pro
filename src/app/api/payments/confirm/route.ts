@@ -67,6 +67,17 @@ export async function POST(req: NextRequest) {
                 throw { status: 400, error: 'Invalid plan on payment', code: 'failed-precondition' };
             }
 
+            // For membership plans, prevent overwriting an active subscription
+            if (plan.category === 'membership') {
+                const currentSub = userDoc.data()!.subscription;
+                if (currentSub?.status === 'active' && currentSub?.planCategory === 'membership') {
+                    const existingEnd = currentSub.endDate?.toDate ? currentSub.endDate.toDate() : new Date(currentSub.endDate || 0);
+                    if (existingEnd > new Date()) {
+                        throw { status: 400, error: 'You already have an active membership. Wait for it to expire or cancel first.', code: 'subscription-already-active' };
+                    }
+                }
+            }
+
             // Calculate dates
             const now = new Date();
             const endDate = new Date(now);

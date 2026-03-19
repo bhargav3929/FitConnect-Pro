@@ -49,7 +49,7 @@ export function SubscriptionPromptModal({ isOpen, onClose, classId }: Subscripti
                                 {/* Close button */}
                                 <button
                                     onClick={onClose}
-                                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-peach-200/50 flex items-center justify-center hover:bg-peach-200/80 transition-colors"
+                                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-peach-200/50 flex items-center justify-center hover:bg-peach-200/80 transition-colors"
                                 >
                                     <X className="w-4 h-4 text-olive-600" />
                                 </button>

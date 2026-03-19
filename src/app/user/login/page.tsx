@@ -255,7 +255,7 @@ export default function UserLoginPage() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowPassword(!showPassword)}
-                                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-olive-300/60 hover:text-olive-600 transition-colors"
+                                                                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-olive-300/60 hover:text-olive-600 transition-colors"
                                                             >
                                                                 {showPassword ? (
                                                                     <EyeOff className="w-5 h-5" />
@@ -362,7 +362,7 @@ export default function UserLoginPage() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setShowPassword(!showPassword)}
-                                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-olive-300/60 hover:text-olive-600 transition-colors"
+                                                                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-olive-300/60 hover:text-olive-600 transition-colors"
                                                             >
                                                                 {showPassword ? (
                                                                     <EyeOff className="w-5 h-5" />

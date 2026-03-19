@@ -138,6 +138,17 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'Class not found', code: 'not-found' }, { status: 404 });
         }
 
+        // Validate that new capacity/totalSpots is not less than current booked count
+        const classData = classDoc.data()!;
+        const bookedCount = classData.bookedCount || 0;
+        const newCapacity = updates.capacity ?? updates.totalSpots;
+        if (newCapacity !== undefined && newCapacity < bookedCount) {
+            return NextResponse.json(
+                { error: `Cannot reduce capacity below current booked count (${bookedCount})`, code: 'failed-precondition' },
+                { status: 400 },
+            );
+        }
+
         // Build update object, only including provided fields
         const updateData: Record<string, unknown> = {
             updatedAt: FieldValue.serverTimestamp(),
