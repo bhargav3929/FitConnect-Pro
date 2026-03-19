@@ -72,14 +72,27 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
     // Active plan
     const isUnlimited = classesRemaining === null
     const planLabel = planId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-    const daysLeft = endDate ? Math.max(0, Math.ceil((new Date(endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
-    const renewalDate = endDate ? new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
+    // Safe date parsing (handles Date, Timestamp, string, { seconds } formats)
+    const endDateObj = (() => {
+        if (!endDate) return null
+        if (endDate instanceof Date && !isNaN(endDate.getTime())) return endDate
+        const raw = endDate as unknown
+        if (raw && typeof raw === 'object' && 'seconds' in (raw as Record<string, unknown>)) {
+            return new Date((raw as { seconds: number }).seconds * 1000)
+        }
+        const d = new Date(raw as string | number)
+        return isNaN(d.getTime()) ? null : d
+    })()
 
-    // Credits progress ring
-    const maxCredits = isUnlimited ? 1 : (classesRemaining ?? 0) + 4 // rough estimate for visual
-    const creditFraction = isUnlimited ? 1 : maxCredits > 0 ? (classesRemaining ?? 0) / maxCredits : 0
+    const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
+    const renewalDate = endDateObj ? endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
+
+    // Credits progress ring — use plan's original credit count for the ring max
+    const credits = classesRemaining ?? 0
+    const maxCredits = isUnlimited ? 1 : Math.max(credits, 1)
+    const creditFraction = isUnlimited ? 1 : credits / maxCredits
     const circumference = 2 * Math.PI * 22
-    const offset = circumference * (1 - Math.min(creditFraction, 1))
+    const offset = circumference * (1 - Math.min(Math.max(creditFraction, 0), 1))
 
     return (
         <motion.div

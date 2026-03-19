@@ -47,8 +47,16 @@ function hasValidSubscription(sub: { planId: unknown; status: string; endDate: u
     if (!sub) return false
     if (!sub.planId) return false
     if (sub.status !== 'active') return false
-    const end = sub.endDate ? new Date(sub.endDate as string) : new Date(0)
-    if (end < new Date()) return false
+    // Safe date parse — handles Date, Timestamp { seconds }, string
+    let end: Date
+    const raw = sub.endDate
+    if (raw instanceof Date) { end = raw }
+    else if (raw && typeof raw === 'object' && 'seconds' in (raw as Record<string, unknown>)) {
+        end = new Date((raw as unknown as { seconds: number }).seconds * 1000)
+    } else {
+        end = raw ? new Date(raw as string) : new Date(0)
+    }
+    if (isNaN(end.getTime()) || end < new Date()) return false
     // classesRemaining === null means unlimited
     if (sub.classesRemaining !== null && (sub.classesRemaining as number) <= 0) return false
     return true
@@ -144,6 +152,8 @@ export default function SchedulePage() {
         setSpotModalOpen(true)
     }
 
+    const refreshSubscription = useClientAuthStore(state => state.refreshSubscription)
+
     const handleSpotConfirm = async (spotNumber: number, isGuest: boolean) => {
         if (!selectedClass) return
         try {
@@ -151,7 +161,9 @@ export default function SchedulePage() {
             toast.success("Booking confirmed!", {
                 description: `Spot ${spotNumber} reserved for ${selectedClass.name}`,
             })
+            // Refresh both class data and user subscription (credits decremented server-side)
             fetchClasses(selectedDate)
+            refreshSubscription()
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to book class"
             toast.error("Booking failed", { description: message })

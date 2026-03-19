@@ -10,13 +10,21 @@ export default function UserLayout({
 }: {
     children: React.ReactNode
 }) {
-    const { isAuthenticated, isLoading, initAuth } = useClientAuthStore()
+    const { isAuthenticated, isLoading, initAuth, startProfileListener } = useClientAuthStore()
     const router = useRouter()
 
     useEffect(() => {
         const unsubscribe = initAuth()
         return () => unsubscribe()
     }, [initAuth])
+
+    // Real-time Firestore listener: keeps subscription, credits, stats in sync.
+    // Fires whenever the user doc changes (booking decrements credits, plan purchase, etc.)
+    useEffect(() => {
+        if (!isAuthenticated) return
+        const unsubscribe = startProfileListener()
+        return () => unsubscribe()
+    }, [isAuthenticated, startProfileListener])
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {

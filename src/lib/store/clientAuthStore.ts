@@ -7,7 +7,7 @@ import {
     updateProfile,
     User as FirebaseUser,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase/config'
 import { ClientUser } from '@/types/client'
 
@@ -17,6 +17,7 @@ interface ClientAuthState {
     clientUser: ClientUser | null
     firebaseUser: FirebaseUser | null
     initAuth: () => () => void
+    startProfileListener: () => () => void
     loginClient: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
     signupClient: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
     logoutClient: () => Promise<void>
@@ -69,13 +70,32 @@ function mapFirebaseError(code: string): string {
     }
 }
 
+function toSafeDate(val: unknown): Date | null {
+    if (!val) return null
+    // Firestore Timestamp
+    if (val && typeof val === 'object' && 'toDate' in val && typeof (val as { toDate: () => Date }).toDate === 'function') {
+        return (val as { toDate: () => Date }).toDate()
+    }
+    // Firestore seconds format { seconds, nanoseconds }
+    if (val && typeof val === 'object' && 'seconds' in val) {
+        return new Date((val as { seconds: number }).seconds * 1000)
+    }
+    // String or number
+    if (typeof val === 'string' || typeof val === 'number') {
+        const d = new Date(val)
+        return isNaN(d.getTime()) ? null : d
+    }
+    if (val instanceof Date) return val
+    return null
+}
+
 function normalizeSubscription(raw: Record<string, unknown> | undefined): ClientUser['subscription'] {
     if (!raw) return { ...DEFAULT_SUBSCRIPTION }
     return {
         planId: (raw.planId as ClientUser['subscription']['planId']) ?? (raw.planType as ClientUser['subscription']['planId']) ?? null,
         planCategory: (raw.planCategory as ClientUser['subscription']['planCategory']) ?? null,
-        startDate: raw.startDate ? new Date(raw.startDate as string) : null,
-        endDate: raw.endDate ? new Date(raw.endDate as string) : null,
+        startDate: toSafeDate(raw.startDate),
+        endDate: toSafeDate(raw.endDate),
         status: (raw.status as ClientUser['subscription']['status']) ?? 'expired',
         classesRemaining: raw.classesRemaining !== undefined ? (raw.classesRemaining as number | null) : 0,
         maxClassesPerDay: (raw.maxClassesPerDay as number) ?? 0,
@@ -87,24 +107,27 @@ function normalizeSubscription(raw: Record<string, unknown> | undefined): Client
     }
 }
 
+function buildClientUser(uid: string, data: Record<string, unknown>): ClientUser {
+    return {
+        id: (data.id as string) || uid,
+        name: (data.name as string) || 'Member',
+        email: (data.email as string) || '',
+        avatar: data.avatar as string | undefined,
+        subscription: normalizeSubscription(data.subscription as Record<string, unknown>),
+        stats: {
+            totalClassesAttended: (data.stats as Record<string, unknown>)?.totalClassesAttended as number ?? 0,
+            currentStreak: (data.stats as Record<string, unknown>)?.currentStreak as number ?? 0,
+            longestStreak: (data.stats as Record<string, unknown>)?.longestStreak as number ?? 0,
+        },
+    }
+}
+
 async function fetchClientProfile(uid: string): Promise<ClientUser | null> {
     try {
         const docRef = doc(db, 'users', uid)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
-            const data = docSnap.data()
-            return {
-                id: data.id || uid,
-                name: data.name || 'Member',
-                email: data.email || '',
-                avatar: data.avatar,
-                subscription: normalizeSubscription(data.subscription as Record<string, unknown>),
-                stats: {
-                    totalClassesAttended: data.stats?.totalClassesAttended ?? 0,
-                    currentStreak: data.stats?.currentStreak ?? 0,
-                    longestStreak: data.stats?.longestStreak ?? 0,
-                },
-            }
+            return buildClientUser(uid, docSnap.data() as Record<string, unknown>)
         }
         return null
     } catch {
@@ -165,6 +188,22 @@ export const useClientAuthStore = create<ClientAuthState>()((set, get) => ({
             }
         })
         return unsubscribe
+    },
+
+    // Real-time Firestore listener — keeps clientUser in sync with DB at all times.
+    // When the booking API decrements classesRemaining in Firestore, this listener
+    // fires and updates the Zustand store automatically within ~1 second.
+    startProfileListener: () => {
+        const { firebaseUser } = get()
+        if (!firebaseUser) return () => {}
+        const userRef = doc(db, 'users', firebaseUser.uid)
+        const unsub: Unsubscribe = onSnapshot(userRef, (snap) => {
+            if (!snap.exists()) return
+            const data = snap.data() as Record<string, unknown>
+            const updated = buildClientUser(firebaseUser.uid, data)
+            set({ clientUser: updated })
+        })
+        return unsub
     },
 
     loginClient: async (email, password) => {

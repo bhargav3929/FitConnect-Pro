@@ -1,32 +1,89 @@
 "use client"
 
+import { useState } from "react"
 import { useClientAuthStore } from "@/lib/store/clientAuthStore"
 import { motion } from "framer-motion"
 import {
     Mail,
     CreditCard,
-    Settings,
     LogOut,
     ChevronRight,
     Flame,
     Trophy,
     Target,
-    Bell,
     HelpCircle,
     Shield,
+    Lock,
+    ArrowRight,
+    Calendar,
+    Star,
+    Eye,
+    EyeOff,
+    Loader2,
+    CheckCircle2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
+import { auth } from "@/lib/firebase/config"
+import { toast } from "sonner"
 import Link from "next/link"
 
 export default function ProfilePage() {
     const { clientUser, logoutClient } = useClientAuthStore()
     const router = useRouter()
+    const [showPasswordSection, setShowPasswordSection] = useState(false)
+    const [currentPassword, setCurrentPassword] = useState('')
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [showCurrent, setShowCurrent] = useState(false)
+    const [showNew, setShowNew] = useState(false)
+    const [isChangingPassword, setIsChangingPassword] = useState(false)
 
     const handleLogout = async () => {
         await logoutClient()
         router.push('/')
+    }
+
+    const handleChangePassword = async () => {
+        if (!newPassword || newPassword.length < 6) {
+            toast.error('Password must be at least 6 characters')
+            return
+        }
+        if (newPassword !== confirmPassword) {
+            toast.error('Passwords do not match')
+            return
+        }
+        if (!currentPassword) {
+            toast.error('Please enter your current password')
+            return
+        }
+
+        setIsChangingPassword(true)
+        try {
+            const user = auth.currentUser
+            if (!user || !user.email) throw new Error('Not authenticated')
+            const credential = EmailAuthProvider.credential(user.email, currentPassword)
+            await reauthenticateWithCredential(user, credential)
+            await updatePassword(user, newPassword)
+            toast.success('Password updated successfully')
+            setShowPasswordSection(false)
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmPassword('')
+        } catch (err: unknown) {
+            const code = (err as { code?: string }).code || ''
+            if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+                toast.error('Current password is incorrect')
+            } else if (code === 'auth/weak-password') {
+                toast.error('New password is too weak')
+            } else {
+                toast.error('Failed to update password. Please try again.')
+            }
+        } finally {
+            setIsChangingPassword(false)
+        }
     }
 
     if (!clientUser) {
@@ -47,6 +104,14 @@ export default function ProfilePage() {
     }
 
     const initials = clientUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    const sub = clientUser.subscription
+    const hasPlan = sub.planId && sub.status === 'active'
+    const isUnlimited = sub.classesRemaining === null
+    const planLabel = sub.planId?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Free'
+    const daysLeft = sub.endDate ? Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
+    const renewalDate = sub.endDate ? new Date(sub.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+
+    const inputClasses = "w-full bg-peach-100 border border-peach-400/20 rounded-xl px-4 py-3 text-olive-600 text-sm font-medium placeholder:text-olive-300/50 focus:outline-none focus:ring-2 focus:ring-terra-400/30 focus:border-terra-400/40 transition-all"
 
     return (
         <div className="max-w-2xl mx-auto space-y-6 pb-24">
@@ -61,7 +126,6 @@ export default function ProfilePage() {
                 <div className="absolute -bottom-10 -left-10 w-36 h-36 rounded-full bg-olive-400/5" />
 
                 <div className="relative z-10">
-                    {/* Avatar + Name */}
                     <div className="flex items-center gap-5 mb-6">
                         <Avatar className="h-20 w-20 border-4 border-peach-50 shadow-lg">
                             <AvatarImage src={clientUser.avatar} />
@@ -77,13 +141,13 @@ export default function ProfilePage() {
                             </p>
                             <div className="flex items-center gap-2 mt-2">
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-terra-400/10 text-terra-400 text-[11px] font-bold">
-                                    {clientUser.subscription.planId ? `${clientUser.subscription.planId.replace(/_/g, ' ')} Plan` : 'Free Plan'}
+                                    {planLabel} Plan
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Stats Row — inline, not separate cards */}
+                    {/* Stats Row */}
                     <div className="flex items-center gap-0 bg-peach-50/60 rounded-xl divide-x divide-olive-400/8 overflow-hidden">
                         <div className="flex-1 py-4 px-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -94,10 +158,12 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex-1 py-4 px-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 mb-1">
-                                <Target className="w-3.5 h-3.5 text-terra-300" />
-                                <span className="text-xl font-black text-olive-600 leading-none">{clientUser.stats.longestStreak}</span>
+                                <Star className="w-3.5 h-3.5 text-terra-300" />
+                                <span className="text-xl font-black text-olive-600 leading-none">
+                                    {isUnlimited ? '∞' : sub.classesRemaining ?? 0}
+                                </span>
                             </div>
-                            <p className="text-[10px] text-olive-300 font-medium uppercase tracking-wider">Best Streak</p>
+                            <p className="text-[10px] text-olive-300 font-medium uppercase tracking-wider">Credits Left</p>
                         </div>
                         <div className="flex-1 py-4 px-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -107,6 +173,69 @@ export default function ProfilePage() {
                             <p className="text-[10px] text-olive-300 font-medium uppercase tracking-wider">Streak</p>
                         </div>
                     </div>
+                </div>
+            </motion.div>
+
+            {/* ═══════════ MEMBERSHIP DETAILS ═══════════ */}
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+            >
+                <p className="text-[10px] font-bold text-olive-300 uppercase tracking-[0.2em] px-1 mb-3">Membership</p>
+                <div className="bg-peach-50 border border-peach-400/15 rounded-2xl overflow-hidden">
+                    {hasPlan ? (
+                        <div className="p-5 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-terra-400/10 flex items-center justify-center">
+                                        <CreditCard className="w-5 h-5 text-terra-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-olive-600 font-bold text-sm">{planLabel}</p>
+                                        <p className="text-olive-300 text-xs">{sub.planCategory === 'membership' ? 'Auto-renewing' : 'Class pack'}</p>
+                                    </div>
+                                </div>
+                                <span className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-700 text-[10px] font-bold uppercase tracking-wider ring-1 ring-green-500/20">
+                                    Active
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3 pt-3 border-t border-peach-400/10">
+                                <div>
+                                    <p className="text-olive-300 text-[10px] uppercase tracking-wider font-semibold mb-1">Credits</p>
+                                    <p className="text-olive-600 font-black text-lg">{isUnlimited ? '∞' : sub.classesRemaining}</p>
+                                </div>
+                                <div>
+                                    <p className="text-olive-300 text-[10px] uppercase tracking-wider font-semibold mb-1">Days Left</p>
+                                    <p className="text-olive-600 font-black text-lg">{daysLeft}</p>
+                                </div>
+                                <div>
+                                    <p className="text-olive-300 text-[10px] uppercase tracking-wider font-semibold mb-1">{sub.planCategory === 'membership' ? 'Renews' : 'Expires'}</p>
+                                    <p className="text-olive-600 font-bold text-xs">{renewalDate}</p>
+                                </div>
+                            </div>
+                            <Link href="/user/subscribe" className="block pt-2">
+                                <Button variant="outline" className="w-full h-11 border-peach-400/20 text-olive-400 hover:bg-peach-200/50 font-bold text-xs tracking-wider rounded-xl">
+                                    UPGRADE PLAN
+                                </Button>
+                            </Link>
+                        </div>
+                    ) : (
+                        <Link href="/user/subscribe" className="block">
+                            <div className="p-5 flex items-center justify-between group hover:bg-peach-100/60 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-terra-400/10 flex items-center justify-center">
+                                        <CreditCard className="w-5 h-5 text-terra-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-olive-600 font-bold text-sm">No Active Plan</p>
+                                        <p className="text-olive-300 text-xs">Choose a plan to start booking classes</p>
+                                    </div>
+                                </div>
+                                <ArrowRight className="w-4 h-4 text-terra-400 group-hover:translate-x-0.5 transition-transform" />
+                            </div>
+                        </Link>
+                    )}
                 </div>
             </motion.div>
 
@@ -120,48 +249,112 @@ export default function ProfilePage() {
                 <Link href="/user/schedule">
                     <div className="bg-peach-50 border border-peach-400/15 rounded-2xl p-4 hover:border-terra-400/25 transition-all group text-center">
                         <div className="w-10 h-10 rounded-xl bg-terra-400/8 flex items-center justify-center mx-auto mb-2 group-hover:bg-terra-400/15 transition-colors">
-                            <Trophy className="w-5 h-5 text-terra-400" />
+                            <Calendar className="w-5 h-5 text-terra-400" />
                         </div>
                         <p className="text-olive-600 text-sm font-bold">Book a Class</p>
                         <p className="text-olive-300 text-[11px] mt-0.5">Browse schedule</p>
                     </div>
                 </Link>
-                <Link href="/user/subscribe">
+                <Link href="/user/bookings">
                     <div className="bg-peach-50 border border-peach-400/15 rounded-2xl p-4 hover:border-terra-400/25 transition-all group text-center">
                         <div className="w-10 h-10 rounded-xl bg-olive-400/8 flex items-center justify-center mx-auto mb-2 group-hover:bg-olive-400/15 transition-colors">
-                            <CreditCard className="w-5 h-5 text-olive-400" />
+                            <Target className="w-5 h-5 text-olive-400" />
                         </div>
-                        <p className="text-olive-600 text-sm font-bold">Manage Plan</p>
-                        <p className="text-olive-300 text-[11px] mt-0.5">View pricing</p>
+                        <p className="text-olive-600 text-sm font-bold">My Bookings</p>
+                        <p className="text-olive-300 text-[11px] mt-0.5">View history</p>
                     </div>
                 </Link>
             </motion.div>
 
-            {/* ═══════════ SETTINGS LIST (iOS-style) ═══════════ */}
+            {/* ═══════════ SECURITY — CHANGE PASSWORD ═══════════ */}
             <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
             >
-                <p className="text-[10px] font-bold text-olive-300 uppercase tracking-[0.2em] px-1 mb-3">Account</p>
-                <div className="bg-peach-50 border border-peach-400/15 rounded-2xl divide-y divide-peach-400/10 overflow-hidden">
-                    {[
-                        { icon: CreditCard, label: "Membership Plan", sub: clientUser.subscription.planId ? `${clientUser.subscription.planId.replace(/_/g, ' ')} Plan` : 'No active plan', color: "text-terra-400", bg: "bg-terra-400/8" },
-                        { icon: Bell, label: "Notifications", sub: "Push & email preferences", color: "text-olive-400", bg: "bg-olive-400/8" },
-                        { icon: Shield, label: "Privacy & Security", sub: "Password, data, permissions", color: "text-olive-400", bg: "bg-olive-400/8" },
-                        { icon: Settings, label: "Preferences", sub: "Theme, language, accessibility", color: "text-olive-400", bg: "bg-olive-400/8" },
-                    ].map((item) => (
-                        <button key={item.label} className="w-full flex items-center gap-4 p-4 hover:bg-peach-100/60 transition-colors group active:bg-peach-200/50">
-                            <div className={`w-9 h-9 rounded-xl ${item.bg} flex items-center justify-center flex-shrink-0 ${item.color}`}>
-                                <item.icon className="w-[18px] h-[18px]" />
+                <p className="text-[10px] font-bold text-olive-300 uppercase tracking-[0.2em] px-1 mb-3">Security</p>
+                <div className="bg-peach-50 border border-peach-400/15 rounded-2xl overflow-hidden">
+                    <button
+                        onClick={() => setShowPasswordSection(!showPasswordSection)}
+                        className="w-full flex items-center gap-4 p-4 hover:bg-peach-100/60 transition-colors group active:bg-peach-200/50"
+                    >
+                        <div className="w-9 h-9 rounded-xl bg-olive-400/8 flex items-center justify-center flex-shrink-0 text-olive-400">
+                            <Lock className="w-[18px] h-[18px]" />
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                            <p className="text-olive-600 font-semibold text-sm">Change Password</p>
+                            <p className="text-olive-300 text-xs">Update your account password</p>
+                        </div>
+                        <ChevronRight className={`w-4 h-4 text-olive-300/30 transition-transform ${showPasswordSection ? 'rotate-90' : ''}`} />
+                    </button>
+
+                    {showPasswordSection && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            className="px-4 pb-5 space-y-3 border-t border-peach-400/10"
+                        >
+                            <div className="pt-4">
+                                <label className="text-[10px] font-bold text-olive-400 uppercase tracking-wider mb-1.5 block">Current Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showCurrent ? 'text' : 'password'}
+                                        value={currentPassword}
+                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                        placeholder="Enter current password"
+                                        className={inputClasses}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrent(!showCurrent)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-olive-300/50 hover:text-olive-400"
+                                    >
+                                        {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex-1 text-left min-w-0">
-                                <p className="text-olive-600 font-semibold text-sm">{item.label}</p>
-                                <p className="text-olive-300 text-xs truncate">{item.sub}</p>
+                            <div>
+                                <label className="text-[10px] font-bold text-olive-400 uppercase tracking-wider mb-1.5 block">New Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showNew ? 'text' : 'password'}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="At least 6 characters"
+                                        className={inputClasses}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNew(!showNew)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-olive-300/50 hover:text-olive-400"
+                                    >
+                                        {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-olive-300/30 group-hover:text-olive-300/60 flex-shrink-0" />
-                        </button>
-                    ))}
+                            <div>
+                                <label className="text-[10px] font-bold text-olive-400 uppercase tracking-wider mb-1.5 block">Confirm New Password</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Repeat new password"
+                                    className={inputClasses}
+                                />
+                            </div>
+                            <Button
+                                onClick={handleChangePassword}
+                                disabled={isChangingPassword}
+                                className="w-full h-11 bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold text-xs tracking-wider rounded-xl mt-2"
+                            >
+                                {isChangingPassword ? (
+                                    <><Loader2 className="w-4 h-4 animate-spin mr-2" /> UPDATING...</>
+                                ) : (
+                                    'UPDATE PASSWORD'
+                                )}
+                            </Button>
+                        </motion.div>
+                    )}
                 </div>
             </motion.div>
 
