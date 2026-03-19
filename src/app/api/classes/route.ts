@@ -175,7 +175,7 @@ export async function PUT(req: NextRequest) {
     }
 }
 
-// DELETE — deleteClass (admin only, soft-delete by canceling)
+// DELETE — deleteClass (admin only, hard delete + cancel associated bookings)
 export async function DELETE(req: NextRequest) {
     try {
         // Verify auth + admin
@@ -195,73 +195,67 @@ export async function DELETE(req: NextRequest) {
             );
         }
 
-        const body = await req.json();
-        const { classId, cancelReason } = body;
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json(
+                { error: 'Invalid request body', code: 'invalid-argument' },
+                { status: 400 },
+            );
+        }
+
+        const { classId } = body;
 
         if (!classId || typeof classId !== 'string') {
             return NextResponse.json({ error: 'classId is required', code: 'invalid-argument' }, { status: 400 });
         }
 
         const classRef = adminDb.collection('classes').doc(classId);
+        const classDoc = await classRef.get();
 
-        await adminDb.runTransaction(async (transaction) => {
-            const classDoc = await transaction.get(classRef);
+        if (!classDoc.exists) {
+            return NextResponse.json({ error: 'Class not found', code: 'not-found' }, { status: 404 });
+        }
 
-            if (!classDoc.exists) {
-                throw { status: 404, error: 'Class not found', code: 'not-found' };
-            }
+        // Cancel all confirmed bookings for this class and restore credits
+        const bookingsSnapshot = await adminDb.collection('bookings')
+            .where('classId', '==', classId)
+            .where('status', '==', 'confirmed')
+            .get();
 
-            const classData = classDoc.data()!;
-
-            if (classData.status === 'canceled') {
-                throw { status: 400, error: 'Class is already canceled', code: 'failed-precondition' };
-            }
-
+        if (bookingsSnapshot.size > 0) {
+            const batch = adminDb.batch();
             const now = FieldValue.serverTimestamp();
-
-            // Cancel the class
-            transaction.update(classRef, {
-                status: 'canceled',
-                canceledAt: now,
-                cancelReason: cancelReason || 'Canceled by admin',
-                updatedAt: now,
-            });
-
-            // Find all confirmed bookings for this class and cancel them
-            const bookingsSnapshot = await adminDb.collection('bookings')
-                .where('classId', '==', classId)
-                .where('status', '==', 'confirmed')
-                .get();
 
             for (const bookingDoc of bookingsSnapshot.docs) {
                 const bookingData = bookingDoc.data();
 
-                // Cancel each booking
-                transaction.update(bookingDoc.ref, {
+                batch.update(bookingDoc.ref, {
                     status: 'canceled',
                     canceledAt: now,
-                    cancelReason: 'Class canceled by admin',
+                    cancelReason: 'Class deleted by admin',
                     updatedAt: now,
                 });
 
-                // Restore classesRemaining for each user
                 const userRef = adminDb.collection('users').doc(bookingData.userId);
-                transaction.update(userRef, {
+                batch.update(userRef, {
                     'subscription.classesRemaining': FieldValue.increment(1),
                     updatedAt: now,
                 });
             }
-        });
+
+            await batch.commit();
+        }
+
+        // Hard delete the class document
+        await classRef.delete();
 
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
-        if (error && typeof error === 'object' && 'status' in error) {
-            const e = error as { status: number; error: string; code: string };
-            return NextResponse.json({ error: e.error, code: e.code }, { status: e.status });
-        }
         console.error('Error deleting class:', error);
         return NextResponse.json(
-            { error: 'Failed to cancel class', code: 'internal' },
+            { error: 'Failed to delete class', code: 'internal' },
             { status: 500 },
         );
     }

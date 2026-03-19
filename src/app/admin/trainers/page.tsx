@@ -92,9 +92,10 @@ export default function TrainersPage() {
     )
 
     const activeTrainers = trainers.filter(t => t.isActive).length
-    const avgRating = trainers.length > 0
-        ? (trainers.reduce((sum, t) => sum + (t.rating || 0), 0) / trainers.filter(t => t.rating).length).toFixed(1)
-        : '0'
+    const ratedTrainers = trainers.filter(t => t.rating)
+    const avgRating = ratedTrainers.length > 0
+        ? (ratedTrainers.reduce((sum, t) => sum + (t.rating || 0), 0) / ratedTrainers.length).toFixed(1)
+        : '—'
     const totalExperience = trainers.reduce((sum, t) => sum + (t.experienceYears || 0), 0)
 
     const openAddDialog = () => {

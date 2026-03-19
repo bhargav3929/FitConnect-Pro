@@ -61,7 +61,7 @@ export function UserNav() {
                         </div>
                         <div className="min-w-0">
                             <p className="text-peach-200 font-bold text-sm truncate">{firstName}</p>
-                            <p className="text-peach-400/50 text-[11px] truncate">{clientUser?.subscription?.planType ? `${clientUser.subscription.planType} Plan` : 'Free Plan'}</p>
+                            <p className="text-peach-400/50 text-[11px] truncate">{clientUser?.subscription?.planId ? `${clientUser.subscription.planId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} Plan` : 'Free Plan'}</p>
                         </div>
                     </div>
                 </div>
@@ -96,8 +96,8 @@ export function UserNav() {
 
                 {/* Bottom */}
                 <div className="px-4 pb-6 space-y-3">
-                    {(!clientUser?.subscription?.planType || clientUser.subscription.planType === null) && (
-                        <Link href="/subscription" className="block mx-1">
+                    {(!clientUser?.subscription?.planId || clientUser.subscription.planId === null) && (
+                        <Link href="/user/subscribe" className="block mx-1">
                             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-terra-400/20 to-terra-300/10 border border-terra-400/15 p-4 group hover:border-terra-400/30 transition-all">
                                 <div className="absolute -bottom-3 -right-3 w-16 h-16 rounded-full bg-terra-400/10" />
                                 <div className="flex items-center gap-3 relative z-10">

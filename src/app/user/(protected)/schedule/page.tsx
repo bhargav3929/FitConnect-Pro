@@ -16,8 +16,10 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { CalendarStrip } from "@/components/user/CalendarStrip"
 import { SpotSelectionModal } from "@/components/user/SpotSelectionModal"
+import { SubscriptionPromptModal } from "@/components/user/SubscriptionPromptModal"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getClassesByDate, getTrainers, callBookClass } from "@/lib/firebase/firestore"
+import { useClientAuthStore } from "@/lib/store/clientAuthStore"
 import { ClassSession } from "@/types/class"
 import { Trainer } from "@/types/trainer"
 import { toast } from "sonner"
@@ -41,10 +43,23 @@ const FACILITY = {
 
 type FilterType = 'instructor' | 'classType' | 'rooms'
 
+function hasValidSubscription(sub: { planId: unknown; status: string; endDate: unknown; classesRemaining: unknown } | undefined): boolean {
+    if (!sub) return false
+    if (!sub.planId) return false
+    if (sub.status !== 'active') return false
+    const end = sub.endDate ? new Date(sub.endDate as string) : new Date(0)
+    if (end < new Date()) return false
+    // classesRemaining === null means unlimited
+    if (sub.classesRemaining !== null && (sub.classesRemaining as number) <= 0) return false
+    return true
+}
+
 export default function SchedulePage() {
     const [selectedTab, setSelectedTab] = useState<'classes' | 'trainers' | 'info'>('classes')
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [spotModalOpen, setSpotModalOpen] = useState(false)
+    const [subscriptionPromptOpen, setSubscriptionPromptOpen] = useState(false)
+    const [pendingClassId, setPendingClassId] = useState<string | undefined>()
     const [selectedClass, setSelectedClass] = useState<{
         id: string
         name: string
@@ -67,6 +82,8 @@ export default function SchedulePage() {
     const [isLoadingClasses, setIsLoadingClasses] = useState(true)
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(true)
 
+    const clientUser = useClientAuthStore(state => state.clientUser)
+
     const formatDate = (date: Date) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         return `${date.getDate()} ${months[date.getMonth()]}`
@@ -77,7 +94,8 @@ export default function SchedulePage() {
         try {
             const result = await getClassesByDate(date)
             setClasses(result)
-        } catch {
+        } catch (err) {
+            console.error('Failed to fetch classes:', err)
             setClasses([])
         } finally {
             setIsLoadingClasses(false)
@@ -104,6 +122,13 @@ export default function SchedulePage() {
     }, [])
 
     const handleBook = (cls: ClassSession) => {
+        // Subscription gate — check BEFORE opening spot selection
+        if (!hasValidSubscription(clientUser?.subscription)) {
+            setPendingClassId(cls.id)
+            setSubscriptionPromptOpen(true)
+            return
+        }
+
         const totalSpots = cls.totalSpots || cls.capacity || 12
         setSelectedClass({
             id: cls.id,
@@ -130,6 +155,7 @@ export default function SchedulePage() {
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to book class"
             toast.error("Booking failed", { description: message })
+            throw err // Re-throw so SpotSelectionModal catches it and doesn't show success
         }
     }
 
@@ -184,6 +210,12 @@ export default function SchedulePage() {
                 onClose={() => setSpotModalOpen(false)}
                 classDetails={selectedClass}
                 onConfirm={handleSpotConfirm}
+            />
+
+            <SubscriptionPromptModal
+                isOpen={subscriptionPromptOpen}
+                onClose={() => setSubscriptionPromptOpen(false)}
+                classId={pendingClassId}
             />
 
             {/* Facility Header */}

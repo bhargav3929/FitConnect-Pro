@@ -16,7 +16,15 @@ export async function POST(req: NextRequest) {
         const decoded = await adminAuth.verifyIdToken(token);
         const userId = decoded.uid;
 
-        const body = await req.json();
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json(
+                { error: 'Invalid request body', code: 'invalid-argument' },
+                { status: 400 },
+            );
+        }
         const { bookingId } = body;
 
         if (!bookingId || typeof bookingId !== 'string') {
@@ -73,11 +81,28 @@ export async function POST(req: NextRequest) {
                 transaction.update(classRef, updateData);
             }
 
-            // Restore user's classesRemaining
-            transaction.update(userRef, {
-                'subscription.classesRemaining': FieldValue.increment(1),
-                updatedAt: now,
-            });
+            // ── Credit-type-aware restore ────────────────────────────
+            const creditType = bookingData.creditType || 'standard';
+            const usedGuestPass = bookingData.usedGuestPass === true;
+
+            if (usedGuestPass || creditType === 'guest_pass') {
+                // Restore guest pass
+                transaction.update(userRef, {
+                    'subscription.guestPassesRemaining': FieldValue.increment(1),
+                    updatedAt: now,
+                });
+            } else if (creditType === 'unlimited') {
+                // Unlimited — no credits to restore, just update timestamp
+                transaction.update(userRef, {
+                    updatedAt: now,
+                });
+            } else {
+                // Standard credit — restore classesRemaining
+                transaction.update(userRef, {
+                    'subscription.classesRemaining': FieldValue.increment(1),
+                    updatedAt: now,
+                });
+            }
         });
 
         return NextResponse.json({ success: true });

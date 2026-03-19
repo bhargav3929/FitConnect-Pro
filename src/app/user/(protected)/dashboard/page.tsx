@@ -7,14 +7,13 @@ import {
     Trophy,
     Calendar,
     ArrowRight,
-    Dumbbell,
     Clock,
     Star,
-    Sparkles,
     Target,
 } from "lucide-react"
 import { useClientAuthStore } from "@/lib/store/clientAuthStore"
 import { getUserBookings, getClassesByDate } from "@/lib/firebase/firestore"
+import { SubscriptionWidget } from "@/components/user/SubscriptionWidget"
 import { Booking } from "@/types/booking"
 import { ClassSession } from "@/types/class"
 import Link from "next/link"
@@ -86,6 +85,7 @@ export default function UserDashboard() {
                         ))}
                     </div>
                 </div>
+                <div className="h-20 bg-peach-200/40 rounded-2xl animate-pulse" />
                 <div className="h-28 bg-peach-200/40 rounded-2xl animate-pulse" />
                 <div className="h-48 bg-peach-200/40 rounded-2xl animate-pulse" />
             </div>
@@ -156,21 +156,18 @@ export default function UserDashboard() {
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <Star className="w-3.5 h-3.5 text-terra-300" />
-                                <p className="text-2xl font-black text-olive-600 leading-none">{clientUser.subscription.classesRemaining}</p>
+                                <p className="text-2xl font-black text-olive-600 leading-none">
+                                    {clientUser.subscription.classesRemaining === null ? '∞' : clientUser.subscription.classesRemaining}
+                                </p>
                             </div>
                             <p className="text-[11px] text-olive-300 font-medium">Classes Left</p>
-                        </div>
-                        <div className="w-px h-10 bg-olive-400/10" />
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <Sparkles className="w-3.5 h-3.5 text-olive-300" />
-                                <p className="text-2xl font-black text-olive-600 leading-none capitalize">{clientUser.subscription.planType || 'Free'}</p>
-                            </div>
-                            <p className="text-[11px] text-olive-300 font-medium">Current Plan</p>
                         </div>
                     </div>
                 </div>
             </motion.div>
+
+            {/* ═══════════ SUBSCRIPTION WIDGET ═══════════ */}
+            <SubscriptionWidget subscription={clientUser.subscription} />
 
             {/* ═══════════ NEXT SESSION / BOOKING CTA ═══════════ */}
             {isLoadingBookings ? (

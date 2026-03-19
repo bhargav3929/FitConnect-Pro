@@ -44,6 +44,13 @@ export default function FacilitySettingsPage() {
                     getFacility(),
                     getTrainers(),
                 ])
+                if (facilityData) {
+                    // Ensure nested objects exist to prevent runtime errors
+                    facilityData.address = facilityData.address || { street: '', city: '', state: '', zip: '', country: '' }
+                    facilityData.contactInfo = facilityData.contactInfo || { phone: '', email: '' }
+                    facilityData.operatingHours = facilityData.operatingHours || {}
+                    facilityData.coordinates = facilityData.coordinates || { lat: 0, lng: 0 }
+                }
                 setFacility(facilityData)
                 setTrainerCount(trainers.length)
             } catch {

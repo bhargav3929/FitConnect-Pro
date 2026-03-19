@@ -71,6 +71,29 @@ src/types/                → TypeScript type definitions
 functions/src/            → Cloud Functions
 ```
 
+## Turbopack Cache Corruption Fix (macOS)
+
+This project runs on macOS which adds `com.apple.provenance` extended attributes to files. These attributes prevent Turbopack (Next.js 16's compiler) from writing its SST database files inside `.next/dev/cache/turbopack/`, causing:
+- `Persisting failed: Unable to write SST file`
+- `Failed to restore task data (corrupted database or bug)`
+- Dev server says "Ready" but pages return 500 or hang indefinitely
+
+**Fix:** Before starting the dev server (or whenever this error appears), run:
+```bash
+rm -rf .next && mkdir -p .next && xattr -cr .next && npm run dev
+```
+
+**Why:** `xattr -cr .next` strips macOS extended attributes recursively so Turbopack can write its persistent cache. If you only see `Persisting failed` warnings but pages still load, the warnings are non-fatal. If pages 500 or hang, run the full fix above.
+
+**Do NOT:**
+- Delete `.next` while the dev server is running (causes corruption)
+- Use `kill -9` on the dev server (use Ctrl+C instead)
+
+## Firebase Admin Private Key (.env.local)
+
+The `FIREBASE_SERVICE_ACCOUNT` in `.env.local` stores the private key with literal `\n` characters (not real newlines). The fix in `src/lib/firebase/admin.ts` handles this with `.replace(/\\n/g, '\n')`. If API routes return HTML error pages with "Failed to parse private key: Invalid PEM formatted message", this replacement is not working — check that `admin.ts` has the replace line.
+
 ## Known Issues
 - `src/types/admin.ts` has hardcoded admin credentials (admin/admin123) — CRITICAL security issue
 - Font is Inter — consider upgrading to Satoshi or Space Grotesk per design standards
+- Settings page (`/admin/settings`) has no backend persistence — notification toggles and profile changes are lost on refresh

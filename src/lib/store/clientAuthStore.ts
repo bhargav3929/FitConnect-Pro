@@ -20,6 +20,28 @@ interface ClientAuthState {
     loginClient: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
     signupClient: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
     logoutClient: () => Promise<void>
+    refreshSubscription: () => Promise<void>
+}
+
+const DEFAULT_SUBSCRIPTION: ClientUser['subscription'] = {
+    planId: null,
+    planCategory: null,
+    startDate: null,
+    endDate: null,
+    status: 'expired',
+    classesRemaining: 0,
+    maxClassesPerDay: 0,
+    advanceBookingDays: 0,
+    guestPassesRemaining: 0,
+    lastPaymentId: null,
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+}
+
+const DEFAULT_STATS: ClientUser['stats'] = {
+    totalClassesAttended: 0,
+    currentStreak: 0,
+    longestStreak: 0,
 }
 
 function mapFirebaseError(code: string): string {
@@ -47,12 +69,42 @@ function mapFirebaseError(code: string): string {
     }
 }
 
+function normalizeSubscription(raw: Record<string, unknown> | undefined): ClientUser['subscription'] {
+    if (!raw) return { ...DEFAULT_SUBSCRIPTION }
+    return {
+        planId: (raw.planId as ClientUser['subscription']['planId']) ?? (raw.planType as ClientUser['subscription']['planId']) ?? null,
+        planCategory: (raw.planCategory as ClientUser['subscription']['planCategory']) ?? null,
+        startDate: raw.startDate ? new Date(raw.startDate as string) : null,
+        endDate: raw.endDate ? new Date(raw.endDate as string) : null,
+        status: (raw.status as ClientUser['subscription']['status']) ?? 'expired',
+        classesRemaining: raw.classesRemaining !== undefined ? (raw.classesRemaining as number | null) : 0,
+        maxClassesPerDay: (raw.maxClassesPerDay as number) ?? 0,
+        advanceBookingDays: (raw.advanceBookingDays as number) ?? 0,
+        guestPassesRemaining: (raw.guestPassesRemaining as number) ?? 0,
+        lastPaymentId: (raw.lastPaymentId as string) ?? null,
+        stripeCustomerId: (raw.stripeCustomerId as string) ?? null,
+        stripeSubscriptionId: (raw.stripeSubscriptionId as string) ?? null,
+    }
+}
+
 async function fetchClientProfile(uid: string): Promise<ClientUser | null> {
     try {
         const docRef = doc(db, 'users', uid)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
-            return docSnap.data() as ClientUser
+            const data = docSnap.data()
+            return {
+                id: data.id || uid,
+                name: data.name || 'Member',
+                email: data.email || '',
+                avatar: data.avatar,
+                subscription: normalizeSubscription(data.subscription as Record<string, unknown>),
+                stats: {
+                    totalClassesAttended: data.stats?.totalClassesAttended ?? 0,
+                    currentStreak: data.stats?.currentStreak ?? 0,
+                    longestStreak: data.stats?.longestStreak ?? 0,
+                },
+            }
         }
         return null
     } catch {
@@ -65,18 +117,8 @@ async function createClientProfile(uid: string, email: string, name: string): Pr
         id: uid,
         name,
         email,
-        subscription: {
-            planType: null,
-            startDate: null,
-            endDate: null,
-            status: 'active',
-            classesRemaining: 0,
-        },
-        stats: {
-            totalClassesAttended: 0,
-            currentStreak: 0,
-            longestStreak: 0,
-        },
+        subscription: { ...DEFAULT_SUBSCRIPTION },
+        stats: { ...DEFAULT_STATS },
     }
     try {
         await setDoc(doc(db, 'users', uid), profile)
@@ -86,7 +128,17 @@ async function createClientProfile(uid: string, email: string, name: string): Pr
     return profile
 }
 
-export const useClientAuthStore = create<ClientAuthState>()((set) => ({
+function makeFallbackUser(uid: string, displayName: string | null, email: string | null): ClientUser {
+    return {
+        id: uid,
+        name: displayName || 'Member',
+        email: email || '',
+        subscription: { ...DEFAULT_SUBSCRIPTION },
+        stats: { ...DEFAULT_STATS },
+    }
+}
+
+export const useClientAuthStore = create<ClientAuthState>()((set, get) => ({
     isAuthenticated: false,
     isLoading: true,
     clientUser: null,
@@ -96,13 +148,7 @@ export const useClientAuthStore = create<ClientAuthState>()((set) => ({
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
                 const profile = await fetchClientProfile(firebaseUser.uid)
-                const clientUser: ClientUser = profile || {
-                    id: firebaseUser.uid,
-                    name: firebaseUser.displayName || 'Member',
-                    email: firebaseUser.email || '',
-                    subscription: { planType: null, startDate: null, endDate: null, status: 'active', classesRemaining: 0 },
-                    stats: { totalClassesAttended: 0, currentStreak: 0, longestStreak: 0 },
-                }
+                const clientUser: ClientUser = profile || makeFallbackUser(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email)
                 set({
                     isAuthenticated: true,
                     isLoading: false,
@@ -125,13 +171,7 @@ export const useClientAuthStore = create<ClientAuthState>()((set) => ({
         try {
             const result = await signInWithEmailAndPassword(auth, email, password)
             const profile = await fetchClientProfile(result.user.uid)
-            const clientUser: ClientUser = profile || {
-                id: result.user.uid,
-                name: result.user.displayName || 'Member',
-                email: result.user.email || '',
-                subscription: { planType: null, startDate: null, endDate: null, status: 'active', classesRemaining: 0 },
-                stats: { totalClassesAttended: 0, currentStreak: 0, longestStreak: 0 },
-            }
+            const clientUser: ClientUser = profile || makeFallbackUser(result.user.uid, result.user.displayName, result.user.email)
             set({
                 isAuthenticated: true,
                 clientUser,
@@ -168,5 +208,14 @@ export const useClientAuthStore = create<ClientAuthState>()((set) => ({
             clientUser: null,
             firebaseUser: null,
         })
+    },
+
+    refreshSubscription: async () => {
+        const { firebaseUser } = get()
+        if (!firebaseUser) return
+        const profile = await fetchClientProfile(firebaseUser.uid)
+        if (profile) {
+            set({ clientUser: profile })
+        }
     },
 }))

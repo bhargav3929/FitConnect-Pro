@@ -1,3 +1,5 @@
+import { PlanId } from './subscription';
+
 export interface Booking {
     id: string;
     userId: string;
@@ -7,7 +9,11 @@ export interface Booking {
     bookingDate: Date;
     spotNumber: number;
     isGuest: boolean;
+    guestName?: string;
     status: 'confirmed' | 'canceled' | 'attended' | 'no-show';
+    creditType: 'standard' | 'unlimited' | 'guest_pass';
+    planIdAtBooking: PlanId | null;
+    usedGuestPass: boolean;
     canceledAt?: Date;
     cancelReason?: string;
     attendedAt?: Date;

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
+import { getPlanById, LEGACY_PLAN_MAP, VALID_PLAN_IDS, type PlanId } from '@/types/subscription';
 import { FieldValue } from 'firebase-admin/firestore';
+import { processPayment } from '@/lib/payments/mock-processor';
 
 export async function POST(req: NextRequest) {
     try {
-        // Verify auth
+        // Auth
         const authHeader = req.headers.get('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
@@ -16,38 +18,95 @@ export async function POST(req: NextRequest) {
         const decoded = await adminAuth.verifyIdToken(token);
         const userId = decoded.uid;
 
-        const body = await req.json();
-        const { planType } = body;
-
-        // Validate plan type
-        const validPlans = ['weekly', 'monthly', 'quarterly'];
-        if (!validPlans.includes(planType)) {
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
             return NextResponse.json(
-                { error: 'Invalid plan type', code: 'invalid-argument' },
+                { error: 'Invalid request body', code: 'invalid-argument' },
                 { status: 400 },
             );
         }
 
-        const durationMap: Record<string, number> = {
-            'weekly': 7,
-            'monthly': 30,
-            'quarterly': 90,
-        };
+        // Accept both old planType and new planId
+        let planId: PlanId;
+        if (body.planId && VALID_PLAN_IDS.includes(body.planId as PlanId)) {
+            planId = body.planId as PlanId;
+        } else if (body.planType && typeof body.planType === 'string') {
+            // Legacy mapping
+            const mapped = LEGACY_PLAN_MAP[body.planType];
+            if (!mapped) {
+                return NextResponse.json(
+                    { error: 'Invalid plan type', code: 'invalid-argument' },
+                    { status: 400 },
+                );
+            }
+            planId = mapped;
+        } else {
+            return NextResponse.json(
+                { error: 'planId or planType is required', code: 'invalid-argument' },
+                { status: 400 },
+            );
+        }
 
-        const duration = durationMap[planType];
+        const plan = getPlanById(planId)!;
 
-        // Calculate dates
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + duration);
+        // Verify user exists
+        const userRef = adminDb.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) {
+            return NextResponse.json(
+                { error: 'User profile not found', code: 'not-found' },
+                { status: 404 },
+            );
+        }
+
+        // Process mock payment
+        const paymentResult = await processPayment(plan.price);
+
+        // Create payment record
+        const paymentRef = adminDb.collection('payments').doc();
+        const now = new Date();
+        const endDate = new Date(now);
+        endDate.setDate(endDate.getDate() + plan.durationDays);
+
+        await paymentRef.set({
+            id: paymentRef.id,
+            paymentIntentId: paymentResult.paymentIntentId,
+            userId,
+            amount: plan.price,
+            currency: 'usd',
+            status: paymentResult.success ? 'succeeded' : 'failed',
+            planId,
+            metadata: {
+                planName: plan.name,
+                planCategory: plan.category,
+                credits: plan.credits,
+                durationDays: plan.durationDays,
+            },
+            createdAt: now,
+            paidAt: paymentResult.success ? now : null,
+        });
+
+        if (!paymentResult.success) {
+            return NextResponse.json(
+                { error: paymentResult.error || 'Payment failed', code: 'payment-failed' },
+                { status: 402 },
+            );
+        }
 
         // Update user subscription
-        await adminDb.collection('users').doc(userId).update({
-            'subscription.planType': planType,
-            'subscription.startDate': startDate,
+        await userRef.update({
+            'subscription.planId': plan.id,
+            'subscription.planCategory': plan.category,
+            'subscription.startDate': now,
             'subscription.endDate': endDate,
             'subscription.status': 'active',
-            'subscription.classesRemaining': duration,
+            'subscription.classesRemaining': plan.credits,
+            'subscription.maxClassesPerDay': plan.maxClassesPerDay,
+            'subscription.advanceBookingDays': plan.advanceBookingDays,
+            'subscription.guestPassesRemaining': plan.guestPasses,
+            'subscription.lastPaymentId': paymentRef.id,
             'updatedAt': FieldValue.serverTimestamp(),
         });
 

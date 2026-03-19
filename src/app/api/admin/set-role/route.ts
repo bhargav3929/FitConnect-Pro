@@ -21,7 +21,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const body = await req.json();
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json(
+                { error: 'Invalid request body', code: 'invalid-argument' },
+                { status: 400 },
+            );
+        }
         const { targetUid, isAdmin } = body;
 
         if (!targetUid || typeof targetUid !== 'string') {

@@ -77,7 +77,7 @@ export default function ProfilePage() {
                             </p>
                             <div className="flex items-center gap-2 mt-2">
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-terra-400/10 text-terra-400 text-[11px] font-bold">
-                                    {clientUser.subscription.planType ? `${clientUser.subscription.planType} Plan` : 'Free Plan'}
+                                    {clientUser.subscription.planId ? `${clientUser.subscription.planId.replace(/_/g, ' ')} Plan` : 'Free Plan'}
                                 </span>
                             </div>
                         </div>
@@ -126,7 +126,7 @@ export default function ProfilePage() {
                         <p className="text-olive-300 text-[11px] mt-0.5">Browse schedule</p>
                     </div>
                 </Link>
-                <Link href="/subscription">
+                <Link href="/user/subscribe">
                     <div className="bg-peach-50 border border-peach-400/15 rounded-2xl p-4 hover:border-terra-400/25 transition-all group text-center">
                         <div className="w-10 h-10 rounded-xl bg-olive-400/8 flex items-center justify-center mx-auto mb-2 group-hover:bg-olive-400/15 transition-colors">
                             <CreditCard className="w-5 h-5 text-olive-400" />
@@ -146,7 +146,7 @@ export default function ProfilePage() {
                 <p className="text-[10px] font-bold text-olive-300 uppercase tracking-[0.2em] px-1 mb-3">Account</p>
                 <div className="bg-peach-50 border border-peach-400/15 rounded-2xl divide-y divide-peach-400/10 overflow-hidden">
                     {[
-                        { icon: CreditCard, label: "Membership Plan", sub: clientUser.subscription.planType ? `${clientUser.subscription.planType} Plan` : 'No active plan', color: "text-terra-400", bg: "bg-terra-400/8" },
+                        { icon: CreditCard, label: "Membership Plan", sub: clientUser.subscription.planId ? `${clientUser.subscription.planId.replace(/_/g, ' ')} Plan` : 'No active plan', color: "text-terra-400", bg: "bg-terra-400/8" },
                         { icon: Bell, label: "Notifications", sub: "Push & email preferences", color: "text-olive-400", bg: "bg-olive-400/8" },
                         { icon: Shield, label: "Privacy & Security", sub: "Password, data, permissions", color: "text-olive-400", bg: "bg-olive-400/8" },
                         { icon: Settings, label: "Preferences", sub: "Theme, language, accessibility", color: "text-olive-400", bg: "bg-olive-400/8" },

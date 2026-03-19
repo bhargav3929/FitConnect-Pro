@@ -1,3 +1,5 @@
+import { PlanId, PlanCategory } from './subscription';
+
 export interface UserProfile {
     uid: string;
     email: string;
@@ -9,11 +11,18 @@ export interface UserProfile {
     createdAt: Date;
     updatedAt: Date;
     subscription: {
-        planType: 'weekly' | 'monthly' | 'quarterly' | null;
+        planId: PlanId | null;
+        planCategory: PlanCategory | null;
         startDate: Date | null;
         endDate: Date | null;
         status: 'active' | 'expired' | 'canceled';
-        classesRemaining: number;
+        classesRemaining: number | null;      // null = unlimited
+        maxClassesPerDay: number;
+        advanceBookingDays: number;
+        guestPassesRemaining: number;
+        lastPaymentId: string | null;
+        stripeCustomerId: string | null;
+        stripeSubscriptionId: string | null;
     };
     stats: {
         totalClassesAttended: number;

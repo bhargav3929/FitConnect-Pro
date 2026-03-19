@@ -16,12 +16,12 @@ service cloud.firestore {
     }
 
     // Users collection
-    // - Read: only the owner can read their own profile
-    // - Create: authenticated users can create their own profile (via onUserCreate trigger or client)
+    // - Read: owner can read own profile; admin can read all (for member management)
+    // - Create: authenticated users can create their own profile
     // - Update: only the owner can update their own profile (non-subscription fields)
     // - Subscription and stats fields are updated by Cloud Functions (Admin SDK bypasses rules)
     match /users/{userId} {
-      allow read: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
     }
@@ -39,6 +39,18 @@ service cloud.firestore {
     // - Create/Update/Delete: handled exclusively by Cloud Functions (Admin SDK)
     // - Client-side writes are blocked to ensure transactional integrity
     match /bookings/{bookingId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Payments collection
+    // - Read: owner can read their own payments; admin can read all
+    // - Write: handled exclusively by API routes (Admin SDK bypasses rules)
+    match /payments/{paymentId} {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || isAdmin()
       );

@@ -80,9 +80,9 @@ export async function getClassesByDate(date: Date): Promise<ClassSession[]> {
 
     const q = query(
         collection(db, 'classes'),
+        where('status', '==', 'scheduled'),
         where('date', '>=', Timestamp.fromDate(start)),
         where('date', '<=', Timestamp.fromDate(end)),
-        where('status', '==', 'scheduled'),
         orderBy('date'),
         orderBy('startTime'),
     );
@@ -256,10 +256,11 @@ export async function callBookClass(
     classId: string,
     spotNumber: number,
     isGuest: boolean,
+    guestName?: string,
 ): Promise<{ success: boolean; bookingId: string }> {
     return apiFetch<{ success: boolean; bookingId: string }>('/api/bookings/book', {
         method: 'POST',
-        body: { classId, spotNumber, isGuest },
+        body: { classId, spotNumber, isGuest, guestName },
     });
 }
 
@@ -351,16 +352,42 @@ export async function callSetAdminRole(
 }
 
 // ---------------------------------------------------------------------------
-// 17. callActivateSubscription — API route wrapper
+// 17. callActivateSubscription — API route wrapper (supports both old and new)
 // ---------------------------------------------------------------------------
 
 export async function callActivateSubscription(
-    planType: 'weekly' | 'monthly' | 'quarterly',
+    planId: string,
 ): Promise<{ success: boolean; endDate: string }> {
     return apiFetch<{ success: boolean; endDate: string }>('/api/subscriptions/activate', {
         method: 'POST',
-        body: { planType },
+        body: { planId },
     });
+}
+
+// ---------------------------------------------------------------------------
+// 17b. callCreatePaymentIntent — Create a payment intent for subscription
+// ---------------------------------------------------------------------------
+
+export async function callCreatePaymentIntent(
+    planId: string,
+): Promise<{ paymentId: string; clientSecret: string; amount: number; status: string }> {
+    return apiFetch<{ paymentId: string; clientSecret: string; amount: number; status: string }>(
+        '/api/payments/create-intent',
+        { method: 'POST', body: { planId } },
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 17c. callConfirmPayment — Confirm a payment and activate subscription
+// ---------------------------------------------------------------------------
+
+export async function callConfirmPayment(
+    paymentId: string,
+): Promise<{ success: boolean; endDate: string; planId: string; planName: string; credits: number | null }> {
+    return apiFetch<{ success: boolean; endDate: string; planId: string; planName: string; credits: number | null }>(
+        '/api/payments/confirm',
+        { method: 'POST', body: { paymentId } },
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -427,24 +454,7 @@ export async function createUserProfile(user: UserProfile): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// 20. callSeedDatabase — Admin-only seed function
-// ---------------------------------------------------------------------------
-
-export async function callSeedDatabase(): Promise<{
-    success: boolean;
-    seeded: { trainers: number; classes: number; subscriptionPlans: number; gymCenters: number };
-}> {
-    return apiFetch<{
-        success: boolean;
-        seeded: { trainers: number; classes: number; subscriptionPlans: number; gymCenters: number };
-    }>('/api/admin/seed', {
-        method: 'POST',
-        body: {},
-    });
-}
-
-// ---------------------------------------------------------------------------
-// 21. getAllTrainers — Admin: all trainers (including inactive)
+// 20. getAllTrainers — Admin: all trainers (including inactive)
 // ---------------------------------------------------------------------------
 
 export async function getAllTrainers(): Promise<Trainer[]> {
@@ -611,23 +621,30 @@ export interface MembershipDistribution {
 
 export async function getMembershipDistribution(): Promise<MembershipDistribution[]> {
     const snapshot = await getDocs(collection(db, 'users'));
-    let weekly = 0;
-    let monthly = 0;
-    let quarterly = 0;
+    const planCounts: Record<string, number> = {};
 
     snapshot.docs.forEach((d) => {
         const data = d.data();
-        const plan = data.subscription?.planType;
-        if (plan === 'weekly') weekly++;
-        else if (plan === 'monthly') monthly++;
-        else if (plan === 'quarterly') quarterly++;
+        const planId = data.subscription?.planId || data.subscription?.planType || null;
+        if (planId) {
+            planCounts[planId] = (planCounts[planId] || 0) + 1;
+        }
     });
 
-    return [
-        { name: 'Weekly', value: weekly, color: '#8B3F2C' },
-        { name: 'Monthly', value: monthly, color: '#6B7752' },
-        { name: 'Quarterly', value: quarterly, color: '#D4B494' },
-    ];
+    const colors: Record<string, string> = {
+        unlimited: '#8B3F2C',
+        twice_weekly: '#6B7752',
+        once_weekly: '#D4B494',
+        drop_in: '#9B7653',
+        five_pack: '#556B2F',
+        ten_pack: '#8B6914',
+    };
+
+    return Object.entries(planCounts).map(([name, value]) => ({
+        name: name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        value,
+        color: colors[name] || '#888888',
+    }));
 }
 
 export interface ClassPopularityItem {

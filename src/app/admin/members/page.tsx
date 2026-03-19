@@ -4,28 +4,19 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import {
     Search,
-    MoreVertical,
     Mail,
-    Eye,
-    UserX,
     Calendar,
     Activity,
     Users,
     CreditCard,
     UserPlus,
 } from "lucide-react"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { getAllMembers } from "@/lib/firebase/firestore"
 import { UserProfile } from "@/types/user"
 import { toast } from "sonner"
 
-const PLAN_FILTERS = ["All Plans", "weekly", "monthly", "quarterly"]
+const PLAN_FILTERS = ["All Plans", "unlimited", "twice_weekly", "once_weekly", "drop_in", "five_pack", "ten_pack"]
 const STATUS_FILTERS = ["All Status", "active", "expired", "canceled"]
 
 export default function MembersPage() {
@@ -52,13 +43,13 @@ export default function MembersPage() {
     const filteredMembers = members.filter(member => {
         const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             member.email.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesPlan = planFilter === "All Plans" || member.subscription.planType === planFilter
+        const matchesPlan = planFilter === "All Plans" || member.subscription.planId === planFilter
         const matchesStatus = statusFilter === "All Status" || member.subscription.status === statusFilter
         return matchesSearch && matchesPlan && matchesStatus
     })
 
     const activeCount = members.filter(m => m.subscription.status === 'active').length
-    const totalCredits = members.reduce((sum, m) => sum + (m.subscription.classesRemaining || 0), 0)
+    const totalCredits = members.reduce((sum, m) => sum + (m.subscription.classesRemaining ?? 0), 0)
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -247,7 +238,7 @@ export default function MembersPage() {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-olive-400 capitalize text-sm font-medium">{member.subscription.planType || 'None'}</span>
+                                            <span className="text-olive-400 capitalize text-sm font-medium">{member.subscription.planId?.replace(/_/g, ' ') || 'None'}</span>
                                         </td>
                                         <td className="p-4">
                                             <span className={`inline-flex px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(member.subscription.status)}`}>
@@ -262,7 +253,7 @@ export default function MembersPage() {
                                         </td>
                                         <td className="p-4">
                                             <span className="text-olive-600 font-black text-lg tracking-tight">
-                                                {member.subscription.classesRemaining}
+                                                {member.subscription.classesRemaining === null ? '∞' : member.subscription.classesRemaining}
                                             </span>
                                         </td>
                                         <td className="p-4">
@@ -272,27 +263,13 @@ export default function MembersPage() {
                                             </div>
                                         </td>
                                         <td className="p-4 pr-6 text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <button className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-olive-600 hover:bg-peach-200/50 rounded-md transition-all">
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-peach-50/95 backdrop-blur-xl border-peach-400/15 shadow-xl shadow-black/5">
-                                                    <DropdownMenuItem className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer gap-2">
-                                                        <Eye className="w-4 h-4" />
-                                                        View Profile
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer gap-2">
-                                                        <Mail className="w-4 h-4" />
-                                                        Send Email
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer gap-2">
-                                                        <UserX className="w-4 h-4" />
-                                                        Suspend Account
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <a
+                                                href={`mailto:${member.email}`}
+                                                className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-terra-400 hover:bg-peach-200/50 rounded-md transition-all"
+                                                title="Send email"
+                                            >
+                                                <Mail className="w-4 h-4" />
+                                            </a>
                                         </td>
                                     </motion.tr>
                                 ))}
@@ -330,7 +307,7 @@ export default function MembersPage() {
                                 <div className="grid grid-cols-3 gap-2 text-sm ml-[52px]">
                                     <div>
                                         <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Plan</p>
-                                        <p className="text-olive-400 font-medium capitalize">{member.subscription.planType || 'None'}</p>
+                                        <p className="text-olive-400 font-medium capitalize">{member.subscription.planId?.replace(/_/g, ' ') || 'None'}</p>
                                     </div>
                                     <div>
                                         <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Classes</p>
@@ -338,7 +315,7 @@ export default function MembersPage() {
                                     </div>
                                     <div>
                                         <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Credits</p>
-                                        <p className="text-olive-600 font-black">{member.subscription.classesRemaining}</p>
+                                        <p className="text-olive-600 font-black">{member.subscription.classesRemaining === null ? '∞' : member.subscription.classesRemaining}</p>
                                     </div>
                                 </div>
                             </motion.div>

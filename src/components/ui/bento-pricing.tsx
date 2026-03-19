@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,8 @@ type PricingCardProps = {
     cta?: string;
     className?: string;
     description?: string;
+    planId?: string;
+    onSelect?: (planId: string) => void;
 };
 
 function FilledCheck() {
@@ -34,7 +37,13 @@ function PricingCard({
     features,
     cta = 'Subscribe',
     className,
+    planId,
+    onSelect,
 }: PricingCardProps) {
+    const handleClick = () => {
+        if (planId && onSelect) onSelect(planId);
+    };
+
     return (
         <div
             className={cn(
@@ -77,7 +86,12 @@ function PricingCard({
                 </ul>
 
                 <div className="mt-8">
-                    <Button className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl">{cta}</Button>
+                    <Button
+                        onClick={handleClick}
+                        className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl"
+                    >
+                        {cta}
+                    </Button>
                 </div>
             </div>
         </div>
@@ -85,6 +99,12 @@ function PricingCard({
 }
 
 export function BentoPricing() {
+    const router = useRouter();
+
+    const handleSelect = (planId: string) => {
+        router.push(`/user/subscribe?plan=${planId}`);
+    };
+
     return (
         <div className="space-y-20">
             {/* SECTION 1: MEMBERSHIPS */}
@@ -137,7 +157,12 @@ export function BentoPricing() {
                                 ))}
                             </ul>
                             <div className="mt-8">
-                                <Button className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl">SUBSCRIBE NOW</Button>
+                                <Button
+                                    onClick={() => handleSelect('unlimited')}
+                                    className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl"
+                                >
+                                    SUBSCRIBE NOW
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -154,6 +179,8 @@ export function BentoPricing() {
                             'Membership auto-renews every 4 weeks',
                             'Roll-over unused credits (up to 2)'
                         ]}
+                        planId="twice_weekly"
+                        onSelect={handleSelect}
                     />
 
                     <PricingCard
@@ -167,6 +194,8 @@ export function BentoPricing() {
                             '14-day advance booking window',
                             'Membership auto-renews every 4 weeks'
                         ]}
+                        planId="once_weekly"
+                        onSelect={handleSelect}
                     />
                 </div>
             </div>
@@ -190,6 +219,8 @@ export function BentoPricing() {
                             'Valid for any standard class',
                         ]}
                         cta="BUY PASS"
+                        planId="drop_in"
+                        onSelect={handleSelect}
                     />
 
                     <PricingCard
@@ -205,6 +236,8 @@ export function BentoPricing() {
                             'Shareable with 1 friend'
                         ]}
                         cta="BUY PACK"
+                        planId="five_pack"
+                        onSelect={handleSelect}
                     />
 
                     <PricingCard
@@ -220,6 +253,8 @@ export function BentoPricing() {
                             'Shareable with 2 friends'
                         ]}
                         cta="BUY PACK"
+                        planId="ten_pack"
+                        onSelect={handleSelect}
                     />
                 </div>
             </div>

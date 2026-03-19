@@ -11,7 +11,6 @@ import {
     XCircle,
     AlertCircle,
     MoreVertical,
-    Eye,
     Trash2,
     Loader2,
     BookOpen,
@@ -297,10 +296,6 @@ export default function BookingsPage() {
                                                     </button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="bg-peach-50/95 backdrop-blur-xl border-peach-400/15 shadow-xl shadow-black/5">
-                                                    <DropdownMenuItem className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer gap-2">
-                                                        <Eye className="w-4 h-4" />
-                                                        View Details
-                                                    </DropdownMenuItem>
                                                     {booking.status === 'confirmed' && (
                                                         <DropdownMenuItem
                                                             className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer gap-2"

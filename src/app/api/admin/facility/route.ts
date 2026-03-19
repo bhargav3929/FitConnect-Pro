@@ -72,7 +72,15 @@ export async function PUT(req: NextRequest) {
             );
         }
 
-        const body = await req.json();
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json(
+                { error: 'Invalid request body', code: 'invalid-argument' },
+                { status: 400 },
+            );
+        }
         const { facilityId, ...updates } = body;
 
         if (!facilityId || typeof facilityId !== 'string') {

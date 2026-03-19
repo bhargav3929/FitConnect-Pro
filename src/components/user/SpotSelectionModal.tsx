@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, Info, Clock, MapPin, User, CheckCircle2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { subscribeToClass } from "@/lib/firebase/firestore"
 import { toast } from "sonner"
 
 interface SpotSelectionModalProps {
@@ -35,6 +36,8 @@ export function SpotSelectionModal({
     const [selectedSpot, setSelectedSpot] = useState<number | null>(null)
     const [reserveFor, setReserveFor] = useState<'myself' | 'guest'>('myself')
     const [isLoading, setIsLoading] = useState(false)
+    const [liveBookedSpots, setLiveBookedSpots] = useState<number[]>([])
+    const unsubRef = useRef<(() => void) | null>(null)
 
     // Reset state when opening
     useEffect(() => {
@@ -42,16 +45,45 @@ export function SpotSelectionModal({
             setStep('select')
             setSelectedSpot(null)
             setReserveFor('myself')
+            setLiveBookedSpots(classDetails?.bookedSpots || [])
         }
-    }, [isOpen])
+    }, [isOpen, classDetails?.bookedSpots])
+
+    // Real-time listener for spot availability
+    useEffect(() => {
+        if (isOpen && classDetails?.id) {
+            unsubRef.current = subscribeToClass(classDetails.id, (classSession) => {
+                if (classSession) {
+                    const newBooked = classSession.bookedSpots || []
+                    setLiveBookedSpots((prev) => {
+                        // Check if selected spot was taken by someone else
+                        if (selectedSpot && !prev.includes(selectedSpot) && newBooked.includes(selectedSpot)) {
+                            toast.warning("Spot taken!", {
+                                description: `Spot ${selectedSpot} was just booked by another member. Please select a different spot.`,
+                            })
+                            setSelectedSpot(null)
+                        }
+                        return newBooked
+                    })
+                }
+            })
+        }
+
+        return () => {
+            if (unsubRef.current) {
+                unsubRef.current()
+                unsubRef.current = null
+            }
+        }
+    }, [isOpen, classDetails?.id])
 
     if (!classDetails) return null
 
-    const { totalSpots, bookedSpots } = classDetails
+    const { totalSpots } = classDetails
     const spots = Array.from({ length: totalSpots }, (_, i) => i + 1)
 
     const getSpotState = (spotNumber: number): SpotState => {
-        if (bookedSpots.includes(spotNumber)) return 'unavailable'
+        if (liveBookedSpots.includes(spotNumber)) return 'unavailable'
         if (selectedSpot === spotNumber) {
             return reserveFor === 'guest' ? 'guest' : 'selected'
         }
@@ -59,12 +91,20 @@ export function SpotSelectionModal({
     }
 
     const handleSpotClick = (spotNumber: number) => {
-        if (bookedSpots.includes(spotNumber)) return
+        if (liveBookedSpots.includes(spotNumber)) return
         setSelectedSpot(spotNumber)
     }
 
     const handleConfirm = async () => {
         if (!selectedSpot || !classDetails) return
+        // Final check — spot might have been taken between selection and confirm
+        if (liveBookedSpots.includes(selectedSpot)) {
+            toast.error("Spot no longer available", {
+                description: `Spot ${selectedSpot} was just taken. Please select another.`,
+            })
+            setSelectedSpot(null)
+            return
+        }
         setIsLoading(true)
         try {
             await onConfirm(selectedSpot, reserveFor === 'guest')
@@ -85,7 +125,7 @@ export function SpotSelectionModal({
         handleClose()
     }
 
-    const availableCount = totalSpots - bookedSpots.length
+    const availableCount = totalSpots - liveBookedSpots.length
 
     return (
         <AnimatePresence>
@@ -150,6 +190,11 @@ export function SpotSelectionModal({
                                                 <p className="text-olive-600 font-medium">{classDetails.instructor}</p>
                                                 <p className="text-olive-300 text-sm">{classDetails.location} • {classDetails.duration}</p>
                                             </div>
+                                            <div className="ml-auto">
+                                                <span className="text-xs font-bold text-terra-400 bg-terra-400/10 px-2 py-1 rounded">
+                                                    {availableCount} open
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {/* Legend & Toggle */}
@@ -207,6 +252,7 @@ export function SpotSelectionModal({
                                                             disabled={isUnavailable}
                                                             whileHover={!isUnavailable ? { scale: 1.1 } : {}}
                                                             whileTap={!isUnavailable ? { scale: 0.9 } : {}}
+                                                            layout
                                                             className={`
                                                                 relative w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold transition-all duration-300
                                                                 ${isUnavailable

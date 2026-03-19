@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import { Check, ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { SubscriptionPlan } from '@/types/subscription';
+import { PlanDefinition } from '@/types/subscription';
 import { cn } from '@/lib/utils';
 
 interface PlanCardProps {
-    plan: SubscriptionPlan;
+    plan: PlanDefinition;
     onSelect: (planId: string) => void;
     loading?: boolean;
 }
@@ -40,18 +40,18 @@ export default function PlanCard({ plan, onSelect, loading }: PlanCardProps) {
                 <CardHeader className="text-center pb-2">
                     <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
                     <CardDescription className="text-base text-muted-foreground mt-2">
-                        The perfect start
+                        {plan.credits === null ? 'Unlimited classes' : `${plan.credits} classes`}
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent className="flex-1 flex flex-col items-center">
                     <div className="text-4xl font-bold my-6">
                         ${plan.price}
-                        <span className="text-lg font-normal text-muted-foreground">/period</span>
+                        <span className="text-lg font-normal text-muted-foreground">/{plan.durationDays}d</span>
                     </div>
 
                     <ul className="space-y-3 w-full max-w-[240px] text-left">
-                        {plan.features.map((feature, i) => (
+                        {plan.features.map((feature: string, i: number) => (
                             <li key={i} className="flex items-start gap-3">
                                 <div className={cn(
                                     "h-5 w-5 rounded-full flex items-center justify-center shrink-0 mt-0.5",

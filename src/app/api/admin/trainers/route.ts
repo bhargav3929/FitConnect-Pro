@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
             specialties: Array.isArray(specialties) ? specialties : [],
             profilePictureUrl: profilePictureUrl || '',
             experienceYears: experienceYears || 0,
-            rating: rating || undefined,
+            rating: rating || 0,
             isActive: true,
             createdAt: now,
             updatedAt: now,
@@ -147,8 +147,7 @@ export async function PUT(req: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
-// DELETE — soft-delete trainer (admin only)
-// Sets isActive to false. Active classes with this trainer remain untouched.
+// DELETE — hard delete trainer (admin only)
 // ---------------------------------------------------------------------------
 
 export async function DELETE(req: NextRequest) {
@@ -161,7 +160,16 @@ export async function DELETE(req: NextRequest) {
             );
         }
 
-        const body = await req.json();
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json(
+                { error: 'Invalid request body', code: 'invalid-argument' },
+                { status: 400 },
+            );
+        }
+
         const { trainerId } = body;
 
         if (!trainerId || typeof trainerId !== 'string') {
@@ -174,11 +182,8 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'Trainer not found', code: 'not-found' }, { status: 404 });
         }
 
-        // Soft delete — mark as inactive
-        await trainerRef.update({
-            isActive: false,
-            updatedAt: FieldValue.serverTimestamp(),
-        });
+        // Hard delete the trainer document
+        await trainerRef.delete();
 
         return NextResponse.json({ success: true });
     } catch (error) {

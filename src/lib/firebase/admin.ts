@@ -9,8 +9,11 @@ if (!getApps().length) {
             ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
             : undefined;
     } catch {
-        // Service account JSON may be malformed in dev — fall back to default credentials
         serviceAccount = undefined;
+    }
+    // Fix escaped newlines in private key (common in .env files)
+    if (serviceAccount?.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
     initializeApp(serviceAccount ? { credential: cert(serviceAccount) } : {});
 }
