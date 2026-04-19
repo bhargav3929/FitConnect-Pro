@@ -16,7 +16,7 @@
     "typecheck:shared": "npm run typecheck --workspace=@fitconnect/shared",
     "typecheck:all": "tsc --noEmit && npm run typecheck --workspace=@fitconnect/shared",
     "build:tokens": "node shared/src/design/build-tokens.mjs",
-    "postinstall": "patch-package"
+    "postinstall": "node scripts/postinstall.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
