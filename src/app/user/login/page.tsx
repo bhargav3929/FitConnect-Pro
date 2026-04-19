@@ -20,7 +20,7 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useClientAuthStore } from "@/lib/store/clientAuthStore"
+import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { toast } from "sonner"
 
 const loginSchema = z.object({

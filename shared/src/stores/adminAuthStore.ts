@@ -5,8 +5,9 @@ import {
     signOut,
     User as FirebaseUser,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
-import { AdminUser } from '@/types/admin';
+import { auth } from '../firebase/config';
+import { AdminUser } from '../types/admin';
+import { mapFirebaseError, buildAdminUser } from './adminAuthStore.helpers';
 
 interface AdminAuthState {
     isAdminAuthenticated: boolean;
@@ -18,27 +19,6 @@ interface AdminAuthState {
     logoutAdmin: () => Promise<void>;
 }
 
-function mapFirebaseError(code: string): string {
-    switch (code) {
-        case 'auth/invalid-email':
-            return 'Please enter a valid email address.';
-        case 'auth/user-disabled':
-            return 'This account has been disabled.';
-        case 'auth/user-not-found':
-            return 'No admin account found with this email.';
-        case 'auth/wrong-password':
-            return 'Incorrect password. Please try again.';
-        case 'auth/invalid-credential':
-            return 'Invalid email or password. Please try again.';
-        case 'auth/too-many-requests':
-            return 'Too many failed attempts. Please try again later.';
-        case 'auth/network-request-failed':
-            return 'Network error. Check your connection.';
-        default:
-            return 'An unexpected error occurred. Please try again.';
-    }
-}
-
 async function checkAdminClaim(user: FirebaseUser): Promise<boolean> {
     try {
         const tokenResult = await user.getIdTokenResult(true);
@@ -46,16 +26,6 @@ async function checkAdminClaim(user: FirebaseUser): Promise<boolean> {
     } catch {
         return false;
     }
-}
-
-function buildAdminUser(firebaseUser: FirebaseUser): AdminUser {
-    return {
-        uid: firebaseUser.uid,
-        role: 'super_admin',
-        name: firebaseUser.displayName || 'Admin',
-        email: firebaseUser.email || '',
-        lastLogin: new Date(),
-    };
 }
 
 export const useAdminAuthStore = create<AdminAuthState>()((set) => ({

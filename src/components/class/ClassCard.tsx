@@ -6,7 +6,7 @@ import { Clock, Users, Dumbbell } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ClassSession } from "@/types/class"
+import { ClassSession } from "@fitconnect/shared/types/class"
 import { cn } from "@/lib/utils"
 
 interface ClassCardProps {

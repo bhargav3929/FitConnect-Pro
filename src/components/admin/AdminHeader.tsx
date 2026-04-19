@@ -2,8 +2,8 @@
 
 import { usePathname } from "next/navigation"
 import { Bell, Search, Menu, ChevronDown, Monitor, Clock, Settings, LogOut } from "lucide-react"
-import { useAdminAuthStore } from "@/lib/store/adminAuthStore"
-import { useUIStore } from "@/lib/store/uiStore"
+import { useAdminAuthStore } from "@fitconnect/shared/stores/adminAuthStore"
+import { useUIStore } from "@fitconnect/shared/stores/uiStore"
 import {
     DropdownMenu,
     DropdownMenuContent,

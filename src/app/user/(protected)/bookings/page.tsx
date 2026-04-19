@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Clock, MapPin, User, CheckCircle2, AlertCircle, XCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useClientAuthStore } from "@/lib/store/clientAuthStore"
-import { subscribeToUserBookings, callCancelBooking } from "@/lib/firebase/firestore"
-import { Booking } from "@/types/booking"
+import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
+import { subscribeToUserBookings, callCancelBooking } from "@fitconnect/shared/firebase/firestore"
+import { Booking } from "@fitconnect/shared/types/booking"
 import { toast } from "sonner"
 
 interface EnrichedBooking extends Booking {

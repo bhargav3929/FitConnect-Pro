@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Check, ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlanDefinition } from '@/types/subscription';
+import { PlanDefinition } from '@fitconnect/shared/types/subscription';
 import { cn } from '@/lib/utils';
 
 interface PlanCardProps {

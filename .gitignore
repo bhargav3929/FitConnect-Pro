@@ -51,3 +51,12 @@ functions/node_modules/
 *firebase-adminsdk*
 *service-account*
 *.key.json
+
+# Expo / Mobile
+mobile/.expo/
+mobile/dist/
+mobile/android/
+mobile/ios/
+
+# Shared package
+shared/dist/

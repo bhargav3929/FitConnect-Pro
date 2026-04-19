@@ -18,8 +18,8 @@ import {
     X,
 } from "@phosphor-icons/react"
 import { useState } from "react"
-import { useAdminAuthStore } from "@/lib/store/adminAuthStore"
-import { useUIStore } from "@/lib/store/uiStore"
+import { useAdminAuthStore } from "@fitconnect/shared/stores/adminAuthStore"
+import { useUIStore } from "@fitconnect/shared/stores/uiStore"
 import { useRouter } from "next/navigation"
 
 const NAV_ITEMS = [

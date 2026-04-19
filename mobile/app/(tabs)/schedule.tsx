@@ -1,0 +1,787 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
+import {
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    ActivityIndicator,
+    ScrollView,
+    TouchableOpacity,
+    Dimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
+import {
+    subscribeToClassesByDate,
+    getTrainers,
+    getFacility,
+} from '@fitconnect/shared/firebase/firestore';
+import type { ClassSession } from '@fitconnect/shared/types/class';
+import type { Trainer } from '@fitconnect/shared/types/trainer';
+import type { GymCenter } from '@fitconnect/shared/types/gym';
+import CalendarStrip from '../../components/CalendarStrip';
+import ClassCard from '../../components/ClassCard';
+import SpotSelector from '../../components/SpotSelector';
+import TabHeader from '../../components/TabHeader';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, Spacing, FontSize, BorderRadius, Shadows, FontFamily } from '../../constants/theme';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+// ── Static fallback facility data (matches web) ──
+const FALLBACK_FACILITY = {
+    name: 'SOL Pilates Studio',
+    address: '250 West 54th Street, New York, NY 10019',
+    rating: 4.9,
+    reviewCount: 128,
+    description:
+        'A sophisticated Pilates studio blending strength, mindfulness, and elegance. Five dedicated disciplines — Reformer, Mat, Private Sessions, Barre, and Prenatal — each designed to transform your body and mind.',
+    amenities: [
+        'Reformer Studio',
+        'Mat Studio',
+        'Private Suite',
+        'Barre & Stretch',
+        'Recovery Lounge',
+        'Prenatal Room',
+        'Changing Rooms',
+    ],
+    hours: {
+        weekday: '06:00 - 21:00',
+        weekend: '07:00 - 18:00',
+    },
+    contact: {
+        phone: '(212) 555-0180',
+        email: 'solpilatesstudio.in@gmail.com',
+    },
+};
+
+type SectionTab = 'schedule' | 'trainers' | 'facility';
+
+// ── Helpers ──
+function getInitials(name: string): string {
+    return name
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+}
+
+function formatFullDate(date: Date): string {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function isToday(date: Date): boolean {
+    const now = new Date();
+    return (
+        date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth() &&
+        date.getDate() === now.getDate()
+    );
+}
+
+function parseFacilities(raw: string | string[]): string[] {
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') return raw.split(',').map((s) => s.trim()).filter(Boolean);
+    return [];
+}
+
+// ── Component ──
+type FilterKey = 'instructor' | 'classType' | 'room';
+
+export default function ScheduleScreen() {
+    const [activeTab, setActiveTab] = useState<SectionTab>('schedule');
+    const [classes, setClasses] = useState<ClassSession[]>([]);
+    const [trainers, setTrainers] = useState<Trainer[]>([]);
+    const [facility, setFacility] = useState<GymCenter | null>(null);
+    const [loadingClasses, setLoadingClasses] = useState(true);
+    const [loadingTrainers, setLoadingTrainers] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    });
+    const [selectedClass, setSelectedClass] = useState<ClassSession | null>(null);
+    const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
+
+    // Entering this tab (from Bookings, Profile, Dashboard, tab-bar) should always land on
+    // the Schedule sub-tab, even if the user was previously on Trainers or Facility.
+    useFocusEffect(
+        useCallback(() => {
+            setActiveTab('schedule');
+        }, []),
+    );
+
+    // Real-time listener — spots update live as other members book/cancel
+    useEffect(() => {
+        setLoadingClasses(true);
+        const unsubscribe = subscribeToClassesByDate(selectedDate, (data) => {
+            setClasses(data);
+            setLoadingClasses(false);
+        });
+        return unsubscribe;
+    }, [selectedDate]);
+
+    useEffect(() => {
+        (async () => {
+            setLoadingTrainers(true);
+            try {
+                const data = await getTrainers();
+                setTrainers(data);
+            } catch {
+                setTrainers([]);
+            }
+            setLoadingTrainers(false);
+        })();
+    }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const data = await getFacility();
+                if (data) setFacility(data);
+            } catch {
+                // use fallback
+            }
+        })();
+    }, []);
+
+    const getTrainerName = (trainerId: string) =>
+        trainers.find((t) => t.id === trainerId)?.name || 'Instructor';
+
+    const handleDateSelect = (date: Date) => setSelectedDate(date);
+
+    const handleBook = (cls: ClassSession) => setSelectedClass(cls);
+
+    const handleBooked = () => {
+        // Real-time subscription refreshes class data automatically
+        setSelectedClass(null);
+    };
+
+    const goToToday = () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        setSelectedDate(today);
+    };
+
+    // ── Derived facility data ──
+    // Guard against Firestore docs missing address subfields — fall back to static address.
+    const formatFacilityAddress = (f: GymCenter | null): string => {
+        const parts = [f?.address?.street, f?.address?.city].filter(
+            (p): p is string => Boolean(p && p.trim()),
+        );
+        return parts.length > 0 ? parts.join(', ') : FALLBACK_FACILITY.address;
+    };
+    const facilityAddress = formatFacilityAddress(facility);
+    const facilityDescription = FALLBACK_FACILITY.description;
+    // Amenities are curated copy — always render the full list (matches web),
+    // not whatever partial subset Firestore happens to have.
+    const facilityAmenities = FALLBACK_FACILITY.amenities;
+    const facilityPhone = facility?.contactInfo?.phone || FALLBACK_FACILITY.contact.phone;
+    const facilityEmail = facility?.contactInfo?.email || FALLBACK_FACILITY.contact.email;
+
+    // ── Tab Renderers ──
+    const renderScheduleTab = () => (
+        <View>
+            {/* Calendar Strip */}
+            <CalendarStrip
+                selectedDate={selectedDate}
+                onDateSelect={handleDateSelect}
+                daysCount={14}
+            />
+
+            {/* Date header + Today button */}
+            <View style={styles.dateHeaderRow}>
+                <Text style={styles.dateHeaderText}>{formatFullDate(selectedDate)}</Text>
+                {!isToday(selectedDate) && (
+                    <TouchableOpacity
+                        onPress={goToToday}
+                        activeOpacity={0.7}
+                        style={styles.todayButtonWrap}
+                    >
+                        <Text style={styles.todayButton}>Today</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {/* Filter chips */}
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filtersRow}
+            >
+                <View style={styles.filterIconWrap}>
+                    <Feather name="filter" size={16} color={Colors.olive[400]} />
+                </View>
+                {(
+                    [
+                        { key: 'instructor' as FilterKey, label: 'Instructor' },
+                        { key: 'classType' as FilterKey, label: 'Class Type' },
+                        { key: 'room' as FilterKey, label: 'Room' },
+                    ]
+                ).map((f) => {
+                    const isActive = activeFilter === f.key;
+                    return (
+                        <TouchableOpacity
+                            key={f.key}
+                            onPress={() => setActiveFilter(isActive ? null : f.key)}
+                            activeOpacity={0.7}
+                            style={[styles.filterChip, isActive && styles.filterChipActive]}
+                        >
+                            <Text
+                                style={[
+                                    styles.filterChipText,
+                                    isActive && styles.filterChipTextActive,
+                                ]}
+                            >
+                                {f.label}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </ScrollView>
+
+            {/* Class list */}
+            {loadingClasses ? (
+                <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                </View>
+            ) : classes.length === 0 ? (
+                <View style={styles.emptyState}>
+                    <View style={styles.emptyIconWrap}>
+                        <Feather name="calendar" size={32} color={Colors.olive[300]} />
+                    </View>
+                    <Text style={styles.emptyTitle}>No classes scheduled</Text>
+                    <Text style={styles.emptySubtitle}>
+                        There are no classes available on this date. Try selecting a different day.
+                    </Text>
+                </View>
+            ) : (
+                <View style={styles.classList}>
+                    {classes.map((cls) => (
+                        <ClassCard
+                            key={cls.id}
+                            classSession={cls}
+                            trainerName={getTrainerName(cls.trainerId)}
+                            onBook={handleBook}
+                        />
+                    ))}
+                </View>
+            )}
+        </View>
+    );
+
+    const renderTrainersTab = () => {
+        if (loadingTrainers) {
+            return (
+                <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                </View>
+            );
+        }
+
+        if (trainers.length === 0) {
+            return (
+                <View style={styles.emptyState}>
+                    <Text style={styles.emptyTitle}>No trainers found</Text>
+                </View>
+            );
+        }
+
+        return (
+            <View style={styles.trainerGrid}>
+                {trainers.map((trainer) => (
+                    <View key={trainer.id} style={styles.trainerCard}>
+                        {/* Background / Avatar area */}
+                        <View style={styles.trainerAvatarArea}>
+                            <Text style={styles.trainerInitials}>
+                                {getInitials(trainer.name)}
+                            </Text>
+                        </View>
+                        {/* Gradient overlay */}
+                        <LinearGradient
+                            colors={['transparent', 'rgba(42,31,24,0.8)']}
+                            locations={[0.3, 1]}
+                            style={styles.trainerOverlay}
+                        >
+                            <Text style={styles.trainerCardName} numberOfLines={1}>
+                                {trainer.name}
+                            </Text>
+                            <Text style={styles.trainerCardSpecialty} numberOfLines={1}>
+                                {trainer.specialties?.[0] || 'Trainer'}
+                            </Text>
+                        </LinearGradient>
+                    </View>
+                ))}
+            </View>
+        );
+    };
+
+    const renderFacilityTab = () => (
+        <View style={styles.facilityContainer}>
+            {/* About */}
+            <View style={styles.facilityCard}>
+                <Text style={styles.facilitySectionTitle}>About Our Facility</Text>
+                <Text style={styles.facilityDescription}>{facilityDescription}</Text>
+
+                <Text style={styles.facilitySubTitle}>Amenities</Text>
+                <View style={styles.amenitiesWrap}>
+                    {facilityAmenities.map((item) => (
+                        <View key={item} style={styles.amenityPill}>
+                            <Text style={styles.amenityText}>{item}</Text>
+                        </View>
+                    ))}
+                </View>
+            </View>
+
+            {/* Contact & Hours */}
+            <View style={styles.facilityCard}>
+                <Text style={styles.facilitySectionTitle}>Contact & Hours</Text>
+                <View style={styles.contactRows}>
+                    {/* Phone */}
+                    <View style={styles.contactRow}>
+                        <View style={styles.contactIcon}>
+                            <Feather name="phone" size={18} color={Colors.terra[400]} />
+                        </View>
+                        <Text style={styles.contactText}>{facilityPhone}</Text>
+                    </View>
+                    {/* Email */}
+                    <View style={styles.contactRow}>
+                        <View style={styles.contactIcon}>
+                            <Feather name="mail" size={18} color={Colors.terra[400]} />
+                        </View>
+                        <Text style={styles.contactText}>{facilityEmail}</Text>
+                    </View>
+                    {/* Hours */}
+                    <View style={styles.contactRow}>
+                        <View style={styles.contactIcon}>
+                            <Feather name="clock" size={18} color={Colors.terra[400]} />
+                        </View>
+                        <View>
+                            <Text style={styles.contactText}>
+                                Mon-Fri: {FALLBACK_FACILITY.hours.weekday}
+                            </Text>
+                            <Text style={[styles.contactText, { marginTop: 2 }]}>
+                                Sat-Sun: {FALLBACK_FACILITY.hours.weekend}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+            </View>
+        </View>
+    );
+
+    return (
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+            <TabHeader />
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                stickyHeaderIndices={[1]} // Section tabs sticky
+            >
+                {/* ── Facility Header ── */}
+                <View style={styles.facilityHeader}>
+                    {/* Badge + Rating row */}
+                    <View style={styles.badgeRow}>
+                        <View style={styles.flagshipBadge}>
+                            <Text style={styles.flagshipText}>FLAGSHIP</Text>
+                        </View>
+                        <View style={styles.ratingRow}>
+                            <Feather name="star" size={12} color={Colors.terra[400]} />
+                            <Text style={styles.ratingScore}>{FALLBACK_FACILITY.rating}</Text>
+                            <Text style={styles.ratingCount}>({FALLBACK_FACILITY.reviewCount})</Text>
+                        </View>
+                    </View>
+
+                    {/* Title */}
+                    <Text style={styles.pageTitle}>Class Schedule</Text>
+
+                    {/* Address */}
+                    <View style={styles.addressRow}>
+                        <Feather name="map-pin" size={12} color={Colors.terra[400]} />
+                        <Text style={styles.addressText}>{facilityAddress}</Text>
+                    </View>
+                </View>
+
+                {/* ── Section Tabs (sticky) ── */}
+                <View style={styles.sectionTabsContainer}>
+                    <View style={styles.sectionTabsInner}>
+                        {([
+                            { id: 'schedule', label: 'Schedule' },
+                            { id: 'trainers', label: 'Trainers' },
+                            { id: 'facility', label: 'Facility' },
+                        ] as const).map((tab) => {
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <TouchableOpacity
+                                    key={tab.id}
+                                    style={[
+                                        styles.sectionTab,
+                                        isActive && styles.sectionTabActive,
+                                    ]}
+                                    onPress={() => setActiveTab(tab.id)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.sectionTabText,
+                                            isActive && styles.sectionTabTextActive,
+                                        ]}
+                                    >
+                                        {tab.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                </View>
+
+                {/* ── Tab Content ── */}
+                <View style={styles.tabContent}>
+                    {activeTab === 'schedule' && renderScheduleTab()}
+                    {activeTab === 'trainers' && renderTrainersTab()}
+                    {activeTab === 'facility' && renderFacilityTab()}
+                </View>
+            </ScrollView>
+
+            {/* ── Spot Selector Modal ── */}
+            {selectedClass && (
+                <SpotSelector
+                    visible={selectedClass !== null}
+                    classSession={selectedClass}
+                    trainerName={getTrainerName(selectedClass.trainerId)}
+                    selectedDate={selectedDate}
+                    onClose={() => setSelectedClass(null)}
+                    onBooked={handleBooked}
+                />
+            )}
+        </SafeAreaView>
+    );
+}
+
+// ── Styles ──
+const TRAINER_CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.sm) / 2;
+
+const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: Colors.background,
+    },
+    container: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 100, // bottom tab bar clearance
+    },
+
+    // ── Facility Header ──
+    facilityHeader: {
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.sm,
+        paddingBottom: Spacing.xl,
+    },
+    badgeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm + 2,
+        marginBottom: Spacing.sm,
+    },
+    flagshipBadge: {
+        backgroundColor: Colors.terra[400],
+        paddingHorizontal: Spacing.sm + 2,
+        paddingVertical: 3,
+        borderRadius: BorderRadius.md,
+    },
+    flagshipText: {
+        fontFamily: FontFamily.sansExtra,
+        color: Colors.white,
+        fontSize: FontSize['2xs'],
+        letterSpacing: 1,
+    },
+    ratingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    ratingScore: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.xs,
+        color: Colors.terra[400],
+    },
+    ratingCount: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.xs,
+        color: Colors.olive[300],
+    },
+    pageTitle: {
+        fontFamily: FontFamily.display,
+        fontSize: FontSize['4xl'],
+        color: Colors.olive[600],
+        letterSpacing: -0.5,
+        marginBottom: Spacing.sm,
+    },
+    addressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    addressText: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        color: Colors.olive[400],
+    },
+
+    // ── Section Tabs ──
+    sectionTabsContainer: {
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.lg,
+    },
+    sectionTabsInner: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+    },
+    sectionTab: {
+        flex: 1,
+        paddingVertical: Spacing.sm + 4,
+        paddingHorizontal: Spacing.lg,
+        borderRadius: BorderRadius.full,
+        backgroundColor: Colors.peach[200],
+        alignItems: 'center',
+    },
+    sectionTabActive: {
+        backgroundColor: Colors.terra[400],
+        ...Shadows.lg,
+    },
+    sectionTabText: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.sm,
+        color: Colors.olive[400],
+    },
+    sectionTabTextActive: {
+        color: Colors.white,
+    },
+
+    // ── Tab Content ──
+    tabContent: {
+        minHeight: 400,
+    },
+
+    // ── Schedule Tab ──
+    dateHeaderRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm + 4,
+    },
+    dateHeaderText: {
+        fontSize: FontSize.sm,
+        fontWeight: '600',
+        color: Colors.olive[600],
+    },
+    todayButtonWrap: {
+        borderWidth: 1,
+        borderColor: Colors.warning,
+        borderRadius: BorderRadius.sm,
+        paddingHorizontal: Spacing.sm + 2,
+        paddingVertical: 3,
+    },
+    todayButton: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.xs,
+        color: Colors.terra[400],
+    },
+    filtersRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.md,
+        paddingBottom: Spacing.sm,
+    },
+    filterIconWrap: {
+        paddingHorizontal: Spacing.xs,
+    },
+    filterChip: {
+        borderWidth: 1,
+        borderColor: 'rgba(212,180,148,0.30)', // peach-400/30 (matches web)
+        borderRadius: BorderRadius.md,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: 10,
+        backgroundColor: 'transparent',
+    },
+    filterChipActive: {
+        backgroundColor: 'rgba(139,63,44,0.20)', // terra-400/20
+        borderColor: Colors.terra[400],
+    },
+    filterChipText: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.xs,
+        color: Colors.olive[400],
+    },
+    filterChipTextActive: {
+        color: Colors.terra[400],
+    },
+    classList: {
+        paddingTop: Spacing.xs,
+    },
+
+    // ── Loading / Empty ──
+    loaderContainer: {
+        paddingVertical: Spacing['3xl'],
+        alignItems: 'center',
+    },
+    emptyState: {
+        paddingVertical: Spacing['3xl'],
+        alignItems: 'center',
+        paddingHorizontal: Spacing.xl,
+    },
+    emptyIconWrap: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: 'rgba(235,228,213,0.5)', // peach-200/50
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: Spacing.md,
+    },
+    emptyTitle: {
+        fontSize: FontSize.lg,
+        fontWeight: '700',
+        color: Colors.olive[600],
+        marginBottom: Spacing.sm,
+    },
+    emptySubtitle: {
+        fontSize: FontSize.sm,
+        color: Colors.olive[300],
+        textAlign: 'center',
+        lineHeight: 20,
+        maxWidth: 280,
+    },
+
+    // ── Trainers Tab ──
+    trainerGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.md,
+        gap: Spacing.sm,
+    },
+    trainerCard: {
+        width: TRAINER_CARD_WIDTH,
+        aspectRatio: 3 / 4,
+        borderRadius: BorderRadius['2xl'],
+        overflow: 'hidden',
+        backgroundColor: Colors.cardAlt,
+    },
+    trainerAvatarArea: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    trainerInitials: {
+        fontSize: FontSize['4xl'],
+        fontWeight: '700',
+        color: Colors.olive[400],
+    },
+    trainerOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: Spacing.lg,
+        paddingBottom: Spacing.md,
+        paddingTop: Spacing['4xl'],
+        justifyContent: 'flex-end',
+    },
+    trainerCardName: {
+        color: Colors.peach[50],
+        fontSize: FontSize.base,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    trainerCardSpecialty: {
+        color: Colors.terra[400],
+        fontSize: FontSize.xs,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+
+    // ── Facility Tab ──
+    facilityContainer: {
+        padding: Spacing.md,
+        gap: Spacing.md,
+    },
+    facilityCard: {
+        backgroundColor: Colors.peach[50],
+        borderWidth: 1,
+        borderColor: 'rgba(212,180,148,0.20)',
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg,
+    },
+    facilitySectionTitle: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.xl,
+        color: Colors.olive[600],
+        marginBottom: Spacing.md,
+    },
+    facilityDescription: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        color: Colors.olive[400],
+        lineHeight: 22,
+        marginBottom: Spacing.lg,
+    },
+    facilitySubTitle: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.base,
+        color: Colors.olive[600],
+        marginBottom: Spacing.md,
+    },
+    amenitiesWrap: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: Spacing.sm + 2,
+    },
+    amenityPill: {
+        backgroundColor: Colors.peach[200],
+        borderRadius: BorderRadius.md,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: 10,
+    },
+    amenityText: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        color: Colors.olive[400],
+    },
+    contactRows: {
+        gap: Spacing.md,
+    },
+    contactRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+    },
+    contactIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: BorderRadius.md,
+        backgroundColor: 'rgba(139,63,44,0.12)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    contactText: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.base,
+        color: Colors.olive[400],
+    },
+});

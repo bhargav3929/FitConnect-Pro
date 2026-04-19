@@ -6,7 +6,7 @@ import {
     Lock,
     LogOut,
 } from "lucide-react"
-import { useAdminAuthStore } from "@/lib/store/adminAuthStore"
+import { useAdminAuthStore } from "@fitconnect/shared/stores/adminAuthStore"
 import { useRouter } from "next/navigation"
 
 export default function SettingsPage() {

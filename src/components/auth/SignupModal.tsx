@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { auth, db } from "@/lib/firebase/config"
+import { auth, db } from "@fitconnect/shared/firebase/config"
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { toast } from "sonner"
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
-import { getPlanById, VALID_PLAN_IDS } from '@/types/subscription';
-import { processPayment } from '@/lib/payments/mock-processor';
+import { getPlanById, VALID_PLAN_IDS } from '@fitconnect/shared/types/subscription';
+import { processPayment } from '@fitconnect/shared/payments/mock-processor';
 
 export async function POST(req: NextRequest) {
     try {

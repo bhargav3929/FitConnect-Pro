@@ -50,11 +50,16 @@ When the user says **"start team"** or **"spin up the team"**, create a team wit
 
 ## Build Commands
 ```bash
-npm run dev          # Dev server
-npm run build        # Production build
-npx tsc --noEmit     # Type check frontend
-cd functions && npx tsc --noEmit  # Type check backend
-npm run lint         # Lint
+npm run dev                        # Dev server
+npm run build                      # Production build (web)
+npm run build --include-workspace-root  # Build web app (monorepo-aware)
+npx tsc --noEmit                   # Type check web
+cd shared && npx tsc --noEmit      # Type check shared
+cd functions && npx tsc --noEmit   # Type check backend
+cd shared && npx vitest run        # Run shared tests
+cd mobile && npx vitest run        # Run mobile tests
+cd mobile && npx expo start        # Start mobile dev server
+npm run lint                       # Lint
 ```
 
 ## Key Directories
@@ -70,6 +75,49 @@ src/lib/store/            → Zustand stores
 src/types/                → TypeScript type definitions
 functions/src/            → Cloud Functions
 ```
+
+## Monorepo Structure
+
+This project uses **npm workspaces** with two workspace packages:
+
+```json
+"workspaces": ["shared", "mobile"]
+```
+
+### Directory Layout
+```
+shared/                   → @fitconnect/shared package (consumed as TypeScript source)
+  src/types/              → Shared type definitions (booking, class, gym, user, payment, etc.)
+  src/stores/             → Zustand stores (adminAuthStore, clientAuthStore, uiStore)
+  src/firebase/           → Firebase config, Firestore utilities, API config
+  src/payments/           → Mock payment processor
+mobile/                   → Expo React Native app
+  app/                    → Expo Router screens
+  components/             → Mobile UI components
+  __tests__/              → Mobile tests (Vitest)
+src/                      → Next.js web app (unchanged)
+functions/                → Firebase Cloud Functions (unchanged)
+```
+
+### Shared Package (`@fitconnect/shared`)
+
+The shared package contains types, Zustand stores, Firebase config, Firestore utilities, and mock payment processing. It has no build step — both web and mobile consume it directly as TypeScript source.
+
+**Imports work the same in both web and mobile:**
+```ts
+import { Booking } from '@fitconnect/shared/types/booking';
+import { clientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
+import { getApiBaseUrl } from '@fitconnect/shared/firebase/api-config';
+```
+
+### API Config Pattern
+
+The shared `api-config` module lets web and mobile use the same fetch logic with different base URLs:
+
+- **Web** calls `initApiConfig({ baseUrl: '' })` — uses relative URLs (same origin)
+- **Mobile** calls `initApiConfig({ baseUrl: 'https://your-domain.com' })` — uses absolute URLs
+
+Call `initApiConfig()` once at app startup before any API requests.
 
 ## Turbopack Cache Corruption Fix (macOS)
 

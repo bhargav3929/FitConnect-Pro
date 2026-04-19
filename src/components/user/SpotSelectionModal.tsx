@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, Info, Clock, MapPin, User, CheckCircle2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { subscribeToClass } from "@/lib/firebase/firestore"
+import { subscribeToClass } from "@fitconnect/shared/firebase/firestore"
 import { toast } from "sonner"
 
 interface SpotSelectionModalProps {
@@ -38,6 +38,13 @@ export function SpotSelectionModal({
     const [isLoading, setIsLoading] = useState(false)
     const [liveBookedSpots, setLiveBookedSpots] = useState<number[]>([])
     const unsubRef = useRef<(() => void) | null>(null)
+    const selectedSpotRef = useRef<number | null>(null)
+
+    // Keep ref in sync so the real-time listener's closure reads the latest selection
+    // without tearing down the Firestore subscription on every pick.
+    useEffect(() => {
+        selectedSpotRef.current = selectedSpot
+    }, [selectedSpot])
 
     // Reset state when opening
     useEffect(() => {
@@ -56,10 +63,10 @@ export function SpotSelectionModal({
                 if (classSession) {
                     const newBooked = classSession.bookedSpots || []
                     setLiveBookedSpots((prev) => {
-                        // Check if selected spot was taken by someone else
-                        if (selectedSpot && !prev.includes(selectedSpot) && newBooked.includes(selectedSpot)) {
+                        const currentSelected = selectedSpotRef.current
+                        if (currentSelected && !prev.includes(currentSelected) && newBooked.includes(currentSelected)) {
                             toast.warning("Spot taken!", {
-                                description: `Spot ${selectedSpot} was just booked by another member. Please select a different spot.`,
+                                description: `Spot ${currentSelected} was just booked by another member. Please select a different spot.`,
                             })
                             setSelectedSpot(null)
                         }

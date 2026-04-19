@@ -33,9 +33,9 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { getAllClasses, callDeleteClass, callCreateClass, callUpdateClass, getTrainers } from "@/lib/firebase/firestore"
-import { ClassSession } from "@/types/class"
-import { Trainer } from "@/types/trainer"
+import { getAllClasses, callDeleteClass, callCreateClass, callUpdateClass, getTrainers } from "@fitconnect/shared/firebase/firestore"
+import { ClassSession } from "@fitconnect/shared/types/class"
+import { Trainer } from "@fitconnect/shared/types/trainer"
 import { toast } from "sonner"
 
 const STATUSES = ["All Status", "scheduled", "ongoing", "completed", "canceled"]

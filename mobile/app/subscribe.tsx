@@ -1,0 +1,988 @@
+import { useState, useMemo, useCallback } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    TextInput,
+    ActivityIndicator,
+    Alert,
+    Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { PLAN_CATALOG, getPlanById } from '@fitconnect/shared/types/subscription';
+import type { PlanDefinition, PlanCategory } from '@fitconnect/shared/types/subscription';
+import {
+    callCreatePaymentIntent,
+    callConfirmPayment,
+} from '@fitconnect/shared/firebase/firestore';
+import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
+import { Colors, Spacing, FontSize, BorderRadius, Shadows } from '../constants/theme';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type Step = 'plan' | 'checkout' | 'success';
+
+interface PaymentResult {
+    planName: string;
+    credits: number | null;
+    endDate: string;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatCardNumber(raw: string): string {
+    const digits = raw.replace(/\D/g, '').slice(0, 16);
+    return digits.replace(/(.{4})/g, '$1 ').trim();
+}
+
+function formatExpiry(raw: string): string {
+    const digits = raw.replace(/\D/g, '').slice(0, 4);
+    if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return digits;
+}
+
+function detectCardBrand(number: string): string {
+    const d = number.replace(/\s/g, '');
+    if (/^4/.test(d)) return 'Visa';
+    if (/^5[1-5]/.test(d) || /^2[2-7]/.test(d)) return 'Mastercard';
+    if (/^3[47]/.test(d)) return 'Amex';
+    return '';
+}
+
+function formatDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ---------------------------------------------------------------------------
+// Step Indicator
+// ---------------------------------------------------------------------------
+
+function StepIndicator({ current }: { current: Step }) {
+    const steps: Step[] = ['plan', 'checkout'];
+    const currentIdx = current === 'success' ? 2 : steps.indexOf(current);
+
+    return (
+        <View style={stepStyles.container}>
+            {steps.map((step, i) => {
+                const isCompleted = i < currentIdx;
+                const isCurrent = i === currentIdx;
+
+                return (
+                    <View key={step} style={stepStyles.row}>
+                        {i > 0 && (
+                            <View
+                                style={[
+                                    stepStyles.line,
+                                    isCompleted && stepStyles.lineCompleted,
+                                ]}
+                            />
+                        )}
+                        <View
+                            style={[
+                                stepStyles.circle,
+                                isCurrent && stepStyles.circleCurrent,
+                                isCompleted && stepStyles.circleCompleted,
+                            ]}
+                        >
+                            {isCompleted ? (
+                                <Feather name="check" size={14} color={Colors.terra[400]} />
+                            ) : (
+                                <Text
+                                    style={[
+                                        stepStyles.circleText,
+                                        isCurrent && stepStyles.circleTextCurrent,
+                                    ]}
+                                >
+                                    {i + 1}
+                                </Text>
+                            )}
+                        </View>
+                    </View>
+                );
+            })}
+        </View>
+    );
+}
+
+const stepStyles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: Spacing.lg,
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    line: {
+        width: 48,
+        height: 2,
+        backgroundColor: 'rgba(212,180,148,0.20)',
+        marginHorizontal: Spacing.sm,
+    },
+    lineCompleted: {
+        backgroundColor: Colors.terra[400],
+    },
+    circle: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'rgba(235,228,213,0.50)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    circleCurrent: {
+        backgroundColor: Colors.terra[400],
+    },
+    circleCompleted: {
+        backgroundColor: 'rgba(139,63,44,0.20)',
+    },
+    circleText: {
+        fontSize: FontSize.sm,
+        fontWeight: '700',
+        color: Colors.olive[300],
+    },
+    circleTextCurrent: {
+        color: Colors.white,
+    },
+});
+
+// ---------------------------------------------------------------------------
+// Plan Card
+// ---------------------------------------------------------------------------
+
+function PlanCard({
+    plan,
+    selected,
+    onSelect,
+}: {
+    plan: PlanDefinition;
+    selected: boolean;
+    onSelect: () => void;
+}) {
+    return (
+        <TouchableOpacity
+            style={[
+                planCardStyles.card,
+                selected && planCardStyles.cardSelected,
+            ]}
+            onPress={onSelect}
+            activeOpacity={0.7}
+        >
+            {/* Selected check */}
+            {selected && (
+                <View style={planCardStyles.checkIcon}>
+                    <Feather name="check-circle" size={22} color={Colors.terra[400]} />
+                </View>
+            )}
+
+            {/* Popular badge */}
+            {plan.recommended && (
+                <View style={planCardStyles.popularBadge}>
+                    <Feather
+                        name="star"
+                        size={12}
+                        color={Colors.terra[400]}
+                        style={{ marginRight: 4 }}
+                    />
+                    <Text style={planCardStyles.popularText}>Popular</Text>
+                </View>
+            )}
+
+            <Text style={planCardStyles.planName}>{plan.name}</Text>
+
+            <View style={planCardStyles.priceRow}>
+                <Text style={planCardStyles.price}>${plan.price}</Text>
+                <Text style={planCardStyles.priceSuffix}>
+                    {plan.category === 'membership' ? '/month' : '/pack'}
+                </Text>
+            </View>
+
+            <Text style={planCardStyles.credits}>
+                {plan.credits === null
+                    ? 'Unlimited classes'
+                    : `${plan.credits} class${plan.credits === 1 ? '' : 'es'}`}
+            </Text>
+            <Text style={planCardStyles.duration}>
+                {plan.durationDays} day validity
+            </Text>
+        </TouchableOpacity>
+    );
+}
+
+const planCardStyles = StyleSheet.create({
+    card: {
+        backgroundColor: Colors.peach[50],
+        borderWidth: 1,
+        borderColor: 'rgba(212,180,148,0.20)',
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg - 4,
+        marginBottom: Spacing.md,
+        position: 'relative',
+    },
+    cardSelected: {
+        borderColor: Colors.terra[400],
+        borderWidth: 2,
+    },
+    checkIcon: {
+        position: 'absolute',
+        top: Spacing.md,
+        right: Spacing.md,
+    },
+    popularBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        borderWidth: 1,
+        borderColor: Colors.terra[400],
+        backgroundColor: 'rgba(139,63,44,0.10)',
+        borderRadius: BorderRadius.full,
+        paddingHorizontal: Spacing.sm + 2,
+        paddingVertical: Spacing.xs,
+        marginBottom: Spacing.sm,
+    },
+    popularText: {
+        fontSize: FontSize.xs,
+        fontWeight: '700',
+        color: Colors.terra[400],
+    },
+    planName: {
+        fontSize: FontSize.lg,
+        fontWeight: '700',
+        color: Colors.olive[600],
+        marginBottom: Spacing.xs,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        marginBottom: Spacing.sm,
+    },
+    price: {
+        fontSize: FontSize['3xl'],
+        fontWeight: '700',
+        color: Colors.olive[600],
+        fontVariant: ['tabular-nums'],
+    },
+    priceSuffix: {
+        fontSize: FontSize.sm,
+        color: Colors.olive[300],
+        marginLeft: 4,
+    },
+    credits: {
+        fontSize: FontSize.sm,
+        color: Colors.olive[300],
+    },
+    duration: {
+        fontSize: FontSize.sm,
+        color: Colors.olive[300],
+        marginTop: 2,
+    },
+});
+
+// ---------------------------------------------------------------------------
+// Main Component
+// ---------------------------------------------------------------------------
+
+export default function SubscribeScreen() {
+    const router = useRouter();
+    const { refreshSubscription } = useClientAuthStore();
+
+    // Flow state
+    const [step, setStep] = useState<Step>('plan');
+    const [activeTab, setActiveTab] = useState<PlanCategory>('membership');
+    const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+
+    // Payment form state
+    const [cardNumber, setCardNumber] = useState('');
+    const [expiry, setExpiry] = useState('');
+    const [cvc, setCvc] = useState('');
+    const [cardName, setCardName] = useState('');
+
+    // Processing state
+    const [paymentState, setPaymentState] = useState<
+        'idle' | 'processing' | 'success'
+    >('idle');
+    const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+
+    // Filtered plans
+    const filteredPlans = useMemo(
+        () => PLAN_CATALOG.filter((p) => p.category === activeTab),
+        [activeTab],
+    );
+
+    const selectedPlan = selectedPlanId ? getPlanById(selectedPlanId) : null;
+
+    // Navigate to checkout
+    const handleContinue = useCallback(() => {
+        if (!selectedPlan) {
+            Alert.alert('Select a Plan', 'Please choose a plan to continue.');
+            return;
+        }
+        setStep('checkout');
+    }, [selectedPlan]);
+
+    // Process payment
+    const handlePay = useCallback(async () => {
+        if (!selectedPlan) return;
+
+        // Basic validation
+        const cardDigits = cardNumber.replace(/\s/g, '');
+        if (cardDigits.length < 15) {
+            Alert.alert('Invalid Card', 'Please enter a valid card number.');
+            return;
+        }
+        if (expiry.length < 5) {
+            Alert.alert('Invalid Expiry', 'Please enter a valid expiry date (MM/YY).');
+            return;
+        }
+        if (cvc.length < 3) {
+            Alert.alert('Invalid CVC', 'Please enter a valid CVC.');
+            return;
+        }
+        if (!cardName.trim()) {
+            Alert.alert('Missing Name', 'Please enter the name on card.');
+            return;
+        }
+
+        setPaymentState('processing');
+        try {
+            const intent = await callCreatePaymentIntent(selectedPlan.id);
+            const result = await callConfirmPayment(intent.paymentId);
+
+            if (result.success) {
+                setPaymentResult({
+                    planName: result.planName,
+                    credits: result.credits,
+                    endDate: result.endDate,
+                });
+                setPaymentState('success');
+                // Brief delay then show success step
+                setTimeout(() => {
+                    setStep('success');
+                    refreshSubscription();
+                }, 600);
+            } else {
+                setPaymentState('idle');
+                Alert.alert('Payment Failed', 'Could not confirm payment. Please try again.');
+            }
+        } catch (err: unknown) {
+            setPaymentState('idle');
+            const message =
+                err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+            Alert.alert('Payment Error', message);
+        }
+    }, [selectedPlan, cardNumber, expiry, cvc, cardName, refreshSubscription]);
+
+    // Back handler
+    const handleBack = useCallback(() => {
+        if (step === 'checkout') {
+            setStep('plan');
+            setPaymentState('idle');
+        } else {
+            router.back();
+        }
+    }, [step, router]);
+
+    return (
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
+                {/* Header */}
+                {step !== 'success' && (
+                    <View style={styles.header}>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={handleBack}
+                            activeOpacity={0.7}
+                        >
+                            <Feather
+                                name="arrow-left"
+                                size={22}
+                                color={Colors.olive[600]}
+                            />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>
+                            {step === 'plan' ? 'Choose Your Plan' : 'Checkout'}
+                        </Text>
+                    </View>
+                )}
+
+                {/* Step indicator */}
+                {step !== 'success' && <StepIndicator current={step} />}
+
+                {/* ─── PLAN SELECTION STEP ─────────────────── */}
+                {step === 'plan' && (
+                    <View>
+                        {/* Tab toggle */}
+                        <View style={styles.tabToggleContainer}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.tabButton,
+                                    activeTab === 'membership' && styles.tabButtonActive,
+                                ]}
+                                onPress={() => {
+                                    setActiveTab('membership');
+                                    setSelectedPlanId(null);
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text
+                                    style={[
+                                        styles.tabButtonText,
+                                        activeTab === 'membership' &&
+                                            styles.tabButtonTextActive,
+                                    ]}
+                                >
+                                    MEMBERSHIPS
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.tabButton,
+                                    activeTab === 'class_pack' && styles.tabButtonActive,
+                                ]}
+                                onPress={() => {
+                                    setActiveTab('class_pack');
+                                    setSelectedPlanId(null);
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text
+                                    style={[
+                                        styles.tabButtonText,
+                                        activeTab === 'class_pack' &&
+                                            styles.tabButtonTextActive,
+                                    ]}
+                                >
+                                    CLASS PACKS
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Plan cards */}
+                        {filteredPlans.map((plan) => (
+                            <PlanCard
+                                key={plan.id}
+                                plan={plan}
+                                selected={selectedPlanId === plan.id}
+                                onSelect={() => setSelectedPlanId(plan.id)}
+                            />
+                        ))}
+
+                        {/* Features for selected plan */}
+                        {selectedPlan && (
+                            <View style={styles.featuresCard}>
+                                <Text style={styles.featuresTitle}>WHAT YOU GET</Text>
+                                {selectedPlan.features.map((feature, i) => (
+                                    <View key={i} style={styles.featureRow}>
+                                        <Feather
+                                            name="check-circle"
+                                            size={16}
+                                            color={Colors.terra[400]}
+                                            style={{ marginRight: Spacing.sm }}
+                                        />
+                                        <Text style={styles.featureText}>{feature}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        {/* Continue button */}
+                        <TouchableOpacity
+                            style={[
+                                styles.primaryButton,
+                                !selectedPlan && styles.buttonDisabled,
+                            ]}
+                            onPress={handleContinue}
+                            disabled={!selectedPlan}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={styles.primaryButtonText}>CONTINUE</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* ─── CHECKOUT STEP ──────────────────────── */}
+                {step === 'checkout' && selectedPlan && (
+                    <View>
+                        {/* Order summary */}
+                        <View style={styles.orderSummary}>
+                            <Text style={styles.orderPlanName}>{selectedPlan.name}</Text>
+                            <Text style={styles.orderLabel}>One-time payment</Text>
+                            <Text style={styles.orderAmount}>${selectedPlan.price}</Text>
+                        </View>
+
+                        {/* Payment form */}
+                        <View style={styles.formSection}>
+                            {/* Card Number */}
+                            <Text style={styles.inputLabel}>CARD NUMBER</Text>
+                            <View style={styles.inputWithIcon}>
+                                <Feather
+                                    name="credit-card"
+                                    size={18}
+                                    color={Colors.olive[300]}
+                                    style={styles.inputIcon}
+                                />
+                                <TextInput
+                                    style={styles.inputWithIconField}
+                                    placeholder="1234 5678 9012 3456"
+                                    placeholderTextColor={Colors.olive[300]}
+                                    value={cardNumber}
+                                    onChangeText={(t) => setCardNumber(formatCardNumber(t))}
+                                    keyboardType="number-pad"
+                                    maxLength={19}
+                                />
+                                {detectCardBrand(cardNumber) !== '' && (
+                                    <Text style={styles.cardBrand}>
+                                        {detectCardBrand(cardNumber)}
+                                    </Text>
+                                )}
+                            </View>
+
+                            {/* Expiry + CVC */}
+                            <View style={styles.twoColRow}>
+                                <View style={styles.halfCol}>
+                                    <Text style={styles.inputLabel}>EXPIRY</Text>
+                                    <TextInput
+                                        style={styles.formInput}
+                                        placeholder="MM/YY"
+                                        placeholderTextColor={Colors.olive[300]}
+                                        value={expiry}
+                                        onChangeText={(t) => setExpiry(formatExpiry(t))}
+                                        keyboardType="number-pad"
+                                        maxLength={5}
+                                    />
+                                </View>
+                                <View style={styles.halfCol}>
+                                    <Text style={styles.inputLabel}>CVC</Text>
+                                    <TextInput
+                                        style={styles.formInput}
+                                        placeholder="123"
+                                        placeholderTextColor={Colors.olive[300]}
+                                        value={cvc}
+                                        onChangeText={(t) =>
+                                            setCvc(t.replace(/\D/g, '').slice(0, 4))
+                                        }
+                                        keyboardType="number-pad"
+                                        maxLength={4}
+                                        secureTextEntry
+                                    />
+                                </View>
+                            </View>
+
+                            {/* Name on Card */}
+                            <Text style={styles.inputLabel}>NAME ON CARD</Text>
+                            <TextInput
+                                style={styles.formInput}
+                                placeholder="John Smith"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={cardName}
+                                onChangeText={setCardName}
+                                autoCapitalize="words"
+                            />
+                        </View>
+
+                        {/* Pay button */}
+                        <TouchableOpacity
+                            style={[
+                                styles.primaryButton,
+                                paymentState !== 'idle' && styles.buttonDisabled,
+                            ]}
+                            onPress={handlePay}
+                            disabled={paymentState !== 'idle'}
+                            activeOpacity={0.7}
+                        >
+                            {paymentState === 'processing' ? (
+                                <View style={styles.payingRow}>
+                                    <ActivityIndicator
+                                        size="small"
+                                        color={Colors.white}
+                                        style={{ marginRight: Spacing.sm }}
+                                    />
+                                    <Text style={styles.primaryButtonText}>PROCESSING...</Text>
+                                </View>
+                            ) : paymentState === 'success' ? (
+                                <View style={styles.payingRow}>
+                                    <Feather
+                                        name="check"
+                                        size={18}
+                                        color={Colors.white}
+                                        style={{ marginRight: Spacing.sm }}
+                                    />
+                                    <Text style={styles.primaryButtonText}>
+                                        PAYMENT SUCCESSFUL
+                                    </Text>
+                                </View>
+                            ) : (
+                                <Text style={styles.primaryButtonText}>
+                                    PAY ${selectedPlan.price}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+
+                        {/* Security footer */}
+                        <View style={styles.securityFooter}>
+                            <Feather
+                                name="lock"
+                                size={14}
+                                color="rgba(159,165,137,0.50)"
+                                style={{ marginRight: 6 }}
+                            />
+                            <Text style={styles.securityText}>
+                                Secured with 256-bit encryption
+                            </Text>
+                        </View>
+                    </View>
+                )}
+
+                {/* ─── SUCCESS STEP ───────────────────────── */}
+                {step === 'success' && paymentResult && (
+                    <View style={styles.successContainer}>
+                        {/* Large check icon */}
+                        <View style={styles.successIconWrap}>
+                            <Feather
+                                name="check-circle"
+                                size={64}
+                                color={Colors.terra[400]}
+                            />
+                        </View>
+
+                        <Text style={styles.successTitle}>You're All Set!</Text>
+
+                        {/* Plan summary card */}
+                        <View style={styles.successSummary}>
+                            <View style={styles.summaryRow}>
+                                <Text style={styles.summaryLabel}>Plan</Text>
+                                <Text style={styles.summaryValue}>
+                                    {paymentResult.planName}
+                                </Text>
+                            </View>
+                            <View style={styles.summaryDivider} />
+                            <View style={styles.summaryRow}>
+                                <Text style={styles.summaryLabel}>Credits</Text>
+                                <Text style={styles.summaryValue}>
+                                    {paymentResult.credits === null
+                                        ? 'Unlimited'
+                                        : paymentResult.credits}
+                                </Text>
+                            </View>
+                            <View style={styles.summaryDivider} />
+                            <View style={styles.summaryRow}>
+                                <Text style={styles.summaryLabel}>Valid Until</Text>
+                                <Text style={styles.summaryValue}>
+                                    {formatDate(paymentResult.endDate)}
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Book a Class button */}
+                        <TouchableOpacity
+                            style={styles.primaryButton}
+                            onPress={() => router.replace('/(tabs)/schedule')}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.payingRow}>
+                                <Feather
+                                    name="calendar"
+                                    size={18}
+                                    color={Colors.white}
+                                    style={{ marginRight: Spacing.sm }}
+                                />
+                                <Text style={styles.primaryButtonText}>BOOK A CLASS</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Go to Dashboard button */}
+                        <TouchableOpacity
+                            style={styles.outlineButton}
+                            onPress={() => router.replace('/(tabs)')}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={styles.outlineButtonText}>GO TO DASHBOARD</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </ScrollView>
+        </SafeAreaView>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: Colors.background,
+    },
+    container: {
+        flex: 1,
+        backgroundColor: Colors.background,
+    },
+    contentContainer: {
+        paddingHorizontal: Spacing.md,
+        paddingTop: Spacing.md,
+        paddingBottom: 100,
+    },
+
+    // Header
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: Colors.peach[50],
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: Spacing.sm + 4,
+    },
+    headerTitle: {
+        fontSize: FontSize['2xl'],
+        fontWeight: '800',
+        color: Colors.olive[600],
+    },
+
+    // Tab toggle
+    tabToggleContainer: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(235,228,213,0.50)',
+        borderRadius: BorderRadius.full,
+        padding: 4,
+        marginBottom: Spacing.lg,
+    },
+    tabButton: {
+        flex: 1,
+        paddingVertical: Spacing.sm + 2,
+        borderRadius: BorderRadius.full,
+        alignItems: 'center',
+    },
+    tabButtonActive: {
+        backgroundColor: Colors.terra[400],
+        ...Shadows.md,
+    },
+    tabButtonText: {
+        fontSize: FontSize.xs,
+        fontWeight: '700',
+        color: Colors.olive[400],
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    tabButtonTextActive: {
+        color: Colors.white,
+    },
+
+    // Features
+    featuresCard: {
+        backgroundColor: 'rgba(235,228,213,0.30)',
+        borderWidth: 1,
+        borderColor: 'rgba(212,180,148,0.10)',
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg - 4,
+        marginBottom: Spacing.lg,
+    },
+    featuresTitle: {
+        fontSize: FontSize.xs,
+        fontWeight: '700',
+        color: Colors.olive[300],
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: Spacing.sm + 4,
+    },
+    featureRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.sm,
+    },
+    featureText: {
+        fontSize: FontSize.sm,
+        color: Colors.olive[400],
+        flex: 1,
+    },
+
+    // Buttons
+    primaryButton: {
+        backgroundColor: Colors.terra[400],
+        borderRadius: BorderRadius.xl,
+        height: 56,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    primaryButtonText: {
+        color: Colors.white,
+        fontSize: FontSize.sm,
+        fontWeight: '700',
+        letterSpacing: 1.5,
+    },
+    buttonDisabled: {
+        opacity: 0.5,
+    },
+    outlineButton: {
+        borderWidth: 1,
+        borderColor: 'rgba(212,180,148,0.20)',
+        borderRadius: BorderRadius.xl,
+        height: 56,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: Spacing.sm + 4,
+    },
+    outlineButtonText: {
+        color: Colors.olive[600],
+        fontSize: FontSize.sm,
+        fontWeight: '700',
+        letterSpacing: 1.5,
+    },
+    payingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    // Order summary
+    orderSummary: {
+        backgroundColor: 'rgba(235,228,213,0.40)',
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg - 4,
+        marginBottom: Spacing.lg,
+    },
+    orderPlanName: {
+        fontSize: FontSize.base,
+        fontWeight: '700',
+        color: Colors.olive[600],
+    },
+    orderLabel: {
+        fontSize: FontSize.sm,
+        color: Colors.olive[300],
+        marginTop: 2,
+    },
+    orderAmount: {
+        fontSize: FontSize['2xl'],
+        fontWeight: '700',
+        color: Colors.olive[600],
+        marginTop: Spacing.sm,
+    },
+
+    // Form
+    formSection: {
+        marginBottom: Spacing.lg,
+    },
+    inputLabel: {
+        fontSize: FontSize.xs,
+        fontWeight: '700',
+        color: Colors.olive[400],
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: Spacing.sm,
+        marginTop: Spacing.md,
+    },
+    formInput: {
+        backgroundColor: Colors.peach[100],
+        borderWidth: 1,
+        borderColor: 'rgba(212,180,148,0.20)',
+        borderRadius: BorderRadius.xl,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.md - 4,
+        fontSize: FontSize.base,
+        color: Colors.olive[600],
+    },
+    inputWithIcon: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.peach[100],
+        borderWidth: 1,
+        borderColor: 'rgba(212,180,148,0.20)',
+        borderRadius: BorderRadius.xl,
+        paddingHorizontal: Spacing.md,
+    },
+    inputIcon: {
+        marginRight: Spacing.sm,
+    },
+    inputWithIconField: {
+        flex: 1,
+        paddingVertical: Spacing.md - 4,
+        fontSize: FontSize.base,
+        color: Colors.olive[600],
+    },
+    cardBrand: {
+        fontSize: FontSize.xs,
+        fontWeight: '700',
+        color: Colors.olive[400],
+    },
+    twoColRow: {
+        flexDirection: 'row',
+        gap: Spacing.sm + 4,
+    },
+    halfCol: {
+        flex: 1,
+    },
+
+    // Security footer
+    securityFooter: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: Spacing.md,
+    },
+    securityText: {
+        fontSize: FontSize['2xs'],
+        color: 'rgba(159,165,137,0.50)',
+    },
+
+    // Success
+    successContainer: {
+        alignItems: 'center',
+        paddingTop: Spacing['2xl'],
+    },
+    successIconWrap: {
+        marginBottom: Spacing.lg,
+    },
+    successTitle: {
+        fontSize: FontSize['3xl'],
+        fontWeight: '800',
+        color: Colors.olive[600],
+        marginBottom: Spacing.lg,
+    },
+    successSummary: {
+        backgroundColor: 'rgba(235,228,213,0.30)',
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg - 4,
+        width: '100%',
+        marginBottom: Spacing.lg,
+    },
+    summaryRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: Spacing.sm + 2,
+    },
+    summaryLabel: {
+        fontSize: FontSize.sm,
+        color: Colors.olive[300],
+    },
+    summaryValue: {
+        fontSize: FontSize.sm,
+        fontWeight: '700',
+        color: Colors.olive[600],
+    },
+    summaryDivider: {
+        height: 1,
+        backgroundColor: 'rgba(212,180,148,0.15)',
+    },
+});

@@ -17,8 +17,8 @@ import {
     Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
-import { getFacility, callUpdateFacility, getTrainers } from "@/lib/firebase/firestore"
-import { GymCenter } from "@/types/gym"
+import { getFacility, callUpdateFacility, getTrainers } from "@fitconnect/shared/firebase/firestore"
+import { GymCenter } from "@fitconnect/shared/types/gym"
 
 export default function FacilitySettingsPage() {
     const [isLoading, setIsLoading] = useState(true)

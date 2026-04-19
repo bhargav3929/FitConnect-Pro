@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { CheckIcon, SparklesIcon } from "lucide-react"
-import { PLAN_CATALOG, type PlanId, type PlanDefinition } from "@/types/subscription"
+import { PLAN_CATALOG, type PlanId, type PlanDefinition } from "@fitconnect/shared/types/subscription"
 import { cn } from "@/lib/utils"
 
 interface PlanSelectorProps {

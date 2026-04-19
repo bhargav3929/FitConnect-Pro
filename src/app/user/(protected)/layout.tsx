@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useClientAuthStore } from "@/lib/store/clientAuthStore"
+import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { UserNav } from "@/components/user/UserNav"
 
 export default function UserLayout({

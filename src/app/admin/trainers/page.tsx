@@ -31,8 +31,8 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { getAllTrainers, callCreateTrainer, callUpdateTrainer, callDeleteTrainer } from "@/lib/firebase/firestore"
-import { Trainer } from "@/types/trainer"
+import { getAllTrainers, callCreateTrainer, callUpdateTrainer, callDeleteTrainer } from "@fitconnect/shared/firebase/firestore"
+import { Trainer } from "@fitconnect/shared/types/trainer"
 import { toast } from "sonner"
 
 interface TrainerFormData {

@@ -12,17 +12,18 @@ import {
     type Unsubscribe,
 } from 'firebase/firestore';
 import { db, auth } from './config';
-import { UserProfile } from '@/types/user';
-import { ClassSession, SpotSelection } from '@/types/class';
-import { Booking } from '@/types/booking';
-import { Trainer } from '@/types/trainer';
-import { GymCenter } from '@/types/gym';
+import { getApiBaseUrl } from './api-config';
+import { UserProfile } from '../types/user';
+import { ClassSession, SpotSelection } from '../types/class';
+import { Booking } from '../types/booking';
+import { Trainer } from '../types/trainer';
+import { GymCenter } from '../types/gym';
 
 // ---------------------------------------------------------------------------
 // API call helper — gets ID token and calls our Next.js API routes
 // ---------------------------------------------------------------------------
 
-async function apiFetch<T>(
+export async function apiFetch<T>(
     url: string,
     options: { method?: string; body?: unknown } = {},
 ): Promise<T> {
@@ -30,7 +31,7 @@ async function apiFetch<T>(
     if (!user) throw new Error('Not authenticated');
     const token = await user.getIdToken();
 
-    const res = await fetch(url, {
+    const res = await fetch(`${getApiBaseUrl()}${url}`, {
         method: options.method || 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -39,9 +40,9 @@ async function apiFetch<T>(
         ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
     });
 
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     if (!res.ok) {
-        throw new Error(data.error || 'API request failed');
+        throw new Error((data.error as string) || 'API request failed');
     }
     return data as T;
 }
@@ -50,14 +51,14 @@ async function apiFetch<T>(
 // Helpers
 // ---------------------------------------------------------------------------
 
-function toDate(val: unknown): Date {
+export function toDate(val: unknown): Date {
     if (val instanceof Timestamp) return val.toDate();
     if (val instanceof Date) return val;
     if (typeof val === 'string' || typeof val === 'number') return new Date(val);
     return new Date();
 }
 
-function convertTimestamps<T extends Record<string, unknown>>(data: T): T {
+export function convertTimestamps<T extends Record<string, unknown>>(data: T): T {
     const result = { ...data };
     for (const key of Object.keys(result)) {
         const val = result[key];
@@ -182,6 +183,35 @@ export function subscribeToClass(
     });
 }
 
+// Real-time listener for all scheduled classes on a given date.
+// Fires whenever any class in the day is added, updated (e.g. bookedSpots changes),
+// or removed — used by Dashboard's "Today at the Studio" and Schedule tab.
+export function subscribeToClassesByDate(
+    date: Date,
+    callback: (classes: ClassSession[]) => void,
+): Unsubscribe {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    const q = query(
+        collection(db, 'classes'),
+        where('status', '==', 'scheduled'),
+        where('date', '>=', Timestamp.fromDate(start)),
+        where('date', '<=', Timestamp.fromDate(end)),
+        orderBy('date'),
+        orderBy('startTime'),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const classes = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return convertTimestamps({ ...data, id: doc.id }) as unknown as ClassSession;
+        });
+        callback(classes);
+    });
+}
+
 // ---------------------------------------------------------------------------
 // 7. subscribeToUserBookings — Real-time listener for user bookings
 // ---------------------------------------------------------------------------
@@ -195,12 +225,56 @@ export function subscribeToUserBookings(
         where('userId', '==', userId),
         orderBy('classDate', 'desc'),
     );
-    return onSnapshot(q, (snapshot) => {
-        const bookings = snapshot.docs.map((doc) => {
+    const classCache = new Map<string, Record<string, unknown>>();
+    const trainerCache = new Map<string, string>();
+
+    return onSnapshot(q, async (snapshot) => {
+        const rawBookings = snapshot.docs.map((doc) => {
             const data = doc.data();
-            return convertTimestamps({ ...data, id: doc.id }) as unknown as Booking;
+            return convertTimestamps({ ...data, id: doc.id }) as unknown as Booking & {
+                classId: string;
+                trainerId: string;
+            };
         });
-        callback(bookings);
+
+        const classIds = Array.from(new Set(rawBookings.map((b) => b.classId).filter(Boolean)));
+        const missingClassIds = classIds.filter((id) => !classCache.has(id));
+        await Promise.all(
+            missingClassIds.map(async (id) => {
+                const snap = await getDoc(doc(db, 'classes', id));
+                if (snap.exists()) classCache.set(id, snap.data() as Record<string, unknown>);
+                else classCache.set(id, {});
+            }),
+        );
+
+        const trainerIds = Array.from(
+            new Set(
+                rawBookings
+                    .map((b) => (classCache.get(b.classId)?.trainerId as string) || b.trainerId)
+                    .filter(Boolean),
+            ),
+        );
+        const missingTrainerIds = trainerIds.filter((id) => !trainerCache.has(id));
+        await Promise.all(
+            missingTrainerIds.map(async (id) => {
+                const snap = await getDoc(doc(db, 'trainers', id));
+                trainerCache.set(id, snap.exists() ? (snap.data().name as string) : 'Instructor');
+            }),
+        );
+
+        const enriched = rawBookings.map((b) => {
+            const cls = classCache.get(b.classId) || {};
+            const trainerId = (cls.trainerId as string) || b.trainerId;
+            return {
+                ...b,
+                classType: (cls.classType as string) || 'Pilates',
+                classStartTime: (cls.startTime as string) || '',
+                classDuration: (cls.duration as number) || 0,
+                classLocation: (cls.location as string) || 'Main Studio',
+                trainerName: trainerCache.get(trainerId) || 'Instructor',
+            } as Booking;
+        });
+        callback(enriched);
     });
 }
 

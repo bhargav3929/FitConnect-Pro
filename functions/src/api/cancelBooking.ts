@@ -62,8 +62,9 @@ export const cancelBooking = functions.https.onCall(async (data: CancelBookingDa
             // Release spot from class if class exists
             if (classDoc.exists) {
                 const spotNumber = bookingData.spotNumber;
+                const currentBookedCount = (classDoc.data()?.bookedCount as number) || 0;
                 const updateData: Record<string, unknown> = {
-                    bookedCount: FieldValue.increment(-1),
+                    bookedCount: Math.max(0, currentBookedCount - 1),
                     updatedAt: now,
                 };
                 if (spotNumber !== undefined) {

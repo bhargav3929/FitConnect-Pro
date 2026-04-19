@@ -28,8 +28,8 @@ import {
     ResponsiveContainer,
 } from "recharts"
 import Link from "next/link"
-import { getBookingStats, getAllMembers, getClassesByDate, getAllBookings } from "@/lib/firebase/firestore"
-import { Booking } from "@/types/booking"
+import { getBookingStats, getAllMembers, getClassesByDate, getAllBookings } from "@fitconnect/shared/firebase/firestore"
+import { Booking } from "@fitconnect/shared/types/booking"
 
 const getGreeting = () => {
     const hour = new Date().getHours()

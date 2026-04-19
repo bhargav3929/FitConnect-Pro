@@ -12,8 +12,8 @@ import {
     UserPlus,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { getAllMembers } from "@/lib/firebase/firestore"
-import { UserProfile } from "@/types/user"
+import { getAllMembers } from "@fitconnect/shared/firebase/firestore"
+import { UserProfile } from "@fitconnect/shared/types/user"
 import { toast } from "sonner"
 
 const PLAN_FILTERS = ["All Plans", "unlimited", "twice_weekly", "once_weekly", "drop_in", "five_pack", "ten_pack"]

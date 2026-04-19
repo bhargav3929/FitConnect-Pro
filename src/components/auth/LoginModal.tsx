@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { signInWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/lib/firebase/config"
+import { auth } from "@fitconnect/shared/firebase/config"
 import { toast } from "sonner"
 
 const loginSchema = z.object({

@@ -31,8 +31,8 @@ import {
     type ClassPopularityItem,
     type LocationUtilization as LocationUtilizationItem,
     type AttendanceStats,
-} from "@/lib/firebase/firestore"
-import { Booking } from "@/types/booking"
+} from "@fitconnect/shared/firebase/firestore"
+import { Booking } from "@fitconnect/shared/types/booking"
 
 function MetricCard({ label, value, subValue, icon: Icon, delay = 0, isLoading }: {
     label: string; value: string; subValue?: string; icon: LucideIcon; delay?: number; isLoading: boolean

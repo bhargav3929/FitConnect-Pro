@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useClientAuthStore } from "@/lib/store/clientAuthStore"
+import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { motion } from "framer-motion"
 import {
     Mail,
@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
-import { auth } from "@/lib/firebase/config"
+import { auth } from "@fitconnect/shared/firebase/config"
 import { toast } from "sonner"
 import Link from "next/link"
 

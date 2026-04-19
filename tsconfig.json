@@ -25,19 +25,28 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@fitconnect/shared": [
+        "./shared/src/index.ts"
+      ],
+      "@fitconnect/shared/*": [
+        "./shared/src/*"
       ]
     }
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "*.ts",
+    "*.mts"
   ],
   "exclude": [
     "node_modules",
-    "functions"
+    "functions",
+    "shared",
+    "mobile"
   ]
 }

@@ -11,11 +11,11 @@ import {
     Star,
     Target,
 } from "lucide-react"
-import { useClientAuthStore } from "@/lib/store/clientAuthStore"
-import { getUserBookings, getClassesByDate } from "@/lib/firebase/firestore"
+import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
+import { getUserBookings, subscribeToClassesByDate } from "@fitconnect/shared/firebase/firestore"
 import { SubscriptionWidget } from "@/components/user/SubscriptionWidget"
-import { Booking } from "@/types/booking"
-import { ClassSession } from "@/types/class"
+import { Booking } from "@fitconnect/shared/types/booking"
+import { ClassSession } from "@fitconnect/shared/types/class"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -45,12 +45,11 @@ export default function UserDashboard() {
             setIsLoadingBookings(false)
         })
 
-        getClassesByDate(new Date()).then((classes) => {
+        const unsub = subscribeToClassesByDate(new Date(), (classes) => {
             setTodaysClasses(classes)
             setIsLoadingClasses(false)
-        }).catch(() => {
-            setIsLoadingClasses(false)
         })
+        return unsub
     }, [firebaseUser])
 
     const formatTime = (time: string) => {

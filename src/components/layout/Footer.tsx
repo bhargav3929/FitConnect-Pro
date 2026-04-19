@@ -33,18 +33,19 @@ export function Footer() {
                         </p>
                         <div className="flex gap-4">
                             {[
-                                { icon: Instagram, href: "#" },
-                                { icon: Twitter, href: "#" },
-                                { icon: Linkedin, href: "#" },
-                                { icon: Youtube, href: "#" }
+                                { icon: Instagram, label: "Instagram" },
+                                { icon: Twitter, label: "Twitter" },
+                                { icon: Linkedin, label: "LinkedIn" },
+                                { icon: Youtube, label: "YouTube" },
                             ].map((social, i) => (
-                                <Link
+                                <button
                                     key={i}
-                                    href={social.href}
+                                    type="button"
+                                    aria-label={social.label}
                                     className="w-10 h-10 rounded-full bg-peach-200/5 border border-peach-200/10 flex items-center justify-center text-peach-200 hover:bg-terra-400 hover:text-peach-50 hover:border-terra-400 hover:scale-110 transition-all duration-300"
                                 >
                                     <social.icon className="w-4 h-4" />
-                                </Link>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -54,10 +55,16 @@ export function Footer() {
                         <div>
                             <h4 className="font-bold text-peach-200 mb-6 tracking-wide">SERVICES</h4>
                             <ul className="space-y-4">
-                                {["Strength & Sculpt", "Cardio & Endurance", "Reset & Restore", "Muscle Recovery", "Intense Exercise"].map(item => (
-                                    <li key={item}>
-                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
-                                            {item}
+                                {[
+                                    { label: "Strength & Sculpt", href: "/subscription" },
+                                    { label: "Cardio & Endurance", href: "/subscription" },
+                                    { label: "Reset & Restore", href: "/subscription" },
+                                    { label: "Muscle Recovery", href: "/subscription" },
+                                    { label: "Intense Exercise", href: "/subscription" },
+                                ].map(item => (
+                                    <li key={item.label}>
+                                        <Link href={item.href} className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
+                                            {item.label}
                                         </Link>
                                     </li>
                                 ))}
@@ -66,10 +73,15 @@ export function Footer() {
                         <div>
                             <h4 className="font-bold text-peach-200 mb-6 tracking-wide">COMPANY</h4>
                             <ul className="space-y-4">
-                                {["About SOL", "Our Instructors", "Our Story", "Contact"].map(item => (
-                                    <li key={item}>
-                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
-                                            {item}
+                                {[
+                                    { label: "About SOL", href: "/about" },
+                                    { label: "Our Instructors", href: "/about" },
+                                    { label: "Our Story", href: "/about" },
+                                    { label: "Contact", href: "/contact" },
+                                ].map(item => (
+                                    <li key={item.label}>
+                                        <Link href={item.href} className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
+                                            {item.label}
                                         </Link>
                                     </li>
                                 ))}
@@ -80,9 +92,9 @@ export function Footer() {
                             <ul className="space-y-4">
                                 {["Privacy Policy", "Terms of Service", "Cookie Policy", "Accessibility"].map(item => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
+                                        <button type="button" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5 text-left w-full">
                                             {item}
-                                        </Link>
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
@@ -116,11 +128,11 @@ export function Footer() {
                         &copy; {new Date().getFullYear()} SOL Pilates Studio. All rights reserved.
                     </p>
                     <div className="flex gap-6">
-                        <Link href="#" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Privacy</Link>
+                        <button type="button" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Privacy</button>
                         <span className="text-warmDark-700">&bull;</span>
-                        <Link href="#" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Terms</Link>
+                        <button type="button" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Terms</button>
                         <span className="text-warmDark-700">&bull;</span>
-                        <Link href="#" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Sitemap</Link>
+                        <button type="button" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">Sitemap</button>
                     </div>
                 </div>
             </div>

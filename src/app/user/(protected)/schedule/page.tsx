@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     MapPin,
@@ -18,10 +18,10 @@ import { CalendarStrip } from "@/components/user/CalendarStrip"
 import { SpotSelectionModal } from "@/components/user/SpotSelectionModal"
 import { SubscriptionPromptModal } from "@/components/user/SubscriptionPromptModal"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { getClassesByDate, getTrainers, callBookClass } from "@/lib/firebase/firestore"
-import { useClientAuthStore } from "@/lib/store/clientAuthStore"
-import { ClassSession } from "@/types/class"
-import { Trainer } from "@/types/trainer"
+import { subscribeToClassesByDate, getTrainers, callBookClass } from "@fitconnect/shared/firebase/firestore"
+import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
+import { ClassSession } from "@fitconnect/shared/types/class"
+import { Trainer } from "@fitconnect/shared/types/trainer"
 import { toast } from "sonner"
 
 const FACILITY = {
@@ -97,22 +97,14 @@ export default function SchedulePage() {
         return `${date.getDate()} ${months[date.getMonth()]}`
     }
 
-    const fetchClasses = useCallback(async (date: Date) => {
-        setIsLoadingClasses(true)
-        try {
-            const result = await getClassesByDate(date)
-            setClasses(result)
-        } catch (err) {
-            console.error('Failed to fetch classes:', err)
-            setClasses([])
-        } finally {
-            setIsLoadingClasses(false)
-        }
-    }, [])
-
     useEffect(() => {
-        fetchClasses(selectedDate)
-    }, [selectedDate, fetchClasses])
+        setIsLoadingClasses(true)
+        const unsub = subscribeToClassesByDate(selectedDate, (result) => {
+            setClasses(result)
+            setIsLoadingClasses(false)
+        })
+        return unsub
+    }, [selectedDate])
 
     useEffect(() => {
         async function loadTrainers() {
@@ -161,8 +153,7 @@ export default function SchedulePage() {
             toast.success("Booking confirmed!", {
                 description: `Spot ${spotNumber} reserved for ${selectedClass.name}`,
             })
-            // Refresh both class data and user subscription (credits decremented server-side)
-            fetchClasses(selectedDate)
+            // subscribeToClassesByDate auto-refreshes spot counts; just refresh user credits.
             refreshSubscription()
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to book class"

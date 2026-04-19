@@ -1,9 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowRight, AlertTriangle, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ClientUser } from "@/types/client"
+import { ClientUser } from "@fitconnect/shared/types/client"
 import Link from "next/link"
 
 interface SubscriptionWidgetProps {
@@ -12,6 +13,7 @@ interface SubscriptionWidgetProps {
 
 export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
     const { planId, status, classesRemaining, endDate } = subscription
+    const [nowMs] = useState(() => Date.now())
 
     // No plan state
     if (!planId || status === 'expired' || status === 'canceled') {
@@ -84,7 +86,7 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
         return isNaN(d.getTime()) ? null : d
     })()
 
-    const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
+    const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - nowMs) / (1000 * 60 * 60 * 24))) : 0
     const renewalDate = endDateObj ? endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
 
     // Credits progress ring — use plan's original credit count for the ring max

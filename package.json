@@ -1,12 +1,22 @@
 {
-  "name": "temp_app",
+  "name": "fitconnect-pro",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "shared",
+    "mobile"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:shared": "npm run test --workspace=@fitconnect/shared",
+    "typecheck": "tsc --noEmit",
+    "typecheck:shared": "npm run typecheck --workspace=@fitconnect/shared",
+    "typecheck:all": "tsc --noEmit && npm run typecheck --workspace=@fitconnect/shared",
+    "build:tokens": "node shared/src/design/build-tokens.mjs",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -48,6 +58,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
+    "patch-package": "^8.0.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

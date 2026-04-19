@@ -13,7 +13,7 @@ import {
     CaretRight,
     Crown,
 } from "@phosphor-icons/react"
-import { useClientAuthStore } from "@/lib/store/clientAuthStore"
+import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { useRouter } from "next/navigation"
 
 const NAV_ITEMS = [

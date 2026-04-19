@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { useAdminAuthStore } from "@/lib/store/adminAuthStore"
+import { useAdminAuthStore } from "@fitconnect/shared/stores/adminAuthStore"
 import { AdminSidebar } from "@/components/admin/AdminSidebar"
 import { AdminHeader } from "@/components/admin/AdminHeader"
 

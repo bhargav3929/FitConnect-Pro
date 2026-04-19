@@ -23,8 +23,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getAllBookings, callCancelBooking } from "@/lib/firebase/firestore"
-import { Booking } from "@/types/booking"
+import { getAllBookings, callCancelBooking } from "@fitconnect/shared/firebase/firestore"
+import { Booking } from "@fitconnect/shared/types/booking"
 import { toast } from "sonner"
 
 const STATUS_FILTERS = ["All Status", "confirmed", "attended", "canceled", "no-show"]

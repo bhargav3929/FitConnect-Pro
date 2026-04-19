@@ -1,12 +1,13 @@
 @import "tailwindcss";
+@import "../../shared/src/design/tokens.generated.css";
 
 @config "../../tailwind.config.ts";
 
 @layer base {
   :root {
     /* SOL Pilates Studio v2 — Warm Peach / Olive / Terracotta */
-    --background: 28 48% 90%;
-    /* #F0D8C0 Warm Peach */
+    --background: 33 59% 90%;
+    /* #F5E8D8 peach-100 (shared token: semanticColors.background) */
     --foreground: 82 16% 39%;
     /* #6B7752 Olive Green */
 
