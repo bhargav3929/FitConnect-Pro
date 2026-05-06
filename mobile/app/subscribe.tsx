@@ -20,7 +20,7 @@ import {
     callConfirmPayment,
 } from '@fitconnect/shared/firebase/firestore';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
-import { Colors, Spacing, FontSize, BorderRadius, Shadows } from '../constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../constants/theme';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -127,7 +127,7 @@ const stepStyles = StyleSheet.create({
     line: {
         width: 48,
         height: 2,
-        backgroundColor: 'rgba(212,180,148,0.20)',
+        backgroundColor: Alpha.peach400_20,
         marginHorizontal: Spacing.sm,
     },
     lineCompleted: {
@@ -137,7 +137,7 @@ const stepStyles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: 'rgba(235,228,213,0.50)',
+        backgroundColor: Alpha.peach200_50,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -145,7 +145,7 @@ const stepStyles = StyleSheet.create({
         backgroundColor: Colors.terra[400],
     },
     circleCompleted: {
-        backgroundColor: 'rgba(139,63,44,0.20)',
+        backgroundColor: Alpha.terra400_20,
     },
     circleText: {
         fontSize: FontSize.sm,
@@ -202,7 +202,7 @@ function PlanCard({
             <Text style={planCardStyles.planName}>{plan.name}</Text>
 
             <View style={planCardStyles.priceRow}>
-                <Text style={planCardStyles.price}>${plan.price}</Text>
+                <Text style={planCardStyles.price}>₹{plan.price}</Text>
                 <Text style={planCardStyles.priceSuffix}>
                     {plan.category === 'membership' ? '/month' : '/pack'}
                 </Text>
@@ -224,7 +224,7 @@ const planCardStyles = StyleSheet.create({
     card: {
         backgroundColor: Colors.peach[50],
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.20)',
+        borderColor: Alpha.peach400_20,
         borderRadius: BorderRadius['2xl'],
         padding: Spacing.lg - 4,
         marginBottom: Spacing.md,
@@ -245,7 +245,7 @@ const planCardStyles = StyleSheet.create({
         alignSelf: 'flex-start',
         borderWidth: 1,
         borderColor: Colors.terra[400],
-        backgroundColor: 'rgba(139,63,44,0.10)',
+        backgroundColor: Alpha.terra400_10,
         borderRadius: BorderRadius.full,
         paddingHorizontal: Spacing.sm + 2,
         paddingVertical: Spacing.xs,
@@ -523,7 +523,7 @@ export default function SubscribeScreen() {
                         <View style={styles.orderSummary}>
                             <Text style={styles.orderPlanName}>{selectedPlan.name}</Text>
                             <Text style={styles.orderLabel}>One-time payment</Text>
-                            <Text style={styles.orderAmount}>${selectedPlan.price}</Text>
+                            <Text style={styles.orderAmount}>₹{selectedPlan.price}</Text>
                         </View>
 
                         {/* Payment form */}
@@ -639,7 +639,7 @@ export default function SubscribeScreen() {
                             <Feather
                                 name="lock"
                                 size={14}
-                                color="rgba(159,165,137,0.50)"
+                                color={Alpha.olive300_50}
                                 style={{ marginRight: 6 }}
                             />
                             <Text style={styles.securityText}>
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
     // Tab toggle
     tabToggleContainer: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(235,228,213,0.50)',
+        backgroundColor: Alpha.peach200_50,
         borderRadius: BorderRadius.full,
         padding: 4,
         marginBottom: Spacing.lg,
@@ -792,9 +792,9 @@ const styles = StyleSheet.create({
 
     // Features
     featuresCard: {
-        backgroundColor: 'rgba(235,228,213,0.30)',
+        backgroundColor: Alpha.peach200_30,
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.10)',
+        borderColor: Alpha.peach400_10,
         borderRadius: BorderRadius['2xl'],
         padding: Spacing.lg - 4,
         marginBottom: Spacing.lg,
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
     },
     outlineButton: {
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.20)',
+        borderColor: Alpha.peach400_20,
         borderRadius: BorderRadius.xl,
         height: 56,
         justifyContent: 'center',
@@ -858,7 +858,7 @@ const styles = StyleSheet.create({
 
     // Order summary
     orderSummary: {
-        backgroundColor: 'rgba(235,228,213,0.40)',
+        backgroundColor: Alpha.peach200_40,
         borderRadius: BorderRadius['2xl'],
         padding: Spacing.lg - 4,
         marginBottom: Spacing.lg,
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
     formInput: {
         backgroundColor: Colors.peach[100],
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.20)',
+        borderColor: Alpha.peach400_20,
         borderRadius: BorderRadius.xl,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.md - 4,
@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: Colors.peach[100],
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.20)',
+        borderColor: Alpha.peach400_20,
         borderRadius: BorderRadius.xl,
         paddingHorizontal: Spacing.md,
     },
@@ -943,7 +943,7 @@ const styles = StyleSheet.create({
     },
     securityText: {
         fontSize: FontSize['2xs'],
-        color: 'rgba(159,165,137,0.50)',
+        color: Alpha.olive300_50,
     },
 
     // Success
@@ -961,7 +961,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
     },
     successSummary: {
-        backgroundColor: 'rgba(235,228,213,0.30)',
+        backgroundColor: Alpha.peach200_30,
         borderRadius: BorderRadius['2xl'],
         padding: Spacing.lg - 4,
         width: '100%',
@@ -983,6 +983,6 @@ const styles = StyleSheet.create({
     },
     summaryDivider: {
         height: 1,
-        backgroundColor: 'rgba(212,180,148,0.15)',
+        backgroundColor: Alpha.peach400_12,
     },
 });

@@ -41,7 +41,7 @@ const FACILITY = {
     },
 }
 
-type FilterType = 'instructor' | 'classType' | 'rooms'
+type FilterType = 'instructor' | 'classType'
 
 function hasValidSubscription(sub: { planId: unknown; status: string; endDate: unknown; classesRemaining: unknown } | undefined): boolean {
     if (!sub) return false
@@ -83,7 +83,6 @@ export default function SchedulePage() {
     const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterType, string>>({
         instructor: '',
         classType: '',
-        rooms: '',
     })
     const [classes, setClasses] = useState<ClassSession[]>([])
     const [trainers, setTrainers] = useState<Trainer[]>([])
@@ -181,7 +180,6 @@ export default function SchedulePage() {
 
     // Derive unique filter options from classes
     const uniqueClassTypes = [...new Set(classes.map(c => c.classType).filter(Boolean))] as string[]
-    const uniqueRooms = [...new Set(classes.map(c => c.location).filter(Boolean))] as string[]
     const uniqueInstructors = [...new Set(classes.map(c => {
         const t = trainers.find(t => t.id === c.trainerId)
         return t ? t.name : null
@@ -190,7 +188,6 @@ export default function SchedulePage() {
     // Apply filters to classes
     const filteredClasses = classes.filter(cls => {
         if (selectedFilterValues.classType && cls.classType !== selectedFilterValues.classType) return false
-        if (selectedFilterValues.rooms && cls.location !== selectedFilterValues.rooms) return false
         if (selectedFilterValues.instructor) {
             const trainerName = trainers.find(t => t.id === cls.trainerId)?.name
             if (trainerName !== selectedFilterValues.instructor) return false
@@ -294,7 +291,6 @@ export default function SchedulePage() {
                                     {[
                                         { id: 'instructor', label: 'Instructor' },
                                         { id: 'classType', label: 'Class Type' },
-                                        { id: 'rooms', label: 'Room' },
                                     ].map(filter => (
                                         <button
                                             key={filter.id}
@@ -338,22 +334,6 @@ export default function SchedulePage() {
                                                     }`}
                                             >
                                                 {type}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                                {activeFilters.includes('rooms') && uniqueRooms.length > 0 && (
-                                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pl-6">
-                                        {uniqueRooms.map(room => (
-                                            <button
-                                                key={room}
-                                                onClick={() => selectFilterValue('rooms', room)}
-                                                className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.rooms === room
-                                                        ? 'bg-terra-400 text-peach-50'
-                                                        : 'bg-peach-200/50 text-olive-400 hover:bg-peach-200/80'
-                                                    }`}
-                                            >
-                                                {room}
                                             </button>
                                         ))}
                                     </div>

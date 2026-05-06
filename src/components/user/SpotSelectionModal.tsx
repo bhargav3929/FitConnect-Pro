@@ -238,7 +238,7 @@ export function SpotSelectionModal({
                                             </div>
                                         </div>
 
-                                        {/* Spots Grid - The "Stage" */}
+                                        {/* Studio Layout - 12 reformers: 5 left / 7 right with center aisle */}
                                         <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] relative">
                                             {/* Stage Indicator */}
                                             <div className="w-full max-w-xm text-center mb-8">
@@ -246,44 +246,37 @@ export function SpotSelectionModal({
                                                 <span className="text-[10px] uppercase tracking-[0.3em] text-olive-300/40">Front of Room</span>
                                             </div>
 
-                                            <div className="grid grid-cols-4 gap-4 sm:gap-6">
-                                                {spots.map((spotNum) => {
-                                                    const state = getSpotState(spotNum)
-                                                    const isUnavailable = state === 'unavailable'
-                                                    const isSelected = state === 'selected' || state === 'guest'
-
-                                                    return (
-                                                        <motion.button
+                                            <div className="flex items-start justify-center gap-10 sm:gap-16">
+                                                {/* Left side: reformers 1-5 (vertical stack) */}
+                                                <div className="flex flex-col gap-3">
+                                                    {spots.slice(0, 5).map((spotNum) => (
+                                                        <ReformerCell
                                                             key={spotNum}
+                                                            spotNum={spotNum}
+                                                            state={getSpotState(spotNum)}
                                                             onClick={() => handleSpotClick(spotNum)}
-                                                            disabled={isUnavailable}
-                                                            whileHover={!isUnavailable ? { scale: 1.1 } : {}}
-                                                            whileTap={!isUnavailable ? { scale: 0.9 } : {}}
-                                                            layout
-                                                            className={`
-                                                                relative w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold transition-all duration-300
-                                                                ${isUnavailable
-                                                                    ? 'bg-peach-300/30 text-olive-300/30 cursor-not-allowed'
-                                                                    : isSelected
-                                                                        ? 'bg-terra-400 text-peach-50 shadow-[0_0_20px_rgba(139,63,44,0.3)] scale-110'
-                                                                        : 'bg-peach-200/40 border border-peach-400/20 text-olive-400 hover:border-terra-400/30 hover:bg-peach-200/60'
-                                                                }
-                                                            `}
-                                                        >
-                                                            {isUnavailable && (
-                                                                <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-20">
-                                                                    <svg className="w-full h-full">
-                                                                        <pattern id={`stripe-${spotNum}`} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                                                                            <rect width="2" height="4" transform="translate(0,0)" fill="currentColor"></rect>
-                                                                        </pattern>
-                                                                        <rect width="100%" height="100%" fill={`url(#stripe-${spotNum})`}></rect>
-                                                                    </svg>
-                                                                </div>
-                                                            )}
-                                                            {spotNum}
-                                                        </motion.button>
-                                                    )
-                                                })}
+                                                        />
+                                                    ))}
+                                                </div>
+
+                                                {/* Center aisle */}
+                                                <div className="flex flex-col items-center justify-center pt-6">
+                                                    <div className="h-32 w-px bg-peach-400/20" />
+                                                    <span className="text-[9px] uppercase tracking-[0.3em] text-olive-300/40 my-2 rotate-90 origin-center whitespace-nowrap">Aisle</span>
+                                                    <div className="h-32 w-px bg-peach-400/20" />
+                                                </div>
+
+                                                {/* Right side: reformers 6-12 (vertical stack) */}
+                                                <div className="flex flex-col gap-3">
+                                                    {spots.slice(5, 12).map((spotNum) => (
+                                                        <ReformerCell
+                                                            key={spotNum}
+                                                            spotNum={spotNum}
+                                                            state={getSpotState(spotNum)}
+                                                            onClick={() => handleSpotClick(spotNum)}
+                                                        />
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -340,5 +333,49 @@ export function SpotSelectionModal({
                 </>
             )}
         </AnimatePresence>
+    )
+}
+
+function ReformerCell({
+    spotNum,
+    state,
+    onClick,
+}: {
+    spotNum: number
+    state: SpotState
+    onClick: () => void
+}) {
+    const isUnavailable = state === 'unavailable'
+    const isSelected = state === 'selected' || state === 'guest'
+    return (
+        <motion.button
+            onClick={onClick}
+            disabled={isUnavailable}
+            whileHover={!isUnavailable ? { scale: 1.05 } : {}}
+            whileTap={!isUnavailable ? { scale: 0.95 } : {}}
+            layout
+            aria-label={`Reformer ${spotNum} ${isUnavailable ? 'booked' : isSelected ? 'selected' : 'available'}`}
+            className={`
+                relative w-12 h-16 rounded-md flex items-center justify-center text-base font-bold transition-all duration-300
+                ${isUnavailable
+                    ? 'bg-peach-300/30 text-olive-300/30 cursor-not-allowed'
+                    : isSelected
+                        ? 'bg-terra-400 text-peach-50 shadow-[0_0_20px_rgba(139,63,44,0.3)] scale-105'
+                        : 'bg-peach-200/40 border border-peach-400/30 text-olive-400 hover:border-terra-400/50 hover:bg-peach-200/60'
+                }
+            `}
+        >
+            {isUnavailable && (
+                <div className="absolute inset-0 rounded-md overflow-hidden opacity-20">
+                    <svg className="w-full h-full">
+                        <pattern id={`stripe-${spotNum}`} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                            <rect width="2" height="4" transform="translate(0,0)" fill="currentColor"></rect>
+                        </pattern>
+                        <rect width="100%" height="100%" fill={`url(#stripe-${spotNum})`}></rect>
+                    </svg>
+                </div>
+            )}
+            <span className="relative">{spotNum}</span>
+        </motion.button>
     )
 }

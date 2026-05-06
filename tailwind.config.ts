@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { COLORS } from "./shared/src/theme/colors";
 
 const config: Config = {
     darkMode: "class",
@@ -54,56 +55,56 @@ const config: Config = {
                     '4': 'hsl(var(--chart-4))',
                     '5': 'hsl(var(--chart-5))'
                 },
-                /* SOL v2 — Warm Peach / Olive / Terracotta Named Scales */
+                /* SOL v3 — Centralized colors from shared/src/theme/colors.ts */
                 peach: {
-                    50: "#FAF3EB",
-                    100: "#F5E8D8",
-                    200: "#F0D8C0",
-                    300: "#E4C8AB",
-                    400: "#D4B494",
-                    500: "#C4A080",
+                    50: COLORS.peach[50],
+                    100: COLORS.peach[100],
+                    200: COLORS.peach[200],
+                    300: COLORS.peach[300],
+                    400: COLORS.peach[400],
+                    500: COLORS.peach[500],
                 },
                 olive: {
-                    300: "#8A9A78",
-                    400: "#6B7752",
-                    500: "#5A6645",
-                    600: "#4A5438",
-                    700: "#3A422C",
+                    300: COLORS.olive[300],
+                    400: COLORS.olive[400],
+                    500: COLORS.olive[500],
+                    600: COLORS.olive[600],
+                    700: COLORS.olive[700],
                 },
                 terra: {
-                    300: "#A85A48",
-                    400: "#8B3F2C",
-                    500: "#6E3022",
-                    600: "#52231A",
+                    300: COLORS.gold[300],
+                    400: COLORS.gold[400],
+                    500: COLORS.gold[500],
+                    600: COLORS.primary.terraDarker,
                 },
                 warmDark: {
-                    700: "#3B2F28",
-                    800: "#2C2420",
-                    900: "#1E1815",
+                    700: COLORS.peach[100],
+                    800: COLORS.peach[50],
+                    900: COLORS.peach[50],
                 },
-                /* SOL Member/Admin Area — Dark Earthy Palette */
                 forest: {
-                    600: "#2A3328",
-                    700: "#1E2620",
-                    800: "#171E16",
-                    950: "#0C120B",
+                    600: COLORS.peach[100],
+                    700: COLORS.peach[200],
+                    800: COLORS.peach[50],
+                    950: COLORS.peach[50],
                 },
                 gold: {
-                    300: "#E2C476",
-                    400: "#D4A24C",
-                    500: "#B8862E",
+                    300: COLORS.gold[300],
+                    400: COLORS.gold[400],
+                    500: COLORS.gold[500],
                 },
                 sand: {
-                    200: "#EDE6DA",
+                    200: COLORS.peach[100],
                 },
                 sage: {
-                    300: "#9DAA8F",
-                    400: "#7A8A6C",
-                    500: "#5E6D52",
+                    300: COLORS.olive[300],
+                    400: COLORS.olive[300],
+                    500: COLORS.olive[400],
                 },
                 terracotta: {
-                    400: "#C06744",
+                    400: COLORS.primary.terra,
                 },
+                'error-hover': COLORS.errorHover,
             },
             borderRadius: {
                 lg: 'var(--radius)',
@@ -115,8 +116,8 @@ const config: Config = {
                 'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
                 'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
                 'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-                'glow': '0 0 24px rgba(139, 63, 44, 0.25)',
-                'glow-lg': '0 0 40px rgba(139, 63, 44, 0.4)',
+                'glow': '0 0 24px rgba(0, 0, 0, 0.15)',
+                'glow-lg': '0 0 40px rgba(0, 0, 0, 0.2)',
             },
             keyframes: {
                 "accordion-down": {

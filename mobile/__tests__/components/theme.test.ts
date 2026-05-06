@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../constants/theme';
+import { palette } from '@fitconnect/shared/design/tokens';
 
 describe('Theme constants', () => {
     describe('Colors', () => {
-        it('has the primary palette colors', () => {
-            expect(Colors.primary).toBe('#8B3F2C');
-            expect(Colors.primaryLight).toBe('#A84D39');
-            expect(Colors.warning).toBe('#FFB347');
+        it('sources primary palette colors from canonical tokens', () => {
+            expect(Colors.primary).toBe(palette.terra[400]);
+            expect(Colors.primaryLight).toBe(palette.terra[300]);
+            expect(Colors.warning).toBe(palette.warning);
         });
 
         it('has semantic colors', () => {

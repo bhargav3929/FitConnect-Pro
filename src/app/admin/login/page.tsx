@@ -11,6 +11,7 @@ import Link from "next/link"
 import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
+import { COLORS, withAlpha } from "@fitconnect/shared/theme"
 import {
     Form,
     FormControl,
@@ -68,7 +69,7 @@ export default function AdminLoginPage() {
                 <div
                     className="absolute inset-0 opacity-20"
                     style={{
-                        backgroundImage: `linear-gradient(rgba(240,216,192,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(240,216,192,0.06) 1px, transparent 1px)`,
+                        backgroundImage: `linear-gradient(${withAlpha(COLORS.dark.text, 0.06)} 1px, transparent 1px), linear-gradient(90deg, ${withAlpha(COLORS.dark.text, 0.06)} 1px, transparent 1px)`,
                         backgroundSize: '60px 60px'
                     }}
                 />
@@ -77,7 +78,7 @@ export default function AdminLoginPage() {
                     <div>
                         <Link href="/" className="inline-flex items-center gap-3 group">
                             <ArrowLeft className="w-5 h-5 text-peach-400 group-hover:text-peach-200 transition-colors" />
-                            <Image src="/images/sol-logo-cream.png" alt="SOL Pilates Studio" width={400} height={400} className="h-16 w-auto" />
+                            <Image src="/images/sol-logo-terra.png" alt="SOL Pilates Studio" width={400} height={400} className="h-16 w-auto" />
                         </Link>
                     </div>
 

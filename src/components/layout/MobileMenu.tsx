@@ -14,6 +14,7 @@ const MENU_ITEMS = [
     { label: "PRICING", href: "/subscription" },
     { label: "FACILITIES", href: "/facilities" },
     { label: "ABOUT US", href: "/about" },
+    { label: "SHOP", href: "/shop" },
     { label: "CONTACT US", href: "/contact" },
 ];
 

@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import type { ClassSession } from '@fitconnect/shared/types/class';
-import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius, Alpha } from '../constants/theme';
 
 interface ClassCardProps {
     classSession: ClassSession;
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.20)', // peach-400/20
+        borderColor: Alpha.peach400_20,
     },
     topRow: {
         flexDirection: 'row',
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     divider: {
         width: 1,
         height: 40,
-        backgroundColor: 'rgba(212,180,148,0.20)', // peach-400/20
+        backgroundColor: Alpha.peach400_20,
         marginHorizontal: Spacing.sm,
     },
     infoColumn: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         borderRadius: 12,
-        backgroundColor: 'rgba(139,63,44,0.20)', // terra-400/20
+        backgroundColor: Alpha.terra400_20,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
         marginTop: Spacing.sm,
         paddingTop: Spacing.sm,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(212,180,148,0.20)', // peach-400/20
+        borderTopColor: Alpha.peach400_20,
         gap: 6,
     },
     spotDot: {

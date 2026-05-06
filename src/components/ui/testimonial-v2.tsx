@@ -12,64 +12,58 @@ interface Testimonial {
 // --- Data ---
 const testimonials: Testimonial[] = [
     {
-        text: "SOL Pilates transformed how we manage our studio. The booking system is flawless, and member retention has never been higher.",
+        text: "I was not able to spend much time with my daughter or do activities because of back pain. With Swetha's personalized approach, it not only helped alleviate my back pain but also allowed me to spend more quality time with my daughter. I felt more energetic and capable of participating in her activities. Another fantastic outcome was my improved performance in volleyball. Swetha's positive energy and encouragement created a welcoming environment where I felt comfortable sharing my progress and challenges.",
+        image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
+        name: "Srikanth Nomula",
+        role: "Engineer",
+    },
+    {
+        text: "I was struggling with lower back pain while bending and was not able to stretch completely during yoga poses. After starting my sessions with Swetha, I can do my yoga poses such as forward bends and back rolls with ease. Back rolls were impossible until lately.",
         image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Briana Patton",
-        role: "Studio Owner",
+        name: "Pallavi Jalakam",
+        role: "Engineer",
     },
     {
-        text: "As a personal trainer, tracking client progress is crucial. This platform gives me all the data I need to help my clients succeed.",
-        image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Bilal Ahmed",
-        role: "Elite Trainer",
-    },
-    {
-        text: "I love how easy it is to find and book classes. The interface is super intuitive, and I never miss a workout now.",
+        text: "Because of my back pain, I become restless with my toddler and pain adds to make the already cranky situation worse. Since working with Swetha, my back has become more flexible and core and arm strength increased. I correct my sloppy posture when sitting and moving. I also realized how exercise bands can help me get stronger almost anywhere — even on the couch. Swetha teaches through layers, so we can pick whichever feels comfortable and feel a real sense of progress.",
         image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Saman Malik",
-        role: "Pro Member",
+        name: "Sushma Gurram",
+        role: "Engineer",
     },
     {
-        text: "The analytics provided by SOL helped us optimize our class schedules and increase revenue by 30%.",
-        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Omar Raza",
-        role: "Fitness Director",
+        text: "Swetha has great energy in the room. She is passionate about movement and it shows (in the best way). Her cueing is clear, direct, and somehow makes you realize muscles you didn't even know you had are definitely working. She has a gift for helping clients dial in their form while building that all-important mind-body connection. Beyond that, Swetha brings such a warm, welcoming energy to the studio. I'd especially recommend her to anyone on a postpartum or prenatal journey.",
+        image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
+        name: "Melinda Hattan",
+        role: "Pilates Studio Owner & Instructor",
     },
     {
-        text: "Finally, a fitness app that actually motivates me. The community features and progress tracking are game-changers.",
+        text: "I tried Pilates after trying everything to heal my sciatica pain. After a lot of research, I decided to give Pilates one last shot — and it worked. My back pain is gone, I've built so much more muscle, and I feel genuinely confident in my body again. What stands out most about Swetha's classes is how warm and intentional she is. Her classes feel special — smooth, flowy, with minimal transitions — and you can feel the effort she puts into every session.",
         image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Zainab Hussain",
-        role: "Member",
+        name: "Sai Shruthi Sayini",
+        role: "Pilates Instructor",
     },
     {
-        text: "Managing our training zones used to be chaotic. SOL centralized everything from scheduling to equipment tracking, making operations seamless.",
+        text: "I came to Pilates already doing yoga and walking, but I wanted to add real strength training. Swetha delivered exactly that — my stamina has noticeably improved. What I appreciate most is the curated approach she brings, both in class and in the practice videos she provides. She's patient, professional and genuinely invested in her clients' progress. If you're looking for interactive, results-driven Pilates sessions, Swetha is the place to go.",
         image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Aliza Khan",
+        name: "Kanthisri",
+        role: "Medical Coder",
+    },
+    {
+        text: "I started with concerns about my strength, flexibility, and balance — and Pilates addressed every one of them. I have more confidence and better balance in my daily life. Swetha leads focused, challenging classes with a calm, clear energy that keeps you motivated throughout. I'd recommend her to anyone looking to feel stronger and more capable in their everyday movement.",
+        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
+        name: "Shelli",
         role: "Operations Manager",
     },
     {
-        text: "The user experience is premium. It feels like a high-end luxury service, which aligns perfectly with our studio's brand.",
-        image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Farhan Siddiqui",
-        role: "Brand Director",
-    },
-    {
-        text: "Customer support is outstanding. Whenever we have a question about the software, the team is there to help instantly.",
-        image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Sana Sheikh",
-        role: "Studio Manager",
-    },
-    {
-        text: "Since switching to SOL Pilates, our online bookings have doubled. It's the best investment we've made for our business.",
-        image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150",
-        name: "Hassan Ali",
-        role: "Studio Owner",
+        text: "I came to Swetha dealing with sciatica and severe lower back pain. After completing her online back pain course twice consistently, I'd say 70–80% of my pain is gone and I feel significantly better. Her instruction is clear, precise and easy to follow, which made all the difference in staying consistent. I've already recommended her to friends and family, and I'll keep doing so. My one piece of advice: stick with it consistently, exactly as she instructs, and you will see results.",
+        image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150",
+        name: "Abhinav",
+        role: "Software Engineer",
     },
 ];
 
 const firstColumn = testimonials.slice(0, 3);
 const secondColumn = testimonials.slice(3, 6);
-const thirdColumn = testimonials.slice(6, 9);
+const thirdColumn = testimonials.slice(6, 8);
 
 // --- Sub-Components ---
 const TestimonialsColumn = (props: {

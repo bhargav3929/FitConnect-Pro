@@ -33,6 +33,7 @@ import {
     type AttendanceStats,
 } from "@fitconnect/shared/firebase/firestore"
 import { Booking } from "@fitconnect/shared/types/booking"
+import { CHART_THEME } from "@fitconnect/shared/theme"
 
 function MetricCard({ label, value, subValue, icon: Icon, delay = 0, isLoading }: {
     label: string; value: string; subValue?: string; icon: LucideIcon; delay?: number; isLoading: boolean
@@ -153,21 +154,21 @@ export default function ReportsPage() {
                     ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={weeklyAttendance} barSize={32}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(74,84,56,0.08)" vertical={false} />
-                                <XAxis dataKey="name" stroke="rgba(74,84,56,0.4)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
-                                <YAxis stroke="rgba(74,84,56,0.4)" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
+                                <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.gridLine} vertical={false} />
+                                <XAxis dataKey="name" stroke={CHART_THEME.axisStroke} fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                                <YAxis stroke={CHART_THEME.axisStroke} fontSize={12} tickLine={false} axisLine={false} dx={-10} />
                                 <Tooltip
-                                    cursor={{ fill: 'rgba(74,84,56,0.04)' }}
+                                    cursor={{ fill: CHART_THEME.cursorFill }}
                                     contentStyle={{
-                                        backgroundColor: '#FAF5EF',
-                                        border: '1px solid rgba(212,180,148,0.3)',
+                                        backgroundColor: CHART_THEME.tooltipBg,
+                                        border: `1px solid ${CHART_THEME.tooltipBorder}`,
                                         borderRadius: '0',
-                                        boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
+                                        boxShadow: CHART_THEME.tooltipShadow,
                                         padding: '12px',
                                         fontSize: '12px',
                                     }}
                                 />
-                                <Bar dataKey="value" fill="#8B3F2C" radius={[4, 4, 4, 4]} />
+                                <Bar dataKey="value" fill={CHART_THEME.bar} radius={[4, 4, 4, 4]} />
                             </BarChart>
                         </ResponsiveContainer>
                     )}
@@ -191,7 +192,7 @@ export default function ReportsPage() {
                                     <Pie data={membershipData as any[]} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value" strokeWidth={0}>
                                         {membershipData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
                                     </Pie>
-                                    <Tooltip contentStyle={{ backgroundColor: '#FAF3EB', border: '1px solid rgba(212,180,148,0.3)', borderRadius: '0', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)', padding: '12px' }} />
+                                    <Tooltip contentStyle={{ backgroundColor: CHART_THEME.tooltipBg, border: `1px solid ${CHART_THEME.tooltipBorder}`, borderRadius: '0', boxShadow: CHART_THEME.tooltipShadow, padding: '12px' }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
@@ -230,11 +231,11 @@ export default function ReportsPage() {
                         ) : classPopularity.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={classPopularity} layout="vertical" barSize={16}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(74,84,56,0.08)" horizontal={false} />
-                                    <XAxis type="number" stroke="rgba(74,84,56,0.4)" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis dataKey="name" type="category" stroke="rgba(74,84,56,0.4)" fontSize={12} tickLine={false} axisLine={false} width={90} />
-                                    <Tooltip cursor={{ fill: 'rgba(74,84,56,0.03)' }} contentStyle={{ backgroundColor: '#FAF3EB', border: '1px solid rgba(212,180,148,0.3)', borderRadius: '0', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)', padding: '12px' }} />
-                                    <Bar dataKey="bookings" fill="#8B3F2C" radius={[0, 4, 4, 0]} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.gridLine} horizontal={false} />
+                                    <XAxis type="number" stroke={CHART_THEME.axisStroke} fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis dataKey="name" type="category" stroke={CHART_THEME.axisStroke} fontSize={12} tickLine={false} axisLine={false} width={90} />
+                                    <Tooltip cursor={{ fill: CHART_THEME.cursorFillMuted }} contentStyle={{ backgroundColor: CHART_THEME.tooltipBg, border: `1px solid ${CHART_THEME.tooltipBorder}`, borderRadius: '0', boxShadow: CHART_THEME.tooltipShadow, padding: '12px' }} />
+                                    <Bar dataKey="bookings" fill={CHART_THEME.bar} radius={[0, 4, 4, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (

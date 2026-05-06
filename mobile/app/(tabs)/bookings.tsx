@@ -19,7 +19,7 @@ import {
     callCancelBooking,
 } from '@fitconnect/shared/firebase/firestore';
 import type { Booking } from '@fitconnect/shared/types/booking';
-import { Colors, Spacing, FontSize, BorderRadius, Shadows } from '../../constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
 
 // ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ const STATUS_CONFIG: Record<BookingStatus, {
     confirmed: {
         icon: 'alert-circle',
         label: 'CONFIRMED',
-        bgColor: 'rgba(139,63,44,0.15)',
+        bgColor: Alpha.terra400_15,
         textColor: Colors.terra[400],
     },
     attended: {
@@ -324,7 +324,7 @@ export default function BookingsScreen() {
     const renderEmpty = () => (
         <View style={styles.emptyContainer}>
             <View style={styles.emptyIconWrapper}>
-                <Feather name="calendar" size={32} color="rgba(159,165,137,0.4)" />
+                <Feather name="calendar" size={32} color={Alpha.olive300_40} />
             </View>
             <Text style={styles.emptyTitle}>No bookings found</Text>
             <Text style={styles.emptySubtitle}>
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
 
     // Details section
     detailsSection: {
-        backgroundColor: 'rgba(235,228,213,0.4)',
+        backgroundColor: Alpha.peach200_40,
         borderRadius: BorderRadius.xl,
         padding: Spacing.md,
         marginTop: Spacing.md,
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
     cancelButton: {
         flex: 1,
         borderWidth: 1,
-        borderColor: 'rgba(220,38,38,0.2)',
+        borderColor: Alpha.error_20,
         borderRadius: BorderRadius.xl,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm + 2,
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
     },
     bookAgainButton: {
         flex: 1,
-        backgroundColor: 'rgba(235,228,213,0.5)',
+        backgroundColor: Alpha.peach200_50,
         borderWidth: 1,
         borderColor: Colors.borderMedium,
         borderRadius: BorderRadius.xl,
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: BorderRadius.full,
-        backgroundColor: 'rgba(235,228,213,0.5)',
+        backgroundColor: Alpha.peach200_50,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: Spacing.md,

@@ -37,6 +37,9 @@ export function Header() {
                         <Link href="/about" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
                             ABOUT US
                         </Link>
+                        <Link href="/shop" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
+                            SHOP
+                        </Link>
                         <Link href="/contact" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
                             CONTACT US
                         </Link>

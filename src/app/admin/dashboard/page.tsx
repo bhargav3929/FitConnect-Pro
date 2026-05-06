@@ -30,6 +30,7 @@ import {
 import Link from "next/link"
 import { getBookingStats, getAllMembers, getClassesByDate, getAllBookings } from "@fitconnect/shared/firebase/firestore"
 import { Booking } from "@fitconnect/shared/types/booking"
+import { CHART_THEME } from "@fitconnect/shared/theme"
 
 const getGreeting = () => {
     const hour = new Date().getHours()
@@ -211,37 +212,37 @@ export default function AdminDashboardPage() {
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={weeklyData} barSize={32}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(74,84,56,0.08)" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.gridLine} vertical={false} />
                                     <XAxis
                                         dataKey="name"
-                                        stroke="rgba(74,84,56,0.3)"
+                                        stroke={CHART_THEME.axisStrokeMuted}
                                         fontSize={11}
                                         tickLine={false}
                                         axisLine={false}
                                         dy={8}
                                     />
                                     <YAxis
-                                        stroke="rgba(74,84,56,0.3)"
+                                        stroke={CHART_THEME.axisStrokeMuted}
                                         fontSize={11}
                                         tickLine={false}
                                         axisLine={false}
                                         dx={-8}
                                     />
                                     <Tooltip
-                                        cursor={{ fill: 'rgba(74,84,56,0.04)' }}
+                                        cursor={{ fill: CHART_THEME.cursorFill }}
                                         contentStyle={{
-                                            backgroundColor: '#FAF5EF',
-                                            border: '1px solid rgba(212,180,148,0.2)',
+                                            backgroundColor: CHART_THEME.tooltipBg,
+                                            border: `1px solid ${CHART_THEME.tooltipBorderLight}`,
                                             borderRadius: '12px',
-                                            boxShadow: '0 8px 32px -8px rgba(0,0,0,0.08)',
+                                            boxShadow: CHART_THEME.tooltipShadowSm,
                                             padding: '10px 14px',
                                             fontSize: '12px',
                                         }}
-                                        itemStyle={{ color: '#4A5738' }}
+                                        itemStyle={{ color: CHART_THEME.itemText }}
                                     />
                                     <Bar
                                         dataKey="value"
-                                        fill="#8B3F2C"
+                                        fill={CHART_THEME.bar}
                                         radius={[6, 6, 6, 6]}
                                     />
                                 </BarChart>

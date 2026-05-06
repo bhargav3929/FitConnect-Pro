@@ -11,13 +11,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
-import { subscribeToUserBookings, subscribeToClassesByDate } from '@fitconnect/shared/firebase/firestore';
+import { subscribeToUserBookings } from '@fitconnect/shared/firebase/firestore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import type { Booking } from '@fitconnect/shared/types/booking';
-import type { ClassSession } from '@fitconnect/shared/types/class';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
-import { Colors, Spacing, FontSize, BorderRadius, FontFamily } from '../../constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
 
 // ---------------------------------------------------------------------------
@@ -29,14 +28,6 @@ function getGreeting(): string {
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
-}
-
-function formatTime(time: string): { time: string; period: string } {
-    const [h, m] = time.split(':');
-    const hour = parseInt(h, 10);
-    const period = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-    return { time: `${displayHour}:${m}`, period };
 }
 
 function formatBookingDate(booking: Booking): string {
@@ -59,12 +50,6 @@ function parseDateSafe(raw: unknown): Date | null {
     }
     const d = new Date(raw as string | number);
     return isNaN(d.getTime()) ? null : d;
-}
-
-function getSpotsColor(spotsLeft: number): string {
-    if (spotsLeft <= 0) return Colors.muted;
-    if (spotsLeft <= 3) return Colors.warning;
-    return Colors.success;
 }
 
 // ---------------------------------------------------------------------------
@@ -117,9 +102,6 @@ function DashboardSkeleton() {
 
                 {/* Upcoming session skeleton */}
                 <SkeletonBlock width={'100%' as unknown as number} height={120} style={{ borderRadius: BorderRadius['2xl'], marginTop: Spacing.md }} />
-
-                {/* Today's classes skeleton */}
-                <SkeletonBlock width={'100%' as unknown as number} height={200} style={{ borderRadius: BorderRadius['2xl'], marginTop: Spacing.md }} />
             </ScrollView>
         </SafeAreaView>
     );
@@ -152,7 +134,7 @@ function StreakRing({ currentStreak }: { currentStreak: number }) {
                     cy={center}
                     r={STREAK_RING_RADIUS}
                     fill="none"
-                    stroke="rgba(126,138,110,0.18)"
+                    stroke={Alpha.olive400_18}
                     strokeWidth={STREAK_RING_STROKE}
                 />
                 {/* Progress arc — rotated -90° so it starts at 12 o'clock */}
@@ -440,101 +422,6 @@ function UpcomingSessionCard({
     );
 }
 
-function TodayClassItem({ cls, onPress }: { cls: ClassSession; onPress: () => void }) {
-    const { time, period } = formatTime(cls.startTime);
-    const spotsLeft = (cls.totalSpots || cls.capacity) - cls.bookedCount;
-    const spotColor = getSpotsColor(spotsLeft);
-    const spotText = spotsLeft <= 0 ? 'Full' : `${spotsLeft} spots`;
-
-    return (
-        <TouchableOpacity
-            style={styles.classItem}
-            onPress={onPress}
-            activeOpacity={0.7}
-        >
-            {/* Time column */}
-            <View style={styles.classTimeCol}>
-                <Text style={styles.classTime}>{time}</Text>
-                <Text style={styles.classTimePeriod}>{period}</Text>
-            </View>
-
-            {/* Vertical divider */}
-            <View style={styles.classVerticalDivider} />
-
-            {/* Info column */}
-            <View style={styles.classInfoCol}>
-                <Text style={styles.className} numberOfLines={1}>
-                    {cls.classType || 'Pilates Class'}
-                </Text>
-                <Text style={styles.classLocation}>
-                    {cls.location || 'Main Studio'} {'\u00B7'} {cls.duration}min
-                </Text>
-            </View>
-
-            {/* Spots indicator */}
-            <View style={styles.spotsIndicator}>
-                <View style={[styles.spotDot, { backgroundColor: spotColor }]} />
-                <Text style={[styles.spotsText, { color: spotColor }]}>{spotText}</Text>
-            </View>
-
-            {/* Chevron */}
-            <Feather
-                name="chevron-right"
-                size={18}
-                color={Colors.olive[300]}
-                style={styles.classChevron}
-            />
-        </TouchableOpacity>
-    );
-}
-
-function TodayAtStudio({
-    classes,
-    isLoading,
-    onSeeAll,
-    onClassPress,
-}: {
-    classes: ClassSession[];
-    isLoading: boolean;
-    onSeeAll: () => void;
-    onClassPress: (cls: ClassSession) => void;
-}) {
-    return (
-        <View>
-            {/* Section header */}
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Today at the Studio</Text>
-                <TouchableOpacity onPress={onSeeAll} activeOpacity={0.7} style={styles.seeAllRow}>
-                    <Text style={styles.seeAllLink}>FULL SCHEDULE</Text>
-                    <Feather name="arrow-right" size={14} color={Colors.terra[400]} />
-                </TouchableOpacity>
-            </View>
-
-            {isLoading ? (
-                <View style={styles.todayCard}>
-                    <ActivityIndicator size="small" color={Colors.terra[400]} />
-                </View>
-            ) : classes.length > 0 ? (
-                <View>
-                    {classes.map((cls) => (
-                        <TodayClassItem key={cls.id} cls={cls} onPress={() => onClassPress(cls)} />
-                    ))}
-                </View>
-            ) : (
-                <View style={styles.emptyTodayCard}>
-                    <View style={styles.emptyIconCircle}>
-                        <Feather name="calendar" size={20} color={Colors.muted} />
-                    </View>
-                    <Text style={styles.emptyTodayTitle}>No classes scheduled for today</Text>
-                    <Text style={styles.emptyTodaySubtitle}>
-                        Check the full schedule for upcoming sessions
-                    </Text>
-                </View>
-            )}
-        </View>
-    );
-}
-
 function QuickActions({
     onBookClass,
     onMyBookings,
@@ -594,9 +481,7 @@ export default function DashboardScreen() {
     const router = useRouter();
 
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
-    const [todaysClasses, setTodaysClasses] = useState<ClassSession[]>([]);
     const [isLoadingBookings, setIsLoadingBookings] = useState(true);
-    const [isLoadingClasses, setIsLoadingClasses] = useState(true);
 
     // Subscribe to user bookings (real-time)
     useEffect(() => {
@@ -615,15 +500,6 @@ export default function DashboardScreen() {
 
         return unsubscribe;
     }, [clientUser?.id]);
-
-    // Real-time listener for today's classes — live-updates bookedSpots as others book
-    useEffect(() => {
-        const unsubscribe = subscribeToClassesByDate(new Date(), (classes) => {
-            setTodaysClasses(classes);
-            setIsLoadingClasses(false);
-        });
-        return unsubscribe;
-    }, []);
 
     // Navigation callbacks
     const navigateToSchedule = useCallback(() => router.push('/(tabs)/schedule'), [router]);
@@ -674,15 +550,7 @@ export default function DashboardScreen() {
                     />
                 )}
 
-                {/* D. Today at the Studio */}
-                <TodayAtStudio
-                    classes={todaysClasses}
-                    isLoading={isLoadingClasses}
-                    onSeeAll={navigateToSchedule}
-                    onClassPress={() => navigateToSchedule()}
-                />
-
-                {/* E. Quick Actions */}
+                {/* D. Quick Actions */}
                 <QuickActions
                     onBookClass={navigateToSchedule}
                     onMyBookings={navigateToBookings}
@@ -811,7 +679,7 @@ const styles = StyleSheet.create({
     },
     welcomeDivider: {
         height: 1,
-        backgroundColor: 'rgba(126,138,110,0.10)',
+        backgroundColor: Alpha.olive400_10,
         marginTop: Spacing.lg,
     },
     statsRow: {
@@ -842,7 +710,7 @@ const styles = StyleSheet.create({
     statsDivider: {
         width: 1,
         height: 40,
-        backgroundColor: 'rgba(126,138,110,0.08)',
+        backgroundColor: Alpha.olive400_08,
         marginHorizontal: Spacing.lg,
     },
 
@@ -864,7 +732,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: 'rgba(139,63,44,0.1)',
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: Spacing.sm,
@@ -925,15 +793,15 @@ const styles = StyleSheet.create({
         gap: Spacing.md,
         borderRadius: BorderRadius['2xl'],
         borderWidth: 1,
-        borderColor: 'rgba(168, 77, 57, 0.2)',
-        backgroundColor: 'rgba(168, 77, 57, 0.05)',
+        borderColor: Alpha.terra400_20,
+        backgroundColor: Alpha.terra400_07,
         marginTop: Spacing.md,
     },
     expiredIconCircle: {
         width: 40,
         height: 40,
         borderRadius: BorderRadius.lg,
-        backgroundColor: 'rgba(168, 77, 57, 0.15)',
+        backgroundColor: Alpha.terra400_15,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -981,7 +849,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.18)',
+        backgroundColor: Alpha.white_18,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -992,7 +860,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.18)',
+        backgroundColor: Alpha.white_18,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -1004,7 +872,7 @@ const styles = StyleSheet.create({
     noPlanSubtitle: {
         fontFamily: FontFamily.sans,
         fontSize: FontSize.xs,
-        color: 'rgba(255,255,255,0.8)',
+        color: Alpha.white_80,
         marginTop: 2,
     },
 
@@ -1025,7 +893,7 @@ const styles = StyleSheet.create({
         width: 180,
         height: 180,
         borderRadius: 90,
-        backgroundColor: 'rgba(255,251,247,0.1)',
+        backgroundColor: Alpha.peach50_10,
     },
     upcomingContent: {
         position: 'relative',
@@ -1036,7 +904,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 6,
         alignSelf: 'flex-start',
-        backgroundColor: 'rgba(255,251,247,0.15)',
+        backgroundColor: Alpha.peach50_15,
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
@@ -1057,7 +925,7 @@ const styles = StyleSheet.create({
     },
     upcomingDetails: {
         fontSize: FontSize.sm,
-        color: 'rgba(255,251,247,0.75)',
+        color: Alpha.peach100_75,
         marginBottom: Spacing.md,
     },
     viewDetailsButton: {
@@ -1131,134 +999,6 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
 
-    // ── Today at the Studio ────────────────────────────────────
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: Spacing.xl,
-        marginBottom: Spacing.md,
-    },
-    sectionTitle: {
-        fontSize: FontSize.lg,
-        fontWeight: '700',
-        color: Colors.olive[600],
-    },
-    seeAllRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    seeAllLink: {
-        fontFamily: FontFamily.sansBold,
-        fontSize: FontSize.xs,
-        color: Colors.terra[400],
-        letterSpacing: 1,
-    },
-    todayCard: {
-        backgroundColor: Colors.peach[50],
-        borderRadius: BorderRadius.xl,
-        borderWidth: 1,
-        borderColor: Colors.borderMedium,
-        padding: Spacing.xl,
-        alignItems: 'center',
-    },
-    classChevron: {
-        marginLeft: Spacing.sm,
-        opacity: 0.45,
-    },
-    classItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.peach[50],
-        borderRadius: BorderRadius.xl,
-        borderWidth: 1,
-        borderColor: Colors.borderMedium,
-        padding: Spacing.md,
-        marginBottom: Spacing.sm,
-    },
-    classTimeCol: {
-        width: 56,
-        alignItems: 'center',
-    },
-    classTime: {
-        fontSize: FontSize.base,
-        fontWeight: '800',
-        color: Colors.olive[600],
-        lineHeight: 20,
-    },
-    classTimePeriod: {
-        fontSize: 9,
-        fontWeight: '700',
-        color: Colors.olive[300],
-        marginTop: 1,
-    },
-    classVerticalDivider: {
-        width: 1,
-        height: 40,
-        backgroundColor: Colors.borderMedium,
-        marginHorizontal: Spacing.sm,
-    },
-    classInfoCol: {
-        flex: 1,
-        minWidth: 0,
-    },
-    className: {
-        fontSize: FontSize.sm,
-        fontWeight: '600',
-        color: Colors.olive[600],
-    },
-    classLocation: {
-        fontSize: FontSize.xs,
-        color: Colors.olive[300],
-        marginTop: 2,
-    },
-    spotsIndicator: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        marginLeft: Spacing.sm,
-    },
-    spotDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-    },
-    spotsText: {
-        fontSize: FontSize.xs,
-        fontWeight: '600',
-    },
-
-    // ── Empty Today State ──────────────────────────────────────
-    emptyTodayCard: {
-        backgroundColor: Colors.peach[50],
-        borderRadius: BorderRadius['2xl'],
-        borderWidth: 1,
-        borderColor: Colors.borderMedium,
-        padding: Spacing['2xl'],
-        alignItems: 'center',
-    },
-    emptyIconCircle: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: 'rgba(235,228,213,0.6)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: Spacing.md,
-    },
-    emptyTodayTitle: {
-        fontSize: FontSize.sm,
-        fontWeight: '600',
-        color: Colors.olive[400],
-        marginBottom: 4,
-    },
-    emptyTodaySubtitle: {
-        fontSize: FontSize.xs,
-        color: Colors.olive[300],
-        textAlign: 'center',
-    },
-
     // ── Quick Actions ──────────────────────────────────────────
     quickActionsColumn: {
         marginTop: Spacing.md,
@@ -1293,7 +1033,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: 'rgba(255,255,255,0.12)',
+        backgroundColor: Alpha.white_12,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -1306,7 +1046,7 @@ const styles = StyleSheet.create({
     bookNextSubtitle: {
         fontFamily: FontFamily.sans,
         fontSize: FontSize.sm,
-        color: 'rgba(245,232,216,0.75)',
+        color: Alpha.peach100_75,
         lineHeight: 20,
     },
 
@@ -1322,7 +1062,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: 'rgba(139,63,44,0.10)',
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: Spacing.md,

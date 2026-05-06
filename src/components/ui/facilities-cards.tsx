@@ -7,34 +7,22 @@ import { cn } from "@/lib/utils";
 const amenities = [
     {
         id: 1,
-        name: "Reformer Pilates",
-        tagline: "Full-body resistance training on state-of-the-art reformer machines",
+        name: "Sol Flow",
+        tagline: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.",
         image: "/images/gyms/fitpro-downtown.png",
     },
     {
         id: 2,
-        name: "Mat Pilates",
-        tagline: "Core-focused floor work using body weight and props",
+        name: "Sol Cardio",
+        tagline: "Fast-paced movement that gets your heart rate up.",
         image: "/images/gyms/fitpro-midtown.png",
     },
     {
         id: 3,
-        name: "Private Pilates",
-        tagline: "Personalised one-on-one sessions tailored to your goals",
+        name: "Sol Stretch",
+        tagline: "Hit reset on your body, one stretch at a time.",
         image: "/images/gyms/fitpro-uptown.png",
     },
-    {
-        id: 4,
-        name: "Barre Pilates",
-        tagline: "Ballet-inspired movements fused with Pilates precision",
-        image: "/images/gyms/fitpro-brooklyn.png",
-    },
-    {
-        id: 5,
-        name: "Prenatal Pilates",
-        tagline: "Safe, gentle sessions designed for expecting mothers",
-        image: "/images/gyms/fitpro-queens.png",
-    }
 ];
 
 export default function FacilitiesSection() {
@@ -82,10 +70,10 @@ export default function FacilitiesSection() {
                     Our Studio
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-4 font-display">
-                    OUR PILATES STUDIO
+                    OUR CLASS TYPES
                 </h2>
                 <p className="text-olive-300 max-w-lg text-lg">
-                    Five dedicated Pilates disciplines, each designed to transform your body and mind.
+                    Three signature class formats, each designed to transform your body and mind.
                 </p>
             </div>
 

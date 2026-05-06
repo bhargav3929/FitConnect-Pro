@@ -25,7 +25,7 @@ import ClassCard from '../../components/ClassCard';
 import SpotSelector from '../../components/SpotSelector';
 import TabHeader from '../../components/TabHeader';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Spacing, FontSize, BorderRadius, Shadows, FontFamily } from '../../constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius, Shadows, FontFamily, Alpha } from '../../constants/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -93,7 +93,7 @@ function parseFacilities(raw: string | string[]): string[] {
 }
 
 // ── Component ──
-type FilterKey = 'instructor' | 'classType' | 'room';
+type FilterKey = 'instructor' | 'classType';
 
 export default function ScheduleScreen() {
     const [activeTab, setActiveTab] = useState<SectionTab>('schedule');
@@ -223,7 +223,6 @@ export default function ScheduleScreen() {
                     [
                         { key: 'instructor' as FilterKey, label: 'Instructor' },
                         { key: 'classType' as FilterKey, label: 'Class Type' },
-                        { key: 'room' as FilterKey, label: 'Room' },
                     ]
                 ).map((f) => {
                     const isActive = activeFilter === f.key;
@@ -306,7 +305,7 @@ export default function ScheduleScreen() {
                         </View>
                         {/* Gradient overlay */}
                         <LinearGradient
-                            colors={['transparent', 'rgba(42,31,24,0.8)']}
+                            colors={['transparent', Alpha.dark_80]}
                             locations={[0.3, 1]}
                             style={styles.trainerOverlay}
                         >
@@ -611,14 +610,14 @@ const styles = StyleSheet.create({
     },
     filterChip: {
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.30)', // peach-400/30 (matches web)
+        borderColor: Alpha.peach400_30,
         borderRadius: BorderRadius.md,
         paddingHorizontal: Spacing.lg,
         paddingVertical: 10,
         backgroundColor: 'transparent',
     },
     filterChipActive: {
-        backgroundColor: 'rgba(139,63,44,0.20)', // terra-400/20
+        backgroundColor: Alpha.terra400_20,
         borderColor: Colors.terra[400],
     },
     filterChipText: {
@@ -647,7 +646,7 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: 32,
-        backgroundColor: 'rgba(235,228,213,0.5)', // peach-200/50
+        backgroundColor: Alpha.peach200_50,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: Spacing.md,
@@ -724,7 +723,7 @@ const styles = StyleSheet.create({
     facilityCard: {
         backgroundColor: Colors.peach[50],
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.20)',
+        borderColor: Alpha.peach400_20,
         borderRadius: BorderRadius['2xl'],
         padding: Spacing.lg,
     },
@@ -775,7 +774,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: BorderRadius.md,
-        backgroundColor: 'rgba(139,63,44,0.12)',
+        backgroundColor: Alpha.terra400_12,
         alignItems: 'center',
         justifyContent: 'center',
     },

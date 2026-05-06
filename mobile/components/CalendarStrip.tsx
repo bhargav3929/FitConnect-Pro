@@ -9,7 +9,7 @@ import {
     NativeSyntheticEvent,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { Colors, Spacing, FontSize, BorderRadius, Shadows } from '../constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../constants/theme';
 import { generateDays, formatDayName, isSameDay } from './calendarUtils';
 
 interface CalendarStripProps {
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
     dayItemToday: {
-        backgroundColor: 'rgba(235,228,213,0.6)',
+        backgroundColor: Alpha.peach200_60,
     },
     dayItemSelected: {
         backgroundColor: Colors.primary,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         backgroundColor: Colors.peach[50],
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.35)',
+        borderColor: Alpha.peach400_35,
         alignItems: 'center',
         justifyContent: 'center',
         ...Shadows.sm,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     // Progress indicator
     progressTrack: {
         height: 3,
-        backgroundColor: 'rgba(212,180,148,0.20)',
+        backgroundColor: Alpha.peach400_20,
         borderRadius: 2,
         marginTop: Spacing.sm,
         marginHorizontal: Spacing.md,

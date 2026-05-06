@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,10 +12,15 @@ import {
     ActivityIndicator,
     Animated,
     Easing,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
+import * as Crypto from 'expo-crypto';
+import Constants from 'expo-constants';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import {
     Colors,
@@ -23,8 +28,11 @@ import {
     FontSize,
     BorderRadius,
     FontFamily,
+    Alpha,
 } from '../constants/theme';
 import Logo from '../components/Logo';
+
+WebBrowser.maybeCompleteAuthSession();
 
 type AuthTab = 'signin' | 'signup';
 
@@ -32,7 +40,72 @@ const SLIDE_DISTANCE = 20;
 
 export default function LoginScreen() {
     const router = useRouter();
-    const { loginClient, signupClient } = useClientAuthStore();
+    const { loginClient, signupClient, googleSignInWithIdToken } = useClientAuthStore();
+    const [googleLoading, setGoogleLoading] = useState(false);
+
+    const googleAuthConfig = Constants.expoConfig?.extra?.googleAuth || {
+        iosClientId: undefined,
+        androidClientId: undefined,
+        webClientId: undefined,
+    };
+
+    const discovery = AuthSession.useAutoDiscovery(
+        'https://accounts.google.com',
+    );
+
+    const [nonce] = useState(() =>
+        Crypto.randomUUID
+            ? Crypto.randomUUID()
+            : Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+    );
+
+    const [request, response, promptAsync] = AuthSession.useAuthRequest(
+        {
+            clientId: Platform.OS === 'ios' ? googleAuthConfig.iosClientId : googleAuthConfig.androidClientId,
+            scopes: ['openid', 'profile', 'email'],
+            responseType: 'id_token',
+            extraParams: { nonce },
+            redirectUri: AuthSession.makeRedirectUri({
+                native: 'fitconnect://',
+            }),
+        },
+        discovery,
+    );
+
+    useEffect(() => {
+        if (response?.type === 'success') {
+            const { id_token } = response.params;
+            if (id_token) {
+                handleGoogleSignInWithToken(id_token);
+            }
+        }
+    }, [response]);
+
+    const handleGoogleSignInWithToken = async (idToken: string) => {
+        setGoogleLoading(true);
+        const result = await googleSignInWithIdToken(idToken);
+        setGoogleLoading(false);
+        if (result.success) {
+            router.replace('/(tabs)');
+        } else {
+            Alert.alert('Sign-in Failed', result.error || 'Something went wrong');
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        if (!googleAuthConfig.iosClientId && !googleAuthConfig.androidClientId) {
+            Alert.alert(
+                'Configuration Error',
+                'Google OAuth client IDs not configured. Please contact support.',
+            );
+            return;
+        }
+        try {
+            await promptAsync();
+        } catch {
+            Alert.alert('Error', 'Failed to initiate Google sign-in');
+        }
+    };
 
     const [activeTab, setActiveTab] = useState<AuthTab>('signin');
     const formOpacity = useRef(new Animated.Value(1)).current;
@@ -85,7 +158,7 @@ export default function LoginScreen() {
     const signupPasswordRef = useRef<TextInput>(null);
     const signupConfirmRef = useRef<TextInput>(null);
 
-    const isLoading = loginLoading || signupLoading;
+    const isLoading = loginLoading || signupLoading || googleLoading;
 
     const handleLogin = async () => {
         if (!loginEmail || !loginPassword) {
@@ -206,7 +279,7 @@ export default function LoginScreen() {
                                 <TextInput
                                     style={styles.input}
                                     placeholder="you@example.com"
-                                    placeholderTextColor="rgba(138,154,120,0.5)"
+                                    placeholderTextColor={Alpha.olive300_50}
                                     value={loginEmail}
                                     onChangeText={setLoginEmail}
                                     keyboardType="email-address"
@@ -224,7 +297,7 @@ export default function LoginScreen() {
                                     ref={loginPasswordRef}
                                     style={styles.input}
                                     placeholder="Enter password"
-                                    placeholderTextColor="rgba(138,154,120,0.5)"
+                                    placeholderTextColor={Alpha.olive300_50}
                                     value={loginPassword}
                                     onChangeText={setLoginPassword}
                                     secureTextEntry={!showLoginPassword}
@@ -241,8 +314,14 @@ export default function LoginScreen() {
                             <SubmitButton
                                 label={loginLoading ? 'VERIFYING...' : 'SIGN IN'}
                                 loading={loginLoading}
-                                disabled={isLoading}
+                                disabled={isLoading || googleLoading}
                                 onPress={handleLogin}
+                            />
+
+                            <GoogleSignInButton
+                                loading={googleLoading}
+                                disabled={isLoading}
+                                onPress={handleGoogleSignIn}
                             />
                         </View>
                     )}
@@ -255,7 +334,7 @@ export default function LoginScreen() {
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Your full name"
-                                    placeholderTextColor="rgba(138,154,120,0.5)"
+                                    placeholderTextColor={Alpha.olive300_50}
                                     value={signupName}
                                     onChangeText={setSignupName}
                                     autoCapitalize="words"
@@ -271,7 +350,7 @@ export default function LoginScreen() {
                                     ref={signupEmailRef}
                                     style={styles.input}
                                     placeholder="you@example.com"
-                                    placeholderTextColor="rgba(138,154,120,0.5)"
+                                    placeholderTextColor={Alpha.olive300_50}
                                     value={signupEmail}
                                     onChangeText={setSignupEmail}
                                     keyboardType="email-address"
@@ -289,7 +368,7 @@ export default function LoginScreen() {
                                     ref={signupPasswordRef}
                                     style={styles.input}
                                     placeholder="At least 6 characters"
-                                    placeholderTextColor="rgba(138,154,120,0.5)"
+                                    placeholderTextColor={Alpha.olive300_50}
                                     value={signupPassword}
                                     onChangeText={setSignupPassword}
                                     secureTextEntry={!showSignupPassword}
@@ -309,7 +388,7 @@ export default function LoginScreen() {
                                     ref={signupConfirmRef}
                                     style={styles.input}
                                     placeholder="Repeat password"
-                                    placeholderTextColor="rgba(138,154,120,0.5)"
+                                    placeholderTextColor={Alpha.olive300_50}
                                     value={signupConfirmPassword}
                                     onChangeText={setSignupConfirmPassword}
                                     secureTextEntry={!showSignupPassword}
@@ -322,9 +401,37 @@ export default function LoginScreen() {
                             <SubmitButton
                                 label={signupLoading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
                                 loading={signupLoading}
-                                disabled={isLoading}
+                                disabled={isLoading || googleLoading}
                                 onPress={handleSignup}
                             />
+
+                            <GoogleSignInButton
+                                loading={googleLoading}
+                                disabled={isLoading}
+                                onPress={handleGoogleSignIn}
+                            />
+
+                            <Text style={styles.legalDisclosure}>
+                                By creating an account, you agree to our{' '}
+                                <Text
+                                    style={styles.legalLink}
+                                    onPress={() =>
+                                        Linking.openURL('https://fitconnectpro.app/terms')
+                                    }
+                                >
+                                    Terms of Service
+                                </Text>{' '}
+                                and{' '}
+                                <Text
+                                    style={styles.legalLink}
+                                    onPress={() =>
+                                        Linking.openURL('https://fitconnectpro.app/privacy')
+                                    }
+                                >
+                                    Privacy Policy
+                                </Text>
+                                .
+                            </Text>
                         </View>
                     )}
 
@@ -367,7 +474,7 @@ function InputRow({
             <Feather
                 name={icon}
                 size={18}
-                color="rgba(138,154,120,0.7)"
+                color={Alpha.olive300_70}
                 style={styles.inputIcon}
             />
             {children}
@@ -385,7 +492,7 @@ function EyeToggle({ visible, onPress }: { visible: boolean; onPress: () => void
             <Feather
                 name={visible ? 'eye-off' : 'eye'}
                 size={18}
-                color="rgba(138,154,120,0.7)"
+                color={Alpha.olive300_70}
             />
         </TouchableOpacity>
     );
@@ -417,6 +524,30 @@ function SubmitButton({
             ) : (
                 <Text style={styles.submitButtonText}>{label}</Text>
             )}
+        </TouchableOpacity>
+    );
+}
+
+function GoogleSignInButton({
+    loading,
+    disabled,
+    onPress,
+}: {
+    loading: boolean;
+    disabled: boolean;
+    onPress: () => void;
+}) {
+    return (
+        <TouchableOpacity
+            style={[styles.googleButton, disabled && styles.googleButtonDisabled]}
+            onPress={onPress}
+            disabled={disabled || loading}
+            activeOpacity={0.85}
+        >
+            <Feather name="mail" size={18} color={Colors.olive[600]} />
+            <Text style={styles.googleButtonText}>
+                {loading ? 'SIGNING IN...' : 'SIGN IN WITH GOOGLE'}
+            </Text>
         </TouchableOpacity>
     );
 }
@@ -455,7 +586,7 @@ const styles = StyleSheet.create({
     userIconSquare: {
         width: 64,
         height: 64,
-        backgroundColor: 'rgba(139,63,44,0.10)',
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: Spacing.lg,
@@ -480,7 +611,7 @@ const styles = StyleSheet.create({
     // Square tabs
     tabContainer: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(228,200,171,0.5)', // peach-300/50
+        backgroundColor: Alpha.peach300_50,
         padding: 4,
         marginBottom: Spacing.xl,
     },
@@ -519,7 +650,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: Colors.peach[50],
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.30)',
+        borderColor: Alpha.peach400_30,
         height: 56,
         paddingHorizontal: Spacing.md,
     },
@@ -565,7 +696,7 @@ const styles = StyleSheet.create({
     // Footer
     divider: {
         height: 1,
-        backgroundColor: 'rgba(212,180,148,0.20)',
+        backgroundColor: Alpha.peach400_20,
         marginVertical: Spacing.xl,
     },
     footerRow: {
@@ -576,13 +707,48 @@ const styles = StyleSheet.create({
     footerLeft: {
         fontFamily: FontFamily.sansMedium,
         fontSize: FontSize.xs,
-        color: 'rgba(138,154,120,0.6)',
+        color: Alpha.olive300_60,
         letterSpacing: 1.5,
     },
     footerRight: {
         fontFamily: FontFamily.sansBold,
         fontSize: FontSize.xs,
         color: Colors.primary,
+        letterSpacing: 1.5,
+    },
+    legalDisclosure: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.xs,
+        color: Alpha.olive300_80,
+        textAlign: 'center',
+        marginTop: Spacing.md,
+        lineHeight: 16,
+        paddingHorizontal: Spacing.sm,
+    },
+    legalLink: {
+        fontFamily: FontFamily.sansBold,
+        color: Colors.primary,
+    },
+
+    // Google Sign-In button
+    googleButton: {
+        marginTop: Spacing.md,
+        height: 56,
+        backgroundColor: Alpha.peach300_40,
+        borderWidth: 1,
+        borderColor: Alpha.peach400_30,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.sm,
+    },
+    googleButtonDisabled: {
+        opacity: 0.6,
+    },
+    googleButtonText: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.xs,
+        color: Colors.olive[600],
         letterSpacing: 1.5,
     },
 });

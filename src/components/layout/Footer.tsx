@@ -21,7 +21,7 @@ export function Footer() {
                     <div className="lg:col-span-4 space-y-8">
                         <Link href="/" className="inline-block group">
                             <Image
-                                src="/images/sol-logo-cream.png"
+                                src="/images/sol-logo-terra.png"
                                 alt="SOL Pilates Studio"
                                 width={400}
                                 height={400}
@@ -56,11 +56,9 @@ export function Footer() {
                             <h4 className="font-bold text-peach-200 mb-6 tracking-wide">SERVICES</h4>
                             <ul className="space-y-4">
                                 {[
-                                    { label: "Strength & Sculpt", href: "/subscription" },
-                                    { label: "Cardio & Endurance", href: "/subscription" },
-                                    { label: "Reset & Restore", href: "/subscription" },
-                                    { label: "Muscle Recovery", href: "/subscription" },
-                                    { label: "Intense Exercise", href: "/subscription" },
+                                    { label: "Sol Flow", href: "/subscription" },
+                                    { label: "Sol Cardio", href: "/subscription" },
+                                    { label: "Sol Stretch", href: "/subscription" },
                                 ].map(item => (
                                     <li key={item.label}>
                                         <Link href={item.href} className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">

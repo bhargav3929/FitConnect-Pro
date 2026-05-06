@@ -13,7 +13,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import type { ClassSession } from '@fitconnect/shared/types/class';
 import { callBookClass, subscribeToClass } from '@fitconnect/shared/firebase/firestore';
-import { Colors, Spacing, FontSize, BorderRadius, Shadows } from '../constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../constants/theme';
 
 interface SpotSelectorProps {
     visible: boolean;
@@ -207,39 +207,58 @@ export default function SpotSelector({
                             </View>
                         </View>
 
-                        {/* Spot Grid */}
+                        {/* Studio layout: 12 reformers, 5 left / 7 right with center aisle */}
                         <View style={styles.gridContainer}>
-                            <View style={styles.grid}>
-                                {spots.map((spot) => {
-                                    const isBooked = liveBookedSpots.includes(spot);
-                                    const isSelected = selectedSpot === spot;
-
-                                    return (
-                                        <TouchableOpacity
-                                            key={spot}
-                                            style={[
-                                                styles.spotCell,
-                                                isBooked && styles.spotBooked,
-                                                isSelected && styles.spotSelected,
-                                            ]}
-                                            onPress={() => {
-                                                if (!isBooked) setSelectedSpot(spot);
-                                            }}
-                                            disabled={isBooked}
-                                            activeOpacity={0.7}
-                                        >
-                                            <Text
+                            <View style={styles.studioLayout}>
+                                <View style={styles.studioColumn}>
+                                    {spots.slice(0, 5).map((spot) => {
+                                        const isBooked = liveBookedSpots.includes(spot);
+                                        const isSelected = selectedSpot === spot;
+                                        return (
+                                            <TouchableOpacity
+                                                key={spot}
                                                 style={[
-                                                    styles.spotText,
-                                                    isBooked && styles.spotTextBooked,
-                                                    isSelected && styles.spotTextSelected,
+                                                    styles.spotCell,
+                                                    isBooked && styles.spotBooked,
+                                                    isSelected && styles.spotSelected,
                                                 ]}
+                                                onPress={() => { if (!isBooked) setSelectedSpot(spot); }}
+                                                disabled={isBooked}
+                                                activeOpacity={0.7}
                                             >
-                                                {spot}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    );
-                                })}
+                                                <Text style={[styles.spotText, isBooked && styles.spotTextBooked, isSelected && styles.spotTextSelected]}>
+                                                    {spot}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+
+                                <View style={styles.studioAisle} />
+
+                                <View style={styles.studioColumn}>
+                                    {spots.slice(5, 12).map((spot) => {
+                                        const isBooked = liveBookedSpots.includes(spot);
+                                        const isSelected = selectedSpot === spot;
+                                        return (
+                                            <TouchableOpacity
+                                                key={spot}
+                                                style={[
+                                                    styles.spotCell,
+                                                    isBooked && styles.spotBooked,
+                                                    isSelected && styles.spotSelected,
+                                                ]}
+                                                onPress={() => { if (!isBooked) setSelectedSpot(spot); }}
+                                                disabled={isBooked}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Text style={[styles.spotText, isBooked && styles.spotTextBooked, isSelected && styles.spotTextSelected]}>
+                                                    {spot}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
                             </View>
                         </View>
                     </ScrollView>
@@ -275,7 +294,7 @@ export default function SpotSelector({
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: Alpha.black_50,
         justifyContent: 'flex-end',
     },
     sheet: {
@@ -293,7 +312,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 4,
         borderRadius: 2,
-        backgroundColor: 'rgba(212,180,148,0.30)', // peach-400/30
+        backgroundColor: Alpha.peach400_30,
     },
     scrollContent: {
         paddingHorizontal: Spacing.lg,
@@ -328,7 +347,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: 'rgba(235,228,213,0.5)', // peach-200/50
+        backgroundColor: Alpha.peach200_50,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -337,7 +356,7 @@ const styles = StyleSheet.create({
     infoCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(235,228,213,0.4)', // peach-200/40
+        backgroundColor: Alpha.peach200_40,
         borderRadius: BorderRadius.xl,
         padding: Spacing.sm + 4,
         marginBottom: Spacing.lg,
@@ -347,7 +366,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: BorderRadius.lg,
-        backgroundColor: 'rgba(139,63,44,0.20)', // terra-400/20
+        backgroundColor: Alpha.terra400_20,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -370,7 +389,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     infoOpenBadge: {
-        backgroundColor: 'rgba(139,63,44,0.10)', // terra-400/10
+        backgroundColor: Alpha.terra400_10,
         paddingHorizontal: Spacing.sm,
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.sm,
@@ -397,7 +416,7 @@ const styles = StyleSheet.create({
         height: 14,
         borderRadius: 7,
         borderWidth: 1.5,
-        borderColor: 'rgba(212,180,148,0.30)', // peach-400/30
+        borderColor: Alpha.peach400_30,
         backgroundColor: 'transparent',
     },
     legendSelected: {
@@ -410,7 +429,7 @@ const styles = StyleSheet.create({
         width: 14,
         height: 14,
         borderRadius: 7,
-        backgroundColor: 'rgba(224,217,204,0.40)', // peach-300/40
+        backgroundColor: Alpha.peach300_40,
     },
     legendLabel: {
         fontSize: FontSize.xs,
@@ -429,19 +448,35 @@ const styles = StyleSheet.create({
         gap: SPOT_GAP,
         width: GRID_COLUMNS * SPOT_SIZE + (GRID_COLUMNS - 1) * SPOT_GAP,
     },
+    studioLayout: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        gap: Spacing.lg,
+    },
+    studioColumn: {
+        flexDirection: 'column',
+        gap: SPOT_GAP,
+    },
+    studioAisle: {
+        width: 1,
+        alignSelf: 'stretch',
+        backgroundColor: Alpha.peach400_30,
+        marginVertical: Spacing.sm,
+    },
     spotCell: {
-        width: SPOT_SIZE,
-        height: SPOT_SIZE,
-        borderRadius: BorderRadius.xl,
-        backgroundColor: 'rgba(235,228,213,0.4)', // peach-200/40
+        width: SPOT_SIZE - 8,
+        height: SPOT_SIZE + 8,
+        borderRadius: BorderRadius.md,
+        backgroundColor: Alpha.peach200_40,
         borderWidth: 1,
-        borderColor: 'rgba(212,180,148,0.20)', // peach-400/20
+        borderColor: Alpha.peach400_20,
         justifyContent: 'center',
         alignItems: 'center',
     },
     spotBooked: {
-        backgroundColor: 'rgba(224,217,204,0.30)', // peach-300/30
-        borderColor: 'rgba(224,217,204,0.30)',
+        backgroundColor: Alpha.peach300_30,
+        borderColor: Alpha.peach300_30,
     },
     spotSelected: {
         backgroundColor: Colors.terra[400],
@@ -468,7 +503,7 @@ const styles = StyleSheet.create({
         paddingTop: Spacing.md,
         paddingBottom: Spacing['2xl'],
         borderTopWidth: 1,
-        borderTopColor: 'rgba(212,180,148,0.20)', // peach-400/20
+        borderTopColor: Alpha.peach400_20,
     },
     confirmButton: {
         backgroundColor: Colors.terra[400],

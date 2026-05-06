@@ -45,7 +45,7 @@ export function UserNav() {
                 {/* Logo */}
                 <div className="px-7 pt-8 pb-6">
                     <Image
-                        src="/images/sol-logo-cream.png"
+                        src="/images/sol-logo-terra.png"
                         alt="SOL Pilates Studio"
                         width={400}
                         height={400}
@@ -114,7 +114,7 @@ export function UserNav() {
                     <div className="border-t border-peach-200/6 pt-3 mx-1">
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-peach-400/40 hover:text-[#C75050] hover:bg-[#C75050]/8 transition-all duration-200"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-peach-400/40 hover:text-error-hover hover:bg-error-hover/10 transition-all duration-200"
                         >
                             <SignOut weight="regular" className="w-[18px] h-[18px]" />
                             <span className="text-sm font-medium">Sign Out</span>

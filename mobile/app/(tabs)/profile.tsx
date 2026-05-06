@@ -9,20 +9,28 @@ import {
     Alert,
     ActivityIndicator,
     Animated,
+    Linking,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
+import { callDeleteAccount } from '@fitconnect/shared/firebase/firestore';
 import {
     updatePassword,
     EmailAuthProvider,
     reauthenticateWithCredential,
 } from 'firebase/auth';
 import { auth } from '@fitconnect/shared/firebase/config';
-import { Colors, Spacing, FontSize, BorderRadius, FontFamily } from '../../constants/theme';
+
+// TODO: Replace with hosted legal URLs before App Store submission.
+const PRIVACY_POLICY_URL = 'https://fitconnectpro.app/privacy';
+const TERMS_OF_SERVICE_URL = 'https://fitconnectpro.app/terms';
+import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
+import MilestoneCard from '../../components/MilestoneCard';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -131,11 +139,91 @@ export default function ProfileScreen() {
         ]);
     };
 
-    const handleHelp = () => {
+    const handleDeleteAccount = () => {
         Alert.alert(
-            'Help & FAQ',
-            'For support, email solpilatesstudio.in@gmail.com or call (212) 555-0180.',
+            'Delete Account',
+            'This permanently deletes your account, cancels all upcoming bookings, and erases your profile. This cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Continue',
+                    style: 'destructive',
+                    onPress: () => promptPasswordAndDelete(),
+                },
+            ],
         );
+    };
+
+    const promptPasswordAndDelete = () => {
+        if (Platform.OS === 'ios') {
+            Alert.prompt(
+                'Confirm Password',
+                'Re-enter your password to permanently delete this account.',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Delete Forever',
+                        style: 'destructive',
+                        onPress: (pw?: string) => performDelete(pw || ''),
+                    },
+                ],
+                'secure-text',
+            );
+        } else {
+            // Android: Alert.prompt is iOS-only. Fallback to a router push to a dedicated screen would go here.
+            Alert.alert(
+                'Delete Account',
+                'Account deletion on Android requires the dedicated Delete Account screen.',
+            );
+        }
+    };
+
+    const performDelete = async (password: string) => {
+        if (!password) {
+            Alert.alert('Error', 'Password is required.');
+            return;
+        }
+        const user = auth.currentUser;
+        if (!user || !user.email) {
+            Alert.alert('Error', 'Not signed in.');
+            return;
+        }
+        try {
+            const credential = EmailAuthProvider.credential(user.email, password);
+            await reauthenticateWithCredential(user, credential);
+            await callDeleteAccount();
+            await logoutClient();
+            router.replace('/login');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to delete account.';
+            Alert.alert('Error', message);
+        }
+    };
+
+    const openLegalLink = (url: string) => {
+        Linking.openURL(url).catch(() =>
+            Alert.alert('Unable to open link', 'Please try again later.'),
+        );
+    };
+
+    const handleHelp = () => {
+        Alert.alert('Help & Support', 'How can we reach you?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Email Us',
+                onPress: () =>
+                    Linking.openURL(
+                        'mailto:solpilatesstudio.in@gmail.com?subject=FitConnect%20Pro%20Support',
+                    ).catch(() => Alert.alert('Email unavailable on this device.')),
+            },
+            {
+                text: 'Call',
+                onPress: () =>
+                    Linking.openURL('tel:+12125550180').catch(() =>
+                        Alert.alert('Calling unavailable on this device.'),
+                    ),
+            },
+        ]);
     };
 
     return (
@@ -217,6 +305,8 @@ export default function ProfileScreen() {
                             <Text style={styles.statLabel}>STREAK</Text>
                         </View>
                     </View>
+
+                    <MilestoneCard totalClassesAttended={stats?.totalClassesAttended ?? 0} />
                 </View>
 
                 {/* ─── Membership ─────────────────────────────────── */}
@@ -342,6 +432,42 @@ export default function ProfileScreen() {
                     )}
                 </View>
 
+                {/* ─── About ─────────────────────────────────────── */}
+                <Text style={styles.sectionLabel}>ABOUT</Text>
+                <TouchableOpacity
+                    style={styles.rowCard}
+                    onPress={() => router.push('/about')}
+                    activeOpacity={0.85}
+                >
+                    <View style={styles.rowIconSquare}>
+                        <Feather name="sun" size={20} color={Colors.terra[400]} />
+                    </View>
+                    <View style={styles.rowTextCol}>
+                        <Text style={styles.rowTitle}>About SOL</Text>
+                        <Text style={styles.rowSubtitle}>
+                            Our story, philosophy and founder
+                        </Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color={Colors.olive[300]} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.rowCard}
+                    onPress={() => router.push('/shop')}
+                    activeOpacity={0.85}
+                >
+                    <View style={styles.rowIconSquare}>
+                        <Feather name="shopping-bag" size={20} color={Colors.terra[400]} />
+                    </View>
+                    <View style={styles.rowTextCol}>
+                        <Text style={styles.rowTitle}>Shop</Text>
+                        <Text style={styles.rowSubtitle}>
+                            Studio merchandise — coming soon
+                        </Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color={Colors.olive[300]} />
+                </TouchableOpacity>
+
                 {/* ─── Support ───────────────────────────────────── */}
                 <Text style={styles.sectionLabel}>SUPPORT</Text>
                 <TouchableOpacity
@@ -356,6 +482,58 @@ export default function ProfileScreen() {
                         <Text style={styles.rowTitle}>Help & FAQ</Text>
                         <Text style={styles.rowSubtitle}>
                             Get answers to common questions
+                        </Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color={Colors.olive[300]} />
+                </TouchableOpacity>
+
+                {/* ─── Legal ─────────────────────────────────────── */}
+                <Text style={styles.sectionLabel}>LEGAL</Text>
+                <TouchableOpacity
+                    style={styles.rowCard}
+                    onPress={() => openLegalLink(PRIVACY_POLICY_URL)}
+                    activeOpacity={0.85}
+                >
+                    <View style={styles.rowIconSquare}>
+                        <Feather name="shield" size={20} color={Colors.olive[400]} />
+                    </View>
+                    <View style={styles.rowTextCol}>
+                        <Text style={styles.rowTitle}>Privacy Policy</Text>
+                        <Text style={styles.rowSubtitle}>How we handle your data</Text>
+                    </View>
+                    <Feather name="external-link" size={18} color={Colors.olive[300]} />
+                </TouchableOpacity>
+
+                <View style={{ height: Spacing.sm }} />
+                <TouchableOpacity
+                    style={styles.rowCard}
+                    onPress={() => openLegalLink(TERMS_OF_SERVICE_URL)}
+                    activeOpacity={0.85}
+                >
+                    <View style={styles.rowIconSquare}>
+                        <Feather name="file-text" size={20} color={Colors.olive[400]} />
+                    </View>
+                    <View style={styles.rowTextCol}>
+                        <Text style={styles.rowTitle}>Terms of Service</Text>
+                        <Text style={styles.rowSubtitle}>The fine print</Text>
+                    </View>
+                    <Feather name="external-link" size={18} color={Colors.olive[300]} />
+                </TouchableOpacity>
+
+                {/* ─── Danger Zone ───────────────────────────────── */}
+                <Text style={styles.sectionLabel}>DANGER ZONE</Text>
+                <TouchableOpacity
+                    style={styles.rowCard}
+                    onPress={handleDeleteAccount}
+                    activeOpacity={0.85}
+                >
+                    <View style={[styles.rowIconSquare, { backgroundColor: Alpha.error_10 }]}>
+                        <Feather name="trash-2" size={20} color={Colors.error} />
+                    </View>
+                    <View style={styles.rowTextCol}>
+                        <Text style={[styles.rowTitle, { color: Colors.error }]}>Delete Account</Text>
+                        <Text style={styles.rowSubtitle}>
+                            Permanently erase your profile and bookings
                         </Text>
                     </View>
                     <Feather name="chevron-right" size={20} color={Colors.olive[300]} />
@@ -456,7 +634,7 @@ const styles = StyleSheet.create({
         width: 180,
         height: 180,
         borderRadius: 90,
-        backgroundColor: 'rgba(139,63,44,0.07)',
+        backgroundColor: Alpha.terra400_07,
     },
     heroDecorSmall: {
         position: 'absolute',
@@ -465,7 +643,7 @@ const styles = StyleSheet.create({
         width: 140,
         height: 140,
         borderRadius: 70,
-        backgroundColor: 'rgba(139,63,44,0.05)',
+        backgroundColor: Alpha.terra500_10,
     },
     heroTopRow: {
         flexDirection: 'row',
@@ -519,7 +697,7 @@ const styles = StyleSheet.create({
     planBadge: {
         alignSelf: 'flex-start',
         marginTop: Spacing.sm,
-        backgroundColor: 'rgba(139,63,44,0.12)',
+        backgroundColor: Alpha.terra400_12,
         borderRadius: BorderRadius.full,
         paddingHorizontal: Spacing.md - 4,
         paddingVertical: 4,
@@ -534,7 +712,7 @@ const styles = StyleSheet.create({
     statsPanel: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,251,247,0.55)',
+        backgroundColor: Alpha.peach100_55,
         borderRadius: BorderRadius.xl,
         padding: Spacing.md,
         marginTop: Spacing.lg,
@@ -563,7 +741,7 @@ const styles = StyleSheet.create({
     statDivider: {
         width: 1,
         height: 36,
-        backgroundColor: 'rgba(126,138,110,0.20)',
+        backgroundColor: Alpha.olive400_20,
     },
 
     // ── Section labels ─────────────────────────────────────────
@@ -591,7 +769,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: 'rgba(139,63,44,0.10)',
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -627,7 +805,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: 'rgba(139,63,44,0.10)',
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: Spacing.md,
@@ -716,7 +894,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(220,38,38,0.25)',
+        borderColor: Alpha.error_25,
         borderRadius: BorderRadius.xl,
         paddingVertical: Spacing.md - 2,
         marginTop: Spacing.xl,
@@ -730,7 +908,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontFamily: FontFamily.sansBold,
         fontSize: FontSize['2xs'],
-        color: 'rgba(159,165,137,0.5)',
+        color: Alpha.olive300_50,
         letterSpacing: 1.5,
         marginTop: Spacing.md,
     },

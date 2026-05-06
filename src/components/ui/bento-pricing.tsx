@@ -6,19 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckIcon, SparklesIcon } from 'lucide-react';
-
-type PricingCardProps = {
-    titleBadge: string;
-    priceLabel: string;
-    priceSuffix?: string;
-    subLabel?: string;
-    features: string[];
-    cta?: string;
-    className?: string;
-    description?: string;
-    planId?: string;
-    onSelect?: (planId: string) => void;
-};
+import { PLAN_CATALOG, type PlanDefinition } from '@fitconnect/shared/types/subscription';
 
 function FilledCheck() {
     return (
@@ -28,56 +16,78 @@ function FilledCheck() {
     );
 }
 
-function PricingCard({
-    titleBadge,
-    priceLabel,
-    priceSuffix = '',
-    subLabel = '',
-    description = '',
-    features,
-    cta = 'Subscribe',
-    className,
-    planId,
-    onSelect,
-}: PricingCardProps) {
-    const handleClick = () => {
-        if (planId && onSelect) onSelect(planId);
-    };
+function formatPrice(rupees: number) {
+    if (rupees === 0) return 'FREE';
+    return `₹${rupees.toLocaleString('en-IN')}`;
+}
 
+function priceSuffix(plan: PlanDefinition) {
+    if (plan.id === 'drop_in') return '/ 30 MIN';
+    if (plan.id === 'kickstarter') return '/ 2 WEEKS';
+    if (plan.durationDays === 90) return '/ QUARTER';
+    if (plan.durationDays === 180) return '/ 6 MONTHS';
+    return '';
+}
+
+function PlanCard({
+    plan,
+    onSelect,
+    cta,
+    featured,
+}: {
+    plan: PlanDefinition;
+    onSelect: (id: string) => void;
+    cta: string;
+    featured?: boolean;
+}) {
     return (
         <div
             className={cn(
                 'bg-peach-50 border-peach-400/20 relative overflow-hidden rounded-2xl border flex flex-col',
                 'hover:border-terra-400/30 transition-all duration-300',
-                className,
+                featured && 'ring-1 ring-terra-400/30',
             )}
         >
+            {featured && (
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-terra-400/50 to-transparent opacity-50" />
+            )}
             <div className="flex items-center gap-3 p-6 pb-2">
-                <Badge variant="secondary" className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wider">{titleBadge}</Badge>
+                <Badge variant="secondary" className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wider uppercase">
+                    {plan.name}
+                </Badge>
+                {plan.recommended && (
+                    <Badge variant="outline" className="ml-auto border-terra-400/30 text-terra-400 text-[10px] uppercase tracking-widest hidden lg:flex">
+                        <SparklesIcon className="me-1 size-3" /> Popular
+                    </Badge>
+                )}
             </div>
 
-            <div className="p-6 pt-2">
+            <div className="p-6 pt-2 flex flex-col h-full">
                 <div className="flex items-end gap-2 mb-2">
                     <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
-                        {priceLabel}
+                        {formatPrice(plan.price)}
                     </span>
                     <div className="flex flex-col leading-none pb-2">
-                        {priceSuffix && (
-                            <span className="text-olive-400 text-sm font-semibold uppercase">{priceSuffix}</span>
-                        )}
-                        {subLabel && (
-                            <span className="text-olive-400 text-[10px] font-bold uppercase">{subLabel}</span>
+                        <span className="text-olive-400 text-sm font-semibold uppercase">{priceSuffix(plan)}</span>
+                        {plan.credits !== null && plan.credits > 1 && (
+                            <span className="text-olive-300 text-[10px] font-bold uppercase">{plan.credits} classes</span>
                         )}
                     </div>
                 </div>
-                {description && (
+                {plan.foundingPrice && (
+                    <div className="mb-3 text-xs font-semibold text-terra-400 uppercase tracking-wider">
+                        Founding member: {formatPrice(plan.foundingPrice)}
+                        <span className="ml-2 text-olive-300 font-normal normal-case tracking-normal">(first 25 only)</span>
+                    </div>
+                )}
+                {plan.tagline && (
                     <p className="text-olive-300 text-sm leading-relaxed mb-6 border-b border-peach-400/20 pb-6">
-                        {description}
+                        {plan.tagline}
                     </p>
                 )}
 
                 <ul className="text-olive-300 space-y-4 text-sm mt-2 flex-grow">
-                    {features.map((f, i) => (
+                    {plan.features.map((f, i) => (
                         <li key={i} className="flex items-start gap-3">
                             <FilledCheck />
                             <span className="leading-tight">{f}</span>
@@ -87,7 +97,7 @@ function PricingCard({
 
                 <div className="mt-8">
                     <Button
-                        onClick={handleClick}
+                        onClick={() => onSelect(plan.id)}
                         className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl"
                     >
                         {cta}
@@ -102,176 +112,53 @@ export function BentoPricing() {
     const router = useRouter();
 
     const handleSelect = (planId: string) => {
+        if (planId === 'drop_in') {
+            router.push('/free-class');
+            return;
+        }
         router.push(`/user/subscribe?plan=${planId}`);
     };
 
+    const dropIn = PLAN_CATALOG.find((p) => p.id === 'drop_in')!;
+    const kickstarter = PLAN_CATALOG.find((p) => p.id === 'kickstarter')!;
+    const memberships = PLAN_CATALOG.filter((p) => p.category === 'membership');
+
     return (
         <div className="space-y-20">
-            {/* SECTION 0: FREE CLASS */}
-            <div className="bg-gradient-to-br from-terra-400/10 to-terra-300/5 rounded-2xl border border-terra-400/20 p-8 md:p-12 text-center">
-                <h3 className="text-2xl md:text-3xl font-black text-terra-400 uppercase tracking-tight mb-3 font-display">
-                    Not Sure Yet?
-                </h3>
-                <p className="text-olive-400 mb-6 max-w-2xl mx-auto">
-                    Try a free 30-minute drop-in session. No commitment, no credit card required. Let Swetha personalize the experience for you.
-                </p>
-                <Button
-                    onClick={() => router.push('/free-class')}
-                    className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 px-8 rounded-xl"
-                >
-                    TRY YOUR FREE SESSION
-                </Button>
-            </div>
-
-            {/* SECTION 1: MEMBERSHIPS */}
+            {/* SECTION 1: TRY IT */}
             <div className="space-y-8">
                 <div className="text-center space-y-2">
-                    <h2 className="text-3xl md:text-5xl font-black text-olive-600 tracking-tight uppercase font-display">Memberships</h2>
-                    <p className="text-olive-400 max-w-2xl mx-auto">Flexible plans for your consistent training.</p>
+                    <h2 className="text-3xl md:text-5xl font-black text-olive-600 tracking-tight uppercase font-display">
+                        Start Here
+                    </h2>
+                    <p className="text-olive-400 max-w-2xl mx-auto">
+                        New to Pilates or new to Sol? Start with a free drop-in or our 2-week Kickstarter.
+                    </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Unlimited - Featured */}
-                    <div
-                        className={cn(
-                            'bg-peach-50 border-peach-400/20 relative w-full overflow-hidden rounded-2xl border flex flex-col',
-                            'md:col-span-1 ring-1 ring-terra-400/30',
-                        )}
-                    >
-                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-terra-400/50 to-transparent opacity-50"></div>
-                        <div className="flex items-center gap-3 p-6 pb-2">
-                            <Badge variant="secondary" className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wider">UNLIMITED</Badge>
-                            <Badge variant="outline" className="ml-auto border-terra-400/30 text-terra-400 text-[10px] uppercase tracking-widest hidden lg:flex">
-                                <SparklesIcon className="me-1 size-3" /> Popular
-                            </Badge>
-                        </div>
-                        <div className="p-6 pt-2 flex flex-col h-full">
-                            <div className="pb-4">
-                                <div className="flex items-end gap-2">
-                                    <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
-                                        $200
-                                    </span>
-                                    <div className="flex flex-col leading-none pb-2">
-                                        <span className="text-olive-400 text-sm font-semibold uppercase">/4 WEEKS</span>
-                                        <span className="text-olive-300 text-[10px] font-bold uppercase">Best Value</span>
-                                    </div>
-                                </div>
-                                <p className="text-olive-300 text-sm mt-4 border-b border-peach-400/20 pb-6">
-                                    Book as many sessions as you&apos;d like. The ultimate commitment to your fitness journey.
-                                </p>
-                            </div>
-                            <ul className="text-olive-300 space-y-4 text-sm flex-grow">
-                                {[
-                                    'Unlimited classes every 4 weeks',
-                                    '14-day advance booking window',
-                                    'Membership auto-renews every 4 weeks',
-                                    'Priority support'
-                                ].map((f, i) => (
-                                    <li key={i} className="flex items-start gap-3">
-                                        <FilledCheck />
-                                        <span className="leading-tight">{f}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                            <div className="mt-8">
-                                <Button
-                                    onClick={() => handleSelect('unlimited')}
-                                    className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl"
-                                >
-                                    SUBSCRIBE NOW
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <PricingCard
-                        titleBadge="TWICE WEEKLY"
-                        priceLabel="$160"
-                        priceSuffix="/ 4 WEEKS"
-                        subLabel="8 classes"
-                        description="Book up to 8 sessions every 4 weeks. Perfect for consistent maintenance."
-                        features={[
-                            '8 classes every 4 weeks',
-                            '14-day advance booking window',
-                            'Membership auto-renews every 4 weeks',
-                            'Roll-over unused credits (up to 2)'
-                        ]}
-                        planId="twice_weekly"
-                        onSelect={handleSelect}
-                    />
-
-                    <PricingCard
-                        titleBadge="ONCE WEEKLY"
-                        priceLabel="$120"
-                        priceSuffix="/ 4 WEEKS"
-                        subLabel="4 classes"
-                        description="Book up to 4 sessions every 4 weeks. Great for supplementing other training."
-                        features={[
-                            '4 classes every 4 weeks',
-                            '14-day advance booking window',
-                            'Membership auto-renews every 4 weeks'
-                        ]}
-                        planId="once_weekly"
-                        onSelect={handleSelect}
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <PlanCard plan={dropIn} onSelect={handleSelect} cta="BOOK FREE CLASS" />
+                    <PlanCard plan={kickstarter} onSelect={handleSelect} cta="START KICKSTARTER" featured />
                 </div>
             </div>
 
-            {/* SECTION 2: SESSIONS */}
+            {/* SECTION 2: MEMBERSHIPS */}
             <div className="space-y-8">
                 <div className="text-center space-y-2">
-                    <h2 className="text-2xl md:text-4xl font-black text-olive-600 tracking-tight uppercase font-display">Class Packs</h2>
-                    <p className="text-olive-400 max-w-2xl mx-auto">No commitment. Just train.</p>
+                    <h2 className="text-2xl md:text-4xl font-black text-olive-600 tracking-tight uppercase font-display">
+                        Memberships
+                    </h2>
+                    <p className="text-olive-400 max-w-2xl mx-auto">Show up consistently. That&apos;s where the change happens.</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
-                    <PricingCard
-                        titleBadge="DROP-IN"
-                        priceLabel="$35"
-                        priceSuffix="/ CLASS"
-                        subLabel="1 Credit"
-                        description="Drop-In credit for one session - Live, Virtual, or On-Demand."
-                        features={[
-                            '1 Session Credit',
-                            '1 Month Expiration',
-                            'Valid for any standard class',
-                        ]}
-                        cta="BUY PASS"
-                        planId="drop_in"
-                        onSelect={handleSelect}
-                    />
-
-                    <PricingCard
-                        titleBadge="5 PACK"
-                        priceLabel="$160"
-                        priceSuffix="/ 5 CLASSES"
-                        subLabel="$32/class"
-                        description="5 drop-in credits. Perfect for occasional visitors."
-                        features={[
-                            '5 Session Credits',
-                            '6 Month Expiration',
-                            'Valid for any standard class',
-                            'Shareable with 1 friend'
-                        ]}
-                        cta="BUY PACK"
-                        planId="five_pack"
-                        onSelect={handleSelect}
-                    />
-
-                    <PricingCard
-                        titleBadge="10 PACK"
-                        priceLabel="$300"
-                        priceSuffix="/ 10 CLASSES"
-                        subLabel="$30/class"
-                        description="10 drop-in session credits. Commit to a block of training."
-                        features={[
-                            '10 Session Credits',
-                            '6 Month Expiration',
-                            'Valid for any standard class',
-                            'Shareable with 2 friends'
-                        ]}
-                        cta="BUY PACK"
-                        planId="ten_pack"
-                        onSelect={handleSelect}
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {memberships.map((plan) => (
+                        <PlanCard
+                            key={plan.id}
+                            plan={plan}
+                            onSelect={handleSelect}
+                            cta="SUBSCRIBE"
+                            featured={plan.recommended}
+                        />
+                    ))}
                 </div>
             </div>
         </div>

@@ -42,6 +42,12 @@ const STATUSES = ["All Status", "scheduled", "ongoing", "completed", "canceled"]
 const DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const
 const LOCATIONS = ["Main Studio", "Reformer Studio", "Mat Studio", "Private Suite", "Barre & Stretch", "Recovery Lounge"]
 
+const CLASS_TYPES = [
+    { name: "Sol Flow", description: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.", timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+    { name: "Sol Cardio", description: "Fast-paced movement that gets your heart rate up.", timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+    { name: "Sol Stretch", description: "Hit reset on your body, one stretch at a time.", timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+] as const
+
 interface ClassFormData {
     trainerId: string
     date: string
@@ -57,10 +63,10 @@ interface ClassFormData {
 const defaultFormData: ClassFormData = {
     trainerId: "",
     date: "",
-    startTime: "09:00",
+    startTime: "08:00",
     duration: 50,
     capacity: 12,
-    classType: "Reformer Pilates",
+    classType: "Sol Flow",
     difficultyLevel: "intermediate",
     location: "Main Studio",
     description: "",
@@ -600,13 +606,26 @@ export default function ClassesPage() {
                             <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
                                 Class Type
                             </label>
-                            <input
-                                type="text"
+                            <select
                                 value={formData.classType}
-                                onChange={(e) => setFormData(prev => ({ ...prev, classType: e.target.value }))}
-                                placeholder="e.g., Reformer Pilates"
-                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all text-sm"
-                            />
+                                onChange={(e) => {
+                                    const selected = CLASS_TYPES.find(ct => ct.name === e.target.value)
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        classType: e.target.value,
+                                        description: selected?.description || prev.description,
+                                        startTime: selected?.timeSlots[0] || prev.startTime,
+                                    }))
+                                }}
+                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none appearance-none cursor-pointer transition-all text-sm"
+                            >
+                                {CLASS_TYPES.map(ct => (
+                                    <option key={ct.name} value={ct.name}>{ct.name}</option>
+                                ))}
+                            </select>
+                            <p className="mt-1.5 text-xs text-olive-300/60 italic">
+                                {CLASS_TYPES.find(ct => ct.name === formData.classType)?.description}
+                            </p>
                         </div>
 
                         {/* Trainer */}
@@ -643,12 +662,21 @@ export default function ClassesPage() {
                                 <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
                                     Start Time
                                 </label>
-                                <input
-                                    type="time"
+                                <select
                                     value={formData.startTime}
                                     onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:outline-none transition-all text-sm"
-                                />
+                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer transition-all text-sm"
+                                >
+                                    {(CLASS_TYPES.find(ct => ct.name === formData.classType)?.timeSlots ?? []).map(slot => {
+                                        const [h, m] = slot.split(':')
+                                        const hour = parseInt(h, 10)
+                                        const ampm = hour >= 12 ? 'PM' : 'AM'
+                                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+                                        return (
+                                            <option key={slot} value={slot}>{`${displayHour}:${m} ${ampm}`}</option>
+                                        )
+                                    })}
+                                </select>
                             </div>
                         </div>
 

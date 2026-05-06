@@ -10,6 +10,11 @@ import {
     Clock,
     Star,
     Target,
+    Award,
+    Crown,
+    Gem,
+    Medal,
+    Shield,
 } from "lucide-react"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { getUserBookings, subscribeToClassesByDate } from "@fitconnect/shared/firebase/firestore"
@@ -18,6 +23,36 @@ import { Booking } from "@fitconnect/shared/types/booking"
 import { ClassSession } from "@fitconnect/shared/types/class"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { TIER_COLORS, withAlpha, COLORS } from "@fitconnect/shared/theme"
+
+// ═══════════ MILESTONE TIERS ═══════════
+const TIERS = [
+    { name: 'Bronze',   threshold: 0,   color: TIER_COLORS.bronze.color,   bg: withAlpha(TIER_COLORS.bronze.color,   TIER_COLORS.bronze.bgAlpha),   icon: Shield },
+    { name: 'Silver',   threshold: 10,  color: TIER_COLORS.silver.color,   bg: withAlpha(TIER_COLORS.silver.color,   TIER_COLORS.silver.bgAlpha),   icon: Medal  },
+    { name: 'Gold',     threshold: 25,  color: TIER_COLORS.gold.color,     bg: withAlpha(TIER_COLORS.gold.color,     TIER_COLORS.gold.bgAlpha),     icon: Award  },
+    { name: 'Platinum', threshold: 50,  color: TIER_COLORS.platinum.color, bg: withAlpha(TIER_COLORS.platinum.color, TIER_COLORS.platinum.bgAlpha), icon: Crown  },
+    { name: 'Diamond',  threshold: 100, color: TIER_COLORS.diamond.color,  bg: withAlpha(TIER_COLORS.diamond.color,  TIER_COLORS.diamond.bgAlpha),  icon: Gem    },
+] as const
+
+const TIER_INACTIVE_LINE = withAlpha(COLORS.olive[500], 0.08)
+const TIER_INACTIVE_BG = withAlpha(COLORS.olive[500], 0.05)
+const TIER_INACTIVE_ICON = withAlpha(COLORS.olive[500], 0.2)
+
+function getMilestone(totalClasses: number) {
+    let currentTierIdx = 0
+    for (let i = TIERS.length - 1; i >= 0; i--) {
+        if (totalClasses >= TIERS[i].threshold) {
+            currentTierIdx = i
+            break
+        }
+    }
+    const currentTier = TIERS[currentTierIdx]
+    const nextTier = TIERS[currentTierIdx + 1] || null
+    const progress = nextTier
+        ? ((totalClasses - currentTier.threshold) / (nextTier.threshold - currentTier.threshold)) * 100
+        : 100
+    return { currentTier, currentTierIdx, nextTier, progress: Math.min(progress, 100) }
+}
 
 const getGreeting = () => {
     const hour = new Date().getHours()
@@ -162,6 +197,101 @@ export default function UserDashboard() {
                             <p className="text-[11px] text-olive-300 font-medium">Classes Left</p>
                         </div>
                     </div>
+
+                    {/* ═══════════ MILESTONE TIER ═══════════ */}
+                    {(() => {
+                        const { currentTier, currentTierIdx, nextTier, progress } = getMilestone(clientUser.stats.totalClassesAttended)
+                        const TierIcon = currentTier.icon
+                        return (
+                            <div className="mt-6 pt-5 border-t border-olive-400/8">
+                                {/* Tier badge + progress info */}
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div
+                                            className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                            style={{ backgroundColor: currentTier.bg }}
+                                        >
+                                            <TierIcon className="w-4 h-4" style={{ color: currentTier.color }} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-olive-600 leading-none">
+                                                {currentTier.name}
+                                                <span className="text-[10px] text-olive-300 font-medium ml-1.5">Tier</span>
+                                            </p>
+                                            <p className="text-[10px] text-olive-300 mt-0.5">
+                                                {nextTier
+                                                    ? `${nextTier.threshold - clientUser.stats.totalClassesAttended} classes to ${nextTier.name}`
+                                                    : 'Max tier reached!'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="text-[11px] font-bold text-olive-400">
+                                        {clientUser.stats.totalClassesAttended}/{nextTier ? nextTier.threshold : currentTier.threshold}
+                                    </span>
+                                </div>
+
+                                {/* Progress bar */}
+                                <div className="relative h-2 rounded-full bg-olive-400/8 overflow-hidden mb-3">
+                                    <motion.div
+                                        className="absolute inset-y-0 left-0 rounded-full"
+                                        style={{ backgroundColor: currentTier.color }}
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${progress}%` }}
+                                        transition={{ duration: 1.2, ease: 'easeOut', delay: 0.5 }}
+                                    />
+                                </div>
+
+                                {/* Tier stepping stones */}
+                                <div className="flex items-center justify-between">
+                                    {TIERS.map((tier, idx) => {
+                                        const Icon = tier.icon
+                                        const isAchieved = idx <= currentTierIdx
+                                        const isCurrent = idx === currentTierIdx
+                                        return (
+                                            <div key={tier.name} className="flex flex-col items-center gap-1 relative">
+                                                {/* Connector line */}
+                                                {idx > 0 && (
+                                                    <div
+                                                        className="absolute top-3 -left-full w-full h-[2px]"
+                                                        style={{
+                                                            backgroundColor: idx <= currentTierIdx
+                                                                ? TIERS[idx - 1].color
+                                                                : TIER_INACTIVE_LINE
+                                                        }}
+                                                    />
+                                                )}
+                                                <div
+                                                    className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${
+                                                        isCurrent ? 'ring-2 ring-offset-1 scale-110' : ''
+                                                    }`}
+                                                    style={{
+                                                        backgroundColor: isAchieved ? tier.bg : TIER_INACTIVE_BG,
+                                                        outlineColor: isCurrent ? tier.color : undefined,
+                                                        borderColor: isCurrent ? tier.color : undefined,
+                                                        ...(isCurrent ? { boxShadow: `0 0 8px ${tier.color}40` } : {}),
+                                                    }}
+                                                >
+                                                    <Icon
+                                                        className="w-3 h-3"
+                                                        style={{
+                                                            color: isAchieved ? tier.color : TIER_INACTIVE_ICON,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span
+                                                    className={`text-[8px] font-bold tracking-wider uppercase ${
+                                                        isAchieved ? 'text-olive-500' : 'text-olive-300/40'
+                                                    }`}
+                                                >
+                                                    {tier.name}
+                                                </span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )
+                    })()}
                 </div>
             </motion.div>
 

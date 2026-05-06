@@ -12,6 +12,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { initApiConfig } from '@fitconnect/shared/firebase/api-config';
 import { Colors } from '../constants/theme';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
@@ -38,15 +39,16 @@ export default function RootLayout() {
     }
 
     return (
-        <>
+        <ErrorBoundary>
             <StatusBar style="auto" />
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="login" />
                 <Stack.Screen name="signup" options={{ headerShown: false }} />
                 <Stack.Screen name="subscribe" />
+                <Stack.Screen name="about" />
                 <Stack.Screen name="(tabs)" />
             </Stack>
-        </>
+        </ErrorBoundary>
     );
 }
 

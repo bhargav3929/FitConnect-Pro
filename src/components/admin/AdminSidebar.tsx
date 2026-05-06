@@ -12,6 +12,7 @@ import {
     UserCircle,
     BookmarkSimple,
     ChartBar,
+    EnvelopeSimple,
     GearSix,
     SignOut,
     CaretLeft,
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
     { label: "Facility", icon: MapPin, href: "/admin/locations" },
     { label: "Trainers", icon: UsersThree, href: "/admin/trainers" },
     { label: "Members", icon: UserCircle, href: "/admin/members" },
+    { label: "Leads", icon: EnvelopeSimple, href: "/admin/leads" },
     { label: "Bookings", icon: BookmarkSimple, href: "/admin/bookings" },
     { label: "Reports", icon: ChartBar, href: "/admin/reports" },
 ]
@@ -54,7 +56,7 @@ export function AdminSidebar() {
             <div className="flex items-center justify-between px-5 pt-7 pb-5">
                 <Link href="/admin/dashboard" className="group">
                     <Image
-                        src="/images/sol-logo-cream.png"
+                        src="/images/sol-logo-terra.png"
                         alt="SOL Pilates Studio"
                         width={400}
                         height={400}
@@ -129,7 +131,7 @@ export function AdminSidebar() {
                 })}
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-peach-400/30 hover:text-[#C75050] hover:bg-[#C75050]/8 transition-all duration-200"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-peach-400/30 hover:text-error-hover hover:bg-error-hover/10 transition-all duration-200"
                 >
                     <SignOut weight="regular" className="w-[20px] h-[20px] flex-shrink-0" />
                     {!collapsed && <span className="text-sm font-medium">Logout</span>}

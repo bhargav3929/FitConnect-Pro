@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Spacing, FontSize, Shadows } from '../../constants/theme';
+import { Colors, Spacing, FontSize, Shadows, Alpha } from '../../constants/theme';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     tabBar: {
         backgroundColor: Colors.card,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(212,180,148,0.12)',
+        borderTopColor: Alpha.peach400_12,
         height: Platform.OS === 'ios' ? 88 : 64,
         paddingTop: Spacing.xs,
         paddingBottom: Platform.OS === 'ios' ? Spacing.lg : Spacing.sm,
