@@ -107,6 +107,22 @@ export function BentoPricing() {
 
     return (
         <div className="space-y-20">
+            {/* SECTION 0: FREE CLASS */}
+            <div className="bg-gradient-to-br from-terra-400/10 to-terra-300/5 rounded-2xl border border-terra-400/20 p-8 md:p-12 text-center">
+                <h3 className="text-2xl md:text-3xl font-black text-terra-400 uppercase tracking-tight mb-3 font-display">
+                    Not Sure Yet?
+                </h3>
+                <p className="text-olive-400 mb-6 max-w-2xl mx-auto">
+                    Try a free 30-minute drop-in session. No commitment, no credit card required. Let Swetha personalize the experience for you.
+                </p>
+                <Button
+                    onClick={() => router.push('/free-class')}
+                    className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 px-8 rounded-xl"
+                >
+                    TRY YOUR FREE SESSION
+                </Button>
+            </div>
+
             {/* SECTION 1: MEMBERSHIPS */}
             <div className="space-y-8">
                 <div className="text-center space-y-2">

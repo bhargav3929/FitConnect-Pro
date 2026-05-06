@@ -30,11 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn("min-h-screen bg-background font-sans antialiased", dmSerifDisplay.variable, plusJakartaSans.variable)}>
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B0F19] text-white">
+        {/* <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B0F19] text-white">
           <p className="text-sm font-semibold tracking-[0.32em] uppercase text-[#FF6A3D] animate-pulse">
             Loading
           </p>
-        </div>
+        </div> */}
         <LayoutContent>{children}</LayoutContent>
           <Toaster richColors position="top-right" closeButton />
       </body>
