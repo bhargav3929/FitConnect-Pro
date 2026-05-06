@@ -85,7 +85,7 @@ describe('type exports', () => {
     });
 
     it('PlanId union accepts valid values', () => {
-        const ids: PlanId[] = ['unlimited', 'twice_weekly', 'once_weekly', 'drop_in', 'five_pack', 'ten_pack'];
+        const ids: PlanId[] = ['drop_in', 'kickstarter', 'twice_quarterly', 'twice_6mo', 'thrice_quarterly', 'thrice_6mo'];
         expect(ids).toHaveLength(6);
     });
 

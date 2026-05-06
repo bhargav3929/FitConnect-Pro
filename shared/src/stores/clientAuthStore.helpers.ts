@@ -41,8 +41,21 @@ export function mapFirebaseError(code: string): string {
             return 'Too many failed attempts. Please try again later.'
         case 'auth/network-request-failed':
             return 'Network error. Check your connection.'
+        case 'auth/popup-closed-by-user':
+            return 'Sign-in popup was closed. Please try again.'
+        case 'auth/cancelled-popup-request':
+            return 'Sign-in was cancelled. Please try again.'
+        case 'auth/popup-blocked':
+            return 'Popup was blocked by the browser. Please allow popups and try again.'
+        case 'auth/unauthorized-domain':
+            return 'This domain is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains.'
+        case 'auth/operation-not-allowed':
+            return 'Google sign-in is not enabled. Enable it in Firebase Console → Authentication → Sign-in method.'
+        case 'auth/account-exists-with-different-credential':
+            return 'An account already exists with this email using a different sign-in method.'
         default:
-            return 'An unexpected error occurred. Please try again.'
+            console.warn('[Auth] Unhandled Firebase error code:', code)
+            return `An unexpected error occurred (${code || 'unknown'}). Please try again.`
     }
 }
 

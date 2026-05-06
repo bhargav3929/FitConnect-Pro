@@ -55,9 +55,19 @@ function PlanCard({
                 </div>
 
                 <div className="flex items-end gap-1.5 mb-2">
-                    <span className="font-mono text-3xl font-bold tracking-tight text-olive-600">${plan.price}</span>
+                    <span className="font-mono text-3xl font-bold tracking-tight text-olive-600">
+                        {plan.price === 0 ? 'FREE' : `₹${plan.price.toLocaleString('en-IN')}`}
+                    </span>
                     <span className="text-olive-400 text-xs font-semibold pb-1">
-                        {plan.category === 'membership' ? '/ 4 weeks' : plan.credits === 1 ? '/ class' : `/ ${plan.credits} classes`}
+                        {plan.durationDays === 90
+                            ? '/ quarter'
+                            : plan.durationDays === 180
+                                ? '/ 6 months'
+                                : plan.durationDays === 14
+                                    ? '/ 2 weeks'
+                                    : plan.credits === 1
+                                        ? '/ class'
+                                        : `/ ${plan.credits} classes`}
                     </span>
                 </div>
 

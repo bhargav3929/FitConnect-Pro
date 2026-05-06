@@ -83,6 +83,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Free class leads (public form submissions)
+    // - Create: anyone (unauthenticated form submissions allowed)
+    // - Read/Update/Delete: admin only
+    match /freeClassLeads/{leadId} {
+      allow create: if request.resource.data.keys().hasAll(['name', 'email', 'phone'])
+                    && request.resource.data.name is string
+                    && request.resource.data.email is string
+                    && request.resource.data.phone is string;
+      allow read, update, delete: if isAdmin();
+    }
+
     // Admins collection
     // - Read/Write: admin only
     match /admins/{uid} {

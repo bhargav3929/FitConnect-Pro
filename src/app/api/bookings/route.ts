@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
             if (doc.exists) {
                 const data = doc.data()!;
                 classMap[doc.id] = {
-                    classType: data.classType || 'Pilates',
+                    classType: data.classType || 'Sol Flow',
                     startTime: data.startTime,
                     duration: data.duration,
                     location: data.location || 'Main Studio',
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
             return {
                 ...data,
                 id: doc.id,
-                classType: classInfo.classType || 'Pilates',
+                classType: classInfo.classType || 'Sol Flow',
                 classStartTime: classInfo.startTime || '',
                 classDuration: classInfo.duration || 0,
                 classLocation: classInfo.location || 'Main Studio',

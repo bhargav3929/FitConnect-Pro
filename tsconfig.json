@@ -48,5 +48,6 @@
     "functions",
     "shared",
     "mobile"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }

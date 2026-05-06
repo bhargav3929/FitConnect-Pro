@@ -92,7 +92,7 @@ async function writeDoc(path, data, { merge = true } = {}) {
 
 // -------------------- plan presets (from shared/src/types/subscription.ts) --------------------
 const PLAN_PRESETS = {
-    unlimited:    { category: 'membership', credits: null, durationDays: 28, maxClassesPerDay: 1, advanceBookingDays: 14, guestPasses: 0 },
+    unlimited:    { category: 'membership', credits: null, durationDays: 28, maxClassesPerDay: 5, advanceBookingDays: 14, guestPasses: 0 },
     once_weekly:  { category: 'membership', credits: 4,    durationDays: 28, maxClassesPerDay: 1, advanceBookingDays: 14, guestPasses: 0 },
     five_pack:    { category: 'class_pack', credits: 5,    durationDays: 180, maxClassesPerDay: 1, advanceBookingDays: 7,  guestPasses: 1 },
 };
@@ -134,13 +134,13 @@ const MEMBERS = [
     {
         email: 'alice@test.com', password: 'Alice123!', name: 'Alice Rivera', age: 32,
         fitnessGoals: ['strength', 'flexibility'],
-        subscription: subscriptionFor('unlimited'),
+        subscription: subscriptionFor('thrice_6mo'),
         stats: { totalClassesAttended: 7, currentStreak: 3, longestStreak: 5 },
     },
     {
         email: 'bob@test.com', password: 'Bob123!', name: 'Bob Chen', age: 41,
         fitnessGoals: ['endurance'],
-        subscription: subscriptionFor('once_weekly', { overrides: { classesRemaining: 1 } }),
+        subscription: subscriptionFor('twice_quarterly', { overrides: { classesRemaining: 1 } }),
         stats: { totalClassesAttended: 2, currentStreak: 1, longestStreak: 2 },
     },
     {
@@ -152,7 +152,7 @@ const MEMBERS = [
     {
         email: 'dave@test.com', password: 'Dave123!', name: 'Dave Park', age: 37,
         fitnessGoals: ['recovery'],
-        subscription: subscriptionFor('five_pack', { active: false, overrides: { classesRemaining: 0 } }),
+        subscription: subscriptionFor('kickstarter', { active: false, overrides: { classesRemaining: 0 } }),
         stats: { totalClassesAttended: 5, currentStreak: 0, longestStreak: 4 },
     },
 ];
@@ -258,38 +258,79 @@ for (const t of TRAINERS) {
     });
 }
 
+// -------------------- 3.5 Class Types --------------------
+console.log('\n─── 3.5 Class Types ───');
+
+const CLASS_TYPES = [
+    {
+        id: 'sol-flow',
+        name: 'Sol Flow',
+        description: 'Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.',
+        defaultIntensity: 2,
+        defaultDuration: 50,
+        equipment: 'Reformer',
+        isActive: true,
+    },
+    {
+        id: 'sol-cardio',
+        name: 'Sol Cardio',
+        description: 'Fast-paced movement that gets your heart rate up.',
+        defaultIntensity: 3,
+        defaultDuration: 45,
+        equipment: 'Reformer + Jumpboard',
+        isActive: false, // not currently scheduled
+    },
+    {
+        id: 'sol-stretch',
+        name: 'Sol Stretch',
+        description: 'Hit reset on your body, one stretch at a time.',
+        defaultIntensity: 1,
+        defaultDuration: 50,
+        equipment: 'Mat + Reformer',
+        isActive: false, // not currently scheduled
+    },
+];
+
+for (const ct of CLASS_TYPES) {
+    await writeDoc(`classTypes/${ct.id}`, {
+        ...ct,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+    });
+}
+
 // -------------------- 4. Classes --------------------
 console.log('\n─── 4. Classes ───');
 
 const CLASSES = [
     // #1 Today empty
-    { slug: 'cls-today-0600',    dayOffset: 0,   startTime: '06:00', trainer: 'maya-chen',     totalSpots: 12, bookedSpots: [],                              status: 'scheduled', classType: 'Reformer Flow',      intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-today-0600',    dayOffset: 0,   startTime: '06:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Performance Floor' },
     // #2 Today partial
-    { slug: 'cls-today-0900',    dayOffset: 0,   startTime: '09:00', trainer: 'julien-okafor', totalSpots: 12, bookedSpots: [1, 3, 5],                        status: 'scheduled', classType: 'Jumpboard Cardio',   intensityLevel: 3, location: 'Performance Floor' },
+    { slug: 'cls-today-0900',    dayOffset: 0,   startTime: '09:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [1, 3, 5],                        status: 'scheduled', classType: 'Sol Cardio',   intensityLevel: 3, location: 'Performance Floor' },
     // #3 Today FULL
-    { slug: 'cls-today-1730',    dayOffset: 0,   startTime: '17:30', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [1,2,3,4,5,6,7,8,9,10],           status: 'scheduled', classType: 'Tower Restorative',  intensityLevel: 1, location: 'Yoga Studio' },
+    { slug: 'cls-today-1730',    dayOffset: 0,   startTime: '17:30', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [1,2,3,4,5,6,7,8,9,10],           status: 'scheduled', classType: 'Sol Stretch',  intensityLevel: 1, location: 'Yoga Studio' },
     // #4 Today amber (50%)
-    { slug: 'cls-today-1900',    dayOffset: 0,   startTime: '19:00', trainer: 'maya-chen',     totalSpots: 12, bookedSpots: [2,4,6,8,10,12],                  status: 'scheduled', classType: 'Reformer Strength',  intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-today-1900',    dayOffset: 0,   startTime: '19:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [2,4,6,8,10],                  status: 'scheduled', classType: 'Sol Flow',  intensityLevel: 2, location: 'Performance Floor' },
     // #5 Tomorrow
-    { slug: 'cls-tmrw-0700',     dayOffset: 1,   startTime: '07:00', trainer: 'julien-okafor', totalSpots: 8,  bookedSpots: [],                              status: 'scheduled', classType: 'Mat Flow',           intensityLevel: 2, location: 'Yoga Studio' },
+    { slug: 'cls-tmrw-0700',     dayOffset: 1,   startTime: '07:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Stretch',           intensityLevel: 2, location: 'Yoga Studio' },
     // #6 +3 days
-    { slug: 'cls-plus3-0800',    dayOffset: 3,   startTime: '08:00', trainer: 'priya-kapoor',  totalSpots: 12, bookedSpots: [],                              status: 'scheduled', classType: 'Rehab Reformer',     intensityLevel: 1, location: 'Rehab Room' },
+    { slug: 'cls-plus3-0800',    dayOffset: 3,   startTime: '08:00', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Stretch',     intensityLevel: 1, location: 'Rehab Room' },
     // #7 +14 days — exactly at Alice's advance-booking horizon
-    { slug: 'cls-plus14-1000',   dayOffset: 14,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 12, bookedSpots: [],                              status: 'scheduled', classType: 'Reformer Flow',      intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-plus14-1000',   dayOffset: 14,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Performance Floor' },
     // #8 +15 days — one past Alice's horizon
-    { slug: 'cls-plus15-1000',   dayOffset: 15,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 12, bookedSpots: [],                              status: 'scheduled', classType: 'Reformer Flow',      intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-plus15-1000',   dayOffset: 15,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Performance Floor' },
     // #9 Yesterday completed
-    { slug: 'cls-yday-1000',     dayOffset: -1,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 12, bookedSpots: [1, 2, 3],                        status: 'completed', classType: 'Reformer Flow',      intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-yday-1000',     dayOffset: -1,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [1, 2, 3],                        status: 'completed', classType: 'Sol Flow',      intensityLevel: 2, location: 'Performance Floor' },
     // #10 Today canceled
-    { slug: 'cls-today-1400',    dayOffset: 0,   startTime: '14:00', trainer: 'julien-okafor', totalSpots: 12, bookedSpots: [],                              status: 'canceled',  classType: 'Jumpboard Cardio',   intensityLevel: 3, location: 'Performance Floor', canceledAt: now, cancelReason: 'Instructor illness' },
+    { slug: 'cls-today-1400',    dayOffset: 0,   startTime: '14:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'canceled',  classType: 'Sol Cardio',   intensityLevel: 3, location: 'Performance Floor', canceledAt: now, cancelReason: 'Instructor illness' },
     // #11 3 days ago completed (Alice attended)
-    { slug: 'cls-past3-0900',    dayOffset: -3,  startTime: '09:00', trainer: 'julien-okafor', totalSpots: 12, bookedSpots: [1],                             status: 'completed', classType: 'Jumpboard Cardio',   intensityLevel: 3, location: 'Performance Floor' },
+    { slug: 'cls-past3-0900',    dayOffset: -3,  startTime: '09:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [1],                             status: 'completed', classType: 'Sol Cardio',   intensityLevel: 3, location: 'Performance Floor' },
     // #12 7 days ago completed (Alice attended)
-    { slug: 'cls-past7-0730',    dayOffset: -7,  startTime: '07:30', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [4],                             status: 'completed', classType: 'Rehab Reformer',     intensityLevel: 1, location: 'Rehab Room' },
+    { slug: 'cls-past7-0730',    dayOffset: -7,  startTime: '07:30', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [4],                             status: 'completed', classType: 'Sol Stretch',     intensityLevel: 1, location: 'Rehab Room' },
     // #13 10 days ago completed (Alice no-show)
-    { slug: 'cls-past10-1800',   dayOffset: -10, startTime: '18:00', trainer: 'maya-chen',     totalSpots: 12, bookedSpots: [2],                             status: 'completed', classType: 'Reformer Strength',  intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-past10-1800',   dayOffset: -10, startTime: '18:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [2],                             status: 'completed', classType: 'Sol Flow',  intensityLevel: 2, location: 'Performance Floor' },
     // #14 5 days ago scheduled (Alice canceled her booking)
-    { slug: 'cls-past5-1100',    dayOffset: -5,  startTime: '11:00', trainer: 'julien-okafor', totalSpots: 12, bookedSpots: [],                              status: 'completed', classType: 'Mat Flow',           intensityLevel: 2, location: 'Yoga Studio' },
+    { slug: 'cls-past5-1100',    dayOffset: -5,  startTime: '11:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'completed', classType: 'Sol Stretch',           intensityLevel: 2, location: 'Yoga Studio' },
 ];
 
 for (const c of CLASSES) {
@@ -318,6 +359,53 @@ for (const c of CLASSES) {
         updatedAt: FieldValue.serverTimestamp(),
     });
 }
+
+// -------------------- 4.5 Sol weekly schedule (next 14 days) --------------------
+console.log('\n─── 4.5 Sol Weekly Schedule ───');
+
+const SCHEDULE_TIMES = ['08:00', '09:00', '10:00', '17:00', '18:00', '19:00'];
+const ACTIVE_TRAINERS = TRAINERS.filter((t) => t.isActive).map((t) => t.slug);
+
+// Skip slots that collide with existing edge-case classes (same date + startTime)
+const existingSlots = new Set(
+    CLASSES.map((c) => `${c.dayOffset}@${c.startTime}`)
+);
+
+let scheduleCount = 0;
+for (let offset = 0; offset < 14; offset++) {
+    for (let i = 0; i < SCHEDULE_TIMES.length; i++) {
+        const startTime = SCHEDULE_TIMES[i];
+        if (existingSlots.has(`${offset}@${startTime}`)) continue;
+
+        const trainerSlug = ACTIVE_TRAINERS[(offset + i) % ACTIVE_TRAINERS.length];
+        const slug = `cls-sched-d${offset}-${startTime.replace(':', '')}`;
+        const classDay = dayAtMidnight(days(offset));
+
+        await writeDoc(`classes/${slug}`, {
+            id: slug,
+            trainerId: trainerIdBySlug[trainerSlug],
+            date: classDay,
+            startTime,
+            duration: 50,
+            capacity: 10,
+            bookedCount: 0,
+            classType: 'Sol Flow',
+            difficultyLevel: 'intermediate',
+            equipmentNeeded: 'Reformer',
+            description: 'Sol Flow — strength meets movement, smooth and continuous.',
+            status: 'scheduled',
+            totalSpots: 10,
+            bookedSpots: [],
+            instructorImage: '',
+            location: 'Performance Floor',
+            intensityLevel: 2,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+        scheduleCount++;
+    }
+}
+console.log(`  Generated ${scheduleCount} Sol Flow sessions across 14 days × 6 time slots.`);
 
 // -------------------- 5. Past bookings (Alice) --------------------
 console.log('\n─── 5. Past bookings (Alice) ───');
@@ -358,7 +446,7 @@ for (const b of ALICE_PAST_BOOKINGS) {
         isGuest: false,
         status: b.status,
         creditType: 'unlimited',
-        planIdAtBooking: 'unlimited',
+        planIdAtBooking: 'thrice_6mo',
         usedGuestPass: false,
         ...(b.status === 'attended' ? { attendedAt: atTime(days(b.dayOffset), cls.startTime) } : {}),
         ...(b.status === 'canceled'
@@ -369,13 +457,55 @@ for (const b of ALICE_PAST_BOOKINGS) {
     });
 }
 
+// -------------------- 6. Upcoming bookings (Alice) --------------------
+console.log('\n─── 6. Upcoming bookings (Alice) ───');
+
+const ALICE_UPCOMING_BOOKINGS = [];
+
+for (const b of ALICE_UPCOMING_BOOKINGS) {
+    const cls = classBySlug[b.classSlug];
+    if (!cls) {
+        console.log(`  [skip]   no class ${b.classSlug} for ${b.id}`);
+        continue;
+    }
+    const classDay = dayAtMidnight(days(b.dayOffset));
+    const bookingCreatedAt = days(Math.min(0, b.dayOffset - 1));
+    await writeDoc(`bookings/${b.id}`, {
+        id: b.id,
+        userId: aliceUid,
+        classId: b.classSlug,
+        trainerId: trainerIdBySlug[cls.trainer],
+        classDate: classDay,
+        bookingDate: bookingCreatedAt,
+        spotNumber: b.spotNumber,
+        isGuest: false,
+        status: 'confirmed',
+        creditType: 'unlimited',
+        planIdAtBooking: 'thrice_6mo',
+        usedGuestPass: false,
+        createdAt: bookingCreatedAt,
+        updatedAt: bookingCreatedAt,
+    });
+
+    // Ensure the class's bookedSpots includes this spot so capacity stays consistent
+    if (!cls.bookedSpots.includes(b.spotNumber)) {
+        cls.bookedSpots.push(b.spotNumber);
+        await writeDoc(`classes/${cls.slug}`, {
+            bookedSpots: cls.bookedSpots,
+            bookedCount: cls.bookedSpots.length,
+            updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+    }
+}
+
 // -------------------- summary --------------------
 console.log('\n─── Summary ───');
 console.log(`  users    : ${MEMBERS.length}`);
 console.log(`  admins   : ${MEMBERS.filter(m => m.admin).length}`);
 console.log(`  trainers : ${TRAINERS.length} (${TRAINERS.filter(t => t.isActive).length} active)`);
-console.log(`  classes  : ${CLASSES.length}`);
-console.log(`  bookings : ${ALICE_PAST_BOOKINGS.length} (Alice — past)`);
+console.log(`  classes  : ${CLASSES.length} edge-case + ${scheduleCount} scheduled = ${CLASSES.length + scheduleCount}`);
+console.log(`  classTypes: ${CLASS_TYPES.length}`);
+console.log(`  bookings : ${ALICE_PAST_BOOKINGS.length} past + ${ALICE_UPCOMING_BOOKINGS.length} upcoming (Alice)`);
 console.log(`  facility : gymCenters/main`);
 
 if (!execute) {

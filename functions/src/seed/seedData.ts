@@ -96,7 +96,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
     // Day pattern A (Mon, Wed, Fri)
     [
         {
-            classType: 'Reformer Pilates',
+            classType: 'Sol Flow',
             startTime: '06:00',
             duration: 50,
             capacity: 12,
@@ -109,7 +109,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 2,
         },
         {
-            classType: 'Mat Pilates',
+            classType: 'Sol Flow',
             startTime: '08:00',
             duration: 45,
             capacity: 15,
@@ -122,7 +122,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 1,
         },
         {
-            classType: 'Strength & Sculpt',
+            classType: 'Sol Cardio',
             startTime: '10:00',
             duration: 50,
             capacity: 10,
@@ -135,7 +135,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 3,
         },
         {
-            classType: 'Barre Pilates',
+            classType: 'Sol Cardio',
             startTime: '16:00',
             duration: 45,
             capacity: 12,
@@ -148,7 +148,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 2,
         },
         {
-            classType: 'Reset & Restore',
+            classType: 'Sol Stretch',
             startTime: '18:00',
             duration: 60,
             capacity: 8,
@@ -164,7 +164,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
     // Day pattern B (Tue, Thu)
     [
         {
-            classType: 'Mat Pilates',
+            classType: 'Sol Flow',
             startTime: '06:00',
             duration: 45,
             capacity: 15,
@@ -177,7 +177,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 2,
         },
         {
-            classType: 'Reformer Pilates',
+            classType: 'Sol Flow',
             startTime: '08:30',
             duration: 50,
             capacity: 12,
@@ -190,7 +190,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 3,
         },
         {
-            classType: 'Barre Pilates',
+            classType: 'Sol Cardio',
             startTime: '10:30',
             duration: 45,
             capacity: 12,
@@ -203,7 +203,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 1,
         },
         {
-            classType: 'Strength & Sculpt',
+            classType: 'Sol Cardio',
             startTime: '17:00',
             duration: 50,
             capacity: 10,
@@ -219,7 +219,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
     // Day pattern C (Sat, Sun)
     [
         {
-            classType: 'Reformer Pilates',
+            classType: 'Sol Flow',
             startTime: '07:00',
             duration: 50,
             capacity: 12,
@@ -232,7 +232,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 1,
         },
         {
-            classType: 'Mat Pilates',
+            classType: 'Sol Flow',
             startTime: '09:00',
             duration: 45,
             capacity: 15,
@@ -245,7 +245,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 2,
         },
         {
-            classType: 'Barre Pilates',
+            classType: 'Sol Cardio',
             startTime: '11:00',
             duration: 45,
             capacity: 12,
@@ -258,7 +258,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             intensityLevel: 2,
         },
         {
-            classType: 'Reset & Restore',
+            classType: 'Sol Stretch',
             startTime: '14:00',
             duration: 60,
             capacity: 8,

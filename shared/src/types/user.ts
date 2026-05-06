@@ -8,6 +8,7 @@ export interface UserProfile {
     age: number;
     fitnessGoals: string[];
     profilePictureUrl?: string;
+    isFoundingMember: boolean;       // true for first 25 non-admin sign-ups
     createdAt: Date;
     updatedAt: Date;
     subscription: {

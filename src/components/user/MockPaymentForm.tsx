@@ -110,7 +110,7 @@ export function MockPaymentForm({
                     <p className="text-olive-600 font-bold">{planName}</p>
                     <p className="text-olive-300 text-xs mt-0.5">One-time payment</p>
                 </div>
-                <p className="text-2xl font-black text-olive-600 font-mono">${amount}</p>
+                <p className="text-2xl font-black text-olive-600 font-mono">₹{amount}</p>
             </div>
 
             {/* Card Number */}

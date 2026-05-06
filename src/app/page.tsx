@@ -122,8 +122,7 @@ function DecorativeIcon({ type, className = "" }: { type: string; className?: st
 
 import FacilitiesSection from "@/components/ui/facilities-cards";
 import ImgStack from "@/components/ui/image-stack";
-import MentorsDesktop from "@/components/ui/mentors-desktop";
-import TestimonialsSection from "@/components/ui/testimonial-v2";
+import { CircularTestimonials } from "@/components/ui/circular-testimonials";
 
 // ... existing imports ...
 
@@ -396,7 +395,7 @@ export default function Home() {
       {/* ========== FACILITIES SECTION ========== */}
       <FacilitiesSection />
 
-      {/* ========== MENTORS STACK SECTION ========== */}
+      {/* ========== TESTIMONIALS SECTION ========== */}
       <section className="bg-warmDark-800 py-24 border-t border-peach-200/5 overflow-hidden">
         <div className="container mx-auto px-4 flex flex-col items-center">
           <div className="text-center mb-16">
@@ -414,42 +413,88 @@ export default function Home() {
           <div className="md:hidden">
             <ImgStack items={[
               {
-                src: "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=600&auto=format&fit=crop",
-                name: "Marcus Cole",
-                role: "Reformer Specialist — Footwork, Long Stretch, Elephant"
+                src: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
+                name: "Srikanth Nomula",
+                role: "Engineer"
               },
               {
-                src: "https://images.unsplash.com/photo-1611672585731-fa10603fb9e0?q=80&w=600&auto=format&fit=crop",
-                name: "Elena Fox",
-                role: "Mat Pilates Lead — The Hundred, Roll-Up, Teaser"
+                src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
+                name: "Pallavi Jalakam",
+                role: "Engineer"
               },
               {
-                src: "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=600&auto=format&fit=crop",
-                name: "David Stone",
-                role: "Strength & Core — Plank Series, Side Kick, Leg Pull"
+                src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
+                name: "Sushma Gurram",
+                role: "Engineer"
               },
               {
-                src: "https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop",
-                name: "Sarah Jen",
-                role: "Barre & Flexibility — Spine Stretch, Swan Dive, Mermaid"
+                src: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
+                name: "Melinda Hattan",
+                role: "Pilates Studio Owner & Instructor"
               },
               {
-                src: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=600&auto=format&fit=crop",
-                name: "Maya Lee",
-                role: "Prenatal & Restorative — Pelvic Curl, Cat-Cow, Side Lying"
+                src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
+                name: "Sai Shruthi Sayini",
+                role: "Pilates Instructor"
               }
             ]} />
           </div>
 
           {/* Desktop View: Sliding Carousel */}
           <div className="hidden md:block">
-            <MentorsDesktop />
+            <div className="hidden md:flex justify-center items-center py-0">
+              <CircularTestimonials
+                testimonials={[
+                  {
+                    name: "Srikanth Nomula",
+                    designation: "Engineer",
+                    quote: "I was not able to spend much time with my daughter or do activities because of back pain. With Swetha's personalized approach, it not only helped alleviate my back pain but also allowed me to spend more quality time with my daughter. I felt more energetic and capable of participating in her activities.",
+                    src: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
+                  },
+                  {
+                    name: "Pallavi Jalakam",
+                    designation: "Engineer",
+                    quote: "I was struggling with lower back pain while bending and was not able to stretch completely during yoga poses. After starting my sessions with Swetha, I can do my yoga poses such as forward bends and back rolls with ease.",
+                    src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
+                  },
+                  {
+                    name: "Sushma Gurram",
+                    designation: "Engineer",
+                    quote: "Because of my back pain, I become restless with my toddler and pain adds to make the already cranky situation worse. Since working with Swetha, my back has become more flexible and core and arm strength increased.",
+                    src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
+                  },
+                  {
+                    name: "Melinda Hattan",
+                    designation: "Pilates Studio Owner & Instructor",
+                    quote: "Swetha has great energy in the room. She is passionate about movement and it shows (in the best way). Her cueing is clear, direct, and somehow makes you realize muscles you didn't even know you had are definitely working.",
+                    src: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
+                  },
+                  {
+                    name: "Sai Shruthi Sayini",
+                    designation: "Pilates Instructor",
+                    quote: "I tried Pilates after trying everything to heal my sciatica pain. After a lot of research, I decided to give Pilates one last shot — and it worked. My back pain is gone, I've built so much more muscle, and I feel genuinely confident in my body again.",
+                    src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
+                  }
+                ]}
+                autoplay={true}
+                colors={{
+                  name: "#F0D8C0",
+                  designation: "#8B3F2C",
+                  testimony: "#D4B494",
+                  arrowBackground: "#3B2F28",
+                  arrowForeground: "#F0D8C0",
+                  arrowHoverBackground: "#8B3F2C",
+                }}
+                fontSizes={{
+                  name: "3rem",
+                  designation: "1rem",
+                  quote: "1.25rem",
+                }}
+              />
+            </div>
           </div>
         </div>
       </section>
-
-      {/* ========== TESTIMONIALS SECTION ========== */}
-      <TestimonialsSection />
 
       {/* ========== PERFORMANCE SECTION ========== */}
       <section className="relative py-32 overflow-hidden">

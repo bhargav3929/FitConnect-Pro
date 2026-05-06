@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
             duration,
             capacity,
             bookedCount: 0,
-            classType: classType || 'Pilates',
+            classType: classType || 'Sol Flow',
             difficultyLevel: difficultyLevel || 'intermediate',
             equipmentNeeded: equipmentNeeded || '',
             description: description || '',

@@ -5,6 +5,9 @@ import {
     onAuthStateChanged,
     signOut,
     updateProfile,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithCredential,
     User as FirebaseUser,
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
@@ -27,6 +30,8 @@ interface ClientAuthState {
     startProfileListener: () => () => void
     loginClient: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
     signupClient: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
+    googleSignIn: () => Promise<{ success: boolean; error?: string }>
+    googleSignInWithIdToken: (idToken: string, accessToken?: string) => Promise<{ success: boolean; error?: string }>
     logoutClient: () => Promise<void>
     refreshSubscription: () => Promise<void>
 }
@@ -42,6 +47,28 @@ async function fetchClientProfile(uid: string): Promise<ClientUser | null> {
     } catch {
         return null
     }
+}
+
+type ClientAuthSetter = (
+    partial:
+        | Partial<ClientAuthState>
+        | ((state: ClientAuthState) => Partial<ClientAuthState>),
+) => void
+
+async function finalizeGoogleLogin(
+    user: FirebaseUser,
+    set: ClientAuthSetter,
+): Promise<{ success: boolean; error?: string }> {
+    let profile = await fetchClientProfile(user.uid)
+    if (!profile) {
+        profile = await createClientProfile(
+            user.uid,
+            user.email || '',
+            user.displayName || 'Member',
+        )
+    }
+    set({ isAuthenticated: true, clientUser: profile, firebaseUser: user })
+    return { success: true }
 }
 
 async function createClientProfile(uid: string, email: string, name: string): Promise<ClientUser> {
@@ -133,6 +160,29 @@ export const useClientAuthStore = create<ClientAuthState>()((set, get) => ({
                 firebaseUser: result.user,
             })
             return { success: true }
+        } catch (err: unknown) {
+            const code = (err as { code?: string }).code || ''
+            return { success: false, error: mapFirebaseError(code) }
+        }
+    },
+
+    googleSignIn: async () => {
+        try {
+            const provider = new GoogleAuthProvider()
+            const result = await signInWithPopup(auth, provider)
+            return await finalizeGoogleLogin(result.user, set)
+        } catch (err: unknown) {
+            const code = (err as { code?: string }).code || ''
+            return { success: false, error: mapFirebaseError(code) }
+        }
+    },
+
+    googleSignInWithIdToken: async (idToken: string, accessToken?: string) => {
+        if (!idToken) return { success: false, error: 'Missing idToken' }
+        try {
+            const credential = GoogleAuthProvider.credential(idToken, accessToken)
+            const result = await signInWithCredential(auth, credential)
+            return await finalizeGoogleLogin(result.user, set)
         } catch (err: unknown) {
             const code = (err as { code?: string }).code || ''
             return { success: false, error: mapFirebaseError(code) }

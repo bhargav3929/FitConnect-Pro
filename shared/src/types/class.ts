@@ -23,6 +23,17 @@ export interface ClassSession {
     intensityLevel?: 1 | 2 | 3; // fire emoji count
 }
 
+export const CLASS_TYPES = ['Sol Flow', 'Sol Cardio', 'Sol Stretch'] as const;
+export type ClassTypeName = (typeof CLASS_TYPES)[number];
+
+export const CLASS_TYPE_DESCRIPTIONS: Record<ClassTypeName, string> = {
+    'Sol Flow': 'Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.',
+    'Sol Cardio': 'Fast-paced movement that gets your heart rate up.',
+    'Sol Stretch': 'Hit reset on your body, one stretch at a time.',
+};
+
+export const CLASS_SCHEDULE_TIMES = ['08:00', '09:00', '10:00', '17:00', '18:00', '19:00'] as const;
+
 export interface SpotSelection {
     spotNumber: number;
     isGuest: boolean;

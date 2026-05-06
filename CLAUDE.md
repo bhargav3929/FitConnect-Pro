@@ -28,7 +28,7 @@ When the user says **"start team"** or **"spin up the team"**, create a team wit
 
 | Agent | Config File | Role | File Ownership |
 |-------|------------|------|----------------|
-| **frontend** | `.claude/agents/frontend.md` | Staff Frontend Engineer | `src/app/`, `src/components/`, `src/lib/hooks/`, `src/lib/store/`, `src/lib/utils.ts`, `src/types/`, `tailwind.config.ts`, `globals.css` |
+| **frontend** | `.claude/agents/frontend.md` | Staff Frontend Engineer | `src/app/`, `src/components/`, `src/lib/hooks/`, `src/lib/store/`, `src/lib/utils.ts`, `src/types/`, `tailwind.config.ts`, `globals.css`, `mobile/`, `shared/` |
 | **backend** | `.claude/agents/backend.md` | Principal Backend Engineer | `functions/`, `firestore.rules`, `firestore.indexes.json`, `src/lib/firebase/` |
 | **tester** | `.claude/agents/tester.md` | Principal Test Engineer | READ-ONLY — does not edit files, only reports issues |
 | **reviewer** | `.claude/agents/reviewer.md` | Design Engineering Director | READ-ONLY — does not edit files, only reports issues |

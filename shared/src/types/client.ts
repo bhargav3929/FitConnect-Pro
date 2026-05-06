@@ -5,6 +5,7 @@ export interface ClientUser {
     name: string;
     email: string;
     avatar?: string;
+    isFoundingMember?: boolean;
     subscription: {
         planId: PlanId | null;
         planCategory: PlanCategory | null;

@@ -352,6 +352,18 @@ export async function callCancelBooking(
 }
 
 // ---------------------------------------------------------------------------
+// callDeleteAccount — irreversibly delete the signed-in user's account.
+// Cancels upcoming bookings, anonymizes booking history, deletes profile + auth user.
+// Caller MUST re-authenticate the user immediately before invoking this.
+// ---------------------------------------------------------------------------
+
+export async function callDeleteAccount(): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>('/api/account/delete', {
+        method: 'POST',
+    });
+}
+
+// ---------------------------------------------------------------------------
 // 13. callCreateClass — API route wrapper for admin
 // ---------------------------------------------------------------------------
 

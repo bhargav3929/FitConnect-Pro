@@ -37,26 +37,30 @@ export async function POST(req: NextRequest) {
 
         const plan = getPlanById(planId)!;
 
+        // Read user doc — needed for both membership check and founding member pricing
+        const userDoc = await adminDb.collection('users').doc(userId).get();
+        const userData = userDoc.exists ? userDoc.data()! : null;
+
         // For membership plans, check if user already has an active membership
-        if (plan.category === 'membership') {
-            const userDoc = await adminDb.collection('users').doc(userId).get();
-            if (userDoc.exists) {
-                const userData = userDoc.data()!;
-                const sub = userData.subscription;
-                if (sub?.status === 'active' && sub?.planCategory === 'membership') {
-                    const endDate = sub.endDate?.toDate?.() || new Date(sub.endDate);
-                    if (endDate > new Date()) {
-                        return NextResponse.json(
-                            { error: 'You already have an active membership. Wait for it to expire or cancel first.', code: 'already-exists' },
-                            { status: 409 },
-                        );
-                    }
+        if (plan.category === 'membership' && userData) {
+            const sub = userData.subscription;
+            if (sub?.status === 'active' && sub?.planCategory === 'membership') {
+                const endDate = sub.endDate?.toDate?.() || new Date(sub.endDate);
+                if (endDate > new Date()) {
+                    return NextResponse.json(
+                        { error: 'You already have an active membership. Wait for it to expire or cancel first.', code: 'already-exists' },
+                        { status: 409 },
+                    );
                 }
             }
         }
 
+        // Use founding member price if eligible
+        const isFoundingMember = userData?.isFoundingMember === true;
+        const chargeAmount = (isFoundingMember && plan.foundingPrice) ? plan.foundingPrice : plan.price;
+
         // Process mock payment
-        const result = await processPayment(plan.price);
+        const result = await processPayment(chargeAmount);
 
         if (!result.success) {
             return NextResponse.json(
@@ -73,7 +77,7 @@ export async function POST(req: NextRequest) {
             id: paymentRef.id,
             paymentIntentId: result.paymentIntentId,
             userId,
-            amount: plan.price,
+            amount: chargeAmount,
             currency: 'usd',
             status: 'requires_confirmation',
             planId,
@@ -92,7 +96,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             paymentId: paymentRef.id,
             clientSecret: result.paymentIntentId,
-            amount: plan.price,
+            amount: chargeAmount,
             status: 'requires_confirmation',
         });
     } catch (error) {
