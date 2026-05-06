@@ -2,28 +2,27 @@
    Run `npm run build:tokens` to regenerate. */
 
 :root {
-    --color-peach-50: #F5F0EB;
-    --color-peach-100: #F0EAE0;
-    --color-peach-200: #E8E0D5;
-    --color-peach-300: #EEEEEE;
-    --color-peach-400: #E5E5E5;
-    --color-peach-500: #D4D4D4;
-    --color-olive-300: #737373;
-    --color-olive-400: #525252;
-    --color-olive-500: #404040;
-    --color-olive-600: #171717;
-    --color-olive-700: #0A0A0A;
-    --color-terra-300: #FF8A65;
-    --color-terra-400: #FF6A3D;
-    --color-terra-500: #E5552A;
-    --color-terra-600: #C2451E;
-    --color-warmDark-700: #F0EAE0;
-    --color-warmDark-800: #F5F0EB;
-    --color-warmDark-900: #F5F0EB;
-    --color-success: #10B981;
-    --color-error: #EF4444;
-    --color-errorHover: #C75050;
-    --color-warning: #F59E0B;
+    --color-peach-50: #FAF3EB;
+    --color-peach-100: #F5E8D8;
+    --color-peach-200: #F0D8C0;
+    --color-peach-300: #E4C8AB;
+    --color-peach-400: #D4B494;
+    --color-peach-500: #C4A080;
+    --color-olive-300: #8A9A78;
+    --color-olive-400: #6B7752;
+    --color-olive-500: #5A6645;
+    --color-olive-600: #4A5438;
+    --color-olive-700: #3A422C;
+    --color-terra-300: #A85A48;
+    --color-terra-400: #8B3F2C;
+    --color-terra-500: #6E3022;
+    --color-terra-600: #52231A;
+    --color-warmDark-700: #3B2F28;
+    --color-warmDark-800: #2C2420;
+    --color-warmDark-900: #1E1815;
+    --color-success: #16a34a;
+    --color-error: #dc2626;
+    --color-warning: #FFB347;
     --color-white: #FFFFFF;
 
     --font-display: DM Serif Display, Georgia, serif;

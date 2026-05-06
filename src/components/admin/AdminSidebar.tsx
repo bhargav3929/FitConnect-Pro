@@ -131,7 +131,7 @@ export function AdminSidebar() {
                 })}
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-peach-400/30 hover:text-error-hover hover:bg-error-hover/10 transition-all duration-200"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-peach-400/30 hover:text-[#C75050] hover:bg-[#C75050]/8 transition-all duration-200"
                 >
                     <SignOut weight="regular" className="w-[20px] h-[20px] flex-shrink-0" />
                     {!collapsed && <span className="text-sm font-medium">Logout</span>}

@@ -54,7 +54,7 @@ export const COLORS = {
   success: palette.success,
   warning: palette.warning,
   error: palette.error,
-  errorHover: palette.errorHover,
+  errorHover: '#C75050',
   info: '#3B82F6',
 
   // Peach Scale (light beige backgrounds)
