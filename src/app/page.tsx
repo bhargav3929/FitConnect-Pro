@@ -399,13 +399,13 @@ export default function Home() {
       <section className="bg-warmDark-800 py-24 border-t border-peach-200/5 overflow-hidden">
         <div className="container mx-auto px-4 flex flex-col items-center">
           <div className="text-center mb-16">
-            <span className="text-terra-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-3">Our Team</span>
+            <span className="text-terra-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-3">Success Stories</span>
             <h2 className="text-4xl md:text-5xl font-black text-peach-200 tracking-tighter uppercase relative inline-block font-display">
-              Our Instructors
+              Testimonials
               <svg className="absolute -right-8 -top-8 w-6 h-6 text-terra-400/30" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
             </h2>
             <p className="text-peach-400 mt-4 max-w-sm mx-auto">
-              Meet the instructors behind every transformative session at SOL.
+              Hear from our community about their transformative Pilates journey.
             </p>
           </div>
 
