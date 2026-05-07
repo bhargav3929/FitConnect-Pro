@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { LayoutContent } from "@/components/layout/LayoutContent";
+import { SitePasswordGate } from "@/components/layout/SitePasswordGate";
 
 const dmSerifDisplay = DM_Serif_Display({
   weight: "400",
@@ -30,13 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn("min-h-screen bg-background font-sans antialiased", dmSerifDisplay.variable, plusJakartaSans.variable)}>
-        {/* <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B0F19] text-white">
-          <p className="text-sm font-semibold tracking-[0.32em] uppercase text-[#FF6A3D] animate-pulse">
-            Loading
-          </p>
-        </div> */}
-        <LayoutContent>{children}</LayoutContent>
-          <Toaster richColors position="top-right" closeButton />
+        <SitePasswordGate>
+          <LayoutContent>{children}</LayoutContent>
+        </SitePasswordGate>
+        <Toaster richColors position="top-right" closeButton />
       </body>
     </html>
   );
