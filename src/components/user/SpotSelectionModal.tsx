@@ -246,9 +246,10 @@ export function SpotSelectionModal({
                                                 <span className="text-[10px] uppercase tracking-[0.3em] text-olive-300/40">Front of Room</span>
                                             </div>
 
-                                            <div className="flex items-start justify-center gap-10 sm:gap-16">
-                                                {/* Left side: reformers 1-5 (vertical stack) */}
-                                                <div className="flex flex-col gap-3">
+                                            {/* Studio floor plan — horizontal reformers, two columns staggered like real layout */}
+                                            <div className="flex items-start justify-center gap-6 sm:gap-10 w-full max-w-2xl border border-peach-400/30 rounded-2xl p-5 bg-peach-200/20">
+                                                {/* Left column: reformers 1-5 */}
+                                                <div className="flex flex-col gap-4 flex-1">
                                                     {spots.slice(0, 5).map((spotNum) => (
                                                         <ReformerCell
                                                             key={spotNum}
@@ -260,15 +261,15 @@ export function SpotSelectionModal({
                                                 </div>
 
                                                 {/* Center aisle */}
-                                                <div className="flex flex-col items-center justify-center pt-6">
-                                                    <div className="h-32 w-px bg-peach-400/20" />
+                                                <div className="flex flex-col items-center justify-center self-stretch">
+                                                    <div className="flex-1 w-px bg-peach-400/20" />
                                                     <span className="text-[9px] uppercase tracking-[0.3em] text-olive-300/40 my-2 rotate-90 origin-center whitespace-nowrap">Aisle</span>
-                                                    <div className="h-32 w-px bg-peach-400/20" />
+                                                    <div className="flex-1 w-px bg-peach-400/20" />
                                                 </div>
 
-                                                {/* Right side: reformers 6-12 (vertical stack) */}
-                                                <div className="flex flex-col gap-3">
-                                                    {spots.slice(5, 12).map((spotNum) => (
+                                                {/* Right column: reformers 6+ — offset down to stagger rows */}
+                                                <div className="flex flex-col gap-4 flex-1 mt-10">
+                                                    {spots.slice(5).map((spotNum) => (
                                                         <ReformerCell
                                                             key={spotNum}
                                                             spotNum={spotNum}
@@ -356,12 +357,12 @@ function ReformerCell({
             layout
             aria-label={`Reformer ${spotNum} ${isUnavailable ? 'booked' : isSelected ? 'selected' : 'available'}`}
             className={`
-                relative w-12 h-16 rounded-md flex items-center justify-center text-base font-bold transition-all duration-300
+                relative w-full h-12 rounded-md flex items-center justify-start pl-4 text-base font-bold transition-all duration-300
                 ${isUnavailable
-                    ? 'bg-peach-300/30 text-olive-300/30 cursor-not-allowed'
+                    ? 'bg-peach-300/30 text-olive-300/40 cursor-not-allowed'
                     : isSelected
-                        ? 'bg-terra-400 text-peach-50 shadow-[0_0_20px_rgba(139,63,44,0.3)] scale-105'
-                        : 'bg-peach-200/40 border border-peach-400/30 text-olive-400 hover:border-terra-400/50 hover:bg-peach-200/60'
+                        ? 'bg-terra-400 text-peach-50 shadow-[0_0_20px_rgba(139,63,44,0.3)] scale-[1.02]'
+                        : 'bg-peach-200/60 border border-peach-400/40 text-olive-500 hover:border-terra-400/60 hover:bg-peach-200/80'
                 }
             `}
         >
@@ -375,7 +376,8 @@ function ReformerCell({
                     </svg>
                 </div>
             )}
-            <span className="relative">{spotNum}</span>
+            <span className="relative text-sm tracking-wider">{spotNum.toString().padStart(2, '0')}</span>
+            <span className={`relative ml-auto mr-3 h-1.5 w-10 rounded-full ${isSelected ? 'bg-peach-50/60' : 'bg-olive-300/30'}`} />
         </motion.button>
     )
 }
