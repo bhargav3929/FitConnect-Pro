@@ -400,7 +400,7 @@ export default function SchedulePage() {
                                                                 {cls.classType || 'Pilates Class'}
                                                             </h3>
                                                             <p className="text-olive-300 text-xs flex items-center gap-1 mt-0.5">
-                                                                {cls.location || 'Main Studio'} · In-Studio
+                                                                In-Studio
                                                             </p>
                                                         </div>
                                                     </div>

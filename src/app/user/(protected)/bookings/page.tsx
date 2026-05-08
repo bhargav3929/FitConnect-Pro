@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, Clock, MapPin, User, CheckCircle2, AlertCircle, XCircle, Loader2 } from "lucide-react"
+import { Calendar, Clock, MapPin, User, CheckCircle2, AlertCircle, XCircle, Loader2, Award } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
@@ -34,6 +34,12 @@ export default function BookingsPage() {
         })
         return () => unsubscribe()
     }, [firebaseUser])
+
+    const attendedCount = bookings.filter(b => b.status === 'attended').length
+    const MILESTONE_STEP = 50
+    const nextMilestone = (Math.floor(attendedCount / MILESTONE_STEP) + 1) * MILESTONE_STEP
+    const progressPct = Math.min(100, (attendedCount % MILESTONE_STEP) / MILESTONE_STEP * 100)
+    const milestoneTiers = [50, 100, 150]
 
     const filteredBookings = bookings.filter(booking => {
         if (activeTab === 'upcoming') return booking.status === 'confirmed'
@@ -91,6 +97,50 @@ export default function BookingsPage() {
                 <p className="text-olive-300 text-sm mt-1">
                     Manage your upcoming classes and view history
                 </p>
+            </div>
+
+            {/* Milestones */}
+            <div className="bg-peach-50 border border-peach-400/20 rounded-xl p-6">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                    <div>
+                        <span className="text-terra-400/70 text-[10px] font-bold tracking-[0.25em] uppercase block mb-2">
+                            Practice Milestones
+                        </span>
+                        <h2 className="text-xl font-black text-olive-600 font-display">
+                            {attendedCount} / {nextMilestone} classes
+                        </h2>
+                        <p className="text-olive-300 text-xs mt-1">
+                            {nextMilestone - attendedCount} to your next milestone
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        {milestoneTiers.map((tier) => {
+                            const earned = attendedCount >= tier
+                            return (
+                                <div
+                                    key={tier}
+                                    className={`flex flex-col items-center justify-center w-14 h-14 rounded-full border ${
+                                        earned
+                                            ? 'bg-terra-400 text-peach-50 border-terra-400'
+                                            : 'bg-transparent text-olive-300 border-peach-400/30'
+                                    }`}
+                                    title={`${tier} classes`}
+                                >
+                                    <Award className="w-4 h-4" />
+                                    <span className="text-[10px] font-bold mt-0.5">{tier}</span>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+                <div className="h-2 bg-peach-200/60 rounded-full overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progressPct}%` }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                        className="h-full bg-gradient-to-r from-terra-400 to-terra-300 rounded-full"
+                    />
+                </div>
             </div>
 
             {/* Tabs */}

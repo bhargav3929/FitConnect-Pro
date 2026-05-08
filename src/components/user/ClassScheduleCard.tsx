@@ -1,7 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { MapPin, Clock, User, ChevronRight, Flame } from "lucide-react"
+import { Flame } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
@@ -12,7 +11,7 @@ interface ClassScheduleCardProps {
     duration: string
     trainer: string
     trainerImage?: string
-    location: string
+    location?: string
     type: string
     capacity: number
     booked: number
@@ -21,13 +20,11 @@ interface ClassScheduleCardProps {
 }
 
 export function ClassScheduleCard({
-    id,
     name,
     time,
     duration,
     trainer,
     trainerImage,
-    location,
     type,
     capacity,
     booked,
@@ -65,8 +62,7 @@ export function ClassScheduleCard({
                     </div>
 
                     <p className="text-olive-400 text-sm font-medium mb-1">{trainer}</p>
-                    <p className="text-olive-400 text-xs mb-1">{type}</p>
-                    <p className="text-olive-400 text-xs">{location}</p>
+                    <p className="text-olive-400 text-xs">{type}</p>
                 </div>
 
                 <div className="mt-2">

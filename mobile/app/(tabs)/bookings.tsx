@@ -143,6 +143,11 @@ export default function BookingsScreen() {
     // Filtered + sorted bookings
     // -----------------------------------------------------------------------
 
+    const attendedCount = bookings.filter((b) => b.status === 'attended').length;
+    const milestoneTarget = Math.max(50, (Math.floor(attendedCount / 50) + (attendedCount % 50 === 0 && attendedCount > 0 ? 0 : 1)) * 50);
+    const milestoneProgress = Math.min(100, (attendedCount / milestoneTarget) * 100);
+    const MILESTONE_BADGES = [50, 100, 150];
+
     const filteredBookings = bookings
         .filter((b) => (activeTab === 'upcoming' ? isUpcoming(b) : !isUpcoming(b)))
         .sort((a, b) => {
@@ -265,15 +270,6 @@ export default function BookingsScreen() {
                                 : '--'}
                         </Text>
                     </View>
-                    <View style={styles.detailRow}>
-                        <View style={styles.detailLabelRow}>
-                            <Feather name="map-pin" size={14} color={Colors.terra[400]} />
-                            <Text style={styles.detailLabel}>Location</Text>
-                        </View>
-                        <Text style={styles.detailValue}>
-                            {(booking as unknown as Record<string, unknown>).classLocation as string || 'Studio'}
-                        </Text>
-                    </View>
                 </View>
 
                 {/* Action buttons — upcoming confirmed */}
@@ -357,6 +353,47 @@ export default function BookingsScreen() {
                 <Text style={styles.subtitle}>
                     Manage your upcoming classes and view history
                 </Text>
+            </View>
+
+            {/* Milestone card */}
+            <View style={styles.milestoneCard}>
+                <View style={styles.milestoneHeader}>
+                    <Text style={styles.milestoneTitle}>Class Milestones</Text>
+                    <Text style={styles.milestoneCount}>
+                        {attendedCount} / {milestoneTarget}
+                    </Text>
+                </View>
+                <View style={styles.progressBarTrack}>
+                    <View style={[styles.progressBarFill, { width: `${milestoneProgress}%` }]} />
+                </View>
+                <View style={styles.badgeRow}>
+                    {MILESTONE_BADGES.map((threshold) => {
+                        const reached = attendedCount >= threshold;
+                        return (
+                            <View
+                                key={threshold}
+                                style={[
+                                    styles.badgePill,
+                                    reached ? styles.badgePillFilled : styles.badgePillOutline,
+                                ]}
+                            >
+                                <Feather
+                                    name="award"
+                                    size={12}
+                                    color={reached ? Colors.white : Colors.terra[400]}
+                                />
+                                <Text
+                                    style={[
+                                        styles.badgePillText,
+                                        reached ? styles.badgePillTextFilled : styles.badgePillTextOutline,
+                                    ]}
+                                >
+                                    {threshold}
+                                </Text>
+                            </View>
+                        );
+                    })}
+                </View>
             </View>
 
             {/* Tab toggle */}
@@ -455,6 +492,76 @@ const styles = StyleSheet.create({
         fontSize: FontSize.sm,
         color: Colors.olive[400],
         marginTop: Spacing.xs,
+    },
+
+    // Milestone
+    milestoneCard: {
+        marginHorizontal: Spacing.lg,
+        marginTop: Spacing.sm,
+        backgroundColor: Colors.peach[50],
+        borderWidth: 1,
+        borderColor: Colors.borderMedium,
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg,
+    },
+    milestoneHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.sm,
+    },
+    milestoneTitle: {
+        fontSize: FontSize.base,
+        fontWeight: '700',
+        color: Colors.olive[600],
+    },
+    milestoneCount: {
+        fontSize: FontSize.sm,
+        fontWeight: '700',
+        color: Colors.terra[400],
+    },
+    progressBarTrack: {
+        height: 8,
+        backgroundColor: Colors.peach[200],
+        borderRadius: BorderRadius.full,
+        overflow: 'hidden',
+    },
+    progressBarFill: {
+        height: '100%',
+        backgroundColor: Colors.terra[400],
+        borderRadius: BorderRadius.full,
+    },
+    badgeRow: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+        marginTop: Spacing.md,
+    },
+    badgePill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 6,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+    },
+    badgePillFilled: {
+        backgroundColor: Colors.terra[400],
+        borderColor: Colors.terra[400],
+    },
+    badgePillOutline: {
+        backgroundColor: 'transparent',
+        borderColor: Colors.terra[400],
+    },
+    badgePillText: {
+        fontSize: FontSize.xs,
+        fontWeight: '700',
+    },
+    badgePillTextFilled: {
+        color: Colors.white,
+    },
+    badgePillTextOutline: {
+        color: Colors.terra[400],
     },
 
     // Tabs

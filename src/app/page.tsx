@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, useInView } from "framer-motion";
 import { GetStartedModal } from "@/components/auth/GetStartedModal";
+import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore";
 
 
 // Service card data
@@ -128,8 +130,23 @@ import { CircularTestimonials } from "@/components/ui/circular-testimonials";
 
 export default function Home() {
 
+  const router = useRouter();
+  const { isAuthenticated, initAuth } = useClientAuthStore();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showGetStarted, setShowGetStarted] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = initAuth();
+    return () => unsubscribe();
+  }, [initAuth]);
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      router.push('/user/dashboard');
+    } else {
+      setShowGetStarted(true);
+    }
+  };
   const [expandedService, setExpandedService] = useState<number | null>(null);
 
   // --- Service Slider State ---
@@ -265,7 +282,7 @@ export default function Home() {
               className="mt-8 md:mt-10 pointer-events-auto"
             >
               <button
-                onClick={() => setShowGetStarted(true)}
+                onClick={handleGetStarted}
                 className="group inline-flex items-center gap-4"
               >
                 <span className="px-8 py-4 md:px-10 md:py-5 bg-terra-400 text-peach-50 font-black text-xs md:text-sm tracking-widest hover:bg-terra-300 transition-all uppercase shadow-glow">

@@ -91,7 +91,8 @@ service cloud.firestore {
                     && request.resource.data.name is string
                     && request.resource.data.email is string
                     && request.resource.data.phone is string;
-      allow read, update, delete: if isAdmin();
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     // Admins collection

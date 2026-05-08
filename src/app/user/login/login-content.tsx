@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useForm } from "react-hook-form"
@@ -46,16 +46,29 @@ export function UserLoginContent() {
     const [isLoading, setIsLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
-    const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login')
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { loginClient, signupClient, googleSignIn } = useClientAuthStore()
+    const [activeTab, setActiveTab] = useState<'login' | 'signup'>(
+        searchParams.get('tab') === 'signup' ? 'signup' : 'login'
+    )
+    const { loginClient, signupClient, googleSignIn, isAuthenticated, isLoading: authLoading, initAuth } = useClientAuthStore()
 
     // Only allow internal paths to prevent open-redirect via ?returnTo=//evil.com
     const rawReturnTo = searchParams.get('returnTo')
     const returnTo = rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//')
         ? rawReturnTo
         : '/user/dashboard'
+
+    useEffect(() => {
+        const unsubscribe = initAuth()
+        return () => unsubscribe()
+    }, [initAuth])
+
+    useEffect(() => {
+        if (!authLoading && isAuthenticated) {
+            router.replace(returnTo)
+        }
+    }, [authLoading, isAuthenticated, returnTo, router])
 
     const loginForm = useForm<LoginValues>({
         resolver: zodResolver(loginSchema),
@@ -113,6 +126,17 @@ export function UserLoginContent() {
             })
         }
         setIsGoogleLoading(false)
+    }
+
+    if (authLoading || isAuthenticated) {
+        return (
+            <main className="min-h-screen bg-peach-200 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-2 border-peach-400/30 border-t-terra-400 rounded-full animate-spin" />
+                    <p className="text-olive-300 text-sm tracking-wider">REDIRECTING...</p>
+                </div>
+            </main>
+        )
     }
 
     return (

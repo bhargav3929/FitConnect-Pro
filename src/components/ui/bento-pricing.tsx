@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckIcon, SparklesIcon } from 'lucide-react';
 import { PLAN_CATALOG, type PlanDefinition } from '@fitconnect/shared/types/subscription';
+import { useFreeClassLead } from '@/lib/hooks/useFreeClassLead';
 
 function FilledCheck() {
     return (
@@ -34,11 +35,13 @@ function PlanCard({
     onSelect,
     cta,
     featured,
+    ctaDisabled,
 }: {
     plan: PlanDefinition;
     onSelect: (id: string) => void;
     cta: string;
     featured?: boolean;
+    ctaDisabled?: boolean;
 }) {
     return (
         <div
@@ -97,8 +100,15 @@ function PlanCard({
 
                 <div className="mt-8">
                     <Button
-                        onClick={() => onSelect(plan.id)}
-                        className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl"
+                        onClick={() => !ctaDisabled && onSelect(plan.id)}
+                        disabled={ctaDisabled}
+                        aria-disabled={ctaDisabled}
+                        className={cn(
+                            'w-full font-bold tracking-wide h-12 rounded-xl',
+                            ctaDisabled
+                                ? 'bg-peach-100 text-olive-400 hover:bg-peach-100 cursor-not-allowed border border-peach-400/30'
+                                : 'bg-terra-400 text-peach-50 hover:bg-terra-300',
+                        )}
                     >
                         {cta}
                     </Button>
@@ -110,9 +120,11 @@ function PlanCard({
 
 export function BentoPricing() {
     const router = useRouter();
+    const { hasFreeClassLead } = useFreeClassLead();
 
     const handleSelect = (planId: string) => {
         if (planId === 'drop_in') {
+            if (hasFreeClassLead === true) return;
             router.push('/free-class');
             return;
         }
@@ -136,7 +148,12 @@ export function BentoPricing() {
                     </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <PlanCard plan={dropIn} onSelect={handleSelect} cta="BOOK FREE CLASS" />
+                    <PlanCard
+                        plan={dropIn}
+                        onSelect={handleSelect}
+                        cta={hasFreeClassLead === true ? 'FREE CLASS BOOKED' : 'BOOK FREE CLASS'}
+                        ctaDisabled={hasFreeClassLead === true}
+                    />
                     <PlanCard plan={kickstarter} onSelect={handleSelect} cta="START KICKSTARTER" featured />
                 </div>
             </div>

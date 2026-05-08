@@ -9,44 +9,44 @@ import Link from "next/link"
 
 const AMENITY_ZONES = [
     {
-        id: "reformer",
-        name: "Reformer Studio",
-        description: "State-of-the-art Balanced Body reformers in a boutique setting. Precision-guided spring resistance for full-body sculpting and core activation.",
+        id: "strength-sculpt",
+        name: "Strength & Sculpt",
+        description: "Build lean muscle and define your physique through targeted Pilates exercises. Reformer resistance and controlled mat work sculpt long, toned muscles while building functional strength from your deep core outward.",
         icon: Dumbbell,
-        image: "/images/gyms/fitpro-downtown.png",
-        features: ["Balanced Body Reformers", "Spring Resistance", "Tower Attachments", "Jump Boards"],
+        image: "/images/service-strength-sculpt.jpg",
+        features: ["Reformer Resistance", "Core Activation", "Targeted Sculpting", "Functional Strength"],
     },
     {
-        id: "mat",
-        name: "Mat Studio",
-        description: "A dedicated open-plan space for mat Pilates, floor work, and group sessions. Floor-to-ceiling mirrors with premium cushioned flooring.",
-        icon: Heart,
-        image: "/images/gyms/fitpro-midtown.png",
-        features: ["Premium Mats", "Resistance Bands", "Pilates Rings", "Stability Balls"],
-    },
-    {
-        id: "private",
-        name: "Private Suite",
-        description: "Intimate one-on-one training rooms equipped with reformer, Cadillac, and Wunda chair. Tailored sessions in a private, focused environment.",
-        icon: Shield,
-        image: "/images/gyms/fitpro-uptown.png",
-        features: ["Private Reformer", "Cadillac/Trapeze", "Wunda Chair", "Spine Corrector"],
-    },
-    {
-        id: "barre",
-        name: "Barre & Stretch",
-        description: "Barre-fusion studio with ballet barres, TRX suspension, and dedicated flexibility zones. A graceful blend of Pilates principles and dance conditioning.",
+        id: "cardio-endurance",
+        name: "Cardio & Endurance",
+        description: "Elevate your heart rate and stamina with high-energy Pilates sequences. Dynamic jumpboard work, circuit-style reformer flows, and tempo-driven mat routines push cardiovascular limits with Pilates precision.",
         icon: Zap,
-        image: "/images/gyms/fitpro-brooklyn.png",
-        features: ["Ballet Barres", "TRX Suspension", "Flexibility Zone", "Foam Rollers"],
+        image: "/images/service-cardio-endurance.jpg",
+        features: ["Jumpboard Work", "Circuit Flows", "Tempo Routines", "Heart Rate Training"],
     },
     {
-        id: "recovery",
-        name: "Recovery Lounge",
-        description: "Post-session recovery with infrared sauna, relaxation seating, and self-massage tools. Designed to calm the body after every session.",
+        id: "reset-restore",
+        name: "Reset & Restore",
+        description: "Reconnect with your body through mindful, restorative Pilates movement. Gentle stretching, breathwork, and slow-flow sequences release tension, improve mobility, and bring your nervous system back into balance.",
+        icon: Heart,
+        image: "/images/service-reset-restore.jpg",
+        features: ["Gentle Stretching", "Breathwork", "Slow Flow", "Mobility Work"],
+    },
+    {
+        id: "muscle-recovery",
+        name: "Muscle Recovery",
+        description: "Accelerate healing and prevent injury with targeted recovery techniques. Foam rolling, myofascial release, and therapeutic Pilates movements flush lactic acid and restore range of motion.",
         icon: Waves,
-        image: "/images/gyms/fitpro-queens.png",
-        features: ["Infrared Sauna", "Relaxation Area", "Foam Rolling Zone", "Stretching Space"],
+        image: "/images/service-muscle-recovery.jpg",
+        features: ["Foam Rolling", "Myofascial Release", "Therapeutic Pilates", "Range of Motion"],
+    },
+    {
+        id: "intense-exercise",
+        name: "Intense Exercise",
+        description: "Push your limits with advanced Pilates challenges designed for peak performance. Explosive power moves, heavy spring resistance, and complex coordination drills — Pilates at its most demanding.",
+        icon: Shield,
+        image: "/images/service-intense-exercise.jpg",
+        features: ["Explosive Power", "Heavy Resistance", "Coordination Drills", "Peak Performance"],
     },
 ]
 
@@ -57,7 +57,7 @@ const FACILITY_HOURS = [
 ]
 
 export default function FacilityPage() {
-    const [activeZone, setActiveZone] = useState<string>("reformer")
+    const [activeZone, setActiveZone] = useState<string>("strength-sculpt")
 
     const selectedZone = AMENITY_ZONES.find(z => z.id === activeZone)
 

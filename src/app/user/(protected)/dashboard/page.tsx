@@ -17,10 +17,9 @@ import {
     Shield,
 } from "lucide-react"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
-import { getUserBookings, subscribeToClassesByDate } from "@fitconnect/shared/firebase/firestore"
+import { getUserBookings } from "@fitconnect/shared/firebase/firestore"
 import { SubscriptionWidget } from "@/components/user/SubscriptionWidget"
 import { Booking } from "@fitconnect/shared/types/booking"
-import { ClassSession } from "@fitconnect/shared/types/class"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { TIER_COLORS, withAlpha, COLORS } from "@fitconnect/shared/theme"
@@ -65,9 +64,7 @@ export default function UserDashboard() {
     const clientUser = useClientAuthStore(state => state.clientUser)
     const firebaseUser = useClientAuthStore(state => state.firebaseUser)
     const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null)
-    const [todaysClasses, setTodaysClasses] = useState<ClassSession[]>([])
     const [isLoadingBookings, setIsLoadingBookings] = useState(true)
-    const [isLoadingClasses, setIsLoadingClasses] = useState(true)
 
     useEffect(() => {
         if (!firebaseUser) return
@@ -79,21 +76,7 @@ export default function UserDashboard() {
         }).catch(() => {
             setIsLoadingBookings(false)
         })
-
-        const unsub = subscribeToClassesByDate(new Date(), (classes) => {
-            setTodaysClasses(classes)
-            setIsLoadingClasses(false)
-        })
-        return unsub
     }, [firebaseUser])
-
-    const formatTime = (time: string) => {
-        const [h, m] = time.split(':')
-        const hour = parseInt(h, 10)
-        const ampm = hour >= 12 ? 'PM' : 'AM'
-        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-        return `${displayHour}:${m} ${ampm}`
-    }
 
     const formatDate = (date: Date | string) => {
         const d = typeof date === 'string' ? new Date(date) : date
@@ -356,89 +339,6 @@ export default function UserDashboard() {
                 </motion.div>
             )}
 
-            {/* ═══════════ TODAY'S CLASSES ═══════════ */}
-            <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-            >
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-olive-600 font-display">Today at the Studio</h2>
-                    <Link href="/user/schedule" className="text-xs font-bold text-terra-400 hover:text-terra-300 transition-colors flex items-center gap-1 tracking-wider">
-                        FULL SCHEDULE <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                </div>
-
-                {isLoadingClasses ? (
-                    <div className="rounded-2xl border border-peach-400/15 bg-peach-50 divide-y divide-peach-400/10">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="p-4 animate-pulse flex items-center gap-4">
-                                <div className="w-14 h-10 bg-peach-300/30 rounded-lg" />
-                                <div className="flex-1">
-                                    <div className="h-4 w-32 bg-peach-300/30 rounded mb-1" />
-                                    <div className="h-3 w-24 bg-peach-200/40 rounded" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : todaysClasses.length > 0 ? (
-                    <div className="rounded-2xl border border-peach-400/15 bg-peach-50 divide-y divide-peach-400/10 overflow-hidden">
-                        {todaysClasses.map((cls, idx) => {
-                            const spotsLeft = (cls.totalSpots || cls.capacity) - cls.bookedCount
-                            return (
-                                <Link key={cls.id} href="/user/schedule" className="block">
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.3 + (idx * 0.08) }}
-                                        className="p-4 hover:bg-peach-100/60 transition-colors group flex items-center gap-4"
-                                    >
-                                        {/* Time block */}
-                                        <div className="flex flex-col items-center min-w-[56px] py-1 px-2 rounded-lg bg-peach-200/50">
-                                            <span className="text-base font-black text-olive-600 leading-none">
-                                                {formatTime(cls.startTime).split(' ')[0]}
-                                            </span>
-                                            <span className="text-[9px] text-olive-300 font-bold mt-0.5">
-                                                {formatTime(cls.startTime).split(' ')[1]}
-                                            </span>
-                                        </div>
-
-                                        {/* Class info */}
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="text-olive-600 font-bold text-sm group-hover:text-terra-400 transition-colors truncate">
-                                                {cls.classType || 'Pilates Class'}
-                                            </h3>
-                                            <p className="text-olive-300 text-xs mt-0.5">
-                                                {cls.location || 'Main Studio'} · {cls.duration}min
-                                            </p>
-                                        </div>
-
-                                        {/* Spots indicator */}
-                                        <div className="flex items-center gap-2">
-                                            {spotsLeft <= 0 ? (
-                                                <span className="text-[10px] font-bold text-olive-300/50 uppercase tracking-wider bg-peach-200/50 px-2 py-1 rounded">Full</span>
-                                            ) : spotsLeft <= 3 ? (
-                                                <span className="text-[10px] font-bold text-terra-400 bg-terra-400/10 px-2 py-1 rounded">{spotsLeft} left</span>
-                                            ) : (
-                                                <span className="text-[10px] font-bold text-olive-300 bg-peach-200/50 px-2 py-1 rounded">{spotsLeft} spots</span>
-                                            )}
-                                            <ArrowRight className="w-4 h-4 text-olive-300/30 group-hover:text-terra-400 group-hover:translate-x-0.5 transition-all" />
-                                        </div>
-                                    </motion.div>
-                                </Link>
-                            )
-                        })}
-                    </div>
-                ) : (
-                    <div className="rounded-2xl border border-peach-400/15 bg-peach-50 p-10 text-center">
-                        <div className="w-12 h-12 rounded-full bg-peach-200/60 flex items-center justify-center mx-auto mb-4">
-                            <Calendar className="w-5 h-5 text-olive-300/50" />
-                        </div>
-                        <p className="text-olive-400 font-medium text-sm">No classes scheduled for today</p>
-                        <p className="text-olive-300 text-xs mt-1">Check the full schedule for upcoming sessions</p>
-                    </div>
-                )}
-            </motion.div>
 
             {/* ═══════════ QUICK ACTIONS — ASYMMETRIC ═══════════ */}
             <motion.div

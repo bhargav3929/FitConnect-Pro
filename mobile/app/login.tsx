@@ -15,7 +15,7 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
@@ -40,8 +40,16 @@ const SLIDE_DISTANCE = 20;
 
 export default function LoginScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams<{ tab?: string; returnTo?: string }>();
     const { loginClient, signupClient, googleSignInWithIdToken } = useClientAuthStore();
     const [googleLoading, setGoogleLoading] = useState(false);
+
+    const rawReturnTo = typeof params.returnTo === 'string' ? params.returnTo : undefined;
+    const returnTo =
+        rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//')
+            ? (rawReturnTo as any)
+            : '/(tabs)';
+    const initialTab: AuthTab = params.tab === 'signup' ? 'signup' : 'signin';
 
     const googleAuthConfig = Constants.expoConfig?.extra?.googleAuth || {
         iosClientId: undefined,
@@ -86,7 +94,7 @@ export default function LoginScreen() {
         const result = await googleSignInWithIdToken(idToken);
         setGoogleLoading(false);
         if (result.success) {
-            router.replace('/(tabs)');
+            router.replace(returnTo);
         } else {
             Alert.alert('Sign-in Failed', result.error || 'Something went wrong');
         }
@@ -107,7 +115,7 @@ export default function LoginScreen() {
         }
     };
 
-    const [activeTab, setActiveTab] = useState<AuthTab>('signin');
+    const [activeTab, setActiveTab] = useState<AuthTab>(initialTab);
     const formOpacity = useRef(new Animated.Value(1)).current;
     const formTranslateY = useRef(new Animated.Value(0)).current;
     const isSwitching = useRef(false);
@@ -168,7 +176,7 @@ export default function LoginScreen() {
         setLoginLoading(true);
         const result = await loginClient(loginEmail, loginPassword);
         setLoginLoading(false);
-        if (result.success) router.replace('/(tabs)');
+        if (result.success) router.replace(returnTo);
         else Alert.alert('Login Failed', result.error || 'Something went wrong');
     };
 
@@ -188,7 +196,7 @@ export default function LoginScreen() {
         setSignupLoading(true);
         const result = await signupClient(signupEmail, signupPassword, signupName);
         setSignupLoading(false);
-        if (result.success) router.replace('/(tabs)');
+        if (result.success) router.replace(returnTo);
         else Alert.alert('Signup Failed', result.error || 'Something went wrong');
     };
 

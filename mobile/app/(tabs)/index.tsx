@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
+import { useFreeClassLead } from '../../hooks/useFreeClassLead';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -425,12 +426,46 @@ function UpcomingSessionCard({
 function QuickActions({
     onBookClass,
     onMyBookings,
+    onFreeClass,
+    freeClassBooked,
 }: {
     onBookClass: () => void;
     onMyBookings: () => void;
+    onFreeClass: () => void;
+    freeClassBooked?: boolean;
 }) {
     return (
         <View style={styles.quickActionsColumn}>
+            {/* Book Free Class — terra outline card */}
+            <TouchableOpacity
+                style={[styles.freeClassCard, freeClassBooked && { opacity: 0.7 }]}
+                onPress={freeClassBooked ? undefined : onFreeClass}
+                disabled={freeClassBooked}
+                activeOpacity={freeClassBooked ? 1 : 0.85}
+            >
+                <View style={styles.freeClassIconCircle}>
+                    <Feather
+                        name={freeClassBooked ? 'check-circle' : 'gift'}
+                        size={20}
+                        color={Colors.terra[400]}
+                    />
+                </View>
+                <Text style={styles.freeClassTitle}>
+                    {freeClassBooked ? 'Free Class Booked' : 'Book a Free Class'}
+                </Text>
+                <Text style={styles.freeClassSubtitle}>
+                    {freeClassBooked
+                        ? "You're all set — Swetha will be in touch shortly."
+                        : 'First time? Try a complimentary 30-minute drop-in.'}
+                </Text>
+                {!freeClassBooked && (
+                    <View style={styles.freeClassLinkRow}>
+                        <Text style={styles.freeClassLinkText}>CLAIM FREE SESSION</Text>
+                        <Feather name="arrow-right" size={14} color={Colors.terra[400]} />
+                    </View>
+                )}
+            </TouchableOpacity>
+
             {/* Book Your Next Class — dark olive feature card */}
             <TouchableOpacity
                 style={styles.bookNextCard}
@@ -479,6 +514,7 @@ function QuickActions({
 export default function DashboardScreen() {
     const { clientUser } = useClientAuthStore();
     const router = useRouter();
+    const { hasFreeClassLead } = useFreeClassLead();
 
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
     const [isLoadingBookings, setIsLoadingBookings] = useState(true);
@@ -505,6 +541,7 @@ export default function DashboardScreen() {
     const navigateToSchedule = useCallback(() => router.push('/(tabs)/schedule'), [router]);
     const navigateToBookings = useCallback(() => router.push('/(tabs)/bookings'), [router]);
     const navigateToSubscribe = useCallback(() => router.push('/subscribe'), [router]);
+    const navigateToFreeClass = useCallback(() => router.push('/free-class' as any), [router]);
 
     // Loading state
     if (!clientUser) {
@@ -554,6 +591,8 @@ export default function DashboardScreen() {
                 <QuickActions
                     onBookClass={navigateToSchedule}
                     onMyBookings={navigateToBookings}
+                    onFreeClass={navigateToFreeClass}
+                    freeClassBooked={hasFreeClassLead === true}
                 />
             </ScrollView>
         </SafeAreaView>
@@ -1085,6 +1124,45 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     myBookingsLinkText: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.xs,
+        color: Colors.terra[400],
+        letterSpacing: 1,
+    },
+    freeClassCard: {
+        backgroundColor: Colors.peach[50],
+        borderWidth: 1,
+        borderColor: Colors.terra[400],
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg,
+    },
+    freeClassIconCircle: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: Alpha.terra400_10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: Spacing.md,
+    },
+    freeClassTitle: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.xl,
+        color: Colors.olive[600],
+    },
+    freeClassSubtitle: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        color: Colors.olive[400],
+        marginTop: 2,
+        marginBottom: Spacing.md,
+    },
+    freeClassLinkRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    freeClassLinkText: {
         fontFamily: FontFamily.sansBold,
         fontSize: FontSize.xs,
         color: Colors.terra[400],

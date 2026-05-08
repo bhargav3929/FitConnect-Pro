@@ -6,6 +6,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@fitconnect/shared/firebase/config';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { Button } from '@/components/ui/button';
+import { useFreeClassLead } from '@/lib/hooks/useFreeClassLead';
 
 type FormState = {
     name: string;
@@ -19,7 +20,8 @@ const EMPTY: FormState = { name: '', email: '', phone: '', goals: '', concerns: 
 
 export default function FreeClassPage() {
     const router = useRouter();
-    const { isAuthenticated, initAuth } = useClientAuthStore();
+    const { isAuthenticated, isLoading, initAuth, clientUser } = useClientAuthStore();
+    const { hasFreeClassLead } = useFreeClassLead();
     const [form, setForm] = useState<FormState>(EMPTY);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,34 @@ export default function FreeClassPage() {
         return () => unsubscribe();
     }, [initAuth]);
 
+    useEffect(() => {
+        if (isLoading) return;
+        if (!isAuthenticated) {
+            router.replace('/user/login?tab=signup&returnTo=/free-class');
+        }
+    }, [isAuthenticated, isLoading, router]);
+
+    useEffect(() => {
+        if (clientUser) {
+            setForm((f) => ({
+                ...f,
+                name: f.name || clientUser.name || '',
+                email: f.email || clientUser.email || '',
+            }));
+        }
+    }, [clientUser]);
+
+    if (isLoading || !isAuthenticated) {
+        return (
+            <main className="min-h-screen bg-peach-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-2 border-peach-400/30 border-t-terra-400 rounded-full animate-spin" />
+                    <p className="text-olive-300 text-sm tracking-wider">REDIRECTING...</p>
+                </div>
+            </main>
+        );
+    }
+
     const update = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
         setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -38,7 +68,7 @@ export default function FreeClassPage() {
         setError(null);
 
         if (!isAuthenticated) {
-            router.push('/user/login?returnTo=/free-class');
+            router.push('/user/login?tab=signup&returnTo=/free-class');
             return;
         }
 
@@ -55,6 +85,7 @@ export default function FreeClassPage() {
         try {
             await addDoc(collection(db, 'freeClassLeads'), {
                 ...form,
+                userId: clientUser?.id ?? null,
                 source: 'free-class-form',
                 status: 'new',
                 createdAt: serverTimestamp(),
@@ -67,6 +98,28 @@ export default function FreeClassPage() {
             setSubmitting(false);
         }
     };
+
+    if (hasFreeClassLead === true && !done) {
+        return (
+            <main className="min-h-screen bg-peach-50 flex items-center justify-center p-6">
+                <div className="max-w-lg text-center space-y-6">
+                    <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-tight">
+                        Free Class Booked
+                    </h1>
+                    <p className="text-olive-400 leading-relaxed">
+                        You&apos;ve already booked your free class. Swetha will be in touch — we can&apos;t wait
+                        to see you on the reformer.
+                    </p>
+                    <Button
+                        onClick={() => router.push('/')}
+                        className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 px-8 rounded-xl"
+                    >
+                        BACK HOME
+                    </Button>
+                </div>
+            </main>
+        );
+    }
 
     if (done) {
         return (

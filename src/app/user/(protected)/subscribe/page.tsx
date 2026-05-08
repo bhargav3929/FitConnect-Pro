@@ -12,6 +12,7 @@ import { getPlanById, type PlanId } from "@fitconnect/shared/types/subscription"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import Link from "next/link"
+import { useFreeClassLead } from "@/lib/hooks/useFreeClassLead"
 
 type Step = 'plan' | 'checkout' | 'success'
 
@@ -22,6 +23,7 @@ export default function SubscribePage() {
     const preselectedPlan = searchParams.get('plan')
 
     const refreshSubscription = useClientAuthStore(state => state.refreshSubscription)
+    const { hasFreeClassLead } = useFreeClassLead()
 
     const [step, setStep] = useState<Step>('plan')
     const [selectedPlanId, setSelectedPlanId] = useState<PlanId | null>(
@@ -39,6 +41,10 @@ export default function SubscribePage() {
 
     const handleContinueToCheckout = async () => {
         if (!selectedPlanId) return
+        if (selectedPlanId === 'drop_in') {
+            router.push('/free-class')
+            return
+        }
         setIsProcessing(true)
         try {
             const result = await callCreatePaymentIntent(selectedPlanId)
@@ -161,10 +167,18 @@ export default function SubscribePage() {
 
                         <Button
                             onClick={handleContinueToCheckout}
-                            disabled={!selectedPlanId || isProcessing}
+                            disabled={
+                                !selectedPlanId ||
+                                isProcessing ||
+                                (selectedPlanId === 'drop_in' && hasFreeClassLead === true)
+                            }
                             className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide text-base rounded-xl transition-all hover:shadow-lg hover:shadow-terra-400/20 disabled:opacity-50"
                         >
-                            {isProcessing ? 'PREPARING CHECKOUT...' : 'CONTINUE'}
+                            {isProcessing
+                                ? 'PREPARING CHECKOUT...'
+                                : selectedPlanId === 'drop_in'
+                                    ? (hasFreeClassLead === true ? 'FREE CLASS BOOKED' : 'BOOK FREE CLASS')
+                                    : 'CONTINUE'}
                         </Button>
                     </motion.div>
                 )}

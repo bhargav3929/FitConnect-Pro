@@ -20,6 +20,7 @@ import {
     callConfirmPayment,
 } from '@fitconnect/shared/firebase/firestore';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
+import { useFreeClassLead } from '../hooks/useFreeClassLead';
 import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../constants/theme';
 
 // ---------------------------------------------------------------------------
@@ -296,6 +297,7 @@ const planCardStyles = StyleSheet.create({
 export default function SubscribeScreen() {
     const router = useRouter();
     const { refreshSubscription } = useClientAuthStore();
+    const { hasFreeClassLead } = useFreeClassLead();
 
     // Flow state
     const [step, setStep] = useState<Step>('plan');
@@ -328,8 +330,12 @@ export default function SubscribeScreen() {
             Alert.alert('Select a Plan', 'Please choose a plan to continue.');
             return;
         }
+        if (selectedPlan.id === 'drop_in') {
+            router.push('/free-class');
+            return;
+        }
         setStep('checkout');
-    }, [selectedPlan]);
+    }, [selectedPlan, router]);
 
     // Process payment
     const handlePay = useCallback(async () => {
@@ -505,13 +511,26 @@ export default function SubscribeScreen() {
                         <TouchableOpacity
                             style={[
                                 styles.primaryButton,
-                                !selectedPlan && styles.buttonDisabled,
+                                (!selectedPlan ||
+                                    (selectedPlan?.id === 'drop_in' &&
+                                        hasFreeClassLead === true)) &&
+                                    styles.buttonDisabled,
                             ]}
                             onPress={handleContinue}
-                            disabled={!selectedPlan}
+                            disabled={
+                                !selectedPlan ||
+                                (selectedPlan?.id === 'drop_in' &&
+                                    hasFreeClassLead === true)
+                            }
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.primaryButtonText}>CONTINUE</Text>
+                            <Text style={styles.primaryButtonText}>
+                                {selectedPlan?.id === 'drop_in'
+                                    ? hasFreeClassLead === true
+                                        ? 'FREE CLASS BOOKED'
+                                        : 'BOOK FREE CLASS'
+                                    : 'CONTINUE'}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 )}
