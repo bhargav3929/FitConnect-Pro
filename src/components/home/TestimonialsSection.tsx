@@ -262,6 +262,7 @@ export function TestimonialsSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-15%" }}
           transition={{ duration: 0.9, delay: 0.2, ease: [...E] }}
+          style={{ overflow: "hidden" }}
         >
           {prefersReduced ? (
             <TestimonialsGrid items={TESTIMONIALS} />

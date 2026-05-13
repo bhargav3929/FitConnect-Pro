@@ -158,14 +158,16 @@
     @apply border-border;
   }
 
-  html {
-    overflow-x: hidden;
-  }
-
   body {
     @apply text-foreground;
-    overflow-x: hidden;
   }
+}
+
+/* Outside any layer so it wins the cascade over Tailwind base resets */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* Shimmer for "Coming soon" pills */

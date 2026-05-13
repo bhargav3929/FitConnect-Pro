@@ -226,6 +226,7 @@ export function InstagramSection() {
           viewport={{ once: true, margin: "-10%" }}
           transition={{ duration: 0.9, delay: 0.2, ease: [...E] }}
           className="flex flex-col gap-2"
+          style={{ overflow: "hidden" }}
         >
           {prefersReduced ? (
             <ThumbGrid thumbs={THUMBS} />
