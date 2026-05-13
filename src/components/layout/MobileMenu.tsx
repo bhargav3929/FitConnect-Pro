@@ -14,8 +14,10 @@ const MENU_ITEMS = [
     { label: "PRICING", href: "/subscription" },
     { label: "FACILITIES", href: "/facilities" },
     { label: "ABOUT US", href: "/about" },
+    { label: "FOUNDER", href: "/founder" },
     { label: "SHOP", href: "/shop" },
     { label: "CONTACT US", href: "/contact" },
+    { label: "FEEDBACK", href: "/feedback" },
 ];
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
@@ -91,17 +93,6 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                 </motion.div>
                             ))}
 
-                            {/* Contact Card */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.6 }}
-                                className="mt-8 p-6 bg-peach-300 rounded-lg border border-peach-400"
-                            >
-                                <h4 className="text-xs font-bold text-olive-300 tracking-wider mb-4">CONTACT</h4>
-                                <p className="text-olive-400 text-sm mb-2">solpilatesstudio.in@gmail.com</p>
-                                <p className="text-olive-400 text-sm">(212) 555-0180</p>
-                            </motion.div>
                         </div>
 
                         {/* Footer CTA */}

@@ -71,10 +71,10 @@ const config: Config = {
                     700: "#3A422C",
                 },
                 terra: {
-                    300: "#A85A48",
-                    400: "#8B3F2C",
-                    500: "#6E3022",
-                    600: "#52231A",
+                    300: "#E8834A",
+                    400: "#DA6027",
+                    500: "#B84D1C",
+                    600: "#8F3B14",
                 },
                 warmDark: {
                     700: "#3B2F28",
@@ -115,8 +115,8 @@ const config: Config = {
                 'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
                 'lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
                 'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-                'glow': '0 0 24px rgba(139, 63, 44, 0.25)',
-                'glow-lg': '0 0 40px rgba(139, 63, 44, 0.4)',
+                'glow': '0 0 24px rgba(218, 96, 39, 0.25)',
+                'glow-lg': '0 0 40px rgba(218, 96, 39, 0.4)',
             },
             keyframes: {
                 "accordion-down": {

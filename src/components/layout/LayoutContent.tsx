@@ -19,7 +19,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
     return (
         <>
             <Header />
-            <main className="min-h-screen pt-[72px]">
+            <main className="min-h-screen">
                 {children}
             </main>
             <Footer />

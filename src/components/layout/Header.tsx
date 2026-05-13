@@ -1,19 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { MobileMenu } from "./MobileMenu";
 
 export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    const { scrollY } = useScroll();
+    const headerBg = useTransform(
+        scrollY,
+        [0, 80],
+        ["rgba(255,245,237,0)", "rgba(255,245,237,0.97)"]
+    );
+
+    useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 60);
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const linkClass = isScrolled
+        ? "text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider"
+        : "text-peach-100/90 font-medium hover:text-peach-50 transition-colors text-sm tracking-wider";
 
     return (
         <>
-            <header className="fixed top-0 left-0 right-0 z-50 bg-peach-200/80 backdrop-blur-md border-b border-peach-400">
+            <motion.header
+                style={{ backgroundColor: headerBg }}
+                className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b ${isScrolled ? "border-peach-400" : "border-peach-400/0"}`}
+            >
                 <div className="container mx-auto px-6 py-4 flex items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="relative z-50">
+                    <Link href="/" className="relative z-50 rounded-lg transition-all duration-300">
                         <Image
                             src="/images/sol-logo-terra.png"
                             alt="SOL Pilates Studio"
@@ -25,42 +47,35 @@ export function Header() {
 
                     {/* Desktop Nav Links */}
                     <nav className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="nav-link group flex items-center gap-1 text-olive-400 font-medium text-sm tracking-wider">
-                            HOME
-                        </Link>
-                        <Link href="/subscription" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
-                            PRICING
-                        </Link>
-                        <Link href="/facilities" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
-                            FACILITIES
-                        </Link>
-                        <Link href="/about" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
-                            ABOUT US
-                        </Link>
-                        <Link href="/shop" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
-                            SHOP
-                        </Link>
-                        <Link href="/contact" className="text-olive-300 font-medium hover:text-terra-400 transition-colors text-sm tracking-wider">
-                            CONTACT US
-                        </Link>
+                        <Link href="/" className={linkClass}>HOME</Link>
+                        <Link href="/subscription" className={linkClass}>PRICING</Link>
+                        <Link href="/facilities" className={linkClass}>FACILITIES</Link>
+                        <Link href="/about" className={linkClass}>ABOUT US</Link>
+                        <Link href="/founder" className={linkClass}>FOUNDER</Link>
+                        <Link href="/shop" className={linkClass}>SHOP</Link>
+                        <Link href="/contact" className={linkClass}>CONTACT US</Link>
+                        <Link href="/feedback" className={linkClass}>FEEDBACK</Link>
                     </nav>
 
                     {/* Right side */}
                     <div className="flex items-center gap-4">
-                        <Link href="/subscription" className="hidden md:block px-6 py-3 border border-terra-400 text-terra-400 font-bold text-sm tracking-wider hover:bg-terra-400 hover:text-peach-50 transition-all">
+                        <Link
+                            href="/subscription"
+                            className={`hidden md:block px-6 py-3 font-bold text-sm tracking-wider transition-all border ${isScrolled ? "border-terra-400 text-terra-400 hover:bg-terra-400 hover:text-peach-50" : "border-peach-100 text-peach-100 hover:bg-peach-100 hover:text-warmDark-800"}`}
+                        >
                             BOOK NOW
                         </Link>
                         <button
                             onClick={() => setIsMenuOpen(true)}
-                            className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 group p-2 hover:bg-olive-400/10 rounded-full transition-colors"
+                            className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 group p-2 hover:bg-white/10 rounded-full transition-colors"
                         >
-                            <span className="w-6 h-0.5 bg-olive-400 group-hover:scale-x-75 transition-transform origin-right"></span>
-                            <span className="w-6 h-0.5 bg-olive-400"></span>
-                            <span className="w-6 h-0.5 bg-olive-400 group-hover:scale-x-75 transition-transform origin-right"></span>
+                            <span className={`w-6 h-0.5 group-hover:scale-x-75 transition-transform origin-right ${isScrolled ? "bg-olive-400" : "bg-peach-100"}`}></span>
+                            <span className={`w-6 h-0.5 ${isScrolled ? "bg-olive-400" : "bg-peach-100"}`}></span>
+                            <span className={`w-6 h-0.5 group-hover:scale-x-75 transition-transform origin-right ${isScrolled ? "bg-olive-400" : "bg-peach-100"}`}></span>
                         </button>
                     </div>
                 </div>
-            </header>
+            </motion.header>
 
             {/* Mobile Menu Overlay */}
             <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />

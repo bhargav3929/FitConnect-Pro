@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { LayoutContent } from "@/components/layout/LayoutContent";
 import { SitePasswordGate } from "@/components/layout/SitePasswordGate";
-
-const dmSerifDisplay = DM_Serif_Display({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-display",
-});
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -30,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn("min-h-screen bg-background font-sans antialiased", dmSerifDisplay.variable, plusJakartaSans.variable)}>
+      <body className={cn("min-h-screen font-sans antialiased", plusJakartaSans.variable)}>
         <SitePasswordGate>
           <LayoutContent>{children}</LayoutContent>
         </SitePasswordGate>
