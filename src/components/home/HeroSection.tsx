@@ -28,14 +28,14 @@ const STYLES = {
   eyebrow:
     "block text-xs font-bold tracking-[0.3em] uppercase text-peach-200/70 mb-4",
   headline:
-    "font-display font-black tracking-tight leading-[0.95] text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-peach-50 drop-shadow-xl",
+    "font-display font-black tracking-tight leading-[0.95] text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-peach-50 drop-shadow-xl uppercase text-center w-full",
   body: "mt-6 md:mt-8 text-lg md:text-xl text-peach-200/90 max-w-2xl mx-auto leading-relaxed",
   ctaRow:
-    "mt-10 md:mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center",
+    "mt-10 md:mt-12 flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center",
   primaryBtn:
-    "px-10 py-5 bg-terra-400 text-peach-50 font-black text-xs md:text-sm tracking-widest uppercase hover:bg-terra-300 transition-all shadow-glow",
+    "block w-full sm:w-auto text-center px-10 py-5 bg-terra-400 text-peach-50 font-black text-xs md:text-sm tracking-widest uppercase hover:bg-terra-300 transition-all shadow-glow",
   secondaryBtn:
-    "px-10 py-5 border-2 border-peach-50 text-peach-50 font-black text-xs md:text-sm tracking-widest uppercase hover:bg-peach-50 hover:text-warmDark-800 transition-all",
+    "block w-full sm:w-auto text-center px-10 py-5 border-2 border-peach-50 text-peach-50 font-black text-xs md:text-sm tracking-widest uppercase hover:bg-peach-50 hover:text-warmDark-800 transition-all",
 };
 
 const COPY = {
@@ -179,7 +179,7 @@ export function HeroSection() {
             initial={prefersReduced ? undefined : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 1.05, ease: [...E] }}
-            className="relative"
+            className="relative w-full sm:w-auto"
           >
             {!prefersReduced && (
               <motion.span
@@ -204,6 +204,7 @@ export function HeroSection() {
             initial={prefersReduced ? undefined : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 1.13, ease: [...E] }}
+          className="w-full sm:w-auto"
           >
             <button onClick={handleGetStarted} className={STYLES.secondaryBtn}>
               {COPY.secondaryCta.label}
