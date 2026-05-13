@@ -95,6 +95,16 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Waitlist (founding membership interest)
+    // - Create: anyone (no auth required)
+    // - Read/Update/Delete: admin only
+    match /waitlist/{entryId} {
+      allow create: if request.resource.data.keys().hasAll(['name', 'email'])
+                    && request.resource.data.name is string
+                    && request.resource.data.email is string;
+      allow read, update, delete: if isAdmin();
+    }
+
     // Admins collection
     // - Read/Write: admin only
     match /admins/{uid} {

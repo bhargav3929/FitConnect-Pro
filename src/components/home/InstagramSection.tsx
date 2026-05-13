@@ -21,7 +21,7 @@ import {
 const COPY = {
   headline: "Follow the journey.",
   body: "Daily movement cues, behind-the-scenes from the studio, and stories from our community.",
-  handle: "@solpilatesstudio.in",
+  handle: "solpilatesstudio.in",
   url: "https://instagram.com/solpilatesstudio.in",
 };
 

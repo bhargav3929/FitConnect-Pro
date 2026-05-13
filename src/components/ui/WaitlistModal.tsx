@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@fitconnect/shared/firebase/config"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { motion, AnimatePresence } from "framer-motion"
@@ -45,14 +45,6 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
         setError("")
         setLoading(true)
         try {
-            const existing = await getDocs(
-                query(collection(db, "waitlist"), where("email", "==", email.toLowerCase().trim()))
-            )
-            if (!existing.empty) {
-                setError("This email is already on the waitlist.")
-                setLoading(false)
-                return
-            }
             await addDoc(collection(db, "waitlist"), {
                 name: name.trim(),
                 email: email.toLowerCase().trim(),

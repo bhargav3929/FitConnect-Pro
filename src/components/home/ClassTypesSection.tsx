@@ -25,7 +25,7 @@ const STYLES = {
   stickyTextWrap:
     "flex flex-col justify-center px-8 py-10 md:px-12 md:py-16",
   // Mobile grid
-  mobileGrid: "container mx-auto px-8 py-24 grid grid-cols-1 gap-8",
+  mobileGrid: "container mx-auto px-8 pt-4 pb-20 grid grid-cols-1 gap-8",
   mobileImageWrap: "relative aspect-[3/4] w-full overflow-hidden rounded-none",
   // Shared
   statusPill:
@@ -250,7 +250,7 @@ export function ClassTypesSection() {
     <section className={STYLES.section}>
       {/* Section headline */}
       <div className={STYLES.headerWrap}>
-        <div className="overflow-hidden pb-16 md:pb-20">
+        <div className="overflow-hidden pb-4 md:pb-12">
           <motion.h2
             className={STYLES.headline}
             initial={{ y: "100%" }}

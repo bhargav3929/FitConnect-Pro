@@ -31,7 +31,7 @@ export function Header() {
         <>
             <motion.header
                 style={{ backgroundColor: headerBg }}
-                className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b ${isScrolled ? "border-peach-400" : "border-peach-400/0"}`}
+                className={`fixed top-0 left-0 right-0 z-50 border-b ${isScrolled ? "backdrop-blur-md border-peach-400" : "border-transparent"}`}
             >
                 <div className="container mx-auto px-8 py-4 flex items-center justify-between">
                     {/* Logo */}

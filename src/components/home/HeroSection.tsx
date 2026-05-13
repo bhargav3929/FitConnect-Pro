@@ -213,24 +213,6 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Scroll cue — hidden on reduced motion */}
-      {!prefersReduced && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.8, duration: 0.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1"
-        >
-          <motion.span
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-px h-8 bg-peach-200/40"
-          />
-          <span className="text-[10px] tracking-[0.2em] uppercase text-peach-200/40">
-            Scroll
-          </span>
-        </motion.div>
-      )}
 
       <GetStartedModal
         isOpen={showGetStarted}
