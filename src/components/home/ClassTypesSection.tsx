@@ -20,7 +20,7 @@ const STYLES = {
   headline: "font-display font-black text-4xl md:text-6xl text-olive-600",
   // Desktop sticky card
   stickyCard:
-    "w-[92vw] max-w-5xl mx-auto bg-peach-200 grid grid-cols-1 md:grid-cols-[55fr_45fr] overflow-hidden shadow-[0_-20px_60px_-30px_rgba(0,0,0,0.25)]",
+    "w-full max-w-5xl mx-auto bg-peach-200 grid grid-cols-1 md:grid-cols-[55fr_45fr] overflow-hidden shadow-[0_-20px_60px_-30px_rgba(0,0,0,0.25)]",
   stickyImageWrap: "relative h-[50vh] md:h-[72vh] overflow-hidden bg-peach-300",
   stickyTextWrap:
     "flex flex-col justify-center px-8 py-10 md:px-12 md:py-16",

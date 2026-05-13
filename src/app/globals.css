@@ -158,8 +158,13 @@
     @apply border-border;
   }
 
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     @apply text-foreground;
+    overflow-x: hidden;
   }
 }
 
