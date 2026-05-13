@@ -55,7 +55,7 @@ export function mapFirebaseError(code: string): string {
             return 'An account already exists with this email using a different sign-in method.'
         default:
             console.warn('[Auth] Unhandled Firebase error code:', code)
-            return `An unexpected error occurred (${code || 'unknown'}). Please try again.`
+            return 'An unexpected error occurred. Please try again.'
     }
 }
 
