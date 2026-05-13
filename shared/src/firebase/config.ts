@@ -19,7 +19,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 function getFirebaseAuth(): Auth {
     // React Native: use AsyncStorage for auth persistence across sessions
-    if (typeof navigator !== 'undefined' && navigator.product === 'ReactNative') {
+    if (typeof (globalThis as any).navigator !== 'undefined' && (globalThis as any).navigator.product === 'ReactNative') {
         try {
             const { initializeAuth, getReactNativePersistence } = require('firebase/auth');
             const AsyncStorage = require('@react-native-async-storage/async-storage').default;
