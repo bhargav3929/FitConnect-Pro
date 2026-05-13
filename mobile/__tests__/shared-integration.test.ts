@@ -44,7 +44,7 @@ describe('shared package integration from mobile', () => {
             '@fitconnect/shared/types/subscription'
         );
         expect(PLAN_CATALOG).toHaveLength(6);
-        expect(getPlanById('unlimited')?.price).toBe(200);
+        expect(getPlanById('thrice_quarterly')?.price).toBe(54000);
         expect(VALID_PLAN_IDS).toContain('drop_in');
     });
 

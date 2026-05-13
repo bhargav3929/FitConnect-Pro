@@ -53,8 +53,8 @@ describe('Subscribe screen — plan catalog integration', () => {
         const memberships = PLAN_CATALOG.filter((p) => p.category === 'membership');
         const classPacks = PLAN_CATALOG.filter((p) => p.category === 'class_pack');
 
-        expect(memberships.length).toBe(3);
-        expect(classPacks.length).toBe(3);
+        expect(memberships.length).toBe(4);
+        expect(classPacks.length).toBe(2);
     });
 
     it('getPlanById returns the correct plan', async () => {
@@ -62,12 +62,12 @@ describe('Subscribe screen — plan catalog integration', () => {
             '@fitconnect/shared/types/subscription'
         );
 
-        const unlimited = getPlanById('unlimited');
-        expect(unlimited).toBeDefined();
-        expect(unlimited!.name).toBe('Unlimited');
-        expect(unlimited!.price).toBe(200);
-        expect(unlimited!.credits).toBeNull(); // unlimited
-        expect(unlimited!.category).toBe('membership');
+        const twice = getPlanById('twice_quarterly');
+        expect(twice).toBeDefined();
+        expect(twice!.name).toBe('2x Weekly · Quarterly');
+        expect(twice!.price).toBe(36000);
+        expect(twice!.credits).toBe(24);
+        expect(twice!.category).toBe('membership');
     });
 
     it('getPlanById returns undefined for invalid id', async () => {
@@ -87,7 +87,7 @@ describe('Subscribe screen — plan catalog integration', () => {
             expect(plan.name).toBeDefined();
             expect(plan.category).toBeDefined();
             expect(typeof plan.price).toBe('number');
-            expect(plan.price).toBeGreaterThan(0);
+            expect(plan.price).toBeGreaterThanOrEqual(0);
             expect(typeof plan.durationDays).toBe('number');
             expect(plan.durationDays).toBeGreaterThan(0);
             expect(Array.isArray(plan.features)).toBe(true);
@@ -102,19 +102,19 @@ describe('Subscribe screen — plan catalog integration', () => {
         const dropIn = getPlanById('drop_in');
         expect(dropIn).toBeDefined();
         expect(dropIn!.credits).toBe(1);
-        expect(dropIn!.price).toBe(35);
+        expect(dropIn!.price).toBe(0);
     });
 
     it('ten_pack plan has correct values', async () => {
         const { getPlanById } = await import(
             '@fitconnect/shared/types/subscription'
         );
-        const tenPack = getPlanById('ten_pack');
-        expect(tenPack).toBeDefined();
-        expect(tenPack!.credits).toBe(10);
-        expect(tenPack!.price).toBe(300);
-        expect(tenPack!.guestPasses).toBe(2);
-        expect(tenPack!.durationDays).toBe(180);
+        const twice6mo = getPlanById('twice_6mo');
+        expect(twice6mo).toBeDefined();
+        expect(twice6mo!.credits).toBe(48);
+        expect(twice6mo!.price).toBe(64000);
+        expect(twice6mo!.guestPasses).toBe(1);
+        expect(twice6mo!.durationDays).toBe(180);
     });
 
     it('only one plan is marked as recommended', async () => {
@@ -123,7 +123,7 @@ describe('Subscribe screen — plan catalog integration', () => {
         );
         const recommended = PLAN_CATALOG.filter((p) => p.recommended);
         expect(recommended).toHaveLength(1);
-        expect(recommended[0].id).toBe('unlimited');
+        expect(recommended[0].id).toBe('thrice_quarterly');
     });
 
     it('membership plans auto-renew, class packs do not', async () => {

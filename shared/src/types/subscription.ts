@@ -85,7 +85,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         maxClassesPerDay: 1,
         advanceBookingDays: 14,
         guestPasses: 0,
-        autoRenew: false,
+        autoRenew: true,
         tagline: 'Twice a week, every week, for 3 months. Enough to build a real habit.',
         features: [
             '2 classes per week',
@@ -105,7 +105,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         maxClassesPerDay: 1,
         advanceBookingDays: 14,
         guestPasses: 1,
-        autoRenew: false,
+        autoRenew: true,
         tagline: 'Six months of showing up twice a week. This is where real change happens.',
         features: [
             '2 classes per week',
@@ -127,7 +127,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         maxClassesPerDay: 1,
         advanceBookingDays: 14,
         guestPasses: 0,
-        autoRenew: false,
+        autoRenew: true,
         recommended: true,
         tagline: "Three times a week for 3 months. You'll feel it faster than you think.",
         features: [
@@ -148,7 +148,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         maxClassesPerDay: 1,
         advanceBookingDays: 14,
         guestPasses: 2,
-        autoRenew: false,
+        autoRenew: true,
         tagline: 'Three days a week, six months in. Pain-free, stronger, and completely different.',
         features: [
             '3 classes per week',
