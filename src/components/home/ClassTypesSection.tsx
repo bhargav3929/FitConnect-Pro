@@ -16,7 +16,7 @@ import { Reveal } from "@/lib/animation/Reveal";
 // ============================================================
 const STYLES = {
   section: "bg-peach-100",
-  headerWrap: "container mx-auto px-6 pt-24 pb-0 md:pt-32 md:pb-0",
+  headerWrap: "container mx-auto px-8 pt-24 pb-0 md:pt-32 md:pb-0",
   headline: "font-display font-black text-4xl md:text-6xl text-olive-600",
   // Desktop sticky card
   stickyCard:
@@ -25,7 +25,7 @@ const STYLES = {
   stickyTextWrap:
     "flex flex-col justify-center px-8 py-10 md:px-12 md:py-16",
   // Mobile grid
-  mobileGrid: "container mx-auto px-6 py-24 grid grid-cols-1 gap-8",
+  mobileGrid: "container mx-auto px-8 py-24 grid grid-cols-1 gap-8",
   mobileImageWrap: "relative aspect-[3/4] w-full overflow-hidden rounded-none",
   // Shared
   statusPill:

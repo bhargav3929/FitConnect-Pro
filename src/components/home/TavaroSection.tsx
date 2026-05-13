@@ -86,7 +86,7 @@ export function TavaroSection() {
 
   return (
     <section ref={sectionRef} className="bg-peach-200 py-24 md:py-32">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-8">
         {/* Header */}
         <motion.div
           initial="hidden"

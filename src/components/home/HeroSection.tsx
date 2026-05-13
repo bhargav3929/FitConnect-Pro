@@ -24,7 +24,7 @@ const STYLES = {
   videoWrap: "absolute inset-0 w-full h-full z-0 will-change-transform",
   video: "absolute inset-0 w-full h-full object-cover",
   overlay: "absolute inset-0 bg-warmDark-800 z-[1]",
-  container: "relative z-10 container mx-auto px-6 text-center",
+  container: "relative z-10 container mx-auto px-8 text-center",
   eyebrow:
     "block text-xs font-bold tracking-[0.3em] uppercase text-peach-200/70 mb-4",
   headline:

@@ -18,7 +18,7 @@ import {
 // ============================================================
 const STYLES = {
   section: "bg-warmDark-800 py-24 border-t border-peach-200/5 overflow-hidden",
-  container: "container mx-auto px-4",
+  container: "container mx-auto px-6",
   headerWrap: "text-center mb-16",
   eyebrow:
     "text-terra-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-3",

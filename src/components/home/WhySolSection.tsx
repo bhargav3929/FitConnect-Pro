@@ -9,7 +9,7 @@ import { Reveal } from "@/lib/animation/Reveal";
 // ============================================================
 const STYLES = {
   section: "bg-peach-200 py-24 md:py-32",
-  container: "container mx-auto px-6",
+  container: "container mx-auto px-8",
   headerWrap: "text-center",
   eyebrow:
     "text-xs font-bold tracking-[0.3em] uppercase text-terra-400 block mb-4",

@@ -161,7 +161,7 @@ export function InstagramSection() {
 
   return (
     <section className="bg-peach-300 py-20 border-t border-olive-400/10 overflow-hidden">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-8">
         {/* Header */}
         <div className="max-w-3xl mx-auto text-center mb-12">
           <motion.div
