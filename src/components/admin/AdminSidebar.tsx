@@ -13,10 +13,12 @@ import {
     BookmarkSimple,
     ChartBar,
     EnvelopeSimple,
+    ChatCircle,
     GearSix,
     SignOut,
     CaretLeft,
     X,
+    Star,
 } from "@phosphor-icons/react"
 import { useState } from "react"
 import { useAdminAuthStore } from "@fitconnect/shared/stores/adminAuthStore"
@@ -30,7 +32,9 @@ const NAV_ITEMS = [
     { label: "Trainers", icon: UsersThree, href: "/admin/trainers" },
     { label: "Members", icon: UserCircle, href: "/admin/members" },
     { label: "Leads", icon: EnvelopeSimple, href: "/admin/leads" },
+    { label: "Waitlist", icon: Star, href: "/admin/waitlist" },
     { label: "Bookings", icon: BookmarkSimple, href: "/admin/bookings" },
+    { label: "Feedback", icon: ChatCircle, href: "/admin/feedback" },
     { label: "Reports", icon: ChartBar, href: "/admin/reports" },
 ]
 

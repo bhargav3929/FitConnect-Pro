@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import Link from "next/link";
 import {
   motion,
   useMotionValue,
@@ -9,6 +8,7 @@ import {
   useInView,
   useReducedMotion,
 } from "framer-motion";
+import { WaitlistModal } from "@/components/ui/WaitlistModal";
 
 // ============================================================
 //  FOUNDING MEMBERSHIP SECTION — edit this block to change anything visual
@@ -34,15 +34,15 @@ const E: [number, number, number, number] = [0.22, 1, 0.36, 1];
 // ── Magnetic CTA ────────────────────────────────────────────
 
 function MagneticCTA({
-  href,
+  onClick,
   label,
   disabled,
 }: {
-  href: string;
+  onClick: () => void;
   label: string;
   disabled: boolean;
 }) {
-  const ref = useRef<HTMLAnchorElement>(null);
+  const ref = useRef<HTMLButtonElement>(null);
   const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
   const x = useSpring(rawX, { damping: 20, stiffness: 200 });
@@ -63,9 +63,9 @@ function MagneticCTA({
   }
 
   return (
-    <motion.a
+    <motion.button
       ref={ref}
-      href={href}
+      onClick={onClick}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       style={disabled ? {} : { x, y }}
@@ -73,7 +73,7 @@ function MagneticCTA({
       className="inline-block bg-peach-200 text-warmDark-800 font-bold text-sm tracking-wider px-10 py-4 rounded-full hover:bg-peach-50 transition-colors mt-8"
     >
       {label}
-    </motion.a>
+    </motion.button>
   );
 }
 
@@ -167,8 +167,10 @@ export function FoundingMembershipSection() {
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, margin: "-20%" });
   const prefersReduced = useReducedMotion();
+  const [showWaitlist, setShowWaitlist] = useState(false);
 
   return (
+    <>
     <section className="bg-peach-200 py-24 md:py-32">
       <div className="container mx-auto px-8">
         {/* Ambient glow behind card */}
@@ -243,7 +245,7 @@ export function FoundingMembershipSection() {
               className="flex justify-center"
             >
               <MagneticCTA
-                href={COPY.ctaHref}
+                onClick={() => setShowWaitlist(true)}
                 label={COPY.ctaLabel}
                 disabled={!!prefersReduced}
               />
@@ -262,5 +264,8 @@ export function FoundingMembershipSection() {
         </div>
       </div>
     </section>
+
+    <WaitlistModal isOpen={showWaitlist} onClose={() => setShowWaitlist(false)} />
+  </>
   );
 }
