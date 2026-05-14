@@ -83,7 +83,6 @@ export function FreeClassPopup({ isAuthenticated }: { isAuthenticated: boolean }
               <X className="w-5 h-5" />
             </button>
 
-            <span className={STYLES.plus}>+</span>
             <h2 className={STYLES.headline}>{COPY.headline}</h2>
             <p className={STYLES.body}>{COPY.body}</p>
 

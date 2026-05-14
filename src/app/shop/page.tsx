@@ -17,7 +17,6 @@ export default function ShopPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7 }}
                     >
-                        <span className="text-terra-400/50 text-3xl font-light block mb-2">+</span>
                         <h1 className="text-5xl md:text-7xl font-black text-peach-200 tracking-tighter font-display">
                             SOL SHOP
                         </h1>

@@ -61,7 +61,6 @@ export default function ContactPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <span className="text-terra-400/50 text-3xl font-light block mb-2">+</span>
             <h1 className="text-5xl md:text-7xl font-black text-peach-200 tracking-tighter font-display">
               GET IN TOUCH
             </h1>
@@ -217,7 +216,6 @@ export default function ContactPage() {
                 <div className="absolute top-0 right-0 text-[8rem] font-black text-peach-200/[0.03] leading-none pointer-events-none font-display">
                   SOL
                 </div>
-                <span className="text-terra-400/50 text-2xl font-light block mb-4">+</span>
                 <h3 className="text-2xl font-black text-peach-200 mb-4 font-display">READY TO BEGIN?</h3>
                 <p className="text-peach-400 text-sm leading-relaxed mb-6">
                   Whether you&apos;re new to Pilates or a seasoned practitioner, our team is here to guide you. Drop us a message or walk into our studio — your transformation starts with a single step.

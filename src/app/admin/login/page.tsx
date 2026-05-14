@@ -88,7 +88,6 @@ export default function AdminLoginPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <span className="text-terra-400 text-4xl font-light">+</span>
                             <h1 className="text-6xl font-black text-peach-200 leading-tight tracking-tight mt-4 font-display">
                                 ADMIN<br />
                                 CONTROL<br />

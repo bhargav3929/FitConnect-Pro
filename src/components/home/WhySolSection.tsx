@@ -13,7 +13,7 @@ const STYLES = {
   headerWrap: "text-center",
   eyebrow:
     "text-xs font-bold tracking-[0.3em] uppercase text-terra-400 block mb-4",
-  headline: "font-display font-black text-4xl md:text-6xl text-olive-600 mt-2",
+    headline: "font-display font-black text-4xl md:text-6xl text-olive-600 mt-2",
   grid: "grid grid-cols-1 md:grid-cols-3 gap-6 mt-16",
   cardImageOuter: "overflow-hidden aspect-[4/5] w-full relative rounded-none",
   cardImagePlaceholder: "absolute inset-0 bg-peach-300",
@@ -32,7 +32,7 @@ const CARDS = [
   {
     label: "The Method",
     body: "Rooted in Contrology — the original Pilates system. Strength training principles built in, not bolted on.",
-    image: "/images/why-sol/method.jpg", // TODO: Pilates move shot
+    image: "/images/sol-pilates-mat-olive.jpeg", // TODO: Pilates move shot
     alt: "Pilates instructor demonstrating a Contrology move",
   },
   {

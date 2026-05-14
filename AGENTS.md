@@ -1,0 +1,147 @@
+# FitConnect Pro — Project Configuration
+
+## Project Overview
+FitConnect Pro is a premium fitness class booking platform built with Next.js 16 (App Router), Firebase (Firestore, Auth, Cloud Functions), Tailwind CSS 4, Zustand, and Framer Motion.
+
+## Tech Stack
+- **Frontend:** Next.js 16.1.0, React 19, TypeScript 5, Tailwind CSS 4, Radix UI, Framer Motion, GSAP
+- **Backend:** Firebase Cloud Functions v5 (Node.js 18), Firestore, Firebase Auth, Firebase Storage
+- **State:** Zustand 5.0.9
+- **Forms:** React Hook Form + Zod
+- **Icons:** Lucide React ONLY
+- **Charts:** Recharts
+- **Deployment:** Vercel (frontend) + Firebase (functions)
+
+## Design System
+- **Colors:** Midnight navy (#0B0F19) base, Coral (#FF6A3D) primary accent, Amber (#FFB347) secondary
+- **Spacing:** 8px grid (8, 16, 24, 32, 48, 64, 96)
+- **Radius:** Sharp edges (0rem) — maximum 2 radius values across UI
+- **Typography:** Extreme weight contrast (300 body / 800 headings), 3x+ size jumps for headings
+- **Dark theme:** Rich darks only, never pure black/white
+- **Shadows:** Elevation hierarchy only, not decorative
+
+## Team Configuration ("start team")
+
+When the user says **"start team"** or **"spin up the team"**, create a team with these four agents:
+
+### Agent Roster
+
+| Agent | Config File | Role | File Ownership |
+|-------|------------|------|----------------|
+| **frontend** | `.Codex/agents/frontend.md` | Staff Frontend Engineer | `src/app/`, `src/components/`, `src/lib/hooks/`, `src/lib/store/`, `src/lib/utils.ts`, `src/types/`, `tailwind.config.ts`, `globals.css`, `mobile/`, `shared/` |
+| **backend** | `.Codex/agents/backend.md` | Principal Backend Engineer | `functions/`, `firestore.rules`, `firestore.indexes.json`, `src/lib/firebase/` |
+| **tester** | `.Codex/agents/tester.md` | Principal Test Engineer | READ-ONLY — does not edit files, only reports issues |
+| **reviewer** | `.Codex/agents/reviewer.md` | Design Engineering Director | READ-ONLY — does not edit files, only reports issues |
+
+### Team Rules (ENFORCED)
+1. **File ownership is absolute.** No agent edits another agent's files. Send a message instead.
+2. **Frontend and Backend announce shared interface changes** (types, API contracts) to each other immediately.
+3. **Tester verifies** every completed task: runs `tsc --noEmit`, `npm run build`, and reviews code for edge cases.
+4. **Reviewer inspects** every UI change against the Vibe-Coded Detection Framework. Any Tier 1 flag blocks the feature.
+5. **No task is complete** until Tester AND Reviewer sign off.
+6. **The lead (you) coordinates** — assigns tasks, resolves conflicts, makes architectural decisions.
+
+### Startup Sequence
+1. Create the team with `TeamCreate`
+2. Create tasks based on user request with `TaskCreate`
+3. Spawn all four agents as teammates using the `Task` tool with their respective agent configs
+4. Assign initial tasks to agents
+5. Monitor progress, relay messages between agents, resolve blockers
+
+## Build Commands
+```bash
+npm run dev                        # Dev server
+npm run build                      # Production build (web)
+npm run build --include-workspace-root  # Build web app (monorepo-aware)
+npx tsc --noEmit                   # Type check web
+cd shared && npx tsc --noEmit      # Type check shared
+cd functions && npx tsc --noEmit   # Type check backend
+cd shared && npx vitest run        # Run shared tests
+cd mobile && npx vitest run        # Run mobile tests
+cd mobile && npx expo start        # Start mobile dev server
+npm run lint                       # Lint
+```
+
+## Key Directories
+```
+src/app/                  → Pages (App Router)
+src/components/ui/        → Atomic UI primitives
+src/components/layout/    → Shell (Header, Footer, Sidebar)
+src/components/admin/     → Admin composites
+src/components/user/      → User composites
+src/lib/firebase/         → Firebase config & utilities
+src/lib/hooks/            → Custom hooks
+src/lib/store/            → Zustand stores
+src/types/                → TypeScript type definitions
+functions/src/            → Cloud Functions
+```
+
+## Monorepo Structure
+
+This project uses **npm workspaces** with two workspace packages:
+
+```json
+"workspaces": ["shared", "mobile"]
+```
+
+### Directory Layout
+```
+shared/                   → @fitconnect/shared package (consumed as TypeScript source)
+  src/types/              → Shared type definitions (booking, class, gym, user, payment, etc.)
+  src/stores/             → Zustand stores (adminAuthStore, clientAuthStore, uiStore)
+  src/firebase/           → Firebase config, Firestore utilities, API config
+  src/payments/           → Mock payment processor
+mobile/                   → Expo React Native app
+  app/                    → Expo Router screens
+  components/             → Mobile UI components
+  __tests__/              → Mobile tests (Vitest)
+src/                      → Next.js web app (unchanged)
+functions/                → Firebase Cloud Functions (unchanged)
+```
+
+### Shared Package (`@fitconnect/shared`)
+
+The shared package contains types, Zustand stores, Firebase config, Firestore utilities, and mock payment processing. It has no build step — both web and mobile consume it directly as TypeScript source.
+
+**Imports work the same in both web and mobile:**
+```ts
+import { Booking } from '@fitconnect/shared/types/booking';
+import { clientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
+import { getApiBaseUrl } from '@fitconnect/shared/firebase/api-config';
+```
+
+### API Config Pattern
+
+The shared `api-config` module lets web and mobile use the same fetch logic with different base URLs:
+
+- **Web** calls `initApiConfig({ baseUrl: '' })` — uses relative URLs (same origin)
+- **Mobile** calls `initApiConfig({ baseUrl: 'https://your-domain.com' })` — uses absolute URLs
+
+Call `initApiConfig()` once at app startup before any API requests.
+
+## Turbopack Cache Corruption Fix (macOS)
+
+This project runs on macOS which adds `com.apple.provenance` extended attributes to files. These attributes prevent Turbopack (Next.js 16's compiler) from writing its SST database files inside `.next/dev/cache/turbopack/`, causing:
+- `Persisting failed: Unable to write SST file`
+- `Failed to restore task data (corrupted database or bug)`
+- Dev server says "Ready" but pages return 500 or hang indefinitely
+
+**Fix:** Before starting the dev server (or whenever this error appears), run:
+```bash
+rm -rf .next && mkdir -p .next && xattr -cr .next && npm run dev
+```
+
+**Why:** `xattr -cr .next` strips macOS extended attributes recursively so Turbopack can write its persistent cache. If you only see `Persisting failed` warnings but pages still load, the warnings are non-fatal. If pages 500 or hang, run the full fix above.
+
+**Do NOT:**
+- Delete `.next` while the dev server is running (causes corruption)
+- Use `kill -9` on the dev server (use Ctrl+C instead)
+
+## Firebase Admin Private Key (.env.local)
+
+The `FIREBASE_SERVICE_ACCOUNT` in `.env.local` stores the private key with literal `\n` characters (not real newlines). The fix in `src/lib/firebase/admin.ts` handles this with `.replace(/\\n/g, '\n')`. If API routes return HTML error pages with "Failed to parse private key: Invalid PEM formatted message", this replacement is not working — check that `admin.ts` has the replace line.
+
+## Known Issues
+- `src/types/admin.ts` has hardcoded admin credentials (admin/admin123) — CRITICAL security issue
+- Font is Inter — consider upgrading to Satoshi or Space Grotesk per design standards
+- Settings page (`/admin/settings`) has no backend persistence — notification toggles and profile changes are lost on refresh
