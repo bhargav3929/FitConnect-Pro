@@ -69,7 +69,7 @@ export default function FacilitiesSection() {
                 <div className="border border-terra-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-terra-400 bg-terra-400/10 mb-6">
                     Our Studio
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-4 font-display">
+                <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-4 font-display">
                     OUR CLASS TYPES
                 </h2>
                 <p className="text-olive-300 max-w-lg text-lg">
@@ -160,7 +160,7 @@ export default function FacilitiesSection() {
                             )}>
                                 <div className="flex justify-between items-center w-full">
                                     <h3 className={cn(
-                                        "font-black text-peach-200 uppercase tracking-tighter transition-all duration-500 leading-none font-display",
+                                        "font-black text-peach-200 uppercase tracking-normal transition-all duration-500 leading-none font-display",
                                         activeId === amenity.id ? "text-4xl mb-2" : "text-xl"
                                     )}>
                                         {amenity.name}

@@ -56,7 +56,7 @@ export function GetStartedModal({ trigger, isOpen: controlledOpen, onClose }: Ge
                     {/* Header */}
                     <div className="p-8 pb-4">
                         <DialogHeader>
-                            <DialogTitle className="text-3xl font-black text-olive-600 tracking-tight text-center font-display">
+                            <DialogTitle className="text-3xl font-black text-olive-600 tracking-normal text-center font-display">
                                 WELCOME TO SOL
                             </DialogTitle>
                             <p className="text-olive-300 text-center text-sm tracking-wider mt-2">
@@ -80,7 +80,7 @@ export function GetStartedModal({ trigger, isOpen: controlledOpen, onClose }: Ge
                             </div>
 
                             {/* Content */}
-                            <h3 className="text-xl font-black text-olive-600 mb-2 tracking-tight font-display">
+                            <h3 className="text-xl font-black text-olive-600 mb-2 tracking-normal font-display">
                                 ADMIN PORTAL
                             </h3>
                             <p className="text-olive-300 text-sm leading-relaxed mb-6">
@@ -110,7 +110,7 @@ export function GetStartedModal({ trigger, isOpen: controlledOpen, onClose }: Ge
                             </div>
 
                             {/* Content */}
-                            <h3 className="text-xl font-black text-olive-600 mb-2 tracking-tight font-display">
+                            <h3 className="text-xl font-black text-olive-600 mb-2 tracking-normal font-display">
                                 MEMBER ACCESS
                             </h3>
                             <p className="text-olive-300 text-sm leading-relaxed mb-6">

@@ -120,10 +120,10 @@ const TestimonialsColumn = (props: {
                                                 className="h-10 w-10 rounded-full object-cover ring-2 ring-peach-400 group-hover:ring-terra-400/40 transition-all duration-300"
                                             />
                                             <div className="flex flex-col">
-                                                <cite className="font-semibold not-italic tracking-tight leading-5 text-olive-600">
+                                                <cite className="font-semibold not-italic tracking-normal leading-5 text-olive-600">
                                                     {name}
                                                 </cite>
-                                                <span className="text-sm leading-5 tracking-tight text-terra-400/70 mt-0.5">
+                                                <span className="text-sm leading-5 tracking-normal text-terra-400/70 mt-0.5">
                                                     {role}
                                                 </span>
                                             </div>
@@ -157,7 +157,7 @@ export default function TestimonialsSection() {
                 className="container px-4 z-10 mx-auto"
             >
                 <div className="flex flex-col items-center justify-center max-w-[540px] mx-auto mb-16">
-                    <h2 id="testimonials-heading" className="text-4xl md:text-5xl font-extrabold tracking-tight mt-6 text-center text-olive-600 font-display">
+                    <h2 id="testimonials-heading" className="text-4xl md:text-5xl font-extrabold tracking-normal mt-6 text-center text-olive-600 font-display">
                         What our members say
                     </h2>
                     <p className="text-center mt-5 text-olive-300 text-lg leading-relaxed max-w-sm">

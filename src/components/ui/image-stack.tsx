@@ -129,7 +129,7 @@ export default function ImgStack({ items }: ImgStackProps) {
 
                         {/* Mentor Info */}
                         <div className="absolute bottom-6 left-6 pointer-events-none">
-                            <h3 className="text-2xl font-black text-peach-200 uppercase leading-none mb-1 tracking-tight drop-shadow-md font-display">
+                            <h3 className="text-2xl font-black text-peach-200 uppercase leading-none mb-1 tracking-normal drop-shadow-md font-display">
                                 {card.name}
                             </h3>
                             <p className="text-xs font-bold text-peach-200/80 uppercase tracking-[0.2em] drop-shadow-sm">

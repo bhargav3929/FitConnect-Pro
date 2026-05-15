@@ -59,7 +59,7 @@ export function SubscriptionPromptModal({ isOpen, onClose, classId }: Subscripti
                                     <Lock className="w-10 h-10 text-terra-400" />
                                 </div>
 
-                                <h2 className="text-2xl font-black text-olive-600 mb-2 font-display tracking-tight">
+                                <h2 className="text-2xl font-black text-olive-600 mb-2 font-display tracking-normal">
                                     Membership Required
                                 </h2>
                                 <p className="text-olive-300 text-sm leading-relaxed mb-8 max-w-xs">

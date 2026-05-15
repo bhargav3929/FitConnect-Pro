@@ -68,7 +68,7 @@ export default function WaitlistPage() {
                 <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-terra-400">
                     Founding Membership
                 </p>
-                <h1 className="text-3xl lg:text-4xl font-black text-olive-600 uppercase tracking-tight font-display">
+                <h1 className="text-3xl lg:text-4xl font-black text-olive-600 uppercase tracking-normal font-display">
                     Waitlist
                 </h1>
                 <p className="text-olive-400 text-sm">

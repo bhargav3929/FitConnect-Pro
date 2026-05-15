@@ -185,7 +185,7 @@ export function InstagramSection() {
               whileInView={{ y: "0%", opacity: 1 }}
               viewport={{ once: true, margin: "-15%" }}
               transition={{ duration: 1.0, ease: [...E] }}
-              className="text-3xl md:text-5xl font-black text-olive-600 tracking-tighter font-display"
+              className="text-3xl md:text-5xl font-black text-olive-600 tracking-normal font-display"
             >
               {COPY.headline}
             </motion.h2>

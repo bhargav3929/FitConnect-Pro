@@ -148,7 +148,7 @@ export default function FacilitySettingsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="pb-6 border-b border-peach-400/20"
                 >
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">Facility</h2>
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">Facility</h2>
                     <p className="text-olive-300 text-sm tracking-wide">No facility has been configured yet.</p>
                 </motion.div>
                 <div className="bg-peach-50 border border-peach-400/20 p-12 text-center">
@@ -169,7 +169,7 @@ export default function FacilitySettingsPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
                         Facility
                     </h2>
                     <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
@@ -219,7 +219,7 @@ export default function FacilitySettingsPage() {
                     >
                         <div className="absolute top-0 right-0 w-24 h-24 bg-terra-400/5 rounded-full blur-2xl -mr-12 -mt-12 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
                         <stat.icon className="w-5 h-5 text-olive-300 mb-3 group-hover:text-terra-400 transition-colors" />
-                        <p className="text-2xl font-black text-olive-600 tracking-tight">{stat.value}</p>
+                        <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value}</p>
                         <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
                     </div>
                 ))}
@@ -246,7 +246,7 @@ export default function FacilitySettingsPage() {
                             type="text"
                             defaultValue={facility.name}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                         />
                     </div>
                     <div>
@@ -258,7 +258,7 @@ export default function FacilitySettingsPage() {
                             type="text"
                             defaultValue={facility.address.street}
                             disabled={!isEditing}
-                            className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                            className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                         />
                     </div>
                     <div className="grid grid-cols-3 gap-3">
@@ -269,7 +269,7 @@ export default function FacilitySettingsPage() {
                                 type="text"
                                 defaultValue={facility.address.city}
                                 disabled={!isEditing}
-                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                             />
                         </div>
                         <div>
@@ -279,7 +279,7 @@ export default function FacilitySettingsPage() {
                                 type="text"
                                 defaultValue={facility.address.state}
                                 disabled={!isEditing}
-                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                             />
                         </div>
                         <div>
@@ -289,7 +289,7 @@ export default function FacilitySettingsPage() {
                                 type="text"
                                 defaultValue={facility.address.zip}
                                 disabled={!isEditing}
-                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                             />
                         </div>
                     </div>
@@ -301,7 +301,7 @@ export default function FacilitySettingsPage() {
                                 type="text"
                                 defaultValue={facility.contactInfo.phone}
                                 disabled={!isEditing}
-                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                             />
                         </div>
                         <div>
@@ -311,7 +311,7 @@ export default function FacilitySettingsPage() {
                                 type="text"
                                 defaultValue={facility.contactInfo.email}
                                 disabled={!isEditing}
-                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                                className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                             />
                         </div>
                     </div>
@@ -327,7 +327,7 @@ export default function FacilitySettingsPage() {
                         defaultValue={facility.facilities}
                         disabled={!isEditing}
                         rows={3}
-                        className={`w-full px-4 py-3 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all duration-300 resize-none ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                        className={`w-full px-4 py-3 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 resize-none ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                     />
                 </div>
             </motion.div>

@@ -53,7 +53,7 @@ export default function TrainersExpandSection() {
                 <div className="border border-terra-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-terra-400 bg-terra-400/10 mb-6">
                     Our Team
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black text-peach-200 tracking-tight mb-4 font-display">
+                <h2 className="text-4xl md:text-5xl font-black text-peach-200 tracking-normal mb-4 font-display">
                     MEET THE EXPERTS
                 </h2>
                 <p className="text-peach-400 max-w-lg text-lg">
@@ -134,8 +134,8 @@ export default function TrainersExpandSection() {
                             "absolute inset-0 flex items-center px-8 transition-all duration-500",
                             activeId === trainer.id ? "opacity-0 translate-x-10" : "opacity-100 translate-x-0"
                         )}>
-                            <span className="text-3xl font-black text-peach-400 tracking-tighter uppercase mr-6">0{trainer.id}</span>
-                            <h3 className="text-2xl font-bold text-peach-200 tracking-tight uppercase font-display">{trainer.name}</h3>
+                            <span className="text-3xl font-black text-peach-400 tracking-normal uppercase mr-6">0{trainer.id}</span>
+                            <h3 className="text-2xl font-bold text-peach-200 tracking-normal uppercase font-display">{trainer.name}</h3>
                         </div>
 
                         {/* Active State Content */}
@@ -147,7 +147,7 @@ export default function TrainersExpandSection() {
                                 <span className="text-peach-400 text-xs font-bold tracking-[0.2em] uppercase block mb-1">
                                     Expert 0{trainer.id}
                                 </span>
-                                <h3 className="text-4xl font-black text-peach-200 uppercase leading-[0.9] tracking-tight mb-2 font-display">
+                                <h3 className="text-4xl font-black text-peach-200 uppercase leading-[0.9] tracking-normal mb-2 font-display">
                                     {trainer.name}
                                 </h3>
                                 <p className="text-peach-200/80 font-medium tracking-wide text-sm">

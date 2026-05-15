@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { useRouter } from "next/navigation"
 
 const STORAGE_KEY = "sol_site_gate_ok"
@@ -8,26 +8,16 @@ const STORAGE_KEY = "sol_site_gate_ok"
 const AdminContext = createContext<{ isAdmin: boolean }>({ isAdmin: false })
 export const useIsAdmin = () => useContext(AdminContext).isAdmin
 
+function hasStoredAccess() {
+    return typeof window !== "undefined" && sessionStorage.getItem(STORAGE_KEY) === "1"
+}
+
 export function SitePasswordGate({ children }: { children: React.ReactNode }) {
-    const [authed, setAuthed] = useState<boolean | null>(null)
+    const [authed, setAuthed] = useState(hasStoredAccess)
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
     const router = useRouter()
-
-    useEffect(() => {
-        setAuthed(typeof window !== "undefined" && sessionStorage.getItem(STORAGE_KEY) === "1")
-    }, [])
-
-    if (authed === null) {
-        return (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B0F19] text-white">
-                <p className="text-sm font-semibold tracking-[0.32em] uppercase text-[#FF6A3D] animate-pulse">
-                    Loading
-                </p>
-            </div>
-        )
-    }
 
     if (authed) return <AdminContext.Provider value={{ isAdmin: true }}>{children}</AdminContext.Provider>
 
@@ -43,8 +33,8 @@ export function SitePasswordGate({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0B0F19] text-white gap-8 px-6">
-            <p className="text-sm font-semibold tracking-[0.32em] uppercase text-[#FF6A3D] animate-pulse">
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-warmDark-900 text-peach-50 gap-8 px-6">
+            <p className="type-eyebrow animate-pulse">
                 Loading
             </p>
             <form onSubmit={handleSubmit} className="w-full max-w-xs flex flex-col gap-3">
@@ -54,7 +44,7 @@ export function SitePasswordGate({ children }: { children: React.ReactNode }) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
-                    className="bg-white/5 border border-white/10 rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#FF6A3D]"
+                    className="bg-peach-50/5 border border-peach-50/10 px-4 py-3 text-sm text-peach-50 placeholder:text-peach-200/50 focus:outline-none focus:border-terra-400"
                 />
                 <input
                     type="password"
@@ -62,12 +52,12 @@ export function SitePasswordGate({ children }: { children: React.ReactNode }) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
-                    className="bg-white/5 border border-white/10 rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#FF6A3D]"
+                    className="bg-peach-50/5 border border-peach-50/10 px-4 py-3 text-sm text-peach-50 placeholder:text-peach-200/50 focus:outline-none focus:border-terra-400"
                 />
                 {error && <p className="text-xs text-red-400">{error}</p>}
                 <button
                     type="submit"
-                    className="bg-[#FF6A3D] text-white text-sm font-bold tracking-wider uppercase py-3 rounded-md hover:bg-[#FF8A5D] transition-colors"
+                    className="bg-terra-400 text-peach-50 text-sm font-bold tracking-wider uppercase py-3 hover:bg-terra-300 transition-colors"
                 >
                     Enter
                 </button>

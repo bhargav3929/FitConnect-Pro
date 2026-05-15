@@ -26,7 +26,7 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="pb-6 border-b border-peach-400/20"
             >
-                <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
+                <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
                     Settings
                 </h2>
                 <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">

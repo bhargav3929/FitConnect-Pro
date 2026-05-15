@@ -69,7 +69,7 @@ export default function LeadsPage() {
     return (
         <div className="p-6 lg:p-10 space-y-8">
             <header className="space-y-2">
-                <h1 className="text-3xl lg:text-4xl font-black text-olive-600 uppercase tracking-tight font-display">
+                <h1 className="text-3xl lg:text-4xl font-black text-olive-600 uppercase tracking-normal font-display">
                     Free Class Leads
                 </h1>
                 <p className="text-olive-400 text-sm">

@@ -167,7 +167,7 @@ export function UserLoginContent() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <h1 className="text-6xl font-black text-peach-200 leading-tight tracking-tight mt-4 font-display">
+                            <h1 className="text-6xl font-black text-peach-200 leading-tight tracking-normal mt-4 font-display">
                                 MEMBER<br />
                                 ACCESS<br />
                                 PORTAL
@@ -216,7 +216,7 @@ export function UserLoginContent() {
                                 <UserPlus className="w-8 h-8 text-terra-400" />
                             )}
                         </div>
-                        <h2 className="text-3xl font-black text-olive-600 tracking-tight font-display">
+                        <h2 className="text-3xl font-black text-olive-600 tracking-normal font-display">
                             {activeTab === 'login' ? 'MEMBER LOGIN' : 'CREATE ACCOUNT'}
                         </h2>
                         <p className="text-olive-300 mt-2 text-sm tracking-wider">

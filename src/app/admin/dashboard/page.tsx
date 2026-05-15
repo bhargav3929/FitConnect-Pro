@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                         <div>
                             <p className="text-olive-300 text-sm font-medium tracking-wide">{getGreeting()}, Admin</p>
-                            <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-tight font-display mt-1">
+                            <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal font-display mt-1">
                                 Studio Dashboard
                             </h1>
                         </div>

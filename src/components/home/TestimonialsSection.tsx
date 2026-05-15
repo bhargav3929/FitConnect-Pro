@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import Image from "next/image";
 import {
   motion,
   useScroll,
@@ -23,16 +22,16 @@ const STYLES = {
   eyebrow:
     "text-terra-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-3",
   headline:
-    "text-4xl md:text-5xl font-black text-peach-200 tracking-tighter inline-block font-display",
+    "text-4xl md:text-5xl font-black text-peach-200 tracking-normal inline-block font-display",
   body: "text-peach-400 mt-4 max-w-sm mx-auto",
   // Card
-  card: "bg-warmDark-700 border border-peach-200/10 p-7 md:p-8 flex flex-col w-[340px] md:w-[400px] flex-shrink-0",
-  cardQuote: "text-peach-200 text-base leading-relaxed font-light flex-1",
+  card: "relative overflow-hidden bg-warmDark-700 border border-peach-200/10 p-7 md:p-8 flex flex-col w-[340px] md:w-[400px] flex-shrink-0",
+  cardQuote: "text-peach-200 text-base leading-relaxed font-light flex-1 max-h-48 overflow-y-auto",
   cardMeta: "mt-6 flex items-center gap-3",
-  cardAvatar:
-    "w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-terra-400/40",
-  cardAvatarMono:
-    "w-10 h-10 rounded-full ring-1 ring-terra-400/40 bg-terra-400/20 flex items-center justify-center flex-shrink-0",
+  cardMark:
+    "w-10 h-10 border border-terra-400/40 bg-terra-400/15 text-terra-300 flex items-center justify-center flex-shrink-0 font-display text-base font-extrabold leading-none",
+  cardWatermark:
+    "pointer-events-none absolute -right-5 -top-7 font-display text-[7rem] md:text-[8rem] font-extrabold leading-none text-terra-400/[0.045]",
   cardName: "text-peach-200 font-bold tracking-wide text-sm",
   cardRole: "text-terra-300 text-xs tracking-wider uppercase mt-0.5",
 };
@@ -47,7 +46,6 @@ export type Testimonial = {
   name: string;
   role: string;
   quote: string;
-  src?: string;
 };
 
 const TESTIMONIALS: Testimonial[] = [
@@ -55,57 +53,54 @@ const TESTIMONIALS: Testimonial[] = [
     name: "Srikanth Nomula",
     role: "Engineer",
     quote:
-      "Swetha's personalized approach not only helped alleviate my back pain but also allowed me to spend more quality time with my daughter. Her positive energy and encouragement created a welcoming environment where I felt comfortable sharing my progress.",
-    src: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150",
+      `I was not able to spend much time with my daughter or do activities because of back pain. With Swetha’’s personalized approach, It not only helped alleviate my back pain but also allowed me to spend more quality time with my daughter. I felt more energetic and capable of participating in her activities. Another fantastic outcome was my improved performance in volleyball. 
+Swetha’s positive energy and encouragement not only motivated me to push through the tough workouts but also created a welcoming environment where I felt comfortable sharing my progress and challenges.
+`,
   },
   {
     name: "Pallavi Jalakam",
     role: "Engineer",
     quote:
-      "After starting sessions with Swetha, I can do my yoga poses such as forward bends and back rolls with ease. Back rolls were impossible until lately.",
-    src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
+      "I was struggling with lower back pain while bending and was not able to stretch completely during yoga poses. After starting my sessions with Swetha, I can do my yoga poses such as forward bends and back rolls with ease. Back rolls were impossible until lately.",
   },
   {
     name: "Sushma Gurram",
     role: "Engineer",
     quote:
-      "Since working with Swetha, my back has become more flexible and core and arm strength increased. I correct my sloppy posture when I'm sitting and moving. Swetha teaches through layers — we can pick whichever feels comfortable to us.",
-    src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150",
+      `Because of my back pain, I become restless with my toddler and pain adds to make the already cranky situation worse. Since working with Swetha, my back has become more flexible and core and arm strength increased. I correct my sloppy posture when I’m sitting and moving. I also realized how I can use exercise bands for getting stronger almost anywhere anytime just sitting on the couch. 
+Swetha teaches through layers in her classes and we can pick whichever feels comfortable to us, so that we feel a sense of progress of where we stand in terms of strength and flexibility doing those layers of any movement. `,
   },
   {
     name: "Melinda Hattan",
     role: "Pilates Studio Owner & Instructor",
     quote:
-      "Swetha has great energy in the room. Her cueing is clear, direct, and somehow makes you realize muscles you didn't even know you had are working. She has a gift for helping clients dial in their form.",
-    src: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150",
+      `Swetha has great energy in the room. She is passionate about movement and it shows (in the best way). Her cueing is clear, direct, and somehow makes you realize muscles you didn’t even know you had… are definitely working. She has a gift for helping clients dial in their form while building that all-important mind-body connection.
+Beyond that, Swetha brings such a warm, welcoming energy to the studio. She connects easily with members, remembers the little things, and makes everyone feel comfortable (even mid-shaky-shaky on the reformer). 
+I'd especially recommend her to anyone on a postpartum or prenatal journey.`,
   },
   {
     name: "Sai Shruthi Sayini",
     role: "Pilates Instructor",
     quote:
-      "My back pain is gone, I've built so much more muscle, and I feel genuinely confident in my body again. Her classes feel special, smooth, flowy with minimal transitions and you can feel the effort she puts into every session.",
-    src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
+      `I tried Pilates after trying everything to heal my sciatica pain. After a lot of research, I decided to give Pilates one last shot and it worked. My back pain is gone, I've built so much more muscle, and I feel genuinely confident in my body again. What stands out most about Swetha's classes is how warm and intentional she is. Her classes feel special, smooth, flowy with minimal transitions and you can feel the effort she puts into every session. I'd recommend her to anyone without hesitation. Try her classes and feel the difference for yourself.`,
   },
   {
     name: "Kanthisri",
     role: "Medical Coder",
     quote:
-      "My stamina has noticeably improved. What I appreciate most is the curated approach she brings. She's patient, professional and genuinely invested in her clients' progress.",
-    src: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150&h=150",
+      `I came to Pilates already doing yoga and walking but I wanted to add real strength training. Swetha delivered exactly that, my stamina has noticeably improved. What I appreciate most is the curated approach she brings, both in class and in the practice videos she provides. She's patient, professional and genuinely invested in her clients' progress. If you're looking for interactive, results-driven Pilates sessions, Swetha is the place to go.`,
   },
   {
     name: "Shelli",
     role: "Operations Manager",
     quote:
-      "I have more confidence and better balance in my daily life. Swetha leads focused, challenging classes with a calm, clear energy that keeps you motivated throughout.",
-    src: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=150&h=150",
+      `I started with concerns about my strength, flexibility, and balance and Pilates addressed every one of them. I have more confidence and better balance in my daily life. Swetha leads focused, challenging classes with a calm, clear energy that keeps you motivated throughout. I'd recommend her to anyone looking to feel stronger and more capable in their everyday movement.`,
   },
   {
     name: "Abhinav",
     role: "Software Engineer",
     quote:
-      "After completing her online back pain course twice consistently, 70–80% of my pain is gone and I feel significantly better. My one piece of advice: stick with it consistently and you will see the results.",
-    src: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150",
+      `I came to Swetha dealing with sciatica and severe lower back pain. After completing her online back pain course twice consistently, I'd say 70–80% of my pain is gone and I feel significantly better. Her instruction is clear, precise and easy to follow, which made all the difference in staying consistent. I've already recommended her to friends and family dealing with similar issues and I'll keep doing so. My one piece of advice: stick with it consistently, exactly as she instructs and you will see the results.`,
   },
 ];
 
@@ -122,25 +117,14 @@ function wrapValue(min: number, max: number, v: number): number {
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
     <article className={STYLES.card}>
-      <p className={STYLES.cardQuote}>&ldquo;{item.quote}&rdquo;</p>
+      <span className={STYLES.cardWatermark} aria-hidden="true">
+        :)
+      </span>
+      <p className={STYLES.cardQuote}>{item.quote}</p>
       <div className={STYLES.cardMeta}>
-        {item.src ? (
-          <div className={STYLES.cardAvatar}>
-            <Image
-              src={item.src}
-              alt={item.name}
-              width={40}
-              height={40}
-              className="object-cover w-full h-full"
-            />
-          </div>
-        ) : (
-          <div className={STYLES.cardAvatarMono}>
-            <span className="text-terra-400 font-bold text-sm">
-              {item.name.charAt(0)}
-            </span>
-          </div>
-        )}
+        <div className={STYLES.cardMark} aria-hidden="true">
+          :)
+        </div>
         <div>
           <p className={STYLES.cardName}>{item.name}</p>
           <p className={STYLES.cardRole}>{item.role}</p>
@@ -160,9 +144,13 @@ function TestimonialsMarquee({ items }: { items: Testimonial[] }) {
 
   // Measure strip after mount
   useEffect(() => {
-    if (stripRef.current) {
-      setHalfWidth(stripRef.current.scrollWidth / 2);
-    }
+    const frame = requestAnimationFrame(() => {
+      if (stripRef.current) {
+        setHalfWidth(stripRef.current.scrollWidth / 2);
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   // Scroll velocity → marquee speed boost

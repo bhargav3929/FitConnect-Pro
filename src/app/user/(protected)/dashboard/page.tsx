@@ -130,7 +130,7 @@ export default function UserDashboard() {
                     <div className="flex items-start justify-between mb-1">
                         <div>
                             <p className="text-olive-300 text-sm font-medium tracking-wide">{getGreeting()}</p>
-                            <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-tight font-display mt-1">
+                            <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal font-display mt-1">
                                 {clientUser.name.split(' ')[0]}
                             </h1>
                         </div>

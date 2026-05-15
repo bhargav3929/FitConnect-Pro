@@ -234,7 +234,7 @@ export default function SchedulePage() {
                             <span className="text-olive-400 text-xs">({FACILITY.reviewCount})</span>
                         </div>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-tighter mb-2 font-display">
+                    <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal mb-2 font-display">
                         Class Schedule
                     </h1>
                     <p className="text-olive-300 text-sm flex items-center gap-2">

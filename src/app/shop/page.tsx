@@ -17,7 +17,7 @@ export default function ShopPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7 }}
                     >
-                        <h1 className="text-5xl md:text-7xl font-black text-peach-200 tracking-tighter font-display">
+                        <h1 className="text-5xl md:text-7xl font-black text-peach-200 tracking-normal font-display">
                             SOL SHOP
                         </h1>
                         <p className="text-peach-400 mt-4 max-w-lg mx-auto tracking-wider text-sm">
@@ -40,7 +40,7 @@ export default function ShopPage() {
                     <span className="inline-block px-3 py-1 rounded-full bg-terra-400/10 text-terra-400 text-[11px] font-bold tracking-[0.2em] uppercase mb-4">
                         Coming Soon
                     </span>
-                    <h2 className="text-3xl md:text-4xl font-black text-olive-600 tracking-tight font-display mb-4 uppercase">
+                    <h2 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal font-display mb-4 uppercase">
                         Studio Merch Is On The Way
                     </h2>
                     <p className="text-olive-400 leading-relaxed mb-8">

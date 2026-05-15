@@ -29,7 +29,7 @@ const COPY = {
     legalLinks: ["Privacy Policy", "Terms of Service", "Cookie Policy", "Accessibility"],
     newsletterHeading: "STAY CONNECTED",
     newsletterBody:
-        "Be the first to know about classes, founding member spots, and studio updates.",
+        "Be the first to know about classes, founding member spots and studio updates.",
     newsletterPlaceholder: "Enter your email",
     newsletterCta: "Subscribe",
     copyright: "SOL Pilates Studio. All rights reserved.",
@@ -41,7 +41,7 @@ export function Footer() {
         <Reveal variant="slideUp" as="footer" duration={0.8} className="bg-warmDark-800 text-peach-200 py-20 relative overflow-hidden">
             {/* Cinematic Watermark */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none select-none flex items-center justify-center opacity-[0.03]">
-                <span className="text-[15vw] md:text-[20vw] font-black uppercase tracking-tighter text-peach-200 stroke-text leading-none whitespace-nowrap font-display">
+                <span className="text-[15vw] md:text-[20vw] font-black uppercase tracking-normal text-peach-200 stroke-text leading-none whitespace-nowrap font-display">
                     {COPY.watermark}
                 </span>
             </div>

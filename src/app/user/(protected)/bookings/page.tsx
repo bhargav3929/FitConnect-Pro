@@ -93,7 +93,7 @@ export default function BookingsPage() {
         <div className="space-y-8 pb-20">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-olive-600 tracking-tight font-display">My Bookings</h1>
+                <h1 className="text-3xl font-black text-olive-600 tracking-normal font-display">My Bookings</h1>
                 <p className="text-olive-300 text-sm mt-1">
                     Manage your upcoming classes and view history
                 </p>

@@ -123,7 +123,7 @@ export default function BookingsPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
                         Bookings
                     </h2>
                     <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
@@ -162,7 +162,7 @@ export default function BookingsPage() {
                         {isLoading ? (
                             <div className="h-8 w-16 bg-peach-300/40 rounded animate-pulse mb-1" />
                         ) : (
-                            <p className="text-2xl font-black text-olive-600 tracking-tight">{stat.value}</p>
+                            <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value}</p>
                         )}
                         <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
                     </div>
@@ -183,7 +183,7 @@ export default function BookingsPage() {
                         placeholder="Search by user or class ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-white transition-all duration-300"
+                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                     />
                 </div>
                 <select
@@ -263,7 +263,7 @@ export default function BookingsPage() {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-olive-600 font-black text-lg tracking-tight">#{booking.spotNumber}</span>
+                                            <span className="text-olive-600 font-black text-lg tracking-normal">#{booking.spotNumber}</span>
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-2 text-olive-300">

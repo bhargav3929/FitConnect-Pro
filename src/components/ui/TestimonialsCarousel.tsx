@@ -12,7 +12,7 @@ export type Testimonial = {
   src?: string;
 };
 
-const TERRA_400 = "#C2714A";
+const TERRA_400 = "#FF6A3D";
 const PEACH_200_20 = "rgba(255,232,210,0.2)";
 
 const slideVariants: Variants = {

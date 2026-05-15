@@ -88,7 +88,7 @@ export default function AdminLoginPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <h1 className="text-6xl font-black text-peach-200 leading-tight tracking-tight mt-4 font-display">
+                            <h1 className="text-6xl font-black text-peach-200 leading-tight tracking-normal mt-4 font-display">
                                 ADMIN<br />
                                 CONTROL<br />
                                 CENTER
@@ -134,7 +134,7 @@ export default function AdminLoginPage() {
                         <div className="w-16 h-16 bg-terra-400/10 flex items-center justify-center mb-6">
                             <Shield className="w-8 h-8 text-terra-400" />
                         </div>
-                        <h2 className="text-3xl font-black text-olive-600 tracking-tight font-display">
+                        <h2 className="text-3xl font-black text-olive-600 tracking-normal font-display">
                             ADMIN LOGIN
                         </h2>
                         <p className="text-olive-300 mt-2 text-sm tracking-wider">

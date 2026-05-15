@@ -134,7 +134,7 @@ export default function ProfilePage() {
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-2xl font-black text-olive-600 tracking-tight font-display truncate">{clientUser.name}</h1>
+                            <h1 className="text-2xl font-black text-olive-600 tracking-normal font-display truncate">{clientUser.name}</h1>
                             <p className="text-olive-300 text-sm flex items-center gap-1.5 mt-0.5 truncate">
                                 <Mail className="w-3 h-3 flex-shrink-0" />
                                 {clientUser.email}

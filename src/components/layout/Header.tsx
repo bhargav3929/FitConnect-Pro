@@ -48,14 +48,14 @@ export function Header() {
                     {/* Desktop Nav Links */}
                     <nav className="hidden md:flex items-center gap-8">
                         <Link href="/" className={linkClass}>HOME</Link>
-                        <Link href="/subscription" className={linkClass}>PRICING</Link>
                         {/* Hiding facilities */}
                         {/* <Link href="/facilities" className={linkClass}>FACILITIES</Link> */}
-                        <Link href="/about" className={linkClass}>ABOUT US</Link>
-                        <Link href="/founder" className={linkClass}>FOUNDER</Link>
+                        <Link href="/about" className={linkClass}>OUR STORY</Link>
+                        <Link href="/subscription" className={linkClass}>PRICING</Link>
+                        {/* <Link href="/founder" className={linkClass}>FOUNDER</Link> */}
                         <Link href="/shop" className={linkClass}>SHOP</Link>
                         <Link href="/contact" className={linkClass}>CONTACT US</Link>
-                        <Link href="/feedback" className={linkClass}>FEEDBACK</Link>
+                        {/* <Link href="/feedback" className={linkClass}>FEEDBACK</Link> */}
                     </nav>
 
                     {/* Right side */}
@@ -68,7 +68,7 @@ export function Header() {
                         </Link>
                         <button
                             onClick={() => setIsMenuOpen(true)}
-                            className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 group p-2 hover:bg-white/10 rounded-full transition-colors"
+                            className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 group p-2 hover:bg-peach-50/10 rounded-full transition-colors md:hidden"
                         >
                             <span className={`w-6 h-0.5 group-hover:scale-x-75 transition-transform origin-right ${isScrolled ? "bg-olive-400" : "bg-peach-100"}`}></span>
                             <span className={`w-6 h-0.5 ${isScrolled ? "bg-olive-400" : "bg-peach-100"}`}></span>

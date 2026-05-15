@@ -98,7 +98,7 @@ export default function SubscribePage() {
                         </button>
                     )}
 
-                    <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-tighter font-display">
+                    <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal font-display">
                         {step === 'plan' && 'Choose Your Plan'}
                         {step === 'checkout' && 'Checkout'}
                         {step === 'success' && 'Welcome Aboard'}
@@ -218,7 +218,7 @@ export default function SubscribePage() {
                             <CheckCircle2 className="w-12 h-12 text-terra-400" />
                         </motion.div>
 
-                        <h2 className="text-3xl font-black text-olive-600 mb-2 font-display tracking-tight">
+                        <h2 className="text-3xl font-black text-olive-600 mb-2 font-display tracking-normal">
                             You&apos;re All Set!
                         </h2>
                         <p className="text-olive-300 text-sm mb-8 max-w-xs">

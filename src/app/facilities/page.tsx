@@ -71,7 +71,7 @@ export default function FacilityPage() {
                         animate={{ opacity: 1, y: 0 }}
                     >
                         <span className="text-terra-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-4">Our Facility</span>
-                        <h1 className="text-4xl md:text-6xl font-black text-olive-600 tracking-tighter leading-[0.95] mb-6 font-display">
+                        <h1 className="text-4xl md:text-6xl font-black text-olive-600 tracking-normal leading-[0.95] mb-6 font-display">
                             SPACES DESIGNED<br />
                             FOR STRENGTH,<br />
                             CONTROL & CALM
@@ -133,7 +133,7 @@ export default function FacilityPage() {
                             {/* Content */}
                             <div className="flex flex-col justify-center space-y-6">
                                 <div>
-                                    <h3 className="text-3xl font-black text-olive-600 tracking-tight mb-4 font-display">{selectedZone.name}</h3>
+                                    <h3 className="text-3xl font-black text-olive-600 tracking-normal mb-4 font-display">{selectedZone.name}</h3>
                                     <p className="text-olive-300 text-base leading-relaxed">{selectedZone.description}</p>
                                 </div>
 

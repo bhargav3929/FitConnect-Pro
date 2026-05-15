@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 const config: Config = {
     darkMode: "class",
@@ -64,22 +65,31 @@ const config: Config = {
                     500: "#C4A080",
                 },
                 olive: {
-                    300: "#8A9A78",
-                    400: "#6B7752",
-                    500: "#5A6645",
+                    300: "#8A947A",
+                    400: "#64704F",
+                    500: "#566044",
                     600: "#4A5438",
-                    700: "#3A422C",
+                    700: "#354024",
                 },
                 terra: {
-                    300: "#E8834A",
-                    400: "#DA6027",
-                    500: "#B84D1C",
-                    600: "#8F3B14",
+                    300: "#FF8A5D",
+                    400: "#FF6A3D",
+                    500: "#E4572E",
+                    600: "#B83A1F",
                 },
                 warmDark: {
+                    600: "#4A3830",
                     700: "#3B2F28",
                     800: "#2C2420",
-                    900: "#1E1815",
+                    900: "#0B0F19",
+                },
+                brand: {
+                    primary: "#FF6A3D",
+                    secondary: "#FFB347",
+                    accent: "#4A5438",
+                    ink: "#0B0F19",
+                    surface: "#F5E8D8",
+                    paper: "#FAF3EB",
                 },
                 /* SOL Member/Admin Area — Dark Earthy Palette */
                 forest: {
@@ -162,6 +172,6 @@ const config: Config = {
             }
         }
     },
-    plugins: [require("tailwindcss-animate")],
+    plugins: [tailwindcssAnimate],
 };
 export default config;

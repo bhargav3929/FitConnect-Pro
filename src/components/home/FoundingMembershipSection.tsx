@@ -25,8 +25,8 @@ const COPY = {
   filledSpots: 3,
 };
 
-// terra-400 = #DA6027, peach-400/30 ≈ rgba(212,180,148,0.3)
-const TERRA_COLOR = "#DA6027";
+// terra-400 = SOL primary coral
+const TERRA_COLOR = "#FF6A3D";
 const INACTIVE_COLOR = "rgba(212,180,148,0.3)";
 
 const E: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -103,7 +103,9 @@ function DotRow() {
 
   // Reduced motion: show dots immediately in final state
   useEffect(() => {
-    if (prefersReduced && isInView) setPhase(2);
+    if (!prefersReduced || !isInView) return;
+    const frame = requestAnimationFrame(() => setPhase(2));
+    return () => cancelAnimationFrame(frame);
   }, [prefersReduced, isInView]);
 
   return (

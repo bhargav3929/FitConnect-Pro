@@ -60,7 +60,7 @@ function MetricCard({ label, value, subValue, icon: Icon, delay = 0, isLoading }
                 {isLoading ? (
                     <div className="h-8 w-24 bg-peach-300/40 rounded animate-pulse mb-1" />
                 ) : (
-                    <p className="text-3xl font-black text-olive-600 tracking-tight group-hover:translate-x-1 transition-transform duration-300">{value}</p>
+                    <p className="text-3xl font-black text-olive-600 tracking-normal group-hover:translate-x-1 transition-transform duration-300">{value}</p>
                 )}
                 <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1.5">{label}</p>
             </div>
@@ -124,7 +124,7 @@ export default function ReportsPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">Reports</h2>
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">Reports</h2>
                     <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">Business performance insights, attendance trends, and membership analytics.</p>
                 </div>
             </motion.div>

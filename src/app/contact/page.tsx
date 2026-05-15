@@ -61,7 +61,7 @@ export default function ContactPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <h1 className="text-5xl md:text-7xl font-black text-peach-200 tracking-tighter font-display">
+            <h1 className="text-5xl md:text-7xl font-black text-peach-200 tracking-normal font-display">
               GET IN TOUCH
             </h1>
             <p className="text-peach-400 mt-4 max-w-md mx-auto tracking-wider text-sm">
@@ -112,7 +112,7 @@ export default function ContactPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-3xl md:text-4xl font-black text-olive-600 tracking-tight mb-2 font-display">
+              <h2 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal mb-2 font-display">
                 SEND US A MESSAGE
               </h2>
               <p className="text-olive-300 mb-8 text-sm">

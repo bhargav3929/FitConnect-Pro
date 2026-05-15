@@ -55,7 +55,7 @@ function PlanCard({
                 </div>
 
                 <div className="flex items-end gap-1.5 mb-2">
-                    <span className="font-mono text-3xl font-bold tracking-tight text-olive-600">
+                    <span className="font-mono text-3xl font-bold tracking-normal text-olive-600">
                         {plan.price === 0 ? 'FREE' : `₹${plan.price.toLocaleString('en-IN')}`}
                     </span>
                     <span className="text-olive-400 text-xs font-semibold pb-1">

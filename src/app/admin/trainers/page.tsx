@@ -196,7 +196,7 @@ export default function TrainersPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
                         Trainers
                     </h2>
                     <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
@@ -234,7 +234,7 @@ export default function TrainersPage() {
                         {isLoading ? (
                             <div className="h-8 w-16 bg-peach-300/40 rounded animate-pulse mb-1" />
                         ) : (
-                            <p className="text-2xl font-black text-olive-600 tracking-tight">{stat.value}</p>
+                            <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value}</p>
                         )}
                         <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
                     </div>
@@ -254,7 +254,7 @@ export default function TrainersPage() {
                     placeholder="Search trainers or specialties..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-white transition-all duration-300"
+                    className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                 />
             </motion.div>
 
@@ -463,7 +463,7 @@ export default function TrainersPage() {
                                     value={formData.name}
                                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                     placeholder="Jane Smith"
-                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all text-sm"
+                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
                                 />
                             </div>
                             <div>
@@ -475,7 +475,7 @@ export default function TrainersPage() {
                                     value={formData.email}
                                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                                     placeholder="jane@solpilates.com"
-                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all text-sm"
+                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
                                 />
                             </div>
                         </div>
@@ -491,7 +491,7 @@ export default function TrainersPage() {
                                     value={formData.phone}
                                     onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                                     placeholder="(212) 555-0100"
-                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all text-sm"
+                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
                                 />
                             </div>
                             <div>
@@ -519,7 +519,7 @@ export default function TrainersPage() {
                                 value={formData.specialties}
                                 onChange={(e) => setFormData(prev => ({ ...prev, specialties: e.target.value }))}
                                 placeholder="Reformer, Mat Pilates, Barre"
-                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all text-sm"
+                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
                             />
                         </div>
 
@@ -533,7 +533,7 @@ export default function TrainersPage() {
                                 value={formData.certifications}
                                 onChange={(e) => setFormData(prev => ({ ...prev, certifications: e.target.value }))}
                                 placeholder="PMA-CPT, NASM, ACE"
-                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all text-sm"
+                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
                             />
                         </div>
 
@@ -561,7 +561,7 @@ export default function TrainersPage() {
                                 value={formData.profilePictureUrl}
                                 onChange={(e) => setFormData(prev => ({ ...prev, profilePictureUrl: e.target.value }))}
                                 placeholder="https://..."
-                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-white focus:outline-none transition-all text-sm"
+                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
                             />
                         </div>
 
@@ -580,7 +580,7 @@ export default function TrainersPage() {
                                         }`}
                                 >
                                     <span
-                                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 shadow-sm ${formData.isActive ? 'left-6' : 'left-1'}`}
+                                        className={`absolute top-1 w-4 h-4 bg-peach-50 rounded-full transition-all duration-300 shadow-sm ${formData.isActive ? 'left-6' : 'left-1'}`}
                                     />
                                 </button>
                             </div>

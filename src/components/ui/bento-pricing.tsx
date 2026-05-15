@@ -67,7 +67,7 @@ function PlanCard({
 
             <div className="p-6 pt-2 flex flex-col h-full">
                 <div className="flex items-end gap-2 mb-2">
-                    <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
+                    <span className="font-mono text-4xl font-bold tracking-normal text-olive-600">
                         {formatPrice(plan.price)}
                     </span>
                     <div className="flex flex-col leading-none pb-2">
@@ -140,7 +140,7 @@ export function BentoPricing() {
             {/* SECTION 1: TRY IT */}
             <div className="space-y-8">
                 <div className="text-center space-y-2">
-                    <h2 className="text-3xl md:text-5xl font-black text-olive-600 tracking-tight uppercase font-display">
+                    <h2 className="text-3xl md:text-5xl font-black text-olive-600 tracking-normal uppercase font-display">
                         Start Here
                     </h2>
                     <p className="text-olive-400 max-w-2xl mx-auto">
@@ -161,7 +161,7 @@ export function BentoPricing() {
             {/* SECTION 2: MEMBERSHIPS */}
             <div className="space-y-8">
                 <div className="text-center space-y-2">
-                    <h2 className="text-2xl md:text-4xl font-black text-olive-600 tracking-tight uppercase font-display">
+                    <h2 className="text-2xl md:text-4xl font-black text-olive-600 tracking-normal uppercase font-display">
                         Memberships
                     </h2>
                     <p className="text-olive-400 max-w-2xl mx-auto">Show up consistently. That&apos;s where the change happens.</p>

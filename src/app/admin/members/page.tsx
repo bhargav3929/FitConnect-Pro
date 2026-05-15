@@ -75,7 +75,7 @@ export default function MembersPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-2 font-display">
+                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
                         Members
                     </h2>
                     <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
@@ -125,7 +125,7 @@ export default function MembersPage() {
                         {isLoading ? (
                             <div className="h-8 w-16 bg-peach-300/40 rounded animate-pulse mb-1" />
                         ) : (
-                            <p className="text-2xl font-black text-olive-600 tracking-tight">{stat.value.toLocaleString()}</p>
+                            <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value.toLocaleString()}</p>
                         )}
                         <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
                     </div>
@@ -146,7 +146,7 @@ export default function MembersPage() {
                         placeholder="Search by name or email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-white transition-all duration-300"
+                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                     />
                 </div>
                 <select
@@ -252,7 +252,7 @@ export default function MembersPage() {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-olive-600 font-black text-lg tracking-tight">
+                                            <span className="text-olive-600 font-black text-lg tracking-normal">
                                                 {member.subscription.classesRemaining === null ? '∞' : member.subscription.classesRemaining}
                                             </span>
                                         </td>

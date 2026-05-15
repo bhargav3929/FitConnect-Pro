@@ -299,7 +299,7 @@ export const AnimatedProfileCard = React.forwardRef<
                 <div className='h-full w-full'>{baseCard}</div>
                 <div
                     ref={overlayRef}
-                    className={cn('absolute inset-0 h-full w-full bg-white text-black', overlayThemeClass)}
+                    className={cn('absolute inset-0 h-full w-full bg-peach-50 text-black', overlayThemeClass)}
                 >
                     {overlayCard}
                 </div>

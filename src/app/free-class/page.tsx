@@ -103,7 +103,7 @@ export default function FreeClassPage() {
         return (
             <main className="min-h-screen bg-peach-50 flex items-center justify-center p-6">
                 <div className="max-w-lg text-center space-y-6">
-                    <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-tight">
+                    <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
                         Free Class Booked
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
@@ -125,7 +125,7 @@ export default function FreeClassPage() {
         return (
             <main className="min-h-screen bg-peach-50 flex items-center justify-center p-6">
                 <div className="max-w-lg text-center space-y-6">
-                    <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-tight">
+                    <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
                         You&apos;re in.
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
@@ -146,7 +146,7 @@ export default function FreeClassPage() {
         <main className="min-h-screen bg-peach-50 py-16 px-6">
             <div className="max-w-xl mx-auto space-y-8">
                 <header className="space-y-3">
-                    <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-tight">
+                    <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
                         Free Drop-In
                     </h1>
                     <p className="text-olive-400 leading-relaxed">

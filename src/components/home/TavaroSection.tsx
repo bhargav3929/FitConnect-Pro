@@ -15,7 +15,7 @@ import {
 const COPY = {
   badge: "OPENING JULY 2026 · HYDERABAD",
   headline: "A space that makes showing up the easy part.",
-  body: "Sol Pilates Studio is inside Tavaro Resorts. Beautiful, intentional, and designed to make every visit feel like more than just a workout.",
+  body: "Sol Pilates Studio is inside Tavaro Resorts. Beautiful, intentional and designed to make every visit feel like more than just a workout.",
 };
 
 const IMAGES = {
@@ -30,7 +30,7 @@ const IMAGES = {
   studio: {
     src: "/images/tavaro/studio.jpg",
     alt: "Studio space, under construction",
-    caption: "Studio space — coming soon",
+    caption: "Studio in construction",
   },
 };
 

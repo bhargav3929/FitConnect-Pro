@@ -54,7 +54,7 @@ export function AdminHeader() {
 
                     {/* Page Title & Breadcrumb */}
                     <div className="flex flex-col">
-                        <h1 className="text-xl font-bold text-olive-600 tracking-tight flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-olive-600 tracking-normal flex items-center gap-2">
                             {pageTitle}
                             <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-terra-400" />
                         </h1>

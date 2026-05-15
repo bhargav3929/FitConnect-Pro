@@ -8,7 +8,7 @@ import { SitePasswordGate } from "@/components/layout/SitePasswordGate";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-sans",
 });
 
