@@ -21,11 +21,11 @@ export default function MentorsDesktop() {
                 autoplay={true}
                 colors={{
                     name: "#F0D8C0",
-                    designation: "#8B3F2C",
+                    designation: "#DA6027",
                     testimony: "#D4B494",
                     arrowBackground: "#3B2F28",
                     arrowForeground: "#F0D8C0",
-                    arrowHoverBackground: "#8B3F2C",
+                    arrowHoverBackground: "#DA6027",
                 }}
                 fontSizes={{
                     name: "3rem",

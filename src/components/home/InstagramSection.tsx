@@ -93,7 +93,7 @@ function ThumbRow({
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Open Instagram"
-      className="block overflow-hidden"
+      className="block overflow-hidden relative isolate"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -225,7 +225,7 @@ export function InstagramSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-10%" }}
           transition={{ duration: 0.9, delay: 0.2, ease: [...E] }}
-          className="flex flex-col gap-2"
+          className="flex flex-col gap-2 relative isolate"
           style={{ overflow: "hidden" }}
         >
           {prefersReduced ? (

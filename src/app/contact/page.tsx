@@ -103,6 +103,20 @@ export default function ContactPage() {
             ))}
           </div>
 
+          {/* Google Maps */}
+          <div className="mb-20 overflow-hidden border border-peach-400">
+            <iframe
+              title="SOL Pilates Studio location"
+              src="https://www.google.com/maps?q=250+West+54th+Street,+New+York,+NY+10019&output=embed"
+              width="100%"
+              height="400"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+
           {/* Contact Form + Map */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
             {/* Form */}

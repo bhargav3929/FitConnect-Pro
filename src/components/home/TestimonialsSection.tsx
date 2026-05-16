@@ -175,7 +175,7 @@ function TestimonialsMarquee({ items }: { items: Testimonial[] }) {
 
   return (
     <div
-      className="overflow-hidden w-full"
+      className="overflow-hidden w-full isolate"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -251,6 +251,7 @@ export function TestimonialsSection() {
           viewport={{ once: true, margin: "-15%" }}
           transition={{ duration: 0.9, delay: 0.2, ease: [...E] }}
           style={{ overflow: "hidden" }}
+          className="relative isolate"
         >
           {prefersReduced ? (
             <TestimonialsGrid items={TESTIMONIALS} />

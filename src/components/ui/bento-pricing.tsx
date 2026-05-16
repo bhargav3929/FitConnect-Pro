@@ -17,20 +17,48 @@ function FilledCheck() {
     );
 }
 
+function FilledCheckDark() {
+    return (
+        <div className="bg-terra-300 text-warmDark-900 rounded-full p-0.5 shrink-0">
+            <CheckIcon className="size-3" strokeWidth={3} />
+        </div>
+    );
+}
+
 function formatPrice(rupees: number) {
     if (rupees === 0) return 'FREE';
     return `₹${rupees.toLocaleString('en-IN')}`;
 }
 
 function priceSuffix(plan: PlanDefinition) {
-    if (plan.id === 'drop_in') return '/ 30 MIN';
-    if (plan.id === 'kickstarter') return '/ 2 WEEKS';
-    if (plan.durationDays === 90) return '/ QUARTER';
-    if (plan.durationDays === 180) return '/ 6 MONTHS';
+    if (plan.id === 'drop_in') return '/ session';
+    if (plan.id === 'kickstarter') return '/ 2 weeks';
+    if (plan.durationDays === 90) return '/ quarter';
+    if (plan.durationDays === 180) return '/ 6 months';
     return '';
 }
 
-function PlanCard({
+function getPerClassPrice(plan: PlanDefinition): string | null {
+    if (!plan.credits || plan.credits <= 1) return null;
+    const perClass = Math.round(plan.price / plan.credits);
+    return `≈ ₹${perClass.toLocaleString('en-IN')} / class`;
+}
+
+function SectionLabel({ label, accent }: { label: string; accent?: boolean }) {
+    return (
+        <div className="flex items-center gap-3">
+            <span className={cn(
+                'text-xs font-black uppercase tracking-[0.15em]',
+                accent ? 'text-terra-400' : 'text-olive-500',
+            )}>
+                {label}
+            </span>
+            <div className={cn('flex-1 h-px', accent ? 'bg-terra-400/25' : 'bg-peach-400/30')} />
+        </div>
+    );
+}
+
+function IntroCard({
     plan,
     onSelect,
     cta,
@@ -44,52 +72,45 @@ function PlanCard({
     ctaDisabled?: boolean;
 }) {
     return (
-        <div
-            className={cn(
-                'bg-peach-50 border-peach-400/20 relative overflow-hidden rounded-2xl border flex flex-col',
-                'hover:border-terra-400/30 transition-all duration-300',
-                featured && 'ring-1 ring-terra-400/30',
-            )}
-        >
+        <div className={cn(
+            'relative overflow-hidden rounded-2xl border flex flex-col bg-peach-50 transition-all duration-300',
+            featured
+                ? 'border-terra-400/50 ring-1 ring-terra-400/20 hover:ring-terra-400/40'
+                : 'border-peach-400/30 hover:border-terra-400/30',
+        )}>
             {featured && (
-                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-terra-400/50 to-transparent opacity-50" />
+                <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-terra-400 to-transparent" />
             )}
-            <div className="flex items-center gap-3 p-6 pb-2">
-                <Badge variant="secondary" className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wider uppercase">
+
+            <div className="p-6 pb-0 flex items-center justify-between">
+                <Badge className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wider uppercase text-xs px-3">
                     {plan.name}
                 </Badge>
-                {plan.recommended && (
-                    <Badge variant="outline" className="ml-auto border-terra-400/30 text-terra-400 text-[10px] uppercase tracking-widest hidden lg:flex">
-                        <SparklesIcon className="me-1 size-3" /> Popular
-                    </Badge>
+                {featured && (
+                    <span className="text-[10px] text-terra-400 font-black tracking-[0.15em] uppercase flex items-center gap-1">
+                        <SparklesIcon className="size-3" />
+                        Best Intro
+                    </span>
                 )}
             </div>
 
-            <div className="p-6 pt-2 flex flex-col h-full">
-                <div className="flex items-end gap-2 mb-2">
-                    <span className="font-mono text-4xl font-bold tracking-normal text-olive-600">
+            <div className="p-6 pt-4 flex flex-col h-full">
+                <div className="flex items-end gap-2 mb-1">
+                    <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
                         {formatPrice(plan.price)}
                     </span>
-                    <div className="flex flex-col leading-none pb-2">
-                        <span className="text-olive-400 text-sm font-semibold uppercase">{priceSuffix(plan)}</span>
-                        {plan.credits !== null && plan.credits > 1 && (
-                            <span className="text-olive-300 text-[10px] font-bold uppercase">{plan.credits} classes</span>
-                        )}
-                    </div>
+                    <span className="text-olive-400 text-sm font-semibold uppercase pb-2">
+                        {priceSuffix(plan)}
+                    </span>
                 </div>
-                {plan.foundingPrice && (
-                    <div className="mb-3 text-xs font-semibold text-terra-400 uppercase tracking-wider">
-                        Founding member: {formatPrice(plan.foundingPrice)}
-                        <span className="ml-2 text-olive-300 font-normal normal-case tracking-normal">(first 25 only)</span>
-                    </div>
-                )}
+
                 {plan.tagline && (
-                    <p className="text-olive-300 text-sm leading-relaxed mb-6 border-b border-peach-400/20 pb-6">
+                    <p className="text-olive-400 text-sm leading-relaxed mt-3 mb-5 border-b border-peach-400/20 pb-5">
                         {plan.tagline}
                     </p>
                 )}
 
-                <ul className="text-olive-300 space-y-4 text-sm mt-2 flex-grow">
+                <ul className="space-y-3 text-sm text-olive-400 flex-grow">
                     {plan.features.map((f, i) => (
                         <li key={i} className="flex items-start gap-3">
                             <FilledCheck />
@@ -118,6 +139,180 @@ function PlanCard({
     );
 }
 
+function HighlightedMembershipCard({
+    plan,
+    onSelect,
+}: {
+    plan: PlanDefinition;
+    onSelect: (id: string) => void;
+}) {
+    const perClass = getPerClassPrice(plan);
+
+    return (
+        <div className={cn(
+            'relative overflow-hidden flex flex-col rounded-2xl',
+            'border-2 border-terra-400 bg-warmDark-800',
+            'md:-translate-y-4',
+            'shadow-glow-lg transition-all duration-300',
+            'hover:shadow-[0_0_60px_rgba(218,96,39,0.45)]',
+        )}>
+            {/* Most Popular ribbon */}
+            <div className="bg-terra-400 py-2.5 text-center">
+                <span className="text-peach-50 text-xs font-black tracking-[0.2em] uppercase">
+                    ★&nbsp;&nbsp;Most Popular&nbsp;&nbsp;★
+                </span>
+            </div>
+
+            <div className="p-6 pb-0 flex items-center justify-between">
+                <Badge className="bg-terra-400/20 text-terra-300 border border-terra-400/40 font-bold tracking-wider uppercase text-xs px-3">
+                    {plan.name}
+                </Badge>
+                {plan.foundingPrice && (
+                    <span className="text-[10px] text-gold-300 font-black tracking-[0.12em] uppercase">
+                        Founding Offer
+                    </span>
+                )}
+            </div>
+
+            <div className="p-6 pt-4 flex flex-col h-full">
+                <div className="mb-1">
+                    <div className="flex items-end gap-1.5">
+                        <span className="font-mono text-4xl font-bold tracking-tight text-peach-50">
+                            {formatPrice(plan.price)}
+                        </span>
+                        <span className="text-peach-300 text-xs font-semibold uppercase pb-1.5">
+                            {priceSuffix(plan)}
+                        </span>
+                    </div>
+                    {perClass && (
+                        <p className="text-terra-300 text-xs font-bold uppercase tracking-widest mt-1.5">
+                            {perClass}
+                        </p>
+                    )}
+                </div>
+
+                {plan.foundingPrice && (
+                    <div className="mt-4 mb-5 rounded-xl bg-terra-400/10 border border-terra-400/25 px-4 py-3">
+                        <p className="text-[10px] text-peach-400 uppercase tracking-widest font-bold mb-1">
+                            Founding Member Price
+                        </p>
+                        <p className="text-gold-300 font-black text-2xl leading-none">
+                            {formatPrice(plan.foundingPrice)}
+                        </p>
+                        <p className="text-peach-400 text-[10px] mt-1">
+                            First 25 members only · Save {formatPrice(plan.price - plan.foundingPrice)}
+                        </p>
+                    </div>
+                )}
+
+                {plan.tagline && (
+                    <p className="text-peach-300 text-sm leading-relaxed mb-5 border-b border-peach-50/10 pb-5">
+                        {plan.tagline}
+                    </p>
+                )}
+
+                <ul className="space-y-3.5 text-sm text-peach-200 flex-grow">
+                    {plan.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                            <FilledCheckDark />
+                            <span className="leading-tight">{f}</span>
+                        </li>
+                    ))}
+                </ul>
+
+                <div className="mt-8">
+                    <Button
+                        onClick={() => onSelect(plan.id)}
+                        className="w-full font-bold tracking-wide h-12 rounded-xl bg-terra-400 text-peach-50 hover:bg-terra-300 shadow-glow"
+                    >
+                        SUBSCRIBE NOW
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MembershipCard({
+    plan,
+    onSelect,
+}: {
+    plan: PlanDefinition;
+    onSelect: (id: string) => void;
+}) {
+    const perClass = getPerClassPrice(plan);
+
+    return (
+        <div className={cn(
+            'relative overflow-hidden rounded-2xl border flex flex-col',
+            'bg-peach-50 border-peach-400/30 transition-all duration-300',
+            'hover:border-terra-400/30',
+        )}>
+            <div className="p-6 pb-0 flex items-center justify-between">
+                <Badge className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wider uppercase text-xs px-3">
+                    {plan.name}
+                </Badge>
+            </div>
+
+            <div className="p-6 pt-4 flex flex-col h-full">
+                <div className="mb-1">
+                    <div className="flex items-end gap-1.5">
+                        <span className="font-mono text-3xl font-bold tracking-tight text-olive-600">
+                            {formatPrice(plan.price)}
+                        </span>
+                        <span className="text-olive-400 text-xs font-semibold uppercase pb-1.5">
+                            {priceSuffix(plan)}
+                        </span>
+                    </div>
+                    {perClass && (
+                        <p className="text-olive-400 text-xs font-bold uppercase tracking-widest mt-1.5">
+                            {perClass}
+                        </p>
+                    )}
+                </div>
+
+                {plan.foundingPrice && (
+                    <div className="mt-4 mb-5 rounded-xl bg-terra-400/5 border border-terra-400/20 px-4 py-3">
+                        <p className="text-[10px] text-olive-400 uppercase tracking-widest font-bold mb-1">
+                            Founding Member
+                        </p>
+                        <p className="text-terra-400 font-black text-xl leading-none">
+                            {formatPrice(plan.foundingPrice)}
+                        </p>
+                        <p className="text-olive-300 text-[10px] mt-1">
+                            First 25 only · Save {formatPrice(plan.price - plan.foundingPrice)}
+                        </p>
+                    </div>
+                )}
+
+                {plan.tagline && (
+                    <p className="text-olive-300 text-sm leading-relaxed mb-5 border-b border-peach-400/20 pb-5">
+                        {plan.tagline}
+                    </p>
+                )}
+
+                <ul className="space-y-3 text-sm text-olive-400 flex-grow">
+                    {plan.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                            <FilledCheck />
+                            <span className="leading-tight">{f}</span>
+                        </li>
+                    ))}
+                </ul>
+
+                <div className="mt-8">
+                    <Button
+                        onClick={() => onSelect(plan.id)}
+                        className="w-full font-bold tracking-wide h-12 rounded-xl bg-terra-400 text-peach-50 hover:bg-terra-300"
+                    >
+                        SUBSCRIBE
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function BentoPricing() {
     const router = useRouter();
     const { hasFreeClassLead } = useFreeClassLead();
@@ -136,46 +331,36 @@ export function BentoPricing() {
     const memberships = PLAN_CATALOG.filter((p) => p.category === 'membership');
 
     return (
-        <div className="space-y-20">
+        <div className="space-y-24">
             {/* SECTION 1: TRY IT */}
-            <div className="space-y-8">
-                <div className="text-center space-y-2">
-                    <h2 className="text-3xl md:text-5xl font-black text-olive-600 tracking-normal uppercase font-display">
-                        Start Here
-                    </h2>
-                    <p className="text-olive-400 max-w-2xl mx-auto">
-                        New to Pilates or new to Sol? Start with a free drop-in or our 2-week Kickstarter.
-                    </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <PlanCard
-                        plan={dropIn}
-                        onSelect={handleSelect}
-                        cta={hasFreeClassLead === true ? 'FREE CLASS BOOKED' : 'BOOK FREE CLASS'}
-                        ctaDisabled={hasFreeClassLead === true}
-                    />
-                    <PlanCard plan={kickstarter} onSelect={handleSelect} cta="START KICKSTARTER" featured />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                <IntroCard
+                    plan={dropIn}
+                    onSelect={handleSelect}
+                    cta={hasFreeClassLead === true ? 'FREE CLASS BOOKED' : 'BOOK FREE CLASS'}
+                    ctaDisabled={hasFreeClassLead === true}
+                />
+                <IntroCard plan={kickstarter} onSelect={handleSelect} cta="START KICKSTARTER" featured />
             </div>
 
             {/* SECTION 2: MEMBERSHIPS */}
-            <div className="space-y-8">
-                <div className="text-center space-y-2">
-                    <h2 className="text-2xl md:text-4xl font-black text-olive-600 tracking-normal uppercase font-display">
+            <div className="space-y-6">
+                <div className="inline-flex items-center gap-3">
+                    <div className="h-px w-8 bg-terra-400/40" />
+                    <span className="text-terra-400 text-xs font-black tracking-[0.2em] uppercase">
                         Memberships
-                    </h2>
-                    <p className="text-olive-400 max-w-2xl mx-auto">Show up consistently. That&apos;s where the change happens.</p>
+                    </span>
+                    <div className="h-px w-8 bg-terra-400/40" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {memberships.map((plan) => (
-                        <PlanCard
-                            key={plan.id}
-                            plan={plan}
-                            onSelect={handleSelect}
-                            cta="SUBSCRIBE"
-                            featured={plan.recommended}
-                        />
-                    ))}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start pt-4">
+                    {memberships.map((plan) =>
+                        plan.recommended ? (
+                            <HighlightedMembershipCard key={plan.id} plan={plan} onSelect={handleSelect} />
+                        ) : (
+                            <MembershipCard key={plan.id} plan={plan} onSelect={handleSelect} />
+                        )
+                    )}
                 </div>
             </div>
         </div>

@@ -21,7 +21,7 @@ import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore";
 const STYLES = {
   section:
     "relative min-h-screen w-full flex items-center justify-center overflow-hidden",
-  videoWrap: "absolute inset-0 w-full h-full z-0 will-change-transform",
+  videoWrap: "absolute inset-0 w-full h-full z-0",
   video: "absolute inset-0 w-full h-full object-cover",
   overlay: "absolute inset-0 bg-warmDark-800 z-[1]",
   container: "relative z-10 container mx-auto px-8 text-center",

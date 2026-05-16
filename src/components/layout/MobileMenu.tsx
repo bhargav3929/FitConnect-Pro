@@ -11,13 +11,11 @@ interface MobileMenuProps {
 
 const MENU_ITEMS = [
     { label: "HOME", href: "/" },
-    // { label: "FACILITIES", href: "/facilities" },
-    { label: "OUR STORY", href: "/about" },
     { label: "PRICING", href: "/subscription" },
-    // { label: "FOUNDER", href: "/founder" },
+    { label: "ABOUT US", href: "/about" },
     { label: "SHOP", href: "/shop" },
     { label: "CONTACT US", href: "/contact" },
-    // { label: "FEEDBACK", href: "/feedback" },
+    { label: "FEEDBACK", href: "/feedback" },
 ];
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
@@ -81,7 +79,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                         onClick={onClose}
                                         className="group flex items-center justify-between py-4 border-b border-peach-400/30"
                                     >
-                                        <span className="text-3xl font-black text-olive-400 group-hover:text-terra-400 transition-colors tracking-normal font-display">
+                                        <span className="text-3xl font-black text-olive-400 group-hover:text-terra-400 transition-colors tracking-tight font-display">
                                             {item.label}
                                         </span>
                                         <span className="w-8 h-8 rounded-full border border-olive-400/20 flex items-center justify-center text-olive-400/50 group-hover:bg-terra-400 group-hover:text-peach-50 group-hover:border-transparent transition-all">

@@ -220,10 +220,20 @@
   color: hsl(var(--brand-ink));
 }
 
-/* Outside any layer so it wins the cascade over Tailwind base resets */
-html,
+/* ── Horizontal scroll guard ──────────────────────────────
+   Separate html/body rules so each gets its own compositing context.
+   overflow-x: clip is more aggressive than hidden — it clips
+   absolutely-positioned and composited-layer children that hidden
+   sometimes misses (e.g. framer-motion translateX, GSAP transforms).
+   ----------------------------------------------------------- */
+html {
+  overflow-x: clip;
+  width: 100%;
+  position: relative;
+}
 body {
   overflow-x: hidden;
+  width: 100%;
   max-width: 100%;
 }
 

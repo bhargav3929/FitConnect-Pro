@@ -28,7 +28,8 @@ export default function UserLayout({
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            router.push('/user/login')
+            const fullPath = window.location.pathname + window.location.search
+            router.push(`/user/login?returnTo=${encodeURIComponent(fullPath)}`)
         }
     }, [isAuthenticated, isLoading, router])
 
