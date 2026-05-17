@@ -13,7 +13,7 @@ const MENU_ITEMS = [
     { label: "HOME", href: "/" },
     { label: "PRICING", href: "/subscription" },
     { label: "ABOUT US", href: "/about" },
-    { label: "OUR STORY", href: "/about" },
+    { label: "OUR STORY", href: "/our-story" },
     { label: "SHOP", href: "/shop" },
     { label: "CONTACT US", href: "/contact" },
     { label: "FEEDBACK", href: "/feedback" },

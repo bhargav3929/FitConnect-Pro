@@ -55,7 +55,7 @@ export function Header() {
                         <Link href="/" className={linkClass}>HOME</Link>
                         <Link href="/subscription" className={linkClass}>PRICING</Link>
                         <Link href="/about" className={linkClass}>ABOUT US</Link>
-                        <Link href="/about" className={linkClass}>OUR STORY</Link>
+                        <Link href="/our-story" className={linkClass}>OUR STORY</Link>
                         <Link href="/shop" className={linkClass}>SHOP</Link>
                         <Link href="/contact" className={linkClass}>CONTACT US</Link>
                         <Link href="/feedback" className={linkClass}>FEEDBACK</Link>
