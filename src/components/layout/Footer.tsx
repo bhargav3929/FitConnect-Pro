@@ -21,8 +21,7 @@ const COPY = {
     studioHeading: "STUDIO",
     studioLinks: [
         { label: "About Sol", href: "/about" },
-        { label: "Sol Story", href: "/founder" },
-        { label: "Founder Story", href: "/founder" },
+        { label: "Our Story", href: "/about" },
         { label: "Contact", href: "/contact" },
     ],
     legalHeading: "LEGAL",

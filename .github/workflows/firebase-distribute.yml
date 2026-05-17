@@ -1,0 +1,119 @@
+name: Firebase App Distribution
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'shared/**'
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: 'Release notes for testers'
+        required: false
+        default: 'New build from main branch'
+      platform:
+        description: 'Platform to build and distribute'
+        required: true
+        default: 'all'
+        type: choice
+        options: [all, android, ios]
+
+concurrency:
+  group: firebase-distribute-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  distribute-android:
+    name: Build Android & Distribute
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android' || github.event_name == 'push' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android APK via EAS
+        working-directory: mobile
+        run: |
+          BUILD_JSON=$(eas build \
+            --platform android \
+            --profile preview \
+            --non-interactive \
+            --json \
+            2>/dev/null)
+          APK_URL=$(echo "$BUILD_JSON" | jq -r '.[0].artifacts.buildUrl')
+          echo "APK_URL=$APK_URL" >> $GITHUB_ENV
+
+      - name: Download APK
+        run: curl -L -o app.apk "$APK_URL"
+
+      - name: Upload to Firebase App Distribution (Android)
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID_ANDROID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: internal-testers
+          file: app.apk
+          releaseNotes: ${{ github.event.inputs.release_notes || format('Build {0} — {1}', github.sha, github.event.head_commit.message) }}
+
+  distribute-ios:
+    name: Build iOS & Distribute
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios' || github.event_name == 'push' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build iOS IPA via EAS
+        working-directory: mobile
+        run: |
+          BUILD_JSON=$(eas build \
+            --platform ios \
+            --profile preview \
+            --non-interactive \
+            --json \
+            2>/dev/null)
+          IPA_URL=$(echo "$BUILD_JSON" | jq -r '.[0].artifacts.buildUrl')
+          echo "IPA_URL=$IPA_URL" >> $GITHUB_ENV
+
+      - name: Download IPA
+        run: curl -L -o app.ipa "$IPA_URL"
+
+      - name: Upload to Firebase App Distribution (iOS)
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID_IOS }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: internal-testers
+          file: app.ipa
+          releaseNotes: ${{ github.event.inputs.release_notes || format('Build {0} — {1}', github.sha, github.event.head_commit.message) }}

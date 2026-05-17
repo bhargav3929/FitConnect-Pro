@@ -17,6 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.fitconnect.pro",
       "buildNumber": "1",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
           {
@@ -39,7 +40,8 @@
         "backgroundColor": "#0B0F19"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.fitconnect.pro"
+      "package": "com.fitconnect.pro",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png",

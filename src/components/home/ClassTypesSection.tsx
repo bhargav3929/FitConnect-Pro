@@ -54,7 +54,7 @@ const CLASSES = [
     rhythm: "High energy",
     intensity: "Cardio",
     bestFor: "Endurance",
-    body: "High-energy reformer sequences that build endurance and leave you breathless (in the best way).",
+    body: "High-energy boutique sequences that build endurance and leave you breathless (in the best way).",
     image: "/images/service-intense-exercise.jpg",
     alt: "Jumpboard",
   },

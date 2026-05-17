@@ -26,7 +26,7 @@ const STYLES = {
   body: "text-peach-400 mt-4 max-w-sm mx-auto",
   // Card
   card: "relative overflow-hidden bg-warmDark-700 border border-peach-200/10 p-7 md:p-8 flex flex-col w-[340px] md:w-[400px] flex-shrink-0",
-  cardQuote: "text-peach-200 text-base leading-relaxed font-light flex-1 max-h-48 overflow-y-auto",
+  cardQuote: "text-peach-200 text-base leading-relaxed font-light flex-1",
   cardMeta: "mt-6 flex items-center gap-3",
   cardMark:
     "w-10 h-10 border border-terra-400/40 bg-terra-400/15 text-terra-300 flex items-center justify-center flex-shrink-0 font-display text-base font-extrabold leading-none",
@@ -118,12 +118,12 @@ function TestimonialCard({ item }: { item: Testimonial }) {
   return (
     <article className={STYLES.card}>
       <span className={STYLES.cardWatermark} aria-hidden="true">
-        :)
+        ✦
       </span>
       <p className={STYLES.cardQuote}>{item.quote}</p>
       <div className={STYLES.cardMeta}>
         <div className={STYLES.cardMark} aria-hidden="true">
-          :)
+          ✦
         </div>
         <div>
           <p className={STYLES.cardName}>{item.name}</p>
