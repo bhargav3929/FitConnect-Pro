@@ -59,6 +59,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "patch-package": "^8.0.1",
+    "potrace": "^2.1.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
