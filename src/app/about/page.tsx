@@ -44,19 +44,12 @@ export default function AboutPage() {
             </Reveal>
 
             <Reveal variant="slideUp" className="relative">
-              <div className="h-[500px] overflow-hidden bg-peach-300 relative">
+              <div className="h-[500px] bg-peach-300 flex items-center justify-center p-12">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/images/sol-logo-terra.svg"
-                  alt="The O in the Sol logo — a figure in child's pose, a wave, a rising sun"
-                  style={{
-                    position: 'absolute',
-                    width: '220%',
-                    maxWidth: 'none',
-                    height: 'auto',
-                    left: '-74%',
-                    top: '-62%',
-                  }}
+                  alt="Sol Pilates Studio logo"
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', maxWidth: 'none' }}
                 />
               </div>
               <div className="absolute -bottom-6 -left-6 w-32 h-32 border-2 border-terra-400/20 -z-10" />
