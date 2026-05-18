@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Instagram, Mail } from 'lucide-react';
 import { Reveal } from '@/lib/animation/Reveal';
 
-const SOL_INSTAGRAM_URL = "https://instagram.com/solpilatesstudio.in";
+const SOL_INSTAGRAM_URL = "https://instagram.com/pilates.with.swetha";
 
 const COPY = {
     watermark: "SOL PILATES",

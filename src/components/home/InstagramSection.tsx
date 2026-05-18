@@ -21,8 +21,8 @@ import {
 const COPY = {
   headline: "Follow the journey.",
   body: "Daily movement cues, behind-the-scenes from the studio, and stories from our community.",
-  handle: "solpilatesstudio.in",
-  url: "https://instagram.com/solpilatesstudio.in",
+  handle: "pilates.with.swetha",
+  url: "https://instagram.com/pilates.with.swetha",
 };
 
 // TODO: replace with real IG-fed thumbs when API integration ships
