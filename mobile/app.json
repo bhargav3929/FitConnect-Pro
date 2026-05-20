@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "scheme": "fitconnect",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -22,11 +21,15 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
-            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
           }
         ]
       },
@@ -39,7 +42,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B0F19"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.fitconnect.pro",
       "googleServicesFile": "./google-services.json"
     },
@@ -49,7 +51,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "extra": {
       "googleAuth": {
