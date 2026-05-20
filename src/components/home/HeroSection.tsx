@@ -49,7 +49,7 @@ const COPY = {
 
 const MEDIA = {
   // TODO: swap to new hero video when ready (Pilates-in-studio shot)
-  videoSrc: "/videos/sol-hero.mp4",
+  videoSrc: "/videos/Background_option_1.mp4",
   poster: "/images/sol-hero-poster.jpeg",
 };
 

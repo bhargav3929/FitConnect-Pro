@@ -20,7 +20,6 @@ const COPY = {
     ],
     studioHeading: "STUDIO",
     studioLinks: [
-        { label: "About Sol", href: "/about" },
         { label: "Our Story", href: "/our-story" },
         { label: "Contact", href: "/contact" },
     ],
@@ -63,7 +62,7 @@ export function Footer() {
                         <p className="text-peach-400 leading-relaxed max-w-sm font-medium">
                             {COPY.brandTagline}
                         </p>
-                        <div className="flex gap-4">
+                        {/* <div className="flex gap-4">
                             <a
                                 href={SOL_INSTAGRAM_URL}
                                 target="_blank"
@@ -73,7 +72,7 @@ export function Footer() {
                             >
                                 <Instagram className="w-4 h-4" />
                             </a>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* 2. Links Section (Center) - Spans 5 columns */}

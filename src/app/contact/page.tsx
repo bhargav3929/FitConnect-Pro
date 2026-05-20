@@ -20,7 +20,7 @@ const CONTACT_INFO = [
   {
     icon: MapPin,
     label: "Visit Us",
-    value: "250 West 54th Street, New York, NY 10019",
+    value: "Hyderabad, India",
     href: "#",
   },
   {
@@ -64,7 +64,7 @@ export default function ContactPage() {
             <h1 className="text-5xl md:text-7xl font-black text-peach-200 tracking-normal font-display">
               GET IN TOUCH
             </h1>
-            <p className="text-peach-400 mt-4 max-w-md mx-auto tracking-wider text-sm">
+            <p className="text-peach-400 mt-4 mx-auto tracking-wider text-sm">
               We&apos;d love to hear from you. Reach out for class bookings, questions, or just to say hello.
             </p>
           </motion.div>
@@ -107,7 +107,7 @@ export default function ContactPage() {
           <div className="mb-20 overflow-hidden border border-peach-400">
             <iframe
               title="SOL Pilates Studio location"
-              src="https://www.google.com/maps?q=250+West+54th+Street,+New+York,+NY+10019&output=embed"
+              src="https://www.google.com/maps?q=hyderabad+india&output=embed"
               width="100%"
               height="400"
               style={{ border: 0 }}

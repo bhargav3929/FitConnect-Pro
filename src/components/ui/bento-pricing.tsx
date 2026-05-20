@@ -264,11 +264,12 @@ function MembershipCard({
                             {priceSuffix(plan)}
                         </span>
                     </div>
-                    {perClass && (
+                    {/* Removed PerClass price */}
+                    {/* {perClass && (
                         <p className="text-olive-400 text-xs font-bold uppercase tracking-widest mt-1.5">
                             {perClass}
                         </p>
-                    )}
+                    )} */}
                 </div>
 
                 {plan.foundingPrice && (

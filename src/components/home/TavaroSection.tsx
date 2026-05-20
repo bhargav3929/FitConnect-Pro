@@ -28,7 +28,7 @@ const IMAGES = {
   },
   // TODO: add /public/images/tavaro/studio.jpg
   studio: {
-    src: "/images/tavaro/studio.jpg",
+    src: "/images/Studio_in_construction.jpeg",
     alt: "Studio space, under construction",
     caption: "Studio in construction",
   },

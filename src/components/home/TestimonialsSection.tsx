@@ -1,16 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import {
-  motion,
-  useScroll,
-  useVelocity,
-  useSpring,
-  useTransform,
-  useMotionValue,
-  useAnimationFrame,
-  useReducedMotion,
-} from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 // ============================================================
 //  TESTIMONIALS SECTION — edit this block to change anything visual
@@ -23,17 +15,22 @@ const STYLES = {
     "text-terra-400/60 text-sm font-bold tracking-[0.3em] uppercase block mb-3",
   headline:
     "text-4xl md:text-5xl font-black text-peach-200 tracking-normal inline-block font-display",
-  body: "text-peach-400 mt-4 max-w-sm mx-auto",
+  body: "text-peach-400 mt-4 mx-auto",
   // Card
-  card: "relative overflow-hidden bg-warmDark-700 border border-peach-200/10 p-7 md:p-8 flex flex-col w-[340px] md:w-[400px] flex-shrink-0",
-  cardQuote: "text-peach-200 text-base leading-relaxed font-light flex-1",
-  cardMeta: "mt-6 flex items-center gap-3",
+  card: "relative overflow-hidden bg-warmDark-700 border border-peach-200/10 p-7 md:p-8 flex h-[350px] md:h-[370px] flex-col w-[min(86vw,350px)] md:w-[360px] flex-shrink-0 snap-start",
+  cardQuote:
+    "relative z-10 text-peach-200 text-base leading-relaxed font-light line-clamp-[8]",
+  cardMeta: "mt-auto flex items-center gap-3 pt-5",
   cardMark:
     "w-10 h-10 border border-terra-400/40 bg-terra-400/15 text-terra-300 flex items-center justify-center flex-shrink-0 font-display text-base font-extrabold leading-none",
   cardWatermark:
     "pointer-events-none absolute -right-5 -top-7 font-display text-[7rem] md:text-[8rem] font-extrabold leading-none text-terra-400/[0.045]",
   cardName: "text-peach-200 font-bold tracking-wide text-sm",
   cardRole: "text-terra-300 text-xs tracking-wider uppercase mt-0.5",
+  arrow:
+    "h-10 w-10 border border-peach-200/15 bg-warmDark-700/70 text-peach-200 inline-flex items-center justify-center transition hover:border-terra-400/60 hover:bg-terra-400 hover:text-warmDark-900 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-peach-200/15 disabled:hover:bg-warmDark-700/70 disabled:hover:text-peach-200",
+  readMore:
+    "relative z-10 mt-4 w-fit text-xs font-bold uppercase tracking-[0.2em] text-terra-300 transition hover:text-terra-200 cursor-pointer",
 };
 
 const COPY = {
@@ -106,21 +103,37 @@ I'd especially recommend her to anyone on a postpartum or prenatal journey.`,
 
 const E: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-// Wraps a continuously-decreasing value to the range [min, max)
-function wrapValue(min: number, max: number, v: number): number {
-  const range = max - min;
-  return ((((v - min) % range) + range) % range) + min;
+function cleanQuote(quote: string) {
+  return quote.replace(/\s+/g, " ").trim();
 }
 
 // ── Testimonial card ────────────────────────────────────────
 
-function TestimonialCard({ item }: { item: Testimonial }) {
+function TestimonialCard({
+  item,
+  onReadMore,
+}: {
+  item: Testimonial;
+  onReadMore: (item: Testimonial) => void;
+}) {
+  const quote = cleanQuote(item.quote);
+  const hasLongQuote = quote.length > 220;
+
   return (
     <article className={STYLES.card}>
       <span className={STYLES.cardWatermark} aria-hidden="true">
         ✦
       </span>
-      <p className={STYLES.cardQuote}>{item.quote}</p>
+      <p className={STYLES.cardQuote}>{quote}</p>
+      {hasLongQuote && (
+        <button
+          type="button"
+          className={STYLES.readMore}
+          onClick={() => onReadMore(item)}
+        >
+          Read full story
+        </button>
+      )}
       <div className={STYLES.cardMeta}>
         <div className={STYLES.cardMark} aria-hidden="true">
           ✦
@@ -134,70 +147,193 @@ function TestimonialCard({ item }: { item: Testimonial }) {
   );
 }
 
-// ── Velocity-linked marquee ─────────────────────────────────
-
-function TestimonialsMarquee({ items }: { items: Testimonial[] }) {
-  const x = useMotionValue(0);
-  const stripRef = useRef<HTMLDivElement>(null);
-  const [halfWidth, setHalfWidth] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  // Measure strip after mount
+function TestimonialStoryModal({
+  item,
+  onClose,
+}: {
+  item: Testimonial | null;
+  onClose: () => void;
+}) {
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      if (stripRef.current) {
-        setHalfWidth(stripRef.current.scrollWidth / 2);
-      }
-    });
+    if (!item) return;
 
-    return () => cancelAnimationFrame(frame);
-  }, []);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
 
-  // Scroll velocity → marquee speed boost
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-  const smoothVelocity = useSpring(scrollVelocity, {
-    damping: 50,
-    stiffness: 400,
-  });
-  const velocityFactor = useTransform(smoothVelocity, [-3000, 3000], [-3, 3]);
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
 
-  useAnimationFrame((_, delta) => {
-    if (paused || halfWidth === 0) return;
-    const baseSpeed = 80; // px per second
-    const boost = Math.max(-45, Math.min(45, velocityFactor.get() * 15));
-    const move = -(baseSpeed + boost) * (delta / 1000);
-    x.set(wrapValue(-halfWidth, 0, x.get() + move));
-  });
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [item, onClose]);
 
-  // Duplicate items for seamless loop
-  const all = [...items, ...items];
+  if (!item) return null;
 
   return (
     <div
-      className="overflow-hidden w-full isolate"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onTouchStart={() => setPaused(true)}
-      onTouchEnd={() => setPaused(false)}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-warmDark-900/80 px-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="testimonial-story-title"
+      onClick={onClose}
     >
-      <motion.div ref={stripRef} className="flex gap-4" style={{ x }}>
-        {all.map((item, i) => (
-          <TestimonialCard key={i} item={item} />
-        ))}
+      <motion.div
+        className="relative max-h-[82vh] w-full max-w-2xl overflow-y-auto bg-warmDark-700 p-7 text-peach-200 shadow-2xl md:p-9"
+        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.28, ease: [...E] }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center border border-peach-200/15 text-peach-200 transition hover:border-terra-400/60 hover:bg-terra-400 hover:text-warmDark-900"
+          aria-label="Close testimonial story"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-terra-300">
+          Member Story
+        </p>
+        <h3
+          id="testimonial-story-title"
+          className="pr-12 font-display text-3xl font-black tracking-normal text-peach-200"
+        >
+          {item.name}
+        </h3>
+        <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-terra-300">
+          {item.role}
+        </p>
+        <p className="mt-7 whitespace-pre-line text-lg font-light leading-relaxed text-peach-200">
+          {item.quote.trim()}
+        </p>
       </motion.div>
     </div>
   );
 }
 
-// ── Reduced-motion fallback: static 2-col grid ──────────────
+// ── Manual carousel ─────────────────────────────────────────
 
-function TestimonialsGrid({ items }: { items: Testimonial[] }) {
+function TestimonialsCarousel({ items }: { items: Testimonial[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [maxIndex, setMaxIndex] = useState(Math.max(items.length - 1, 0));
+  const [selectedStory, setSelectedStory] = useState<Testimonial | null>(null);
+
+  const getStep = useCallback(() => {
+    const track = trackRef.current;
+    const firstCard = track?.querySelector<HTMLElement>("article");
+    if (!track || !firstCard) return 0;
+
+    const gap = parseFloat(window.getComputedStyle(track).columnGap || "0");
+    return firstCard.offsetWidth + gap;
+  }, []);
+
+  const syncState = useCallback(() => {
+    const track = trackRef.current;
+    const step = getStep();
+    if (!track || step === 0) return;
+
+    const visibleCards = Math.max(1, Math.floor((track.clientWidth + 16) / step));
+    const nextMax = Math.max(items.length - visibleCards, 0);
+    const nextIndex = Math.min(Math.round(track.scrollLeft / step), nextMax);
+
+    setMaxIndex(nextMax);
+    setActiveIndex(nextIndex);
+  }, [getStep, items.length]);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    syncState();
+    const observer = new ResizeObserver(syncState);
+    observer.observe(track);
+
+    return () => observer.disconnect();
+  }, [syncState]);
+
+  const moveTo = useCallback(
+    (index: number) => {
+      const track = trackRef.current;
+      const step = getStep();
+      if (!track || step === 0) return;
+
+      const nextIndex = Math.max(0, Math.min(index, maxIndex));
+      track.scrollTo({
+        left: nextIndex * step,
+        behavior: "smooth",
+      });
+      setActiveIndex(nextIndex);
+    },
+    [getStep, maxIndex]
+  );
+
+  const progress = maxIndex === 0 ? 100 : ((activeIndex + 1) / (maxIndex + 1)) * 100;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {items.slice(0, 6).map((item) => (
-        <TestimonialCard key={item.name} item={item} />
-      ))}
+    <div className="relative isolate">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-warmDark-800 to-transparent md:w-12" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-warmDark-800 to-transparent md:w-12" />
+
+      <div
+        ref={trackRef}
+        className="scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 pr-[12vw] md:pr-[22vw]"
+        onScroll={syncState}
+      >
+        {items.map((item) => (
+          <TestimonialCard
+            key={item.name}
+            item={item}
+            onReadMore={setSelectedStory}
+          />
+        ))}
+      </div>
+
+      <div className="mt-8 flex items-center gap-4">
+        <div
+          className="h-px flex-1 overflow-hidden bg-peach-200/12"
+          role="progressbar"
+          aria-label="Testimonials progress"
+          aria-valuemin={1}
+          aria-valuemax={maxIndex + 1}
+          aria-valuenow={activeIndex + 1}
+        >
+          <div
+            className="h-full bg-terra-400 transition-[width] duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className={STYLES.arrow}
+            aria-label="Previous testimonial"
+            onClick={() => moveTo(activeIndex - 1)}
+            disabled={activeIndex === 0}
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={STYLES.arrow}
+            aria-label="Next testimonial"
+            onClick={() => moveTo(activeIndex + 1)}
+            disabled={activeIndex === maxIndex}
+          >
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      <TestimonialStoryModal
+        item={selectedStory}
+        onClose={() => setSelectedStory(null)}
+      />
     </div>
   );
 }
@@ -244,7 +380,7 @@ export function TestimonialsSection() {
           </motion.p>
         </div>
 
-        {/* Marquee or static grid */}
+        {/* Manual carousel */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -253,11 +389,7 @@ export function TestimonialsSection() {
           style={{ overflow: "hidden" }}
           className="relative isolate"
         >
-          {prefersReduced ? (
-            <TestimonialsGrid items={TESTIMONIALS} />
-          ) : (
-            <TestimonialsMarquee items={TESTIMONIALS} />
-          )}
+          <TestimonialsCarousel items={TESTIMONIALS} />
         </motion.div>
       </div>
     </section>

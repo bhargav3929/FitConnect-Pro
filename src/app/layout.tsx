@@ -25,10 +25,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn("min-h-screen font-sans antialiased", plusJakartaSans.variable)}>
-        <SitePasswordGate>
+        {/* <SitePasswordGate> */}
           <LayoutContent>{children}</LayoutContent>
-        </SitePasswordGate>
-        <Toaster richColors position="top-right" closeButton />
+        {/* </SitePasswordGate> */}
+        {/* <Toaster richColors position="top-right" closeButton /> */}
       </body>
     </html>
   );

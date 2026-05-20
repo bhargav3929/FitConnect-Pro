@@ -54,11 +54,10 @@ export function Header() {
                     <nav className="hidden md:flex items-center gap-8">
                         <Link href="/" className={linkClass}>HOME</Link>
                         <Link href="/subscription" className={linkClass}>PRICING</Link>
-                        <Link href="/about" className={linkClass}>ABOUT US</Link>
                         <Link href="/our-story" className={linkClass}>OUR STORY</Link>
                         <Link href="/shop" className={linkClass}>SHOP</Link>
                         <Link href="/contact" className={linkClass}>CONTACT US</Link>
-                        <Link href="/feedback" className={linkClass}>FEEDBACK</Link>
+                        {/* <Link href="/feedback" className={linkClass}>FEEDBACK</Link> */}
                     </nav>
 
                     {/* Right side */}
@@ -71,7 +70,7 @@ export function Header() {
                         </Link>
                         <button
                             onClick={() => setIsMenuOpen(true)}
-                            className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 group p-2 hover:bg-white/10 rounded-full transition-colors"
+                            className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5 group p-2 hover:bg-white/10 rounded-full transition-colors"
                         >
                             <span className={`w-6 h-0.5 group-hover:scale-x-75 transition-transform origin-right ${useDarkText ? "bg-olive-400" : "bg-peach-100"}`}></span>
                             <span className={`w-6 h-0.5 ${useDarkText ? "bg-olive-400" : "bg-peach-100"}`}></span>

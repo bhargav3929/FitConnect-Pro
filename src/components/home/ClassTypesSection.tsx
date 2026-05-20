@@ -23,7 +23,7 @@ const STYLES = {
   statusPill:
     "inline-flex border border-terra-400/40 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-terra-400",
   cardName: "font-display text-4xl font-black leading-none text-olive-600 md:text-5xl",
-  cardBody: "mt-4 text-sm leading-7 text-olive-400 md:text-base",
+  cardBody: "mt-4 text-sm leading-7 text-olive-400 md:text-base md:min-h-[7rem]",
   detailGrid: "mt-5 grid gap-2",
   detail:
     "border border-olive-600/10 bg-peach-100/70 px-3 py-2 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-olive-500",
@@ -44,7 +44,7 @@ const CLASSES = [
     intensity: "Strength",
     bestFor: "Core control",
     body: "Strength meets movement in one seamless sequence. No breaks, no rush. Just continuous work that builds your body and clears your mind.",
-    image: "/images/sol-pilates-mat-olive.jpeg",
+    image: "/images/IMG_9836.jpeg",
     alt: "Long stretch",
   },
   {
@@ -55,7 +55,7 @@ const CLASSES = [
     intensity: "Cardio",
     bestFor: "Endurance",
     body: "High-energy boutique sequences that build endurance and leave you breathless (in the best way).",
-    image: "/images/service-intense-exercise.jpg",
+    image: "/images/IMG_0003.jpeg",
     alt: "Jumpboard",
   },
   {

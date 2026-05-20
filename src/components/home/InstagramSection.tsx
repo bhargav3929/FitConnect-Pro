@@ -22,7 +22,7 @@ const COPY = {
   headline: "Follow the journey.",
   body: "Daily movement cues, behind-the-scenes from the studio, and stories from our community.",
   handle: "pilates.with.swetha",
-  url: "https://instagram.com/pilates.with.swetha",
+  url: "https://instagram.com/",
 };
 
 // TODO: replace with real IG-fed thumbs when API integration ships
@@ -156,7 +156,10 @@ function ThumbGrid({ thumbs }: { thumbs: string[] }) {
 // ============================================================
 //  Component
 // ============================================================
-export function InstagramSection() {
+export function InstagramSection(props: {
+  id?: string,
+  hideImages?: boolean,
+}) {
   const prefersReduced = useReducedMotion();
 
   return (
@@ -208,19 +211,19 @@ export function InstagramSection() {
             transition={{ duration: 0.6, delay: 0.3, ease: [...E] }}
           >
             <Link
-              href={COPY.url}
+              href={COPY.url + props.id}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 mt-8 px-8 py-4 bg-terra-400 text-peach-50 font-black text-xs tracking-widest uppercase hover:bg-terra-300 transition-all shadow-glow"
             >
               <Instagram className="w-4 h-4" />
-              {COPY.handle}
+              {props.id}
             </Link>
           </motion.div>
         </div>
 
         {/* Two counter-scrolling marquee rows (or static grid) */}
-        <motion.div
+        {!props.hideImages && <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-10%" }}
@@ -238,7 +241,7 @@ export function InstagramSection() {
               </div>
             </>
           )}
-        </motion.div>
+        </motion.div>}
       </div>
     </section>
   );

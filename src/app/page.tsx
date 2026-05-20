@@ -27,7 +27,7 @@ export default function Home() {
       <TestimonialsSection />
       <TavaroSection />
       <FoundingMembershipSection />
-      <InstagramSection />
+      <InstagramSection id={"solpilatesstudio.in"}/>
       <FreeClassPopup isAuthenticated={isAuthenticated} />
     </main>
   );

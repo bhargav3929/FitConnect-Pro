@@ -32,19 +32,19 @@ const CARDS = [
   {
     label: "The Method",
     body: "Rooted in Contrology — the original Pilates system. Strength training principles built in, not bolted on.",
-    image: "/images/sol-pilates-mat-olive.jpeg", // TODO: Pilates move shot
+    image: "/images/IMG_9731.jpeg",
     alt: "Pilates instructor demonstrating a Contrology move",
   },
   {
     label: "The Space",
     body: "Inside Tavaro Resorts, Hyderabad. A studio that feels like a destination, because it is.",
-    image: "/images/why-sol/space.jpg", // TODO: Tavaro exterior/lobby
+    image: "/images/Studio_in_construction.jpeg",
     alt: "Tavaro Resorts grounds",
   },
   {
     label: "The Result",
     body: "Less pain. More strength. A body that works for the life you're actually living.",
-    image: "/images/why-sol/result.jpg", // TODO: client daily-activity shot
+    image: "/images/IMG_9901.jpeg",
     alt: "Client living an active daily life",
   },
 ];
