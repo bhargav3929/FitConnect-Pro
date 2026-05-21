@@ -60,3 +60,4 @@ mobile/ios/
 
 # Shared package
 shared/dist/
+.expo/
