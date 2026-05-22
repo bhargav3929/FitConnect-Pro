@@ -198,14 +198,14 @@ export function TavaroSection() {
             >
               <div className="absolute inset-0 bg-peach-300" aria-hidden="true" />
               <motion.div
-                className="absolute inset-0"
+                className="absolute -inset-6"
                 style={prefersReduced ? {} : { y: smallImageY }}
               >
                 <Image
                   src={IMAGES.studio.src}
                   alt={IMAGES.studio.alt}
                   fill
-                  className="object-cover"
+                  className="object-cover object-center"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
                   }}

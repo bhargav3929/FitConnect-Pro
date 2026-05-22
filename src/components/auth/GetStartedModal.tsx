@@ -52,38 +52,38 @@ export function GetStartedModal({ trigger, isOpen: controlledOpen, onClose }: Ge
             )}
 
             <Dialog open={isOpen} onOpenChange={setOpen}>
-                <DialogContent className="sm:max-w-[600px] bg-peach-200 border border-peach-400 p-0 overflow-hidden">
+                <DialogContent className="max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] overflow-y-auto bg-peach-200 border border-peach-400 p-0 sm:max-w-[600px]">
                     {/* Header */}
-                    <div className="p-8 pb-4">
+                    <div className="px-5 pt-6 pb-3 sm:px-8 sm:pt-8 sm:pb-4">
                         <DialogHeader>
-                            <DialogTitle className="text-3xl font-black text-olive-600 tracking-normal text-center font-display">
+                            <DialogTitle className="text-2xl sm:text-3xl font-black text-olive-600 tracking-normal text-center font-display">
                                 WELCOME TO SOL
                             </DialogTitle>
-                            <p className="text-olive-300 text-center text-sm tracking-wider mt-2">
+                            <p className="text-olive-300 text-center text-xs sm:text-sm tracking-wider mt-2">
                                 SELECT HOW YOU WANT TO ACCESS THE PLATFORM
                             </p>
                         </DialogHeader>
                     </div>
 
                     {/* Role Selection Cards */}
-                    <div className="p-8 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="px-5 py-3 grid grid-cols-1 min-[560px]:grid-cols-2 gap-3 sm:px-8 sm:pt-4 sm:pb-5 sm:gap-5">
                         {/* Admin Card */}
                         <motion.button
                             whileHover={{ scale: 1.02, y: -4 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handleAdminClick}
-                            className="group relative p-8 bg-gradient-to-br from-olive-400/10 to-olive-400/5 border border-peach-400 hover:border-olive-400/30 transition-all duration-300 text-left"
+                            className="group relative p-5 sm:p-6 bg-gradient-to-br from-olive-400/10 to-olive-400/5 border border-peach-400 hover:border-olive-400/30 transition-all duration-300 text-left"
                         >
                             {/* Icon */}
-                            <div className="w-16 h-16 bg-olive-400/10 flex items-center justify-center mb-6 group-hover:bg-olive-400/20 transition-colors">
-                                <Shield className="w-8 h-8 text-olive-400" />
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-olive-400/10 flex items-center justify-center mb-4 group-hover:bg-olive-400/20 transition-colors">
+                                <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-olive-400" />
                             </div>
 
                             {/* Content */}
-                            <h3 className="text-xl font-black text-olive-600 mb-2 tracking-normal font-display">
+                            <h3 className="text-lg sm:text-xl font-black text-olive-600 mb-2 tracking-normal font-display">
                                 ADMIN PORTAL
                             </h3>
-                            <p className="text-olive-300 text-sm leading-relaxed mb-6">
+                            <p className="text-olive-300 text-sm leading-relaxed mb-4">
                                 Access the super admin dashboard to manage classes, facility settings, trainers, and business analytics.
                             </p>
 
@@ -102,18 +102,18 @@ export function GetStartedModal({ trigger, isOpen: controlledOpen, onClose }: Ge
                             whileHover={{ scale: 1.02, y: -4 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handleUserClick}
-                            className="group relative p-8 bg-gradient-to-br from-terra-400/20 to-terra-400/5 border border-terra-400/30 hover:border-terra-400/60 transition-all duration-300 text-left"
+                            className="group relative p-5 sm:p-6 bg-gradient-to-br from-terra-400/20 to-terra-400/5 border border-terra-400/30 hover:border-terra-400/60 transition-all duration-300 text-left"
                         >
                             {/* Icon */}
-                            <div className="w-16 h-16 bg-terra-400/20 flex items-center justify-center mb-6 group-hover:bg-terra-400/30 transition-colors">
-                                <User className="w-8 h-8 text-terra-400" />
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-terra-400/20 flex items-center justify-center mb-4 group-hover:bg-terra-400/30 transition-colors">
+                                <User className="w-6 h-6 sm:w-7 sm:h-7 text-terra-400" />
                             </div>
 
                             {/* Content */}
-                            <h3 className="text-xl font-black text-olive-600 mb-2 tracking-normal font-display">
+                            <h3 className="text-lg sm:text-xl font-black text-olive-600 mb-2 tracking-normal font-display">
                                 MEMBER ACCESS
                             </h3>
-                            <p className="text-olive-300 text-sm leading-relaxed mb-6">
+                            <p className="text-olive-300 text-sm leading-relaxed mb-4">
                                 Sign in to your account to book classes, track your progress, and manage your membership.
                             </p>
 
@@ -129,7 +129,7 @@ export function GetStartedModal({ trigger, isOpen: controlledOpen, onClose }: Ge
                     </div>
 
                     {/* Footer */}
-                    <div className="px-8 pb-8">
+                    <div className="px-5 pt-2 pb-6 sm:px-8 sm:pb-8">
                         <p className="text-olive-300 text-xs text-center tracking-wider">
                             BY CONTINUING, YOU AGREE TO OUR TERMS OF SERVICE AND PRIVACY POLICY
                         </p>

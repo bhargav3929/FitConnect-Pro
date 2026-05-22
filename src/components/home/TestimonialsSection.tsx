@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -154,6 +155,12 @@ function TestimonialStoryModal({
   item: Testimonial | null;
   onClose: () => void;
 }) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!item) return;
 
@@ -161,18 +168,19 @@ function TestimonialStoryModal({
       if (event.key === "Escape") onClose();
     };
 
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [item, onClose]);
 
-  if (!item) return null;
+  if (!item || !isMounted) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-warmDark-900/80 px-4 backdrop-blur-sm"
       role="dialog"
@@ -211,7 +219,8 @@ function TestimonialStoryModal({
           {item.quote.trim()}
         </p>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
