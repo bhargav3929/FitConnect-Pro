@@ -66,21 +66,21 @@ export function AdminHeader() {
 
                 {/* Right side */}
                 <div className="flex items-center gap-2 sm:gap-4">
-                    {/* Search - Desktop */}
-                    <div className="hidden md:flex items-center relative group">
+                    {/* Search - Desktop Removed */}
+                    {/* <div className="hidden md:flex items-center relative group">
                         <Search className="w-4 h-4 text-olive-300/50 absolute left-3 hover:text-olive-400 transition-colors" />
                         <input
                             type="text"
                             placeholder="Search anything..."
                             className="bg-peach-200/50 border border-peach-400/20 rounded-full pl-10 pr-4 py-2 text-sm text-olive-600 placeholder:text-olive-300/40 hover:bg-peach-200/70 focus:bg-peach-200/70 focus:border-terra-400/50 focus:outline-none transition-all w-64"
                         />
-                    </div>
+                    </div> */}
 
-                    {/* Notifications */}
-                    <button className="relative w-10 h-10 flex items-center justify-center text-olive-400 hover:text-olive-600 hover:bg-peach-300/30 rounded-full transition-all group">
+                    {/* Notifications Removed */}
+                    {/* <button className="relative w-10 h-10 flex items-center justify-center text-olive-400 hover:text-olive-600 hover:bg-peach-300/30 rounded-full transition-all group">
                         <Bell className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                         <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-terra-400 rounded-full ring-2 ring-peach-50" />
-                    </button>
+                    </button> */}
 
                     <div className="w-px h-8 bg-peach-400/15 hidden sm:block" />
 
@@ -127,12 +127,13 @@ export function AdminHeader() {
                                 <Settings className="w-4 h-4 mr-2" />
                                 Settings
                             </DropdownMenuItem>
-                            <DropdownMenuItem
+                            {/* Removed */}
+                            {/* <DropdownMenuItem
                                 className="text-olive-400 focus:bg-peach-200/50 focus:text-olive-600 cursor-pointer rounded-sm py-2"
                             >
                                 <Monitor className="w-4 h-4 mr-2" />
                                 System Health
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuSeparator className="bg-peach-400/15" />
                             <DropdownMenuItem
                                 className="text-terra-400 focus:bg-terra-400/10 focus:text-terra-400 cursor-pointer rounded-sm py-2 focus:pl-4 transition-all"

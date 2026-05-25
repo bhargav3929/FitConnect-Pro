@@ -44,6 +44,11 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
 
             const classData = classDoc.data()!;
             const userData = userDoc.data()!;
+            const userName = typeof userData.displayName === 'string' && userData.displayName.trim()
+                ? userData.displayName.trim()
+                : typeof userData.name === 'string' && userData.name.trim()
+                    ? userData.name.trim()
+                    : context.auth?.token.name || context.auth?.token.email || userId;
 
             // Validate class is still scheduled
             if (classData.status !== 'scheduled') {
@@ -133,6 +138,7 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
             transaction.set(newBookingRef, {
                 id: newBookingRef.id,
                 userId,
+                userName,
                 classId,
                 trainerId: classData.trainerId || '',
                 classDate: classData.date,

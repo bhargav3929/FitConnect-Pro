@@ -227,58 +227,64 @@ function TestimonialStoryModal({
 // ── Manual carousel ─────────────────────────────────────────
 
 function TestimonialsCarousel({ items }: { items: Testimonial[] }) {
+  const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [maxIndex, setMaxIndex] = useState(Math.max(items.length - 1, 0));
+  const [step, setStep] = useState(0);
   const [selectedStory, setSelectedStory] = useState<Testimonial | null>(null);
 
-  const getStep = useCallback(() => {
+  const syncMetrics = useCallback(() => {
+    const viewport = viewportRef.current;
     const track = trackRef.current;
     const firstCard = track?.querySelector<HTMLElement>("article");
-    if (!track || !firstCard) return 0;
+    if (!viewport || !track || !firstCard) return;
 
     const gap = parseFloat(window.getComputedStyle(track).columnGap || "0");
-    return firstCard.offsetWidth + gap;
-  }, []);
-
-  const syncState = useCallback(() => {
-    const track = trackRef.current;
-    const step = getStep();
-    if (!track || step === 0) return;
-
-    const visibleCards = Math.max(1, Math.floor((track.clientWidth + 16) / step));
+    const nextStep = firstCard.offsetWidth + gap;
+    const visibleCards = Math.max(1, Math.floor((viewport.clientWidth + gap) / nextStep));
     const nextMax = Math.max(items.length - visibleCards, 0);
-    const nextIndex = Math.min(Math.round(track.scrollLeft / step), nextMax);
 
+    setStep(nextStep);
     setMaxIndex(nextMax);
-    setActiveIndex(nextIndex);
-  }, [getStep, items.length]);
+    setActiveIndex((index) => Math.min(index, nextMax));
+  }, [items.length]);
 
   useEffect(() => {
+    const viewport = viewportRef.current;
     const track = trackRef.current;
-    if (!track) return;
+    if (!viewport || !track) return;
 
-    syncState();
-    const observer = new ResizeObserver(syncState);
+    syncMetrics();
+    const observer = new ResizeObserver(syncMetrics);
+    observer.observe(viewport);
     observer.observe(track);
 
     return () => observer.disconnect();
-  }, [syncState]);
+  }, [syncMetrics]);
 
   const moveTo = useCallback(
     (index: number) => {
-      const track = trackRef.current;
-      const step = getStep();
-      if (!track || step === 0) return;
-
       const nextIndex = Math.max(0, Math.min(index, maxIndex));
-      track.scrollTo({
-        left: nextIndex * step,
-        behavior: "smooth",
-      });
       setActiveIndex(nextIndex);
     },
-    [getStep, maxIndex]
+    [maxIndex]
+  );
+
+  const handleDragEnd = useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
+      const threshold = Math.min(90, Math.max(45, step * 0.18));
+
+      if (info.offset.x < -threshold) {
+        moveTo(activeIndex + 1);
+        return;
+      }
+
+      if (info.offset.x > threshold) {
+        moveTo(activeIndex - 1);
+      }
+    },
+    [activeIndex, moveTo, step]
   );
 
   const progress = maxIndex === 0 ? 100 : ((activeIndex + 1) / (maxIndex + 1)) * 100;
@@ -289,17 +295,34 @@ function TestimonialsCarousel({ items }: { items: Testimonial[] }) {
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-warmDark-800 to-transparent md:w-12" />
 
       <div
-        ref={trackRef}
-        className="scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 pr-[12vw] md:pr-[22vw]"
-        onScroll={syncState}
+        ref={viewportRef}
+        className="overflow-hidden pb-2"
+        role="region"
+        aria-label="Testimonials carousel"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft") moveTo(activeIndex - 1);
+          if (event.key === "ArrowRight") moveTo(activeIndex + 1);
+        }}
       >
-        {items.map((item) => (
-          <TestimonialCard
-            key={item.name}
-            item={item}
-            onReadMore={setSelectedStory}
-          />
-        ))}
+        <motion.div
+          ref={trackRef}
+          className="flex gap-4 pr-[12vw] md:pr-[22vw]"
+          animate={{ x: -activeIndex * step }}
+          transition={{ duration: 0.55, ease: [...E] }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.08}
+          onDragEnd={handleDragEnd}
+        >
+          {items.map((item) => (
+            <TestimonialCard
+              key={item.name}
+              item={item}
+              onReadMore={setSelectedStory}
+            />
+          ))}
+        </motion.div>
       </div>
 
       <div className="mt-8 flex items-center gap-4">

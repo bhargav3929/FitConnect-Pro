@@ -346,12 +346,12 @@ export function BentoPricing() {
 
             {/* SECTION 2: MEMBERSHIPS */}
             <div className="space-y-6">
-                <div className="inline-flex items-center gap-3">
-                    <div className="h-px w-8 bg-terra-400/40" />
-                    <span className="text-terra-400 text-xs font-black tracking-[0.2em] uppercase">
+                <div className="flex items-center justify-center gap-4">
+                    <div className="h-px w-10 bg-terra-400/40" />
+                    <h2 className="text-3xl md:text-4xl font-black tracking-normal uppercase text-terra-400 font-display">
                         Memberships
-                    </span>
-                    <div className="h-px w-8 bg-terra-400/40" />
+                    </h2>
+                    <div className="h-px w-10 bg-terra-400/40" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start pt-4">

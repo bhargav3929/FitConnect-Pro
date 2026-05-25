@@ -38,7 +38,7 @@ const CARDS = [
   {
     label: "The Space",
     body: "Inside Tavaro Resorts, Hyderabad. A studio that feels like a destination, because it is.",
-    image: "/images/Studio_in_construction.jpeg",
+    image: "/images/IMG_0992.jpeg",
     alt: "Tavaro Resorts grounds",
   },
   {

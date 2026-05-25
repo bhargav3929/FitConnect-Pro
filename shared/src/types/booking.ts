@@ -3,6 +3,7 @@ import { PlanId } from './subscription';
 export interface Booking {
     id: string;
     userId: string;
+    userName?: string;
     classId: string;
     trainerId: string;
     classDate: Date;

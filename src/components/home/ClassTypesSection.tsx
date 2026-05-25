@@ -66,7 +66,7 @@ const CLASSES = [
     intensity: "Recovery",
     bestFor: "Mobility",
     body: "Your body's reset button. Long, intentional stretches that undo tension and restore the way you were meant to move.",
-    image: "/images/service-reset-restore.jpg",
+    image: "/images/IMG_9787.jpeg",
     alt: "Mermaid",
   },
 ];

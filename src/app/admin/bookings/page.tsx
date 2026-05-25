@@ -29,6 +29,10 @@ import { toast } from "sonner"
 
 const STATUS_FILTERS = ["All Status", "confirmed", "attended", "canceled", "no-show"]
 
+function getBookingUserLabel(booking: Booking) {
+    return booking.userName?.trim() || booking.userId
+}
+
 export default function BookingsPage() {
     const [bookings, setBookings] = useState<Booking[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -68,8 +72,11 @@ export default function BookingsPage() {
     }
 
     const filteredBookings = bookings.filter(booking => {
-        const matchesSearch = booking.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            booking.classId.toLowerCase().includes(searchQuery.toLowerCase())
+        const query = searchQuery.toLowerCase()
+        const userLabel = getBookingUserLabel(booking).toLowerCase()
+        const matchesSearch = userLabel.includes(query) ||
+            booking.userId.toLowerCase().includes(query) ||
+            booking.classId.toLowerCase().includes(query)
         const matchesStatus = statusFilter === "All Status" || booking.status === statusFilter
         return matchesSearch && matchesStatus
     })
@@ -257,9 +264,16 @@ export default function BookingsPage() {
                                                 <div className="w-8 h-8 bg-peach-200/60 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terra-400/10 transition-colors">
                                                     <User className="w-4 h-4 text-olive-400" />
                                                 </div>
-                                                <span className="font-medium text-olive-600 text-sm truncate max-w-[160px]">
-                                                    {booking.userId}
-                                                </span>
+                                                <div className="min-w-0">
+                                                    <p className="font-medium text-olive-600 text-sm truncate max-w-[160px]">
+                                                        {getBookingUserLabel(booking)}
+                                                    </p>
+                                                    {booking.userName && (
+                                                        <p className="text-[10px] text-olive-300 truncate max-w-[160px]">
+                                                            {booking.userId}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="p-4">
@@ -335,7 +349,10 @@ export default function BookingsPage() {
                                             <User className="w-4 h-4 text-olive-400" />
                                         </div>
                                         <div>
-                                            <p className="font-bold text-olive-600 text-sm truncate max-w-[200px]">{booking.userId}</p>
+                                            <p className="font-bold text-olive-600 text-sm truncate max-w-[200px]">{getBookingUserLabel(booking)}</p>
+                                            {booking.userName && (
+                                                <p className="text-[10px] text-olive-300 truncate max-w-[200px]">{booking.userId}</p>
+                                            )}
                                             <p className="text-xs text-olive-300 mt-0.5">Spot #{booking.spotNumber}</p>
                                         </div>
                                     </div>

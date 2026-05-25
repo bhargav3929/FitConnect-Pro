@@ -19,11 +19,9 @@ const COPY = {
 };
 
 const IMAGES = {
-  // TODO: add /public/images/tavaro/resort-hero.jpg
-  hero: { src: "/images/tavaro/resort-hero.jpg", alt: "Tavaro Resorts hero" },
-  // TODO: add /public/images/tavaro/grounds.jpg
+  hero: { src: "/images/97.jpeg", alt: "Tavaro Resorts hero" },
   grounds: {
-    src: "/images/tavaro/grounds.jpg",
+    src: "/images/Studio.jpeg",
     alt: "Tavaro grounds, pool, lobby",
   },
   // TODO: add /public/images/tavaro/studio.jpg
@@ -48,8 +46,7 @@ export function TavaroSection() {
     offset: ["start end", "end start"],
   });
 
-  // Internal parallax: big image drifts up, right column drifts down
-  const bigImageY = useTransform(scrollYProgress, [0, 1], ["-5%", "5%"]);
+  // Internal parallax: construction image drifts gently while the finished-space images stay fully visible.
   const smallImageY = useTransform(scrollYProgress, [0, 1], ["5%", "-5%"]);
 
   // Clip-path directions for diagonal cascade:
@@ -151,15 +148,12 @@ export function TavaroSection() {
             className="md:col-span-2 relative aspect-[4/3] md:aspect-auto md:h-[500px] rounded-2xl overflow-hidden"
           >
             <div className="absolute inset-0 bg-peach-300" aria-hidden="true" />
-            <motion.div
-              className="absolute inset-0"
-              style={prefersReduced ? {} : { y: bigImageY }}
-            >
+            <motion.div className="absolute inset-0">
               <Image
                 src={IMAGES.hero.src}
                 alt={IMAGES.hero.alt}
                 fill
-                className="object-cover"
+                className="object-cover object-center"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
@@ -175,15 +169,12 @@ export function TavaroSection() {
               className="relative aspect-[4/3] md:aspect-auto rounded-2xl overflow-hidden"
             >
               <div className="absolute inset-0 bg-peach-300" aria-hidden="true" />
-              <motion.div
-                className="absolute inset-0"
-                style={prefersReduced ? {} : { y: smallImageY }}
-              >
+              <motion.div className="absolute inset-0">
                 <Image
                   src={IMAGES.grounds.src}
                   alt={IMAGES.grounds.alt}
                   fill
-                  className="object-cover"
+                  className="object-cover object-center"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
                   }}

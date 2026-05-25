@@ -63,6 +63,11 @@ export async function POST(req: NextRequest) {
 
             const classData = classDoc.data()!;
             const userData = userDoc.data()!;
+            const userName = typeof userData.displayName === 'string' && userData.displayName.trim()
+                ? userData.displayName.trim()
+                : typeof userData.name === 'string' && userData.name.trim()
+                    ? userData.name.trim()
+                    : decoded.name || decoded.email || userId;
 
             // Validate class is still scheduled
             if (classData.status !== 'scheduled') {
@@ -183,6 +188,7 @@ export async function POST(req: NextRequest) {
             transaction.set(newBookingRef, {
                 id: newBookingRef.id,
                 userId,
+                userName,
                 classId,
                 trainerId: classData.trainerId || '',
                 classDate: classData.date,
