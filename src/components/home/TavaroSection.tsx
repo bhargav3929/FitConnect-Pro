@@ -185,7 +185,7 @@ export function TavaroSection() {
             {/* Bottom-right: right-to-left reveal */}
             <motion.div
               variants={maskVariant(clipBotRight, 0.36)}
-              className="relative aspect-[4/3] md:aspect-auto rounded-2xl overflow-hidden border border-dashed border-olive-400/30"
+              className="relative aspect-[4/3] md:aspect-auto rounded-2xl overflow-hidden"
             >
               <div className="absolute inset-0 bg-peach-300" aria-hidden="true" />
               <motion.div
