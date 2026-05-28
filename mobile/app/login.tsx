@@ -13,22 +13,21 @@ import {
     Animated,
     Easing,
     Linking,
+    useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
-import * as Crypto from 'expo-crypto';
+import * as Google from 'expo-auth-session/providers/google';
 import Constants from 'expo-constants';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import {
-    Colors,
     Spacing,
     FontSize,
     BorderRadius,
     FontFamily,
-    Alpha,
 } from '../constants/theme';
 import Logo from '../components/Logo';
 
@@ -37,12 +36,28 @@ WebBrowser.maybeCompleteAuthSession();
 type AuthTab = 'signin' | 'signup';
 
 const SLIDE_DISTANCE = 20;
+const BRAND = {
+    coral: '#FF6A3D',
+    coralDark: '#E4572E',
+    amber: '#FFB347',
+    olive: '#4A5438',
+    oliveMuted: '#64704F',
+    ink: '#0B0F19',
+    warmDark: '#2C2420',
+    paper: '#FAF3EB',
+    surface: '#F5E8D8',
+    border: '#D4B494',
+    white: '#FFFFFF',
+} as const;
 
 export default function LoginScreen() {
     const router = useRouter();
     const params = useLocalSearchParams<{ tab?: string; returnTo?: string }>();
     const { loginClient, signupClient, googleSignInWithIdToken } = useClientAuthStore();
     const [googleLoading, setGoogleLoading] = useState(false);
+    const { width, height } = useWindowDimensions();
+    const isLandscape = width > height;
+    const isCompact = height < 720 || isLandscape;
 
     const rawReturnTo = typeof params.returnTo === 'string' ? params.returnTo : undefined;
     const returnTo =
@@ -53,31 +68,29 @@ export default function LoginScreen() {
 
     const googleAuthConfig = Constants.expoConfig?.extra?.googleAuth || {
         iosClientId: undefined,
+        iosReversedClientId: undefined,
         androidClientId: undefined,
         webClientId: undefined,
     };
+    const googleClientId = Platform.select({
+        ios: googleAuthConfig.iosClientId,
+        android: googleAuthConfig.androidClientId,
+        default: googleAuthConfig.webClientId,
+    });
+    const googleRedirectUri =
+        Platform.OS === 'ios' && googleAuthConfig.iosReversedClientId
+            ? `${googleAuthConfig.iosReversedClientId}:/oauthredirect`
+            : undefined;
 
-    const discovery = AuthSession.useAutoDiscovery(
-        'https://accounts.google.com',
-    );
-
-    const [nonce] = useState(() =>
-        Crypto.randomUUID
-            ? Crypto.randomUUID()
-            : Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-    );
-
-    const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    const [request, response, promptAsync] = Google.useIdTokenAuthRequest(
         {
-            clientId: Platform.OS === 'ios' ? googleAuthConfig.iosClientId : googleAuthConfig.androidClientId,
+            iosClientId: googleAuthConfig.iosClientId,
+            androidClientId: googleAuthConfig.androidClientId,
+            webClientId: googleAuthConfig.webClientId,
+            redirectUri: googleRedirectUri,
             scopes: ['openid', 'profile', 'email'],
-            responseType: 'id_token',
-            extraParams: { nonce },
-            redirectUri: AuthSession.makeRedirectUri({
-                native: 'fitconnect://',
-            }),
+            selectAccount: true,
         },
-        discovery,
     );
 
     useEffect(() => {
@@ -101,7 +114,7 @@ export default function LoginScreen() {
     };
 
     const handleGoogleSignIn = async () => {
-        if (!googleAuthConfig.iosClientId && !googleAuthConfig.androidClientId) {
+        if (!googleClientId) {
             Alert.alert(
                 'Configuration Error',
                 'Google OAuth client IDs not configured. Please contact support.',
@@ -118,7 +131,65 @@ export default function LoginScreen() {
     const [activeTab, setActiveTab] = useState<AuthTab>(initialTab);
     const formOpacity = useRef(new Animated.Value(1)).current;
     const formTranslateY = useRef(new Animated.Value(0)).current;
+    const heroOpacity = useRef(new Animated.Value(0)).current;
+    const heroTranslateY = useRef(new Animated.Value(18)).current;
+    const cardOpacity = useRef(new Animated.Value(0)).current;
+    const cardTranslateY = useRef(new Animated.Value(34)).current;
+    const ambientMotion = useRef(new Animated.Value(0)).current;
     const isSwitching = useRef(false);
+
+    useEffect(() => {
+        Animated.stagger(110, [
+            Animated.parallel([
+                Animated.timing(heroOpacity, {
+                    toValue: 1,
+                    duration: 520,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(heroTranslateY, {
+                    toValue: 0,
+                    duration: 520,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.parallel([
+                Animated.timing(cardOpacity, {
+                    toValue: 1,
+                    duration: 620,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(cardTranslateY, {
+                    toValue: 0,
+                    duration: 620,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start();
+
+        const ambientLoop = Animated.loop(
+            Animated.sequence([
+                Animated.timing(ambientMotion, {
+                    toValue: 1,
+                    duration: 4200,
+                    easing: Easing.inOut(Easing.sin),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(ambientMotion, {
+                    toValue: 0,
+                    duration: 4200,
+                    easing: Easing.inOut(Easing.sin),
+                    useNativeDriver: true,
+                }),
+            ]),
+        );
+
+        ambientLoop.start();
+        return () => ambientLoop.stop();
+    }, [ambientMotion, cardOpacity, cardTranslateY, heroOpacity, heroTranslateY]);
 
     const switchTab = useCallback(
         (next: AuthTab) => {
@@ -200,9 +271,19 @@ export default function LoginScreen() {
         else Alert.alert('Signup Failed', result.error || 'Something went wrong');
     };
 
-    const headerTitle = activeTab === 'signin' ? 'MEMBER LOGIN' : 'CREATE ACCOUNT';
+    const headerTitle = activeTab === 'signin' ? 'Welcome back' : 'Create account';
     const headerSubtitle =
-        activeTab === 'signin' ? 'SIGN IN TO YOUR ACCOUNT' : 'JOIN SOL PILATES STUDIO';
+        activeTab === 'signin'
+            ? 'Sign in to book classes and manage your membership.'
+            : 'Book your first class and manage your membership from the app.';
+    const ambientTranslateY = ambientMotion.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, -14],
+    });
+    const ambientScale = ambientMotion.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.05],
+    });
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -210,252 +291,265 @@ export default function LoginScreen() {
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
+                <Animated.View
+                    pointerEvents="none"
+                    style={[
+                        styles.ambientAccent,
+                        {
+                            transform: [
+                                { translateY: ambientTranslateY },
+                                { scale: ambientScale },
+                            ],
+                        },
+                    ]}
+                />
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        isLandscape && styles.scrollContentLandscape,
+                        isCompact && styles.scrollContentCompact,
+                    ]}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Header row: back arrow + logo */}
-                    <View style={styles.topRow}>
-                        <TouchableOpacity
-                            onPress={() => router.canGoBack() ? router.back() : null}
-                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                        >
-                            <Feather name="arrow-left" size={22} color={Colors.olive[400]} />
-                        </TouchableOpacity>
-                        <Logo variant="terra" height={48} />
-                        <View style={styles.topRowSpacer} />
-                    </View>
-
-                    {/* User icon square */}
-                    <View style={styles.userIconSquare}>
-                        <Feather
-                            name={activeTab === 'signin' ? 'user' : 'user-plus'}
-                            size={28}
-                            color={Colors.primary}
-                        />
-                    </View>
-
-                    {/* Title + subtitle */}
-                    <Text style={styles.title}>{headerTitle}</Text>
-                    <Text style={styles.subtitle}>{headerSubtitle}</Text>
-
-                    {/* Square tab switcher */}
-                    <View style={styles.tabContainer}>
-                        <TouchableOpacity
-                            style={[styles.tab, activeTab === 'signin' && styles.tabActive]}
-                            onPress={() => switchTab('signin')}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.tabText,
-                                    activeTab === 'signin' && styles.tabTextActive,
-                                ]}
-                            >
-                                SIGN IN
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.tab, activeTab === 'signup' && styles.tabActive]}
-                            onPress={() => switchTab('signup')}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.tabText,
-                                    activeTab === 'signup' && styles.tabTextActive,
-                                ]}
-                            >
-                                SIGN UP
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
                     <Animated.View
-                        style={{
-                            opacity: formOpacity,
-                            transform: [{ translateY: formTranslateY }],
-                        }}
+                        style={[
+                            styles.heroShell,
+                            isCompact && styles.heroCompact,
+                            {
+                                opacity: heroOpacity,
+                                transform: [{ translateY: heroTranslateY }],
+                            },
+                        ]}
                     >
+                        <LinearGradient
+                            colors={[BRAND.paper, BRAND.surface]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.heroGradient}
+                        >
+                            <View style={styles.heroTopline}>
+                                <Logo variant="terra" height={isCompact ? 68 : 82} />
+                            </View>
 
-                    {/* Sign In form */}
-                    {activeTab === 'signin' && (
-                        <View style={styles.form}>
-                            <FieldLabel>EMAIL</FieldLabel>
-                            <InputRow icon="mail">
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="you@example.com"
-                                    placeholderTextColor={Alpha.olive300_50}
-                                    value={loginEmail}
-                                    onChangeText={setLoginEmail}
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => loginPasswordRef.current?.focus()}
-                                    editable={!isLoading}
-                                />
-                            </InputRow>
-
-                            <FieldLabel>PASSWORD</FieldLabel>
-                            <InputRow icon="lock">
-                                <TextInput
-                                    ref={loginPasswordRef}
-                                    style={styles.input}
-                                    placeholder="Enter password"
-                                    placeholderTextColor={Alpha.olive300_50}
-                                    value={loginPassword}
-                                    onChangeText={setLoginPassword}
-                                    secureTextEntry={!showLoginPassword}
-                                    returnKeyType="done"
-                                    onSubmitEditing={handleLogin}
-                                    editable={!isLoading}
-                                />
-                                <EyeToggle
-                                    visible={showLoginPassword}
-                                    onPress={() => setShowLoginPassword(!showLoginPassword)}
-                                />
-                            </InputRow>
-
-                            <SubmitButton
-                                label={loginLoading ? 'VERIFYING...' : 'SIGN IN'}
-                                loading={loginLoading}
-                                disabled={isLoading || googleLoading}
-                                onPress={handleLogin}
-                            />
-
-                            <GoogleSignInButton
-                                loading={googleLoading}
-                                disabled={isLoading}
-                                onPress={handleGoogleSignIn}
-                            />
-                        </View>
-                    )}
-
-                    {/* Sign Up form */}
-                    {activeTab === 'signup' && (
-                        <View style={styles.form}>
-                            <FieldLabel>FULL NAME</FieldLabel>
-                            <InputRow icon="user">
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Your full name"
-                                    placeholderTextColor={Alpha.olive300_50}
-                                    value={signupName}
-                                    onChangeText={setSignupName}
-                                    autoCapitalize="words"
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => signupEmailRef.current?.focus()}
-                                    editable={!isLoading}
-                                />
-                            </InputRow>
-
-                            <FieldLabel>EMAIL</FieldLabel>
-                            <InputRow icon="mail">
-                                <TextInput
-                                    ref={signupEmailRef}
-                                    style={styles.input}
-                                    placeholder="you@example.com"
-                                    placeholderTextColor={Alpha.olive300_50}
-                                    value={signupEmail}
-                                    onChangeText={setSignupEmail}
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => signupPasswordRef.current?.focus()}
-                                    editable={!isLoading}
-                                />
-                            </InputRow>
-
-                            <FieldLabel>PASSWORD</FieldLabel>
-                            <InputRow icon="lock">
-                                <TextInput
-                                    ref={signupPasswordRef}
-                                    style={styles.input}
-                                    placeholder="At least 6 characters"
-                                    placeholderTextColor={Alpha.olive300_50}
-                                    value={signupPassword}
-                                    onChangeText={setSignupPassword}
-                                    secureTextEntry={!showSignupPassword}
-                                    returnKeyType="next"
-                                    onSubmitEditing={() => signupConfirmRef.current?.focus()}
-                                    editable={!isLoading}
-                                />
-                                <EyeToggle
-                                    visible={showSignupPassword}
-                                    onPress={() => setShowSignupPassword(!showSignupPassword)}
-                                />
-                            </InputRow>
-
-                            <FieldLabel>CONFIRM PASSWORD</FieldLabel>
-                            <InputRow icon="lock">
-                                <TextInput
-                                    ref={signupConfirmRef}
-                                    style={styles.input}
-                                    placeholder="Repeat password"
-                                    placeholderTextColor={Alpha.olive300_50}
-                                    value={signupConfirmPassword}
-                                    onChangeText={setSignupConfirmPassword}
-                                    secureTextEntry={!showSignupPassword}
-                                    returnKeyType="done"
-                                    onSubmitEditing={handleSignup}
-                                    editable={!isLoading}
-                                />
-                            </InputRow>
-
-                            <SubmitButton
-                                label={signupLoading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
-                                loading={signupLoading}
-                                disabled={isLoading || googleLoading}
-                                onPress={handleSignup}
-                            />
-
-                            <GoogleSignInButton
-                                loading={googleLoading}
-                                disabled={isLoading}
-                                onPress={handleGoogleSignIn}
-                            />
-
-                            <Text style={styles.legalDisclosure}>
-                                By creating an account, you agree to our{' '}
-                                <Text
-                                    style={styles.legalLink}
-                                    onPress={() =>
-                                        Linking.openURL('https://fitconnectpro.app/terms')
-                                    }
-                                >
-                                    Terms of Service
-                                </Text>{' '}
-                                and{' '}
-                                <Text
-                                    style={styles.legalLink}
-                                    onPress={() =>
-                                        Linking.openURL('https://fitconnectpro.app/privacy')
-                                    }
-                                >
-                                    Privacy Policy
+                            <View style={styles.heroCopy}>
+                                <Text style={styles.brandKicker}>SOL PILATES STUDIO</Text>
+                                <Text style={[styles.title, isCompact && styles.titleCompact]}>
+                                    {headerTitle}
                                 </Text>
-                                .
-                            </Text>
-                        </View>
-                    )}
+                                <Text style={[styles.subtitle, isCompact && styles.subtitleCompact]}>
+                                    {headerSubtitle}
+                                </Text>
+                            </View>
 
+                            <View style={styles.heroRule} />
+                        </LinearGradient>
                     </Animated.View>
 
-                    <View style={styles.divider} />
+                    <Animated.View
+                        style={[
+                            styles.authCard,
+                            isLandscape && styles.authCardLandscape,
+                            {
+                                opacity: cardOpacity,
+                                transform: [{ translateY: cardTranslateY }],
+                            },
+                        ]}
+                    >
+                        {activeTab === 'signup' && (
+                            <TouchableOpacity
+                                style={styles.signupBackButton}
+                                onPress={() => switchTab('signin')}
+                                activeOpacity={0.75}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <Feather name="chevron-left" size={19} color={BRAND.coralDark} />
+                                <Text style={styles.signupBackText}>Back to sign in</Text>
+                            </TouchableOpacity>
+                        )}
 
-                    <View style={styles.footerRow}>
-                        <Text style={styles.footerLeft}>SECURE ACCESS</Text>
-                        <TouchableOpacity
-                            onPress={() => router.push('/subscribe')}
-                            activeOpacity={0.7}
+                        <GoogleSignInButton
+                            loading={googleLoading}
+                            disabled={isLoading}
+                            onPress={handleGoogleSignIn}
+                        />
+
+                        <DividerWithLabel label="or continue with email" />
+
+                        <Animated.View
+                            style={{
+                                opacity: formOpacity,
+                                transform: [{ translateY: formTranslateY }],
+                            }}
                         >
-                            <Text style={styles.footerRight}>View Plans →</Text>
-                        </TouchableOpacity>
-                    </View>
+                            {activeTab === 'signin' && (
+                                <View style={styles.form}>
+                                    <FieldLabel>Email</FieldLabel>
+                                    <InputRow icon="mail">
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="you@example.com"
+                                            placeholderTextColor={BRAND.oliveMuted}
+                                            value={loginEmail}
+                                            onChangeText={setLoginEmail}
+                                            keyboardType="email-address"
+                                            autoCapitalize="none"
+                                            autoCorrect={false}
+                                            returnKeyType="next"
+                                            onSubmitEditing={() => loginPasswordRef.current?.focus()}
+                                            editable={!isLoading}
+                                            textContentType="emailAddress"
+                                            autoComplete="email"
+                                        />
+                                    </InputRow>
+
+                                    <FieldLabel>Password</FieldLabel>
+                                    <InputRow icon="lock">
+                                        <TextInput
+                                            ref={loginPasswordRef}
+                                            style={styles.input}
+                                            placeholder="Enter password"
+                                            placeholderTextColor={BRAND.oliveMuted}
+                                            value={loginPassword}
+                                            onChangeText={setLoginPassword}
+                                            secureTextEntry={!showLoginPassword}
+                                            returnKeyType="done"
+                                            onSubmitEditing={handleLogin}
+                                            editable={!isLoading}
+                                            textContentType="password"
+                                            autoComplete="password"
+                                        />
+                                        <EyeToggle
+                                            visible={showLoginPassword}
+                                            onPress={() => setShowLoginPassword(!showLoginPassword)}
+                                        />
+                                    </InputRow>
+
+                                    <SubmitButton
+                                        label={loginLoading ? 'Verifying...' : 'Sign in'}
+                                        loading={loginLoading}
+                                        disabled={isLoading || googleLoading}
+                                        onPress={handleLogin}
+                                    />
+
+                                    <AuthTextLink
+                                        label="New to Sol? Create account"
+                                        onPress={() => switchTab('signup')}
+                                    />
+                                </View>
+                            )}
+
+                            {activeTab === 'signup' && (
+                                <View style={styles.form}>
+                                    <FieldLabel>Full name</FieldLabel>
+                                    <InputRow icon="user">
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Your full name"
+                                            placeholderTextColor={BRAND.oliveMuted}
+                                            value={signupName}
+                                            onChangeText={setSignupName}
+                                            autoCapitalize="words"
+                                            returnKeyType="next"
+                                            onSubmitEditing={() => signupEmailRef.current?.focus()}
+                                            editable={!isLoading}
+                                            textContentType="name"
+                                            autoComplete="name"
+                                        />
+                                    </InputRow>
+
+                                    <FieldLabel>Email</FieldLabel>
+                                    <InputRow icon="mail">
+                                        <TextInput
+                                            ref={signupEmailRef}
+                                            style={styles.input}
+                                            placeholder="you@example.com"
+                                            placeholderTextColor={BRAND.oliveMuted}
+                                            value={signupEmail}
+                                            onChangeText={setSignupEmail}
+                                            keyboardType="email-address"
+                                            autoCapitalize="none"
+                                            autoCorrect={false}
+                                            returnKeyType="next"
+                                            onSubmitEditing={() => signupPasswordRef.current?.focus()}
+                                            editable={!isLoading}
+                                            textContentType="emailAddress"
+                                            autoComplete="email"
+                                        />
+                                    </InputRow>
+
+                                    <FieldLabel>Password</FieldLabel>
+                                    <InputRow icon="lock">
+                                        <TextInput
+                                            ref={signupPasswordRef}
+                                            style={styles.input}
+                                            placeholder="At least 6 characters"
+                                            placeholderTextColor={BRAND.oliveMuted}
+                                            value={signupPassword}
+                                            onChangeText={setSignupPassword}
+                                            secureTextEntry={!showSignupPassword}
+                                            returnKeyType="next"
+                                            onSubmitEditing={() => signupConfirmRef.current?.focus()}
+                                            editable={!isLoading}
+                                            textContentType="newPassword"
+                                            autoComplete="new-password"
+                                        />
+                                        <EyeToggle
+                                            visible={showSignupPassword}
+                                            onPress={() => setShowSignupPassword(!showSignupPassword)}
+                                        />
+                                    </InputRow>
+
+                                    <FieldLabel>Confirm password</FieldLabel>
+                                    <InputRow icon="lock">
+                                        <TextInput
+                                            ref={signupConfirmRef}
+                                            style={styles.input}
+                                            placeholder="Repeat password"
+                                            placeholderTextColor={BRAND.oliveMuted}
+                                            value={signupConfirmPassword}
+                                            onChangeText={setSignupConfirmPassword}
+                                            secureTextEntry={!showSignupPassword}
+                                            returnKeyType="done"
+                                            onSubmitEditing={handleSignup}
+                                            editable={!isLoading}
+                                            textContentType="newPassword"
+                                            autoComplete="new-password"
+                                        />
+                                    </InputRow>
+
+                                    <SubmitButton
+                                        label={signupLoading ? 'Creating account...' : 'Create account'}
+                                        loading={signupLoading}
+                                        disabled={isLoading || googleLoading}
+                                        onPress={handleSignup}
+                                    />
+
+                                    <Text style={styles.legalDisclosure}>
+                                        By creating an account, you agree to our{' '}
+                                        <Text
+                                            style={styles.legalLink}
+                                            onPress={() =>
+                                                Linking.openURL('https://fitconnectpro.app/terms')
+                                            }
+                                        >
+                                            Terms of Service
+                                        </Text>{' '}
+                                        and{' '}
+                                        <Text
+                                            style={styles.legalLink}
+                                            onPress={() =>
+                                                Linking.openURL('https://fitconnectpro.app/privacy')
+                                            }
+                                        >
+                                            Privacy Policy
+                                        </Text>
+                                        .
+                                    </Text>
+                                </View>
+                            )}
+                        </Animated.View>
+                    </Animated.View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -482,7 +576,7 @@ function InputRow({
             <Feather
                 name={icon}
                 size={18}
-                color={Alpha.olive300_70}
+                color={BRAND.oliveMuted}
                 style={styles.inputIcon}
             />
             {children}
@@ -500,7 +594,7 @@ function EyeToggle({ visible, onPress }: { visible: boolean; onPress: () => void
             <Feather
                 name={visible ? 'eye-off' : 'eye'}
                 size={18}
-                color={Alpha.olive300_70}
+                color={BRAND.oliveMuted}
             />
         </TouchableOpacity>
     );
@@ -526,7 +620,7 @@ function SubmitButton({
         >
             {loading ? (
                 <View style={styles.loadingRow}>
-                    <ActivityIndicator size="small" color={Colors.white} />
+                    <ActivityIndicator size="small" color={BRAND.white} />
                     <Text style={styles.submitButtonText}>{label}</Text>
                 </View>
             ) : (
@@ -552,10 +646,35 @@ function GoogleSignInButton({
             disabled={disabled || loading}
             activeOpacity={0.85}
         >
-            <Feather name="mail" size={18} color={Colors.olive[600]} />
+            <View style={styles.googleGlyph}>
+                <Text style={styles.googleGlyphText}>G</Text>
+            </View>
             <Text style={styles.googleButtonText}>
-                {loading ? 'SIGNING IN...' : 'SIGN IN WITH GOOGLE'}
+                {loading ? 'Signing in...' : 'Continue with Google'}
             </Text>
+        </TouchableOpacity>
+    );
+}
+
+function DividerWithLabel({ label }: { label: string }) {
+    return (
+        <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>{label}</Text>
+            <View style={styles.dividerLine} />
+        </View>
+    );
+}
+
+function AuthTextLink({ label, onPress }: { label: string; onPress: () => void }) {
+    return (
+        <TouchableOpacity
+            style={styles.authTextLinkButton}
+            onPress={onPress}
+            activeOpacity={0.75}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+            <Text style={styles.authTextLink}>{label}</Text>
         </TouchableOpacity>
     );
 }
@@ -567,167 +686,234 @@ function GoogleSignInButton({
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: Colors.background,
+        backgroundColor: BRAND.surface,
     },
     container: {
         flex: 1,
+        overflow: 'hidden',
     },
     scrollContent: {
         flexGrow: 1,
-        paddingHorizontal: Spacing.lg,
-        paddingTop: Spacing.md,
-        paddingBottom: Spacing.xl,
+        paddingHorizontal: Spacing.md,
+        paddingTop: Spacing.sm,
+        paddingBottom: Spacing.lg,
+        justifyContent: 'flex-start',
+        minHeight: '100%',
+    },
+    scrollContentCompact: {
+        paddingTop: Spacing.sm,
+        paddingBottom: Spacing.md,
+        justifyContent: 'flex-start',
+    },
+    scrollContentLandscape: {
+        maxWidth: 560,
+        alignSelf: 'center',
+        width: '100%',
+    },
+    ambientAccent: {
+        position: 'absolute',
+        width: 260,
+        height: 260,
+        borderRadius: BorderRadius.full,
+        backgroundColor: '#FF6A3D22',
+        top: -86,
+        right: -96,
     },
 
-    // Header
-    topRow: {
+    // Opening brand moment
+    heroShell: {
+        marginTop: Spacing.sm,
+        marginBottom: -Spacing.xl,
+        borderRadius: BorderRadius['2xl'],
+        overflow: 'hidden',
+    },
+    heroCompact: {
+        marginBottom: -Spacing.lg,
+    },
+    heroGradient: {
+        minHeight: 230,
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.lg,
+        paddingBottom: Spacing.xl,
+        justifyContent: 'space-between',
+    },
+    heroTopline: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.md,
-        marginBottom: Spacing['2xl'],
-    },
-    topRowSpacer: {
-        flex: 1,
-    },
-
-    // User icon box
-    userIconSquare: {
-        width: 64,
-        height: 64,
-        backgroundColor: Alpha.terra400_10,
-        alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: Spacing.lg,
     },
-
-    // Title
+    heroCopy: {
+        alignItems: 'center',
+        paddingTop: Spacing.lg,
+        paddingBottom: Spacing.sm,
+    },
+    brandKicker: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize['2xs'],
+        color: BRAND.coral,
+        letterSpacing: 1.8,
+        marginBottom: Spacing.sm,
+    },
     title: {
         fontFamily: FontFamily.display,
         fontSize: FontSize['3xl'],
-        color: Colors.olive[600],
-        letterSpacing: -0.5,
+        lineHeight: 34,
+        color: BRAND.olive,
+        textAlign: 'center',
         marginBottom: Spacing.sm,
+    },
+    titleCompact: {
+        fontSize: FontSize['2xl'] + 2,
+        lineHeight: 30,
+        marginBottom: Spacing.xs,
     },
     subtitle: {
-        fontFamily: FontFamily.sansMedium,
+        fontFamily: FontFamily.sans,
         fontSize: FontSize.sm,
-        color: Colors.olive[300],
-        letterSpacing: 1.5,
-        marginBottom: Spacing.xl,
+        lineHeight: 20,
+        color: BRAND.oliveMuted,
+        textAlign: 'center',
+        maxWidth: 310,
+    },
+    subtitleCompact: {
+        fontSize: FontSize.sm,
+        lineHeight: 20,
+    },
+    heroRule: {
+        width: 56,
+        height: 3,
+        backgroundColor: BRAND.coral,
+        borderRadius: BorderRadius.full,
+        alignSelf: 'center',
     },
 
-    // Square tabs
-    tabContainer: {
+    // Form panel
+    authCard: {
+        backgroundColor: BRAND.paper,
+        borderWidth: 1,
+        borderColor: '#D4B49455',
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.md - 2,
+        shadowColor: BRAND.ink,
+        shadowOpacity: 0.14,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: 10 },
+        elevation: 6,
+    },
+    authCardLandscape: {
+        padding: Spacing.md,
+    },
+    signupBackButton: {
         flexDirection: 'row',
-        backgroundColor: Alpha.peach300_50,
-        padding: 4,
-        marginBottom: Spacing.xl,
-    },
-    tab: {
-        flex: 1,
-        paddingVertical: Spacing.md - 4,
         alignItems: 'center',
+        alignSelf: 'flex-start',
+        gap: 2,
+        marginBottom: Spacing.md,
+        minHeight: 32,
     },
-    tabActive: {
-        backgroundColor: Colors.primary,
-    },
-    tabText: {
+    signupBackText: {
         fontFamily: FontFamily.sansBold,
-        fontSize: FontSize.xs,
-        color: Colors.olive[400],
-        letterSpacing: 1.5,
-    },
-    tabTextActive: {
-        color: Colors.peach[50],
+        fontSize: FontSize.sm,
+        color: BRAND.coralDark,
     },
 
-    // Form
     form: {
-        marginBottom: Spacing.lg,
+        gap: Spacing.sm,
     },
     fieldLabel: {
-        fontFamily: FontFamily.sansBold,
+        fontFamily: FontFamily.sansMedium,
         fontSize: FontSize.xs,
-        color: Colors.olive[600],
-        letterSpacing: 1.5,
-        marginBottom: Spacing.sm,
-        marginTop: Spacing.md,
+        color: BRAND.olive,
+        marginTop: Spacing.xs,
     },
     inputRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.peach[50],
+        backgroundColor: BRAND.white,
         borderWidth: 1,
-        borderColor: Alpha.peach400_30,
-        height: 56,
+        borderColor: '#D4B49455',
+        height: 50,
         paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.md,
     },
     inputIcon: {
-        marginRight: Spacing.sm + 4,
+        marginRight: Spacing.sm,
     },
     input: {
         flex: 1,
         height: '100%',
         fontFamily: FontFamily.sans,
         fontSize: FontSize.sm,
-        color: Colors.olive[600],
+        color: BRAND.olive,
         paddingVertical: 0,
     },
     eyeButton: {
-        padding: Spacing.xs,
-        marginLeft: Spacing.xs,
+        width: 44,
+        height: 44,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: -Spacing.sm,
     },
 
     // Submit button
     submitButton: {
-        marginTop: Spacing.lg,
-        height: 56,
-        backgroundColor: Colors.primary,
+        marginTop: Spacing.md,
+        height: 50,
+        backgroundColor: BRAND.coral,
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: BorderRadius.md,
+        shadowColor: BRAND.coral,
+        shadowOpacity: 0.24,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 4,
     },
     submitButtonDisabled: {
         opacity: 0.6,
     },
     submitButtonText: {
-        fontFamily: FontFamily.sansExtra,
+        fontFamily: FontFamily.sansBold,
         fontSize: FontSize.sm,
-        color: Colors.peach[50],
-        letterSpacing: 1.5,
+        color: BRAND.white,
     },
     loadingRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,
     },
+    authTextLinkButton: {
+        alignSelf: 'center',
+        marginTop: Spacing.md,
+        minHeight: 34,
+        justifyContent: 'center',
+    },
+    authTextLink: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.sm,
+        color: BRAND.coralDark,
+    },
 
-    // Footer
-    divider: {
-        height: 1,
-        backgroundColor: Alpha.peach400_20,
-        marginVertical: Spacing.xl,
-    },
-    footerRow: {
+    dividerRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        gap: Spacing.sm,
+        marginVertical: Spacing.sm + 4,
     },
-    footerLeft: {
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#D4B49455',
+    },
+    dividerText: {
         fontFamily: FontFamily.sansMedium,
         fontSize: FontSize.xs,
-        color: Alpha.olive300_60,
-        letterSpacing: 1.5,
-    },
-    footerRight: {
-        fontFamily: FontFamily.sansBold,
-        fontSize: FontSize.xs,
-        color: Colors.primary,
-        letterSpacing: 1.5,
+        color: BRAND.oliveMuted,
     },
     legalDisclosure: {
         fontFamily: FontFamily.sans,
         fontSize: FontSize.xs,
-        color: Alpha.olive300_80,
+        color: BRAND.oliveMuted,
         textAlign: 'center',
         marginTop: Spacing.md,
         lineHeight: 16,
@@ -735,28 +921,42 @@ const styles = StyleSheet.create({
     },
     legalLink: {
         fontFamily: FontFamily.sansBold,
-        color: Colors.primary,
+        color: BRAND.coralDark,
     },
 
     // Google Sign-In button
     googleButton: {
-        marginTop: Spacing.md,
-        height: 56,
-        backgroundColor: Alpha.peach300_40,
+        height: 50,
+        backgroundColor: BRAND.white,
         borderWidth: 1,
-        borderColor: Alpha.peach400_30,
+        borderColor: '#D4B49466',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: Spacing.sm,
+        borderRadius: BorderRadius.md,
     },
     googleButtonDisabled: {
         opacity: 0.6,
     },
+    googleGlyph: {
+        width: 24,
+        height: 24,
+        borderRadius: BorderRadius.full,
+        backgroundColor: BRAND.paper,
+        borderWidth: 1,
+        borderColor: '#D4B49466',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    googleGlyphText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.sm,
+        color: BRAND.coralDark,
+    },
     googleButtonText: {
         fontFamily: FontFamily.sansBold,
-        fontSize: FontSize.xs,
-        color: Colors.olive[600],
-        letterSpacing: 1.5,
+        fontSize: FontSize.sm,
+        color: BRAND.olive,
     },
 });

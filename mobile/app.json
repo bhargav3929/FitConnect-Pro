@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0B0F19"
+      "backgroundColor": "#F5E8D8"
     },
     "ios": {
       "supportsTablet": true,
@@ -34,7 +34,20 @@
         ]
       },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "fitconnect",
+              "com.fitconnect.pro"
+            ]
+          },
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj"
+            ]
+          }
+        ]
       }
     },
     "android": {
@@ -56,9 +69,10 @@
     ],
     "extra": {
       "googleAuth": {
-        "iosClientId": "TODO_IOS_CLIENT_ID.apps.googleusercontent.com",
-        "androidClientId": "TODO_ANDROID_CLIENT_ID.apps.googleusercontent.com",
-        "webClientId": "TODO_WEB_CLIENT_ID.apps.googleusercontent.com"
+        "iosClientId": "792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj.apps.googleusercontent.com",
+        "iosReversedClientId": "com.googleusercontent.apps.792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj",
+        "androidClientId": "792852037404-5ignujiais7f6bs17l3etikus0lqc5eo.apps.googleusercontent.com",
+        "webClientId": "792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj.apps.googleusercontent.com"
       }
     }
   }
