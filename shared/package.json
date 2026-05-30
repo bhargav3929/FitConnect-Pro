@@ -10,7 +10,9 @@
     "./types/*": "./src/types/*.ts",
     "./firebase/*": "./src/firebase/*.ts",
     "./stores/*": "./src/stores/*.ts",
-    "./payments/*": "./src/payments/*.ts"
+    "./payments/*": "./src/payments/*.ts",
+    "./design/*": "./src/design/*.ts",
+    "./theme": "./src/theme/index.ts"
   },
   "scripts": {
     "build": "echo 'No build step — consumed as TypeScript source'",
@@ -24,6 +26,6 @@
   },
   "devDependencies": {
     "typescript": "^5.0.0",
-    "vitest": "^3.2.1"
+    "vitest": "^3.2.4"
   }
 }

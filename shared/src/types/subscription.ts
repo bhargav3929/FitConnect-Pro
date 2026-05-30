@@ -24,6 +24,14 @@ export interface PlanDefinition {
     advanceBookingDays: number;
     guestPasses: number;
     autoRenew: boolean;
+    /** Razorpay Plan ID for membership subscriptions. Set by running scripts/create-razorpay-plans.ts. */
+    razorpayPlanId?: string;
+    /** Billing period for Razorpay (monthly + interval). */
+    razorpayPeriod?: 'monthly';
+    /** Billing interval in months (3 = quarterly, 6 = halfyearly). */
+    razorpayInterval?: number;
+    /** Total billing cycles before subscription completes (large = effectively indefinite). */
+    razorpayTotalCount?: number;
     features: string[];
     tagline?: string;
     recommended?: boolean;
@@ -86,6 +94,9 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         advanceBookingDays: 14,
         guestPasses: 0,
         autoRenew: true,
+        razorpayPeriod: 'monthly',
+        razorpayInterval: 3,
+        razorpayTotalCount: 24,
         tagline: 'Twice a week, every week, for 3 months. Enough to build a real habit.',
         features: [
             '2 classes per week',
@@ -106,6 +117,9 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         advanceBookingDays: 14,
         guestPasses: 1,
         autoRenew: true,
+        razorpayPeriod: 'monthly',
+        razorpayInterval: 6,
+        razorpayTotalCount: 12,
         tagline: 'Six months of showing up twice a week. This is where real change happens.',
         features: [
             '2 classes per week',
@@ -128,6 +142,9 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         advanceBookingDays: 14,
         guestPasses: 0,
         autoRenew: true,
+        razorpayPeriod: 'monthly',
+        razorpayInterval: 3,
+        razorpayTotalCount: 24,
         recommended: true,
         tagline: "Three times a week for 3 months. You'll feel it faster than you think.",
         features: [
@@ -149,6 +166,9 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         advanceBookingDays: 14,
         guestPasses: 2,
         autoRenew: true,
+        razorpayPeriod: 'monthly',
+        razorpayInterval: 6,
+        razorpayTotalCount: 12,
         tagline: 'Three days a week, six months in. Pain-free, stronger, and completely different.',
         features: [
             '3 classes per week',

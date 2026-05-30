@@ -1,20 +1,20 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, CheckCircle2, ArrowRight, Calendar, CreditCard } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PlanSelector } from "@/components/user/PlanSelector"
-import { MockPaymentForm } from "@/components/user/MockPaymentForm"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
-import { callCreatePaymentIntent, callConfirmPayment } from "@fitconnect/shared/firebase/firestore"
+import { callCreatePaymentOrder, callVerifyPayment } from "@fitconnect/shared/firebase/firestore"
 import { getPlanById, type PlanId } from "@fitconnect/shared/types/subscription"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useFreeClassLead } from "@/lib/hooks/useFreeClassLead"
+import { useRazorpay } from "@/lib/hooks/useRazorpay"
 
-type Step = 'plan' | 'checkout' | 'success'
+type Step = 'plan' | 'success'
 
 export default function SubscribePage() {
     const router = useRouter()
@@ -22,14 +22,15 @@ export default function SubscribePage() {
     const redirectClassId = searchParams.get('redirect')
     const preselectedPlan = searchParams.get('plan')
 
+    const firebaseUser = useClientAuthStore(state => state.firebaseUser)
     const refreshSubscription = useClientAuthStore(state => state.refreshSubscription)
     const { hasFreeClassLead } = useFreeClassLead()
+    const { openCheckout } = useRazorpay()
 
     const [step, setStep] = useState<Step>('plan')
     const [selectedPlanId, setSelectedPlanId] = useState<PlanId | null>(
         preselectedPlan as PlanId | null
     )
-    const [paymentId, setPaymentId] = useState<string | null>(null)
     const [isProcessing, setIsProcessing] = useState(false)
     const [resultData, setResultData] = useState<{
         planName: string
@@ -47,37 +48,50 @@ export default function SubscribePage() {
         }
         setIsProcessing(true)
         try {
-            const result = await callCreatePaymentIntent(selectedPlanId)
-            setPaymentId(result.paymentId)
-            setStep('checkout')
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Failed to create payment'
-            toast.error('Error', { description: msg })
-        } finally {
-            setIsProcessing(false)
-        }
-    }
+            const order = await callCreatePaymentOrder(selectedPlanId)
 
-    const handlePaymentComplete = async () => {
-        if (!paymentId) return
-        try {
-            const result = await callConfirmPayment(paymentId)
-            setResultData({
-                planName: result.planName,
-                credits: result.credits,
-                endDate: result.endDate,
+            await openCheckout({
+                key: order.key,
+                amount: order.amount,
+                currency: order.currency,
+                order_id: order.orderId,
+                name: 'Sol Pilates',
+                description: selectedPlan?.name ?? 'Membership',
+                prefill: {
+                    email: firebaseUser?.email ?? undefined,
+                    name: firebaseUser?.displayName ?? undefined,
+                },
+                theme: { color: '#FF6A3D' },
+                modal: {
+                    ondismiss: () => setIsProcessing(false),
+                },
+                handler: async (response) => {
+                    try {
+                        const result = await callVerifyPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            paymentId: order.paymentId,
+                        })
+                        setResultData({
+                            planName: result.planName,
+                            credits: result.credits,
+                            endDate: result.endDate,
+                        })
+                        await refreshSubscription()
+                        setStep('success')
+                    } catch (err: unknown) {
+                        const msg = err instanceof Error ? err.message : 'Payment verification failed'
+                        toast.error('Payment error', { description: msg })
+                        setIsProcessing(false)
+                    }
+                },
             })
-            await refreshSubscription()
-            setStep('success')
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Payment confirmation failed'
+            const msg = err instanceof Error ? err.message : 'Failed to open payment'
             toast.error('Error', { description: msg })
             setIsProcessing(false)
         }
-    }
-
-    const handlePaymentError = (error: string) => {
-        toast.error('Payment failed', { description: error })
     }
 
     return (
@@ -87,47 +101,17 @@ export default function SubscribePage() {
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                     {step !== 'success' && (
                         <button
-                            onClick={() => {
-                                if (step === 'checkout') setStep('plan')
-                                else router.back()
-                            }}
+                            onClick={() => router.back()}
                             className="flex items-center gap-1.5 text-olive-400 hover:text-olive-600 text-sm font-medium mb-4 transition-colors"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            {step === 'checkout' ? 'Change plan' : 'Back'}
+                            Back
                         </button>
                     )}
 
                     <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal font-display">
-                        {step === 'plan' && 'Choose Your Plan'}
-                        {step === 'checkout' && 'Checkout'}
-                        {step === 'success' && 'Welcome Aboard'}
+                        {step === 'plan' ? 'Choose Your Plan' : 'Welcome Aboard'}
                     </h1>
-
-                    {/* Step indicators */}
-                    {step !== 'success' && (
-                        <div className="flex items-center gap-2 mt-4">
-                            {(['plan', 'checkout'] as const).map((s, i) => (
-                                <div key={s} className="flex items-center gap-2">
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                                        step === s ? 'bg-terra-400 text-peach-50' :
-                                        (s === 'plan' && step === 'checkout') ? 'bg-terra-400/20 text-terra-400' :
-                                        'bg-peach-200/50 text-olive-300'
-                                    }`}>
-                                        {(s === 'plan' && step === 'checkout') ? (
-                                            <CheckCircle2 className="w-4 h-4" />
-                                        ) : (
-                                            i + 1
-                                        )}
-                                    </div>
-                                    <span className={`text-xs font-medium ${step === s ? 'text-olive-600' : 'text-olive-300'}`}>
-                                        {s === 'plan' ? 'Select Plan' : 'Payment'}
-                                    </span>
-                                    {i === 0 && <div className="w-8 h-px bg-peach-400/20" />}
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </motion.div>
             </div>
 
@@ -175,29 +159,11 @@ export default function SubscribePage() {
                             className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide text-base rounded-xl transition-all hover:shadow-lg hover:shadow-terra-400/20 disabled:opacity-50"
                         >
                             {isProcessing
-                                ? 'PREPARING CHECKOUT...'
+                                ? 'OPENING PAYMENT...'
                                 : selectedPlanId === 'drop_in'
                                     ? (hasFreeClassLead === true ? 'FREE CLASS BOOKED' : 'BOOK FREE CLASS')
-                                    : 'CONTINUE'}
+                                    : 'CONTINUE TO PAYMENT'}
                         </Button>
-                    </motion.div>
-                )}
-
-                {step === 'checkout' && selectedPlan && (
-                    <motion.div
-                        key="checkout"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                    >
-                        <MockPaymentForm
-                            amount={selectedPlan.price}
-                            planName={selectedPlan.name}
-                            onPaymentComplete={handlePaymentComplete}
-                            onPaymentError={handlePaymentError}
-                            isProcessing={isProcessing}
-                            setIsProcessing={setIsProcessing}
-                        />
                     </motion.div>
                 )}
 
@@ -252,21 +218,12 @@ export default function SubscribePage() {
 
                         {/* CTAs */}
                         <div className="w-full max-w-sm space-y-3">
-                            {redirectClassId ? (
-                                <Link href="/user/schedule" className="block">
-                                    <Button className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide rounded-xl flex items-center justify-center gap-2">
-                                        <Calendar className="w-5 h-5" />
-                                        BOOK A CLASS
-                                    </Button>
-                                </Link>
-                            ) : (
-                                <Link href="/user/schedule" className="block">
-                                    <Button className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide rounded-xl flex items-center justify-center gap-2">
-                                        <Calendar className="w-5 h-5" />
-                                        BOOK A CLASS
-                                    </Button>
-                                </Link>
-                            )}
+                            <Link href="/user/schedule" className="block">
+                                <Button className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide rounded-xl flex items-center justify-center gap-2">
+                                    <Calendar className="w-5 h-5" />
+                                    {redirectClassId ? 'BOOK A CLASS' : 'BOOK A CLASS'}
+                                </Button>
+                            </Link>
                             <Link href="/user/dashboard" className="block">
                                 <Button
                                     variant="outline"

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
+import { verifyPaymentSignature } from '@fitconnect/shared/payments/razorpay-processor';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(req: NextRequest) {
     try {
-        // Auth
         const authHeader = req.headers.get('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
@@ -27,7 +27,34 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const paymentId = body.paymentId as string;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, paymentId } = body as {
+            razorpay_order_id?: string;
+            razorpay_payment_id?: string;
+            razorpay_signature?: string;
+            paymentId?: string;
+        };
+
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return NextResponse.json(
+                { error: 'razorpay_order_id, razorpay_payment_id, and razorpay_signature are required', code: 'invalid-argument' },
+                { status: 400 },
+            );
+        }
+
+        const isValid = verifyPaymentSignature(
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            process.env.RAZORPAY_KEY_SECRET!,
+        );
+
+        if (!isValid) {
+            return NextResponse.json(
+                { error: 'Payment signature verification failed', code: 'signature-invalid' },
+                { status: 400 },
+            );
+        }
+
         if (!paymentId || typeof paymentId !== 'string') {
             return NextResponse.json(
                 { error: 'paymentId is required', code: 'invalid-argument' },
@@ -51,45 +78,39 @@ export async function POST(req: NextRequest) {
 
             const paymentData = paymentDoc.data()!;
 
-            // Verify payment belongs to user
             if (paymentData.userId !== userId) {
                 throw { status: 403, error: 'Payment does not belong to you', code: 'permission-denied' };
             }
 
-            // Verify payment is in confirmable state
-            if (paymentData.status !== 'requires_confirmation') {
+            if (paymentData.status !== 'pending') {
                 throw { status: 400, error: `Payment is already ${paymentData.status}`, code: 'failed-precondition' };
             }
 
-            // Look up plan
             const plan = getPlanById(paymentData.planId);
             if (!plan) {
                 throw { status: 400, error: 'Invalid plan on payment', code: 'failed-precondition' };
             }
 
-            // For membership plans, prevent overwriting an active subscription
             if (plan.category === 'membership') {
                 const currentSub = userDoc.data()!.subscription;
                 if (currentSub?.status === 'active' && currentSub?.planCategory === 'membership') {
                     const existingEnd = currentSub.endDate?.toDate ? currentSub.endDate.toDate() : new Date(currentSub.endDate || 0);
                     if (existingEnd > new Date()) {
-                        throw { status: 400, error: 'You already have an active membership. Wait for it to expire or cancel first.', code: 'subscription-already-active' };
+                        throw { status: 400, error: 'You already have an active membership.', code: 'subscription-already-active' };
                     }
                 }
             }
 
-            // Calculate dates
             const now = new Date();
             const endDate = new Date(now);
             endDate.setDate(endDate.getDate() + plan.durationDays);
 
-            // Update payment status
             transaction.update(paymentRef, {
                 status: 'succeeded',
+                razorpayPaymentId: razorpay_payment_id,
                 paidAt: now,
             });
 
-            // Update user subscription
             transaction.update(userRef, {
                 'subscription.planId': plan.id,
                 'subscription.planCategory': plan.category,
@@ -125,9 +146,9 @@ export async function POST(req: NextRequest) {
             const e = error as { status: number; error: string; code: string };
             return NextResponse.json({ error: e.error, code: e.code }, { status: e.status });
         }
-        console.error('Error confirming payment:', error);
+        console.error('Error verifying payment:', error);
         return NextResponse.json(
-            { error: 'Failed to confirm payment', code: 'internal' },
+            { error: 'Failed to verify payment', code: 'internal' },
             { status: 500 },
         );
     }
