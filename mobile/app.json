@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "FitConnect Pro",
+    "name": "SOL Pilates Studio",
     "slug": "fitconnect-pro",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -34,6 +34,7 @@
         ]
       },
       "infoPlist": {
+        "CFBundleDisplayName": "SOL Pilates",
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [
           {
