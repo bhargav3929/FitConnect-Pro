@@ -1,10 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { collection, doc, onSnapshot, orderBy, query, updateDoc, Timestamp } from "firebase/firestore"
+import { doc, updateDoc, Timestamp } from "firebase/firestore"
 import { db } from "@fitconnect/shared/firebase/config"
 import { toast } from "sonner"
 import { Mail, Calendar } from "lucide-react"
+import { PaginationControls } from "@/components/ui/pagination-controls"
+import {
+    getCollectionPage,
+    type FirestorePageCursor,
+} from "@fitconnect/shared/firebase/firestore"
 
 type WaitlistStatus = "new" | "contacted" | "converted" | "archived"
 
@@ -13,10 +18,11 @@ type WaitlistEntry = {
     name: string
     email: string
     status: WaitlistStatus
-    createdAt?: Timestamp
+    createdAt?: Timestamp | Date
 }
 
 const STATUS_OPTIONS: WaitlistStatus[] = ["new", "contacted", "converted", "archived"]
+const PAGE_SIZE = 10
 
 const STATUS_STYLES: Record<WaitlistStatus, string> = {
     new: "bg-terra-400/10 text-terra-400 ring-1 ring-terra-400/30",
@@ -25,27 +31,60 @@ const STATUS_STYLES: Record<WaitlistStatus, string> = {
     archived: "bg-peach-300/30 text-olive-400 ring-1 ring-olive-400/20",
 }
 
+function formatCreatedAt(createdAt?: Timestamp | Date | string | number | { seconds?: number; toDate?: () => Date }): string {
+    if (!createdAt) return ""
+    if (createdAt instanceof Date) return createdAt.toLocaleString()
+    if (typeof createdAt === "string" || typeof createdAt === "number") {
+        return new Date(createdAt).toLocaleString()
+    }
+    if (typeof createdAt.toDate === "function") {
+        return createdAt.toDate().toLocaleString()
+    }
+    if (typeof createdAt.seconds === "number") {
+        return new Date(createdAt.seconds * 1000).toLocaleString()
+    }
+    return ""
+}
+
 export default function WaitlistPage() {
     const [entries, setEntries] = useState<WaitlistEntry[]>([])
+    const [totalEntries, setTotalEntries] = useState(0)
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState<"all" | WaitlistStatus>("all")
+    const [requestedPage, setRequestedPage] = useState(1)
+    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
+    const currentCursor = pageCursors[requestedPage - 1] || null
 
     useEffect(() => {
-        const q = query(collection(db, "waitlist"), orderBy("createdAt", "desc"))
-        const unsub = onSnapshot(
-            q,
-            (snap) => {
-                setEntries(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<WaitlistEntry, "id">) })))
-                setLoading(false)
-            },
-            (err) => {
-                console.error(err)
-                toast.error("Failed to load waitlist")
-                setLoading(false)
-            },
-        )
-        return () => unsub()
-    }, [])
+        let cancelled = false
+
+        getCollectionPage<WaitlistEntry>("waitlist", {
+            pageSize: PAGE_SIZE,
+            cursor: currentCursor,
+            orderField: "createdAt",
+            filters: filter === "all" ? undefined : [{ field: "status", op: "==", value: filter }],
+        })
+            .then((pageResult) => {
+                if (cancelled) return
+                setEntries(pageResult.items)
+                setTotalEntries(pageResult.total)
+                setPageCursors(prev => {
+                    const next = prev.slice(0, requestedPage)
+                    next[requestedPage] = pageResult.nextCursor
+                    return next
+                })
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load waitlist")
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [requestedPage, currentCursor, filter])
 
     const updateStatus = async (id: string, status: WaitlistStatus) => {
         try {
@@ -56,10 +95,13 @@ export default function WaitlistPage() {
         }
     }
 
-    const filtered = filter === "all" ? entries : entries.filter((e) => e.status === filter)
+    const filtered = entries
+    const totalPages = Math.max(1, Math.ceil(totalEntries / PAGE_SIZE))
+    const page = Math.min(requestedPage, totalPages)
+    const paginated = filtered
     const counts = STATUS_OPTIONS.reduce<Record<string, number>>(
         (acc, s) => ({ ...acc, [s]: entries.filter((e) => e.status === s).length }),
-        { all: entries.length },
+        { all: totalEntries },
     )
 
     return (
@@ -91,7 +133,11 @@ export default function WaitlistPage() {
                 {(["all", ...STATUS_OPTIONS] as const).map((s) => (
                     <button
                         key={s}
-                        onClick={() => setFilter(s)}
+                        onClick={() => {
+                            setFilter(s)
+                            setRequestedPage(1)
+                            setPageCursors([null])
+                        }}
                         className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all capitalize ${
                             filter === s
                                 ? "bg-terra-400 text-peach-50 shadow-lg shadow-terra-400/20"
@@ -111,7 +157,7 @@ export default function WaitlistPage() {
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {filtered.map((entry) => (
+                    {paginated.map((entry) => (
                         <article
                             key={entry.id}
                             className="rounded-2xl border border-peach-400/30 bg-peach-50 p-6"
@@ -127,7 +173,7 @@ export default function WaitlistPage() {
                                         {entry.createdAt && (
                                             <span className="inline-flex items-center gap-1.5">
                                                 <Calendar className="w-3.5 h-3.5" />
-                                                {entry.createdAt.toDate().toLocaleString()}
+                                                {formatCreatedAt(entry.createdAt)}
                                             </span>
                                         )}
                                     </div>
@@ -152,6 +198,13 @@ export default function WaitlistPage() {
                             </div>
                         </article>
                     ))}
+                    <PaginationControls
+                        page={page}
+                        totalItems={totalEntries}
+                        pageSize={PAGE_SIZE}
+                        itemLabel="entries"
+                        onPageChange={setRequestedPage}
+                    />
                 </div>
             )}
         </div>

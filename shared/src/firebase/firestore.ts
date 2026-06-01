@@ -8,7 +8,13 @@ import {
     orderBy,
     onSnapshot,
     getDocs,
+    getCountFromServer,
+    limit as limitTo,
+    startAfter,
     Timestamp,
+    type DocumentData,
+    type QueryConstraint,
+    type QueryDocumentSnapshot,
     type Unsubscribe,
 } from 'firebase/firestore';
 import { db, auth } from './config';
@@ -69,6 +75,50 @@ export function convertTimestamps<T extends Record<string, unknown>>(data: T): T
     return result;
 }
 
+export type FirestorePageCursor = QueryDocumentSnapshot<DocumentData> | null;
+
+export interface PaginatedResult<T> {
+    items: T[];
+    nextCursor: FirestorePageCursor;
+    total: number;
+}
+
+interface PageOptions {
+    pageSize: number;
+    cursor?: FirestorePageCursor;
+}
+
+async function getPage<T>(
+    collectionName: string,
+    constraints: QueryConstraint[],
+    pageSize: number,
+    cursor: FirestorePageCursor | undefined,
+    mapper: (snapshot: QueryDocumentSnapshot<DocumentData>) => T,
+): Promise<PaginatedResult<T>> {
+    const baseQuery = query(collection(db, collectionName), ...constraints);
+    const countSnap = await getCountFromServer(baseQuery);
+    const pageQuery = query(
+        collection(db, collectionName),
+        ...constraints,
+        ...(cursor ? [startAfter(cursor)] : []),
+        limitTo(pageSize),
+    );
+    const snapshot = await getDocs(pageQuery);
+
+    return {
+        items: snapshot.docs.map(mapper),
+        nextCursor: snapshot.docs.length === pageSize ? snapshot.docs[snapshot.docs.length - 1] : null,
+        total: countSnap.data().count,
+    };
+}
+
+function mapDocWithId<T>(snapshot: QueryDocumentSnapshot<DocumentData>, idField = 'id'): T {
+    return convertTimestamps({
+        ...snapshot.data(),
+        [idField]: snapshot.id,
+    }) as unknown as T;
+}
+
 // ---------------------------------------------------------------------------
 // 1. getClassesByDate — Query classes for a given date
 // ---------------------------------------------------------------------------
@@ -122,6 +172,70 @@ export async function getUserBookings(userId: string): Promise<Booking[]> {
         const data = doc.data();
         return convertTimestamps({ ...data, id: doc.id }) as unknown as Booking;
     });
+}
+
+export async function getUserBookingsPage(
+    userId: string,
+    options: PageOptions & {
+        statuses?: Booking['status'][];
+        direction?: 'asc' | 'desc';
+    },
+): Promise<PaginatedResult<Booking>> {
+    const constraints: QueryConstraint[] = [
+        where('userId', '==', userId),
+        ...(options.statuses && options.statuses.length > 0
+            ? [where('status', 'in', options.statuses)]
+            : []),
+        orderBy('classDate', options.direction || 'desc'),
+    ];
+
+    const page = await getPage<Booking>(
+        'bookings',
+        constraints,
+        options.pageSize,
+        options.cursor,
+        (snapshot) => mapDocWithId<Booking & { classId: string; trainerId: string }>(snapshot),
+    );
+
+    const classIds = Array.from(new Set(page.items.map((b) => b.classId).filter(Boolean)));
+    const classEntries = await Promise.all(
+        classIds.map(async (id) => {
+            const snap = await getDoc(doc(db, 'classes', id));
+            return [id, snap.exists() ? snap.data() : {}] as const;
+        }),
+    );
+    const classCache = new Map<string, Record<string, unknown>>(classEntries);
+
+    const trainerIds = Array.from(
+        new Set(
+            page.items
+                .map((b) => (classCache.get(b.classId)?.trainerId as string) || b.trainerId)
+                .filter(Boolean),
+        ),
+    );
+    const trainerEntries = await Promise.all(
+        trainerIds.map(async (id) => {
+            const snap = await getDoc(doc(db, 'trainers', id));
+            return [id, snap.exists() ? (snap.data().name as string) : 'Instructor'] as const;
+        }),
+    );
+    const trainerCache = new Map<string, string>(trainerEntries);
+
+    return {
+        ...page,
+        items: page.items.map((b) => {
+            const cls = classCache.get(b.classId) || {};
+            const trainerId = (cls.trainerId as string) || b.trainerId;
+            return {
+                ...b,
+                classType: (cls.classType as string) || 'Pilates',
+                classStartTime: (cls.startTime as string) || '',
+                classDuration: (cls.duration as number) || 0,
+                classLocation: (cls.location as string) || 'Main Studio',
+                trainerName: trainerCache.get(trainerId) || 'Instructor',
+            } as Booking;
+        }),
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -294,6 +408,21 @@ export async function getAllClasses(): Promise<ClassSession[]> {
     });
 }
 
+export async function getClassesPage(
+    options: PageOptions & { status?: ClassSession['status'] },
+): Promise<PaginatedResult<ClassSession>> {
+    return getPage<ClassSession>(
+        'classes',
+        [
+            ...(options.status ? [where('status', '==', options.status)] : []),
+            orderBy('date', 'desc'),
+        ],
+        options.pageSize,
+        options.cursor,
+        (snapshot) => mapDocWithId<ClassSession>(snapshot),
+    );
+}
+
 // ---------------------------------------------------------------------------
 // 9. getAllBookings — Admin: all bookings
 // ---------------------------------------------------------------------------
@@ -310,6 +439,21 @@ export async function getAllBookings(): Promise<Booking[]> {
     });
 }
 
+export async function getBookingsPage(
+    options: PageOptions & { status?: Booking['status'] },
+): Promise<PaginatedResult<Booking>> {
+    return getPage<Booking>(
+        'bookings',
+        [
+            ...(options.status ? [where('status', '==', options.status)] : []),
+            orderBy('classDate', 'desc'),
+        ],
+        options.pageSize,
+        options.cursor,
+        (snapshot) => mapDocWithId<Booking>(snapshot),
+    );
+}
+
 // ---------------------------------------------------------------------------
 // 10. getAllMembers — Admin: all user profiles
 // ---------------------------------------------------------------------------
@@ -320,6 +464,25 @@ export async function getAllMembers(): Promise<UserProfile[]> {
         const data = doc.data();
         return convertTimestamps({ ...data, uid: doc.id }) as unknown as UserProfile;
     });
+}
+
+export async function getMembersPage(
+    options: PageOptions & {
+        planId?: string;
+        status?: UserProfile['subscription']['status'];
+    },
+): Promise<PaginatedResult<UserProfile>> {
+    return getPage<UserProfile>(
+        'users',
+        [
+            ...(options.planId ? [where('subscription.planId', '==', options.planId)] : []),
+            ...(options.status ? [where('subscription.status', '==', options.status)] : []),
+            orderBy('createdAt', 'desc'),
+        ],
+        options.pageSize,
+        options.cursor,
+        (snapshot) => mapDocWithId<UserProfile>(snapshot, 'uid'),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -578,6 +741,38 @@ export async function getAllTrainers(): Promise<Trainer[]> {
         const data = doc.data();
         return convertTimestamps({ ...data, id: doc.id }) as unknown as Trainer;
     });
+}
+
+export async function getTrainersPage(
+    options: PageOptions,
+): Promise<PaginatedResult<Trainer>> {
+    return getPage<Trainer>(
+        'trainers',
+        [orderBy('name')],
+        options.pageSize,
+        options.cursor,
+        (snapshot) => mapDocWithId<Trainer>(snapshot),
+    );
+}
+
+export async function getCollectionPage<T>(
+    collectionName: string,
+    options: PageOptions & {
+        orderField: string;
+        orderDirection?: 'asc' | 'desc';
+        filters?: Array<{ field: string; op: '==' | 'in'; value: unknown }>;
+    },
+): Promise<PaginatedResult<T>> {
+    return getPage<T>(
+        collectionName,
+        [
+            ...(options.filters || []).map((filter) => where(filter.field, filter.op, filter.value)),
+            orderBy(options.orderField, options.orderDirection || 'desc'),
+        ],
+        options.pageSize,
+        options.cursor,
+        (snapshot) => mapDocWithId<T>(snapshot),
+    );
 }
 
 // ---------------------------------------------------------------------------

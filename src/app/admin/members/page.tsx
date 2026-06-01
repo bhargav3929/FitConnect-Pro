@@ -12,33 +12,59 @@ import {
     UserPlus,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { getAllMembers } from "@fitconnect/shared/firebase/firestore"
+import { PaginationControls } from "@/components/ui/pagination-controls"
+import {
+    getMembersPage,
+    type FirestorePageCursor,
+} from "@fitconnect/shared/firebase/firestore"
 import { UserProfile } from "@fitconnect/shared/types/user"
 import { toast } from "sonner"
 
 const PLAN_FILTERS = ["All Plans", "unlimited", "twice_weekly", "once_weekly", "drop_in", "five_pack", "ten_pack"]
 const STATUS_FILTERS = ["All Status", "active", "expired", "canceled"]
+const PAGE_SIZE = 12
 
 export default function MembersPage() {
     const [members, setMembers] = useState<UserProfile[]>([])
+    const [totalMembers, setTotalMembers] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [planFilter, setPlanFilter] = useState("All Plans")
     const [statusFilter, setStatusFilter] = useState("All Status")
+    const [requestedPage, setRequestedPage] = useState(1)
+    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
+    const currentCursor = pageCursors[requestedPage - 1] || null
 
     useEffect(() => {
-        async function fetchMembers() {
-            try {
-                const data = await getAllMembers()
-                setMembers(data)
-            } catch {
-                toast.error("Failed to load members")
-            } finally {
-                setIsLoading(false)
-            }
+        let cancelled = false
+
+        getMembersPage({
+            pageSize: PAGE_SIZE,
+            cursor: currentCursor,
+            planId: planFilter === "All Plans" ? undefined : planFilter,
+            status: statusFilter === "All Status" ? undefined : statusFilter as UserProfile['subscription']['status'],
+        })
+            .then((pageResult) => {
+                if (cancelled) return
+                setMembers(pageResult.items)
+                setTotalMembers(pageResult.total)
+                setPageCursors(prev => {
+                    const next = prev.slice(0, requestedPage)
+                    next[requestedPage] = pageResult.nextCursor
+                    return next
+                })
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load members")
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoading(false)
+            })
+
+        return () => {
+            cancelled = true
         }
-        fetchMembers()
-    }, [])
+    }, [requestedPage, currentCursor, planFilter, statusFilter])
 
     const filteredMembers = members.filter(member => {
         const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -47,6 +73,9 @@ export default function MembersPage() {
         const matchesStatus = statusFilter === "All Status" || member.subscription.status === statusFilter
         return matchesSearch && matchesPlan && matchesStatus
     })
+    const totalPages = Math.max(1, Math.ceil(totalMembers / PAGE_SIZE))
+    const page = Math.min(requestedPage, totalPages)
+    const paginatedMembers = filteredMembers
 
     const activeCount = members.filter(m => m.subscription.status === 'active').length
     const totalCredits = members.reduce((sum, m) => sum + (m.subscription.classesRemaining ?? 0), 0)
@@ -87,7 +116,7 @@ export default function MembersPage() {
                         <>
                             <span className="text-olive-300 text-xs font-mono bg-peach-200/50 px-3 py-1.5 rounded-full border border-peach-400/20 flex items-center gap-2">
                                 <Users className="w-3 h-3" />
-                                {members.length} total
+                                {totalMembers} total
                             </span>
                             <span className="text-olive-300 text-xs font-mono bg-green-500/8 px-3 py-1.5 rounded-full border border-green-500/15 flex items-center gap-2">
                                 <Activity className="w-3 h-3 text-green-600" />
@@ -106,7 +135,7 @@ export default function MembersPage() {
                 className="grid grid-cols-2 lg:grid-cols-4 gap-4"
             >
                 {[
-                    { label: "Total Members", value: members.length, icon: Users },
+                    { label: "Total Members", value: totalMembers, icon: Users },
                     { label: "Active", value: activeCount, icon: Activity },
                     { label: "Credits Remaining", value: totalCredits, icon: CreditCard },
                     { label: "New This Month", value: members.filter(m => {
@@ -115,7 +144,7 @@ export default function MembersPage() {
                         const now = new Date()
                         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
                     }).length, icon: UserPlus },
-                ].map((stat, idx) => (
+                ].map((stat) => (
                     <div
                         key={stat.label}
                         className="group relative overflow-hidden bg-peach-50 border border-peach-400/20 p-5 hover:border-terra-400/30 transition-all duration-500"
@@ -145,13 +174,20 @@ export default function MembersPage() {
                         type="text"
                         placeholder="Search by name or email..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value)
+                            setRequestedPage(1)
+                        }}
                         className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                     />
                 </div>
                 <select
                     value={planFilter}
-                    onChange={(e) => setPlanFilter(e.target.value)}
+                    onChange={(e) => {
+                        setPlanFilter(e.target.value)
+                        setRequestedPage(1)
+                        setPageCursors([null])
+                    }}
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {PLAN_FILTERS.map(plan => (
@@ -160,7 +196,11 @@ export default function MembersPage() {
                 </select>
                 <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => {
+                        setStatusFilter(e.target.value)
+                        setRequestedPage(1)
+                        setPageCursors([null])
+                    }}
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {STATUS_FILTERS.map(status => (
@@ -216,7 +256,7 @@ export default function MembersPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredMembers.map((member, idx) => (
+                                {paginatedMembers.map((member, idx) => (
                                     <motion.tr
                                         key={member.uid}
                                         initial={{ opacity: 0 }}
@@ -279,7 +319,7 @@ export default function MembersPage() {
 
                     {/* Mobile Cards */}
                     <div className="lg:hidden divide-y divide-peach-400/10">
-                        {filteredMembers.map((member, idx) => (
+                        {paginatedMembers.map((member, idx) => (
                             <motion.div
                                 key={member.uid}
                                 initial={{ opacity: 0, y: 10 }}
@@ -331,6 +371,15 @@ export default function MembersPage() {
                             <p className="text-olive-300 text-sm">Try adjusting your search or filter criteria</p>
                         </div>
                     )}
+                    {filteredMembers.length > 0 && (
+                        <PaginationControls
+                            page={page}
+                            totalItems={totalMembers}
+                            pageSize={PAGE_SIZE}
+                            itemLabel="members"
+                            onPageChange={setRequestedPage}
+                        />
+                    )}
                 </motion.div>
             )}
 
@@ -342,7 +391,7 @@ export default function MembersPage() {
                     transition={{ delay: 0.5 }}
                     className="flex items-center justify-between text-olive-300 text-xs tracking-wider"
                 >
-                    <span>Showing {filteredMembers.length} of {members.length} members</span>
+                    <span>Showing page {page} of {Math.max(1, Math.ceil(totalMembers / PAGE_SIZE))} members</span>
                     <span className="font-mono bg-peach-200/30 px-3 py-1 rounded-full border border-peach-400/15">
                         {activeCount} active &bull; {members.length - activeCount} inactive
                     </span>

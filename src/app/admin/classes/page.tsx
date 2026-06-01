@@ -18,7 +18,6 @@ import {
     XCircle,
     Timer,
     Zap,
-    X,
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -26,6 +25,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { PaginationControls } from "@/components/ui/pagination-controls"
 import {
     Dialog,
     DialogContent,
@@ -33,7 +33,14 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { getAllClasses, callDeleteClass, callCreateClass, callUpdateClass, getTrainers } from "@fitconnect/shared/firebase/firestore"
+import {
+    callCreateClass,
+    callDeleteClass,
+    callUpdateClass,
+    getClassesPage,
+    getTrainers,
+    type FirestorePageCursor,
+} from "@fitconnect/shared/firebase/firestore"
 import { ClassSession } from "@fitconnect/shared/types/class"
 import { Trainer } from "@fitconnect/shared/types/trainer"
 import { toast } from "sonner"
@@ -41,6 +48,7 @@ import { toast } from "sonner"
 const STATUSES = ["All Status", "scheduled", "ongoing", "completed", "canceled"]
 const DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const
 const LOCATIONS = ["Main Studio", "Reformer Studio", "Mat Studio", "Private Suite", "Barre & Stretch", "Recovery Lounge"]
+const PAGE_SIZE = 12
 
 const CLASS_TYPES = [
     { name: "Sol Flow", description: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.", timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
@@ -74,11 +82,15 @@ const defaultFormData: ClassFormData = {
 
 export default function ClassesPage() {
     const [classes, setClasses] = useState<ClassSession[]>([])
+    const [totalClasses, setTotalClasses] = useState(0)
     const [trainers, setTrainers] = useState<Trainer[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState("All Status")
     const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [requestedPage, setRequestedPage] = useState(1)
+    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
+    const currentCursor = pageCursors[requestedPage - 1] || null
 
     // Dialog state
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -87,29 +99,48 @@ export default function ClassesPage() {
     const [isSaving, setIsSaving] = useState(false)
 
     useEffect(() => {
-        fetchClasses()
-        fetchTrainers()
+        let cancelled = false
+        getTrainers()
+            .then((data) => {
+                if (!cancelled) setTrainers(data)
+            })
+            .catch(() => {
+                // Trainers load silently
+            })
+        return () => {
+            cancelled = true
+        }
     }, [])
 
-    async function fetchClasses() {
-        try {
-            const data = await getAllClasses()
-            setClasses(data)
-        } catch {
-            toast.error("Failed to load classes")
-        } finally {
-            setIsLoading(false)
-        }
-    }
+    useEffect(() => {
+        let cancelled = false
 
-    async function fetchTrainers() {
-        try {
-            const data = await getTrainers()
-            setTrainers(data)
-        } catch {
-            // Trainers load silently
+        getClassesPage({
+            pageSize: PAGE_SIZE,
+            cursor: currentCursor,
+            status: statusFilter === "All Status" ? undefined : statusFilter as ClassSession['status'],
+        })
+            .then((pageResult) => {
+                if (cancelled) return
+                setClasses(pageResult.items)
+                setTotalClasses(pageResult.total)
+                setPageCursors(prev => {
+                    const next = prev.slice(0, requestedPage)
+                    next[requestedPage] = pageResult.nextCursor
+                    return next
+                })
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load classes")
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoading(false)
+            })
+
+        return () => {
+            cancelled = true
         }
-    }
+    }, [requestedPage, currentCursor, statusFilter])
 
     const handleDelete = async (classId: string) => {
         setDeletingId(classId)
@@ -197,7 +228,8 @@ export default function ClassesPage() {
             }
             setDialogOpen(false)
             setIsLoading(true)
-            await fetchClasses()
+            setRequestedPage(1)
+            setPageCursors([null])
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to save class"
             toast.error(message)
@@ -211,6 +243,9 @@ export default function ClassesPage() {
         const matchesStatus = statusFilter === "All Status" || cls.status === statusFilter
         return matchesSearch && matchesStatus
     })
+    const totalPages = Math.max(1, Math.ceil(totalClasses / PAGE_SIZE))
+    const page = Math.min(requestedPage, totalPages)
+    const paginatedClasses = filteredClasses
 
     const scheduledCount = classes.filter(c => c.status === 'scheduled').length
     const completedCount = classes.filter(c => c.status === 'completed').length
@@ -320,13 +355,20 @@ export default function ClassesPage() {
                         type="text"
                         placeholder="Search classes..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value)
+                            setRequestedPage(1)
+                        }}
                         className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                     />
                 </div>
                 <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => {
+                        setStatusFilter(e.target.value)
+                        setRequestedPage(1)
+                        setPageCursors([null])
+                    }}
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {STATUSES.map(status => (
@@ -382,7 +424,7 @@ export default function ClassesPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredClasses.map((cls, idx) => (
+                                {paginatedClasses.map((cls, idx) => (
                                     <motion.tr
                                         key={cls.id}
                                         initial={{ opacity: 0 }}
@@ -488,7 +530,7 @@ export default function ClassesPage() {
 
                     {/* Mobile Cards */}
                     <div className="lg:hidden divide-y divide-peach-400/10">
-                        {filteredClasses.map((cls, idx) => (
+                        {paginatedClasses.map((cls, idx) => (
                             <motion.div
                                 key={cls.id}
                                 initial={{ opacity: 0, y: 10 }}
@@ -567,6 +609,15 @@ export default function ClassesPage() {
                             <p className="text-olive-600 font-bold mb-1">No classes found</p>
                             <p className="text-olive-300 text-sm">Try adjusting your search or filter criteria</p>
                         </div>
+                    )}
+                    {filteredClasses.length > 0 && (
+                        <PaginationControls
+                            page={page}
+                            totalItems={totalClasses}
+                            pageSize={PAGE_SIZE}
+                            itemLabel="classes"
+                            onPageChange={setRequestedPage}
+                        />
                     )}
                 </motion.div>
             )}

@@ -15,7 +15,6 @@ import {
     Clock,
     Users,
     Loader2,
-    X,
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -31,7 +30,14 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { getAllTrainers, callCreateTrainer, callUpdateTrainer, callDeleteTrainer } from "@fitconnect/shared/firebase/firestore"
+import { PaginationControls } from "@/components/ui/pagination-controls"
+import {
+    callCreateTrainer,
+    callDeleteTrainer,
+    callUpdateTrainer,
+    getTrainersPage,
+    type FirestorePageCursor,
+} from "@fitconnect/shared/firebase/firestore"
 import { Trainer } from "@fitconnect/shared/types/trainer"
 import { toast } from "sonner"
 
@@ -58,11 +64,16 @@ const defaultTrainerForm: TrainerFormData = {
     profilePictureUrl: "",
     isActive: true,
 }
+const PAGE_SIZE = 9
 
 export default function TrainersPage() {
     const [trainers, setTrainers] = useState<Trainer[]>([])
+    const [totalTrainers, setTotalTrainers] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
+    const [requestedPage, setRequestedPage] = useState(1)
+    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
+    const currentCursor = pageCursors[requestedPage - 1] || null
 
     // Dialog state
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -72,24 +83,38 @@ export default function TrainersPage() {
     const [deletingId, setDeletingId] = useState<string | null>(null)
 
     useEffect(() => {
-        fetchTrainers()
-    }, [])
+        let cancelled = false
 
-    async function fetchTrainers() {
-        try {
-            const data = await getAllTrainers()
-            setTrainers(data)
-        } catch {
-            toast.error("Failed to load trainers")
-        } finally {
-            setIsLoading(false)
+        getTrainersPage({ pageSize: PAGE_SIZE, cursor: currentCursor })
+            .then((pageResult) => {
+                if (cancelled) return
+                setTrainers(pageResult.items)
+                setTotalTrainers(pageResult.total)
+                setPageCursors(prev => {
+                    const next = prev.slice(0, requestedPage)
+                    next[requestedPage] = pageResult.nextCursor
+                    return next
+                })
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load trainers")
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoading(false)
+            })
+
+        return () => {
+            cancelled = true
         }
-    }
+    }, [requestedPage, currentCursor])
 
     const filteredTrainers = trainers.filter(trainer =>
         trainer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         trainer.specialties.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
     )
+    const totalPages = Math.max(1, Math.ceil(totalTrainers / PAGE_SIZE))
+    const page = Math.min(requestedPage, totalPages)
+    const paginatedTrainers = filteredTrainers
 
     const activeTrainers = trainers.filter(t => t.isActive).length
     const ratedTrainers = trainers.filter(t => t.rating)
@@ -164,7 +189,8 @@ export default function TrainersPage() {
             }
             setDialogOpen(false)
             setIsLoading(true)
-            await fetchTrainers()
+            setRequestedPage(1)
+            setPageCursors([null])
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to save trainer"
             toast.error(message)
@@ -220,7 +246,7 @@ export default function TrainersPage() {
                 className="grid grid-cols-2 lg:grid-cols-4 gap-4"
             >
                 {[
-                    { label: "Total Trainers", value: trainers.length, icon: Users },
+                    { label: "Total Trainers", value: totalTrainers, icon: Users },
                     { label: "Active", value: activeTrainers, icon: Award },
                     { label: "Avg Rating", value: avgRating, icon: Star },
                     { label: "Combined Yrs Exp", value: totalExperience, icon: Clock },
@@ -253,7 +279,10 @@ export default function TrainersPage() {
                     type="text"
                     placeholder="Search trainers or specialties..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        setRequestedPage(1)
+                    }}
                     className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                 />
             </motion.div>
@@ -291,7 +320,7 @@ export default function TrainersPage() {
             {/* Trainers Grid */}
             {!isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredTrainers.map((trainer, idx) => (
+                    {paginatedTrainers.map((trainer, idx) => (
                         <motion.div
                             key={trainer.id}
                             initial={{ opacity: 0, y: 20 }}
@@ -412,6 +441,16 @@ export default function TrainersPage() {
                 </div>
             )}
 
+            {!isLoading && filteredTrainers.length > 0 && (
+                <PaginationControls
+                    page={page}
+                    totalItems={totalTrainers}
+                    pageSize={PAGE_SIZE}
+                    itemLabel="trainers"
+                    onPageChange={setRequestedPage}
+                />
+            )}
+
             {!isLoading && filteredTrainers.length === 0 && (
                 <div className="text-center py-16">
                     <div className="w-16 h-16 bg-peach-200/40 flex items-center justify-center mx-auto mb-4">
@@ -430,7 +469,7 @@ export default function TrainersPage() {
                     transition={{ delay: 0.5 }}
                     className="flex items-center justify-between text-olive-300 text-xs tracking-wider"
                 >
-                    <span>Showing {filteredTrainers.length} of {trainers.length} trainers</span>
+                    <span>Showing page {page} of {Math.max(1, Math.ceil(totalTrainers / PAGE_SIZE))} trainers</span>
                     <span className="font-mono bg-peach-200/30 px-3 py-1 rounded-full border border-peach-400/15">
                         {activeTrainers} active &bull; {trainers.length - activeTrainers} inactive
                     </span>

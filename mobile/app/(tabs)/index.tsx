@@ -14,7 +14,6 @@ import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { subscribeToUserBookings } from '@fitconnect/shared/firebase/firestore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import type { Booking } from '@fitconnect/shared/types/booking';
-import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
@@ -279,23 +278,18 @@ function SubscriptionCard({
                 activeOpacity={0.9}
                 style={styles.noPlanCardWrap}
             >
-                <LinearGradient
-                    colors={[Colors.terra[500], Colors.terra[300]]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.noPlanCard}
-                >
+                <View style={styles.noPlanCard}>
                     <View style={styles.noPlanIconCircle}>
-                        <Feather name="credit-card" size={18} color={Colors.white} />
+                        <Feather name="credit-card" size={18} color={Colors.terra[400]} />
                     </View>
                     <View style={styles.noPlanTextCol}>
                         <Text style={styles.noPlanTitle}>Choose a Plan</Text>
                         <Text style={styles.noPlanSubtitle}>Start booking classes today</Text>
                     </View>
                     <View style={styles.noPlanArrowCircle}>
-                        <Feather name="arrow-right" size={16} color={Colors.white} />
+                        <Feather name="arrow-right" size={16} color={Colors.terra[400]} />
                     </View>
-                </LinearGradient>
+                </View>
             </TouchableOpacity>
         );
     }
@@ -365,18 +359,13 @@ function UpcomingSessionCard({
     if (booking) {
         return (
             <View style={styles.upcomingCardWrap}>
-                <LinearGradient
-                    colors={[Colors.terra[400], Colors.terra[300]]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.upcomingCard}
-                >
+                <View style={styles.upcomingCard}>
                     {/* Decorative glow circle — top-right, matches web */}
                     <View style={styles.upcomingDecorCircle} />
 
                     <View style={styles.upcomingContent}>
                         <View style={styles.upcomingLabelPill}>
-                            <Feather name="clock" size={10} color={Colors.peach[50]} />
+                            <Feather name="clock" size={10} color={Colors.terra[400]} />
                             <Text style={styles.upcomingLabel}>UPCOMING SESSION</Text>
                         </View>
                         <Text style={styles.upcomingClassName}>
@@ -394,7 +383,7 @@ function UpcomingSessionCard({
                             <Feather name="arrow-right" size={14} color={Colors.terra[400]} />
                         </TouchableOpacity>
                     </View>
-                </LinearGradient>
+                </View>
             </View>
         );
     }
@@ -416,7 +405,7 @@ function UpcomingSessionCard({
                     activeOpacity={0.7}
                 >
                     <Text style={styles.browseScheduleButtonText}>BROWSE SCHEDULE</Text>
-                    <Feather name="arrow-right" size={16} color={Colors.white} />
+                    <Feather name="arrow-right" size={16} color={Colors.terra[400]} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -426,47 +415,12 @@ function UpcomingSessionCard({
 function QuickActions({
     onBookClass,
     onMyBookings,
-    onFreeClass,
-    freeClassBooked,
 }: {
     onBookClass: () => void;
     onMyBookings: () => void;
-    onFreeClass: () => void;
-    freeClassBooked?: boolean;
 }) {
     return (
         <View style={styles.quickActionsColumn}>
-            {/* Book Free Class — terra outline card */}
-            <TouchableOpacity
-                style={[styles.freeClassCard, freeClassBooked && { opacity: 0.7 }]}
-                onPress={freeClassBooked ? undefined : onFreeClass}
-                disabled={freeClassBooked}
-                activeOpacity={freeClassBooked ? 1 : 0.85}
-            >
-                <View style={styles.freeClassIconCircle}>
-                    <Feather
-                        name={freeClassBooked ? 'check-circle' : 'gift'}
-                        size={20}
-                        color={Colors.terra[400]}
-                    />
-                </View>
-                <Text style={styles.freeClassTitle}>
-                    {freeClassBooked ? 'Free Class Booked' : 'Book a Free Class'}
-                </Text>
-                <Text style={styles.freeClassSubtitle}>
-                    {freeClassBooked
-                        ? "You're all set — Swetha will be in touch shortly."
-                        : 'First time? Try a complimentary 30-minute drop-in.'}
-                </Text>
-                {!freeClassBooked && (
-                    <View style={styles.freeClassLinkRow}>
-                        <Text style={styles.freeClassLinkText}>CLAIM FREE SESSION</Text>
-                        <Feather name="arrow-right" size={14} color={Colors.terra[400]} />
-                    </View>
-                )}
-            </TouchableOpacity>
-
-            {/* Book Your Next Class — dark olive feature card */}
             <TouchableOpacity
                 style={styles.bookNextCard}
                 onPress={onBookClass}
@@ -474,9 +428,9 @@ function QuickActions({
             >
                 <View style={styles.bookNextDecorCircle} />
                 <View style={styles.bookNextTopRow}>
-                    <Feather name="calendar" size={22} color={Colors.peach[100]} />
+                    <Feather name="calendar" size={22} color={Colors.terra[400]} />
                     <View style={styles.bookNextArrowCircle}>
-                        <Feather name="arrow-right" size={16} color={Colors.white} />
+                        <Feather name="arrow-right" size={16} color={Colors.terra[400]} />
                     </View>
                 </View>
                 <Text style={styles.bookNextTitle}>Book Your Next Class</Text>
@@ -485,7 +439,6 @@ function QuickActions({
                 </Text>
             </TouchableOpacity>
 
-            {/* My Bookings — peach card */}
             <TouchableOpacity
                 style={styles.myBookingsCard}
                 onPress={onMyBookings}
@@ -504,6 +457,46 @@ function QuickActions({
                 </View>
             </TouchableOpacity>
         </View>
+    );
+}
+
+function FreeClassCTA({
+    onFreeClass,
+    freeClassBooked,
+}: {
+    onFreeClass: () => void;
+    freeClassBooked?: boolean;
+}) {
+    return (
+        <TouchableOpacity
+            style={[styles.freeClassCard, freeClassBooked && { opacity: 0.7 }]}
+            onPress={freeClassBooked ? undefined : onFreeClass}
+            disabled={freeClassBooked}
+            activeOpacity={freeClassBooked ? 1 : 0.85}
+        >
+            <View style={styles.freeClassIconCircle}>
+                <Feather
+                    name={freeClassBooked ? 'check-circle' : 'gift'}
+                    size={20}
+                    color={Colors.terra[400]}
+                />
+            </View>
+            <View style={styles.freeClassTextCol}>
+                <Text style={styles.freeClassTitle}>
+                    {freeClassBooked ? 'Free Class Booked' : 'Book a Free Class'}
+                </Text>
+                <Text style={styles.freeClassSubtitle}>
+                    {freeClassBooked
+                        ? "You're all set. Swetha will be in touch shortly."
+                        : 'First time? Try a complimentary 30-minute drop-in.'}
+                </Text>
+            </View>
+            {!freeClassBooked && (
+                <View style={styles.freeClassArrowCircle}>
+                    <Feather name="arrow-right" size={16} color={Colors.terra[400]} />
+                </View>
+            )}
+        </TouchableOpacity>
     );
 }
 
@@ -560,6 +553,11 @@ export default function DashboardScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
+                <FreeClassCTA
+                    onFreeClass={navigateToFreeClass}
+                    freeClassBooked={hasFreeClassLead === true}
+                />
+                <View style={{ height: Spacing.md }} />
                 {/* A. Welcome Banner */}
                 <WelcomeBanner
                     name={name}
@@ -591,8 +589,6 @@ export default function DashboardScreen() {
                 <QuickActions
                     onBookClass={navigateToSchedule}
                     onMyBookings={navigateToBookings}
-                    onFreeClass={navigateToFreeClass}
-                    freeClassBooked={hasFreeClassLead === true}
                 />
             </ScrollView>
         </SafeAreaView>
@@ -614,6 +610,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: Spacing.lg,
         paddingBottom: 100,
+        paddingTop: Spacing.md,
     },
 
     // ── Welcome Banner ─────────────────────────────────────────
@@ -622,9 +619,10 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderRadius: BorderRadius['2xl'],
         padding: Spacing.lg,
-        marginTop: Spacing.md,
         // Layered background — peach gradient effect
-        backgroundColor: Colors.peach[200],
+        backgroundColor: Colors.peach[50],
+        borderWidth: 1,
+        borderColor: Colors.borderLight,
     },
     // Large circle wrapping around the streak meter (top-right)
     decorCircle1: {
@@ -783,7 +781,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     activeBadge: {
-        backgroundColor: Colors.successBg,
+        backgroundColor: Alpha.terra400_10,
         paddingHorizontal: Spacing.sm,
         paddingVertical: 3,
         borderRadius: BorderRadius.full,
@@ -791,7 +789,7 @@ const styles = StyleSheet.create({
     activeBadgeText: {
         fontSize: FontSize.xs,
         fontWeight: '600',
-        color: Colors.success,
+        color: Colors.terra[400],
     },
     creditsDisplay: {
         marginBottom: Spacing.sm,
@@ -883,12 +881,16 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.md,
         paddingHorizontal: Spacing.md,
         gap: Spacing.md,
+        backgroundColor: Colors.peach[50],
+        borderWidth: 1,
+        borderColor: Colors.borderLight,
+        borderRadius: BorderRadius['2xl'],
     },
     noPlanIconCircle: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: Alpha.white_18,
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -899,19 +901,19 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: Alpha.white_18,
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
     },
     noPlanTitle: {
         fontFamily: FontFamily.sansBold,
         fontSize: FontSize.base,
-        color: Colors.white,
+        color: Colors.olive[600],
     },
     noPlanSubtitle: {
         fontFamily: FontFamily.sans,
         fontSize: FontSize.xs,
-        color: Alpha.white_80,
+        color: Colors.olive[400],
         marginTop: 2,
     },
 
@@ -924,6 +926,10 @@ const styles = StyleSheet.create({
     upcomingCard: {
         padding: 20,
         position: 'relative',
+        backgroundColor: Colors.peach[50],
+        borderWidth: 1,
+        borderColor: Colors.borderLight,
+        borderRadius: BorderRadius['2xl'],
     },
     upcomingDecorCircle: {
         position: 'absolute',
@@ -932,7 +938,7 @@ const styles = StyleSheet.create({
         width: 180,
         height: 180,
         borderRadius: 90,
-        backgroundColor: Alpha.peach50_10,
+        backgroundColor: Alpha.terra400_07,
     },
     upcomingContent: {
         position: 'relative',
@@ -943,7 +949,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 6,
         alignSelf: 'flex-start',
-        backgroundColor: Alpha.peach50_15,
+        backgroundColor: Alpha.terra400_10,
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
@@ -952,26 +958,26 @@ const styles = StyleSheet.create({
     upcomingLabel: {
         fontSize: FontSize['2xs'],
         fontWeight: '700',
-        color: Colors.peach[50],
+        color: Colors.terra[400],
         textTransform: 'uppercase',
         letterSpacing: 1.5,
     },
     upcomingClassName: {
         fontSize: FontSize.xl,
         fontWeight: '800',
-        color: Colors.peach[50],
+        color: Colors.olive[600],
         marginBottom: 4,
     },
     upcomingDetails: {
         fontSize: FontSize.sm,
-        color: Alpha.peach100_75,
+        color: Colors.olive[400],
         marginBottom: Spacing.md,
     },
     viewDetailsButton: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: Colors.peach[50],
+        backgroundColor: Alpha.terra400_10,
         borderRadius: BorderRadius.xl,
         paddingVertical: Spacing.sm + 2,
         paddingHorizontal: Spacing.md,
@@ -1025,7 +1031,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm + 2,
-        backgroundColor: Colors.terra[400],
+        backgroundColor: Alpha.terra400_10,
+        borderWidth: 1,
+        borderColor: Colors.terra[400],
         borderRadius: BorderRadius.md,
         paddingVertical: Spacing.md - 2,
         paddingHorizontal: Spacing.lg,
@@ -1034,7 +1042,7 @@ const styles = StyleSheet.create({
     browseScheduleButtonText: {
         fontFamily: FontFamily.sansBold,
         fontSize: FontSize.xs,
-        color: Colors.white,
+        color: Colors.terra[400],
         letterSpacing: 1,
     },
 
@@ -1048,7 +1056,9 @@ const styles = StyleSheet.create({
     bookNextCard: {
         position: 'relative',
         overflow: 'hidden',
-        backgroundColor: Colors.olive[600],
+        backgroundColor: Colors.peach[50],
+        borderWidth: 1,
+        borderColor: Colors.borderLight,
         borderRadius: BorderRadius['2xl'],
         padding: Spacing.lg,
     },
@@ -1059,8 +1069,7 @@ const styles = StyleSheet.create({
         width: 160,
         height: 160,
         borderRadius: 80,
-        backgroundColor: Colors.peach[100],
-        opacity: 0.08,
+        backgroundColor: Alpha.terra400_07,
     },
     bookNextTopRow: {
         flexDirection: 'row',
@@ -1072,20 +1081,20 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: Alpha.white_12,
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
     },
     bookNextTitle: {
         fontFamily: FontFamily.sansExtra,
         fontSize: FontSize.xl,
-        color: Colors.white,
+        color: Colors.olive[600],
         marginBottom: Spacing.sm,
     },
     bookNextSubtitle: {
         fontFamily: FontFamily.sans,
         fontSize: FontSize.sm,
-        color: Alpha.peach100_75,
+        color: Colors.olive[400],
         lineHeight: 20,
     },
 
@@ -1134,7 +1143,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.terra[400],
         borderRadius: BorderRadius['2xl'],
-        padding: Spacing.lg,
+        padding: Spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
     },
     freeClassIconCircle: {
         width: 44,
@@ -1143,7 +1155,9 @@ const styles = StyleSheet.create({
         backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: Spacing.md,
+    },
+    freeClassTextCol: {
+        flex: 1,
     },
     freeClassTitle: {
         fontFamily: FontFamily.sansExtra,
@@ -1155,17 +1169,13 @@ const styles = StyleSheet.create({
         fontSize: FontSize.sm,
         color: Colors.olive[400],
         marginTop: 2,
-        marginBottom: Spacing.md,
     },
-    freeClassLinkRow: {
-        flexDirection: 'row',
+    freeClassArrowCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: Alpha.terra400_10,
         alignItems: 'center',
-        gap: 6,
-    },
-    freeClassLinkText: {
-        fontFamily: FontFamily.sansBold,
-        fontSize: FontSize.xs,
-        color: Colors.terra[400],
-        letterSpacing: 1,
+        justifyContent: 'center',
     },
 });

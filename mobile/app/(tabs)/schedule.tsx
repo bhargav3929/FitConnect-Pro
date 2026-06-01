@@ -188,7 +188,7 @@ export default function ScheduleScreen() {
 
     // ── Tab Renderers ──
     const renderScheduleTab = () => (
-        <View>
+        <View style={styles.schedulePane}>
             {/* Calendar Strip */}
             <CalendarStrip
                 selectedDate={selectedDate}
@@ -210,69 +210,43 @@ export default function ScheduleScreen() {
                 )}
             </View>
 
-            {/* Filter chips */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filtersRow}
-            >
-                <View style={styles.filterIconWrap}>
-                    <Feather name="filter" size={16} color={Colors.olive[400]} />
-                </View>
-                {(
-                    [
-                        { key: 'instructor' as FilterKey, label: 'Instructor' },
-                        { key: 'classType' as FilterKey, label: 'Class Type' },
-                    ]
-                ).map((f) => {
-                    const isActive = activeFilter === f.key;
-                    return (
-                        <TouchableOpacity
-                            key={f.key}
-                            onPress={() => setActiveFilter(isActive ? null : f.key)}
-                            activeOpacity={0.7}
-                            style={[styles.filterChip, isActive && styles.filterChipActive]}
-                        >
-                            <Text
-                                style={[
-                                    styles.filterChipText,
-                                    isActive && styles.filterChipTextActive,
-                                ]}
-                            >
-                                {f.label}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </ScrollView>
+            {/* TODO: Add filter chips */}
 
             {/* Class list */}
-            {loadingClasses ? (
-                <View style={styles.loaderContainer}>
-                    <ActivityIndicator size="large" color={Colors.primary} />
-                </View>
-            ) : classes.length === 0 ? (
-                <View style={styles.emptyState}>
-                    <View style={styles.emptyIconWrap}>
-                        <Feather name="calendar" size={32} color={Colors.olive[300]} />
-                    </View>
-                    <Text style={styles.emptyTitle}>No classes scheduled</Text>
-                    <Text style={styles.emptySubtitle}>
-                        There are no classes available on this date. Try selecting a different day.
-                    </Text>
-                </View>
-            ) : (
-                <View style={styles.classList}>
-                    {classes.map((cls) => (
-                        <ClassCard
-                            key={cls.id}
-                            classSession={cls}
-                            trainerName={getTrainerName(cls.trainerId)}
-                            onBook={handleBook}
-                        />
-                    ))}
-                </View>
-            )}
+            <FlatList
+                data={loadingClasses ? [] : classes}
+                keyExtractor={(cls) => cls.id}
+                renderItem={({ item }) => (
+                    <ClassCard
+                        classSession={item}
+                        trainerName={getTrainerName(item.trainerId)}
+                        onBook={handleBook}
+                    />
+                )}
+                style={styles.classListScroller}
+                contentContainerStyle={[
+                    styles.classListContent,
+                    (loadingClasses || classes.length === 0) && styles.classListStateContent,
+                ]}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    loadingClasses ? (
+                        <View style={styles.loaderContainer}>
+                            <ActivityIndicator size="large" color={Colors.primary} />
+                        </View>
+                    ) : (
+                        <View style={styles.emptyState}>
+                            <View style={styles.emptyIconWrap}>
+                                <Feather name="calendar" size={32} color={Colors.olive[300]} />
+                            </View>
+                            <Text style={styles.emptyTitle}>No classes scheduled</Text>
+                            <Text style={styles.emptySubtitle}>
+                                There are no classes available on this date. Try selecting a different day.
+                            </Text>
+                        </View>
+                    )
+                }
+            />
         </View>
     );
 
@@ -379,26 +353,9 @@ export default function ScheduleScreen() {
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
             <TabHeader />
-            <ScrollView
-                style={styles.container}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                stickyHeaderIndices={[1]} // Section tabs sticky
-            >
+            <View style={styles.fixedHeader}>
                 {/* ── Facility Header ── */}
                 <View style={styles.facilityHeader}>
-                    {/* Badge + Rating row */}
-                    <View style={styles.badgeRow}>
-                        <View style={styles.flagshipBadge}>
-                            <Text style={styles.flagshipText}>FLAGSHIP</Text>
-                        </View>
-                        <View style={styles.ratingRow}>
-                            <Feather name="star" size={12} color={Colors.terra[400]} />
-                            <Text style={styles.ratingScore}>{FALLBACK_FACILITY.rating}</Text>
-                            <Text style={styles.ratingCount}>({FALLBACK_FACILITY.reviewCount})</Text>
-                        </View>
-                    </View>
-
                     {/* Title */}
                     <Text style={styles.pageTitle}>Class Schedule</Text>
 
@@ -441,14 +398,24 @@ export default function ScheduleScreen() {
                         })}
                     </View>
                 </View>
+            </View>
 
-                {/* ── Tab Content ── */}
+            {activeTab === 'schedule' ? (
                 <View style={styles.tabContent}>
-                    {activeTab === 'schedule' && renderScheduleTab()}
-                    {activeTab === 'trainers' && renderTrainersTab()}
-                    {activeTab === 'facility' && renderFacilityTab()}
+                    {renderScheduleTab()}
                 </View>
-            </ScrollView>
+            ) : (
+                <ScrollView
+                    style={styles.container}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.tabContent}>
+                        {activeTab === 'trainers' && renderTrainersTab()}
+                        {activeTab === 'facility' && renderFacilityTab()}
+                    </View>
+                </ScrollView>
+            )}
 
             {/* ── Spot Selector Modal ── */}
             {selectedClass && (
@@ -478,6 +445,9 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 100, // bottom tab bar clearance
+    },
+    fixedHeader: {
+        backgroundColor: Colors.background,
     },
 
     // ── Facility Header ──
@@ -569,16 +539,20 @@ const styles = StyleSheet.create({
 
     // ── Tab Content ──
     tabContent: {
-        minHeight: 400,
+        flex: 1,
     },
 
     // ── Schedule Tab ──
+    schedulePane: {
+        flex: 1,
+    },
     dateHeaderRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.sm + 4,
+        paddingTop: Spacing.sm,
+        paddingBottom: Spacing.xs,
     },
     dateHeaderText: {
         fontSize: FontSize.sm,
@@ -600,10 +574,10 @@ const styles = StyleSheet.create({
     filtersRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.xs,
         paddingHorizontal: Spacing.lg,
-        paddingTop: Spacing.md,
-        paddingBottom: Spacing.sm,
+        paddingTop: 0,
+        paddingBottom: 1,
     },
     filterIconWrap: {
         paddingHorizontal: Spacing.xs,
@@ -628,8 +602,15 @@ const styles = StyleSheet.create({
     filterChipTextActive: {
         color: Colors.terra[400],
     },
-    classList: {
+    classListScroller: {
+        flex: 1,
+    },
+    classListContent: {
         paddingTop: Spacing.xs,
+        paddingBottom: 100,
+    },
+    classListStateContent: {
+        flexGrow: 1,
     },
 
     // ── Loading / Empty ──

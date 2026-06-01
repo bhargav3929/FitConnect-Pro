@@ -8,7 +8,7 @@ interface TabHeaderProps {
 
 // Fixed top header — identical position/padding on every tab screen.
 // Mount this directly inside SafeAreaView (NOT inside a ScrollView) so it stays pinned.
-export default function TabHeader({ logoHeight = 84 }: TabHeaderProps) {
+export default function TabHeader({ logoHeight = 70 }: TabHeaderProps) {
     return (
         <View style={styles.container}>
             <Logo variant="terra" height={logoHeight} />
@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
         paddingLeft: Spacing.sm,
         paddingRight: Spacing.lg,
         paddingVertical: 0,
-        marginBottom: -Spacing.sm,
+        marginBottom: Spacing.sm,
         backgroundColor: Colors.background,
     },
 });

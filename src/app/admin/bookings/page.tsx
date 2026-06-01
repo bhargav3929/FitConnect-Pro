@@ -23,11 +23,17 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getAllBookings, callCancelBooking } from "@fitconnect/shared/firebase/firestore"
+import { PaginationControls } from "@/components/ui/pagination-controls"
+import {
+    callCancelBooking,
+    getBookingsPage,
+    type FirestorePageCursor,
+} from "@fitconnect/shared/firebase/firestore"
 import { Booking } from "@fitconnect/shared/types/booking"
 import { toast } from "sonner"
 
 const STATUS_FILTERS = ["All Status", "confirmed", "attended", "canceled", "no-show"]
+const PAGE_SIZE = 12
 
 function getBookingUserLabel(booking: Booking) {
     return booking.userName?.trim() || booking.userId
@@ -35,25 +41,44 @@ function getBookingUserLabel(booking: Booking) {
 
 export default function BookingsPage() {
     const [bookings, setBookings] = useState<Booking[]>([])
+    const [totalBookings, setTotalBookings] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState("All Status")
     const [cancelingId, setCancelingId] = useState<string | null>(null)
+    const [requestedPage, setRequestedPage] = useState(1)
+    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
+    const currentCursor = pageCursors[requestedPage - 1] || null
 
     useEffect(() => {
-        fetchBookings()
-    }, [])
+        let cancelled = false
 
-    async function fetchBookings() {
-        try {
-            const data = await getAllBookings()
-            setBookings(data)
-        } catch {
-            toast.error("Failed to load bookings")
-        } finally {
-            setIsLoading(false)
+        getBookingsPage({
+            pageSize: PAGE_SIZE,
+            cursor: currentCursor,
+            status: statusFilter === "All Status" ? undefined : statusFilter as Booking['status'],
+        })
+            .then((pageResult) => {
+                if (cancelled) return
+                setBookings(pageResult.items)
+                setTotalBookings(pageResult.total)
+                setPageCursors(prev => {
+                    const next = prev.slice(0, requestedPage)
+                    next[requestedPage] = pageResult.nextCursor
+                    return next
+                })
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load bookings")
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoading(false)
+            })
+
+        return () => {
+            cancelled = true
         }
-    }
+    }, [requestedPage, currentCursor, statusFilter])
 
     const handleCancelBooking = async (bookingId: string) => {
         setCancelingId(bookingId)
@@ -80,6 +105,9 @@ export default function BookingsPage() {
         const matchesStatus = statusFilter === "All Status" || booking.status === statusFilter
         return matchesSearch && matchesStatus
     })
+    const totalPages = Math.max(1, Math.ceil(totalBookings / PAGE_SIZE))
+    const page = Math.min(requestedPage, totalPages)
+    const paginatedBookings = filteredBookings
 
     const statusCounts = {
         attended: bookings.filter(b => b.status === 'attended').length,
@@ -189,13 +217,20 @@ export default function BookingsPage() {
                         type="text"
                         placeholder="Search by user or class ID..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value)
+                            setRequestedPage(1)
+                        }}
                         className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                     />
                 </div>
                 <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => {
+                        setStatusFilter(e.target.value)
+                        setRequestedPage(1)
+                        setPageCursors([null])
+                    }}
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {STATUS_FILTERS.map(status => (
@@ -251,7 +286,7 @@ export default function BookingsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredBookings.map((booking, idx) => (
+                                {paginatedBookings.map((booking, idx) => (
                                     <motion.tr
                                         key={booking.id}
                                         initial={{ opacity: 0 }}
@@ -335,7 +370,7 @@ export default function BookingsPage() {
 
                     {/* Mobile Cards */}
                     <div className="lg:hidden divide-y divide-peach-400/10">
-                        {filteredBookings.map((booking, idx) => (
+                        {paginatedBookings.map((booking, idx) => (
                             <motion.div
                                 key={booking.id}
                                 initial={{ opacity: 0, y: 10 }}
@@ -383,6 +418,15 @@ export default function BookingsPage() {
                             <p className="text-olive-600 font-bold mb-1">No bookings found</p>
                             <p className="text-olive-300 text-sm">Try adjusting your search or filter criteria</p>
                         </div>
+                    )}
+                    {filteredBookings.length > 0 && (
+                        <PaginationControls
+                            page={page}
+                            totalItems={totalBookings}
+                            pageSize={PAGE_SIZE}
+                            itemLabel="bookings"
+                            onPageChange={setRequestedPage}
+                        />
                     )}
                 </motion.div>
             )}

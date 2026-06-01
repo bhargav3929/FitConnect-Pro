@@ -15,12 +15,15 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import {
-    subscribeToUserBookings,
     callCancelBooking,
+    getUserBookingsPage,
+    type FirestorePageCursor,
 } from '@fitconnect/shared/firebase/firestore';
 import type { Booking } from '@fitconnect/shared/types/booking';
 import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
+
+const PAGE_SIZE = 6;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -114,10 +117,14 @@ export default function BookingsScreen() {
     const router = useRouter();
     const { clientUser } = useClientAuthStore();
     const [bookings, setBookings] = useState<Booking[]>([]);
+    const [totalBookings, setTotalBookings] = useState(0);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
     const [cancelingId, setCancelingId] = useState<string | null>(null);
+    const [requestedPage, setRequestedPage] = useState(1);
+    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null]);
+    const currentCursor = pageCursors[requestedPage - 1] || null;
 
     // -----------------------------------------------------------------------
     // Real-time listener
@@ -129,15 +136,37 @@ export default function BookingsScreen() {
             return;
         }
 
+        let cancelled = false;
         setLoading(true);
-        const unsubscribe = subscribeToUserBookings(clientUser.id, (data) => {
-            setBookings(data);
-            setLoading(false);
-            setRefreshing(false);
-        });
+        getUserBookingsPage(clientUser.id, {
+            pageSize: PAGE_SIZE,
+            cursor: currentCursor,
+            statuses: activeTab === 'upcoming'
+                ? ['confirmed']
+                : ['attended', 'canceled', 'no-show'],
+            direction: activeTab === 'upcoming' ? 'asc' : 'desc',
+        })
+            .then((pageResult) => {
+                if (cancelled) return;
+                setBookings(pageResult.items);
+                setTotalBookings(pageResult.total);
+                setPageCursors((prev) => {
+                    const next = prev.slice(0, requestedPage);
+                    next[requestedPage] = pageResult.nextCursor;
+                    return next;
+                });
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setLoading(false);
+                    setRefreshing(false);
+                }
+            });
 
-        return unsubscribe;
-    }, [clientUser?.id]);
+        return () => {
+            cancelled = true;
+        };
+    }, [clientUser?.id, activeTab, requestedPage, currentCursor]);
 
     // -----------------------------------------------------------------------
     // Filtered + sorted bookings
@@ -148,13 +177,10 @@ export default function BookingsScreen() {
     const milestoneProgress = Math.min(100, (attendedCount / milestoneTarget) * 100);
     const MILESTONE_BADGES = [50, 100, 150];
 
-    const filteredBookings = bookings
-        .filter((b) => (activeTab === 'upcoming' ? isUpcoming(b) : !isUpcoming(b)))
-        .sort((a, b) => {
-            const dateA = toDate(a.classDate).getTime();
-            const dateB = toDate(b.classDate).getTime();
-            return activeTab === 'upcoming' ? dateA - dateB : dateB - dateA;
-        });
+    const filteredBookings = bookings;
+    const totalPages = Math.max(1, Math.ceil(totalBookings / PAGE_SIZE));
+    const page = Math.min(requestedPage, totalPages);
+    const paginatedBookings = filteredBookings;
 
     // -----------------------------------------------------------------------
     // Handlers
@@ -340,6 +366,39 @@ export default function BookingsScreen() {
         </View>
     );
 
+    const renderPagination = () => {
+        if (totalBookings <= PAGE_SIZE) return null;
+        const start = (page - 1) * PAGE_SIZE + 1;
+        const end = Math.min(totalBookings, page * PAGE_SIZE);
+
+        return (
+            <View style={styles.pagination}>
+                <Text style={styles.paginationLabel}>
+                    Showing {start}-{end} of {totalBookings}
+                </Text>
+                <View style={styles.paginationButtons}>
+                    <TouchableOpacity
+                        style={[styles.pageButton, page === 1 && styles.pageButtonDisabled]}
+                        onPress={() => setRequestedPage((prev) => Math.max(1, prev - 1))}
+                        disabled={page === 1}
+                        activeOpacity={0.7}
+                    >
+                        <Feather name="chevron-left" size={18} color={page === 1 ? Colors.olive[300] : Colors.terra[400]} />
+                    </TouchableOpacity>
+                    <Text style={styles.pageCount}>{page} / {totalPages}</Text>
+                    <TouchableOpacity
+                        style={[styles.pageButton, page === totalPages && styles.pageButtonDisabled]}
+                        onPress={() => setRequestedPage((prev) => Math.min(totalPages, prev + 1))}
+                        disabled={page === totalPages}
+                        activeOpacity={0.7}
+                    >
+                        <Feather name="chevron-right" size={18} color={page === totalPages ? Colors.olive[300] : Colors.terra[400]} />
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    };
+
     // -----------------------------------------------------------------------
     // Main render
     // -----------------------------------------------------------------------
@@ -404,7 +463,11 @@ export default function BookingsScreen() {
                         styles.tabButton,
                         activeTab === 'upcoming' && styles.tabButtonActive,
                     ]}
-                    onPress={() => setActiveTab('upcoming')}
+                    onPress={() => {
+                        setActiveTab('upcoming');
+                        setRequestedPage(1);
+                        setPageCursors([null]);
+                    }}
                     activeOpacity={0.7}
                 >
                     <Text
@@ -421,7 +484,11 @@ export default function BookingsScreen() {
                         styles.tabButton,
                         activeTab === 'past' && styles.tabButtonActive,
                     ]}
-                    onPress={() => setActiveTab('past')}
+                    onPress={() => {
+                        setActiveTab('past');
+                        setRequestedPage(1);
+                        setPageCursors([null]);
+                    }}
                     activeOpacity={0.7}
                 >
                     <Text
@@ -443,10 +510,11 @@ export default function BookingsScreen() {
                 </View>
             ) : (
                 <FlatList
-                    data={filteredBookings}
+                    data={paginatedBookings}
                     keyExtractor={(item) => item.id}
                     renderItem={renderBookingCard}
                     ListEmptyComponent={renderEmpty}
+                    ListFooterComponent={renderPagination}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -773,6 +841,44 @@ const styles = StyleSheet.create({
         fontSize: FontSize.sm,
         fontWeight: '700',
         color: Colors.terra[400],
+    },
+
+    // Pagination
+    pagination: {
+        marginTop: Spacing.sm,
+        paddingVertical: Spacing.md,
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    paginationLabel: {
+        fontSize: FontSize.xs,
+        color: Colors.olive[300],
+        fontWeight: '600',
+    },
+    paginationButtons: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+    },
+    pageButton: {
+        width: 36,
+        height: 36,
+        borderWidth: 1,
+        borderColor: Colors.borderMedium,
+        borderRadius: BorderRadius.full,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: Colors.peach[50],
+    },
+    pageButtonDisabled: {
+        opacity: 0.45,
+    },
+    pageCount: {
+        minWidth: 52,
+        textAlign: 'center',
+        fontSize: FontSize.xs,
+        fontWeight: '700',
+        color: Colors.olive[400],
     },
 
     // Empty state

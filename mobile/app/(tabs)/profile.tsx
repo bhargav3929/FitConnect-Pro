@@ -450,7 +450,7 @@ export default function ProfileScreen() {
                     </View>
                     <Feather name="chevron-right" size={20} color={Colors.olive[300]} />
                 </TouchableOpacity>
-
+                <View style={{ height: Spacing.sm }} />
                 <TouchableOpacity
                     style={styles.rowCard}
                     onPress={() => router.push('/shop')}

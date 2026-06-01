@@ -42,6 +42,7 @@ const FACILITY = {
 }
 
 type FilterType = 'instructor' | 'classType'
+const CLASS_RENDER_BATCH = 10
 
 function hasValidSubscription(sub: { planId: unknown; status: string; endDate: unknown; classesRemaining: unknown } | undefined): boolean {
     if (!sub) return false
@@ -88,6 +89,7 @@ export default function SchedulePage() {
     const [trainers, setTrainers] = useState<Trainer[]>([])
     const [isLoadingClasses, setIsLoadingClasses] = useState(true)
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(true)
+    const [visibleClassCount, setVisibleClassCount] = useState(CLASS_RENDER_BATCH)
 
     const clientUser = useClientAuthStore(state => state.clientUser)
 
@@ -162,6 +164,7 @@ export default function SchedulePage() {
     }
 
     const toggleFilter = (filter: FilterType) => {
+        setVisibleClassCount(CLASS_RENDER_BATCH)
         setActiveFilters(prev => {
             if (prev.includes(filter)) {
                 setSelectedFilterValues(v => ({ ...v, [filter]: '' }))
@@ -172,6 +175,7 @@ export default function SchedulePage() {
     }
 
     const selectFilterValue = (filter: FilterType, value: string) => {
+        setVisibleClassCount(CLASS_RENDER_BATCH)
         setSelectedFilterValues(prev => ({
             ...prev,
             [filter]: prev[filter] === value ? '' : value,
@@ -194,6 +198,7 @@ export default function SchedulePage() {
         }
         return true
     })
+    const visibleClasses = filteredClasses.slice(0, visibleClassCount)
 
     const getTrainerName = (trainerId: string) => {
         return trainers.find(t => t.id === trainerId)?.name || 'Instructor'
@@ -280,7 +285,10 @@ export default function SchedulePage() {
                             <div className="mb-6">
                                 <CalendarStrip
                                     selectedDate={selectedDate}
-                                    onDateSelect={setSelectedDate}
+                                    onDateSelect={(date) => {
+                                        setSelectedDate(date)
+                                        setVisibleClassCount(CLASS_RENDER_BATCH)
+                                    }}
                                 />
                             </div>
 
@@ -372,7 +380,7 @@ export default function SchedulePage() {
                             {/* Classes List */}
                             {!isLoadingClasses && filteredClasses.length > 0 && (
                                 <div className="space-y-3">
-                                    {filteredClasses.map((cls, idx) => {
+                                    {visibleClasses.map((cls, idx) => {
                                         const totalSpots = cls.totalSpots || cls.capacity || 12
                                         const bookedCount = cls.bookedCount || 0
                                         const spotsLeft = totalSpots - bookedCount
@@ -432,6 +440,15 @@ export default function SchedulePage() {
                                             </motion.div>
                                         )
                                     })}
+                                    {visibleClassCount < filteredClasses.length && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setVisibleClassCount(count => count + CLASS_RENDER_BATCH)}
+                                            className="w-full h-12 bg-peach-200/50 text-olive-600 hover:bg-peach-200/80 font-bold rounded-xl border border-peach-400/20 transition-colors"
+                                        >
+                                            Show more classes
+                                        </button>
+                                    )}
                                 </div>
                             )}
 

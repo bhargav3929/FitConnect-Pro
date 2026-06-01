@@ -3,9 +3,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Star, Trash2 } from "lucide-react";
-import { collection, getDocs, orderBy, query, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@fitconnect/shared/firebase/config";
 import { Timestamp } from "firebase/firestore";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import {
+  getCollectionPage,
+  type FirestorePageCursor,
+} from "@fitconnect/shared/firebase/firestore";
 
 interface FeedbackEntry {
   id: string;
@@ -18,23 +23,44 @@ interface FeedbackEntry {
   createdAt: Timestamp | null;
 }
 
+const PAGE_SIZE = 10;
+
 export default function AdminFeedbackPage() {
   const [items, setItems] = useState<FeedbackEntry[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [requestedPage, setRequestedPage] = useState(1);
+  const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null]);
+  const currentCursor = pageCursors[requestedPage - 1] || null;
 
-  const fetchFeedback = async () => {
-    setLoading(true);
-    try {
-      const q = query(collection(db, "feedback"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FeedbackEntry)));
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    let cancelled = false;
+
+    getCollectionPage<FeedbackEntry>("feedback", {
+      pageSize: PAGE_SIZE,
+      cursor: currentCursor,
+      orderField: "createdAt",
+      filters: filter === "all" ? undefined : [{ field: "status", op: "==", value: filter }],
+    })
+      .then((pageResult) => {
+        if (cancelled) return;
+        setItems(pageResult.items);
+        setTotalItems(pageResult.total);
+        setPageCursors((prev) => {
+          const next = prev.slice(0, requestedPage);
+          next[requestedPage] = pageResult.nextCursor;
+          return next;
+        });
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
     }
-  };
-
-  useEffect(() => { fetchFeedback(); }, []);
+  }, [requestedPage, currentCursor, filter]);
 
   const markRead = async (id: string) => {
     await updateDoc(doc(db, "feedback", id), { status: "read" });
@@ -46,7 +72,10 @@ export default function AdminFeedbackPage() {
     setItems((prev) => prev.filter((f) => f.id !== id));
   };
 
-  const filtered = filter === "all" ? items : items.filter((f) => f.status === filter);
+  const filtered = items;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const paginated = filtered;
   const unreadCount = items.filter((f) => f.status === "unread").length;
 
   const formatDate = (ts: Timestamp | null) => {
@@ -68,7 +97,11 @@ export default function AdminFeedbackPage() {
           {["all", "unread", "read"].map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => {
+                setFilter(f);
+                setRequestedPage(1);
+                setPageCursors([null]);
+              }}
               className={`px-4 py-2 text-xs font-bold tracking-wider uppercase transition-all border ${
                 filter === f
                   ? "bg-terra-400 text-peach-50 border-terra-400"
@@ -92,7 +125,7 @@ export default function AdminFeedbackPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((item, idx) => (
+          {paginated.map((item, idx) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 10 }}
@@ -150,6 +183,13 @@ export default function AdminFeedbackPage() {
               </div>
             </motion.div>
           ))}
+          <PaginationControls
+            page={page}
+            totalItems={totalItems}
+            pageSize={PAGE_SIZE}
+            itemLabel="feedback"
+            onPageChange={setRequestedPage}
+          />
         </div>
       )}
     </div>

@@ -4,9 +4,14 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Clock, MapPin, User, CheckCircle2, AlertCircle, XCircle, Loader2, Award } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PaginationControls } from "@/components/ui/pagination-controls"
 import Link from "next/link"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
-import { subscribeToUserBookings, callCancelBooking } from "@fitconnect/shared/firebase/firestore"
+import {
+    callCancelBooking,
+    getUserBookingsPage,
+    type FirestorePageCursor,
+} from "@fitconnect/shared/firebase/firestore"
 import { Booking } from "@fitconnect/shared/types/booking"
 import { toast } from "sonner"
 
@@ -18,22 +23,54 @@ interface EnrichedBooking extends Booking {
     trainerName?: string
 }
 
+const PAGE_SIZE = 6
+
 export default function BookingsPage() {
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
     const [bookings, setBookings] = useState<EnrichedBooking[]>([])
+    const [totalBookings, setTotalBookings] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [cancelingId, setCancelingId] = useState<string | null>(null)
+    const [requestedPage, setRequestedPage] = useState(1)
+    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
     const { firebaseUser } = useClientAuthStore()
+    const currentCursor = pageCursors[requestedPage - 1] || null
 
     useEffect(() => {
         if (!firebaseUser) return
 
-        const unsubscribe = subscribeToUserBookings(firebaseUser.uid, (data) => {
-            setBookings(data as EnrichedBooking[])
+        let cancelled = false
+        const userId = firebaseUser.uid
+
+        async function loadBookings() {
+            setIsLoading(true)
+            const page = await getUserBookingsPage(userId, {
+                pageSize: PAGE_SIZE,
+                cursor: currentCursor,
+                statuses: activeTab === 'upcoming'
+                    ? ['confirmed']
+                    : ['attended', 'canceled', 'no-show'],
+                direction: activeTab === 'upcoming' ? 'asc' : 'desc',
+            })
+            if (cancelled) return
+            setBookings(page.items as EnrichedBooking[])
+            setTotalBookings(page.total)
+            setPageCursors(prev => {
+                const next = prev.slice(0, requestedPage)
+                next[requestedPage] = page.nextCursor
+                return next
+            })
             setIsLoading(false)
+        }
+
+        loadBookings().catch(() => {
+            if (!cancelled) setIsLoading(false)
         })
-        return () => unsubscribe()
-    }, [firebaseUser])
+
+        return () => {
+            cancelled = true
+        }
+    }, [firebaseUser, activeTab, requestedPage, currentCursor])
 
     const attendedCount = bookings.filter(b => b.status === 'attended').length
     const MILESTONE_STEP = 50
@@ -41,10 +78,10 @@ export default function BookingsPage() {
     const progressPct = Math.min(100, (attendedCount % MILESTONE_STEP) / MILESTONE_STEP * 100)
     const milestoneTiers = [50, 100, 150]
 
-    const filteredBookings = bookings.filter(booking => {
-        if (activeTab === 'upcoming') return booking.status === 'confirmed'
-        return booking.status === 'attended' || booking.status === 'canceled' || booking.status === 'no-show'
-    })
+    const filteredBookings = bookings
+    const totalPages = Math.max(1, Math.ceil(totalBookings / PAGE_SIZE))
+    const page = Math.min(requestedPage, totalPages)
+    const paginatedBookings = filteredBookings
 
     const handleCancel = async (bookingId: string) => {
         setCancelingId(bookingId)
@@ -148,7 +185,11 @@ export default function BookingsPage() {
                 {(['upcoming', 'past'] as const).map((tab) => (
                     <button
                         key={tab}
-                        onClick={() => setActiveTab(tab)}
+                        onClick={() => {
+                            setActiveTab(tab)
+                            setRequestedPage(1)
+                            setPageCursors([null])
+                        }}
                         className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${activeTab === tab
                                 ? 'bg-terra-400 text-peach-50 shadow-lg'
                                 : 'text-olive-400 hover:text-olive-600'
@@ -192,7 +233,7 @@ export default function BookingsPage() {
             {!isLoading && (
                 <div className="grid md:grid-cols-2 gap-6">
                     <AnimatePresence mode="popLayout">
-                        {filteredBookings.map((booking, idx) => (
+                        {paginatedBookings.map((booking, idx) => (
                             <motion.div
                                 key={booking.id}
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -289,6 +330,16 @@ export default function BookingsPage() {
                         ))}
                     </AnimatePresence>
                 </div>
+            )}
+
+            {!isLoading && filteredBookings.length > 0 && (
+                <PaginationControls
+                    page={page}
+                    totalItems={totalBookings}
+                    pageSize={PAGE_SIZE}
+                    itemLabel="bookings"
+                    onPageChange={setRequestedPage}
+                />
             )}
 
             {!isLoading && filteredBookings.length === 0 && (
