@@ -125,8 +125,8 @@ describe('normalizeSubscription', () => {
         expect(result.advanceBookingDays).toBe(0);
         expect(result.guestPassesRemaining).toBe(0);
         expect(result.lastPaymentId).toBeNull();
-        expect(result.stripeCustomerId).toBeNull();
-        expect(result.stripeSubscriptionId).toBeNull();
+        expect(result.autoRenew).toBe(false);
+        expect(result.razorpaySubscriptionId).toBeNull();
     });
 
     it('normalizes a full subscription object', () => {
@@ -141,8 +141,8 @@ describe('normalizeSubscription', () => {
             advanceBookingDays: 14,
             guestPassesRemaining: 2,
             lastPaymentId: 'pay_123',
-            stripeCustomerId: 'cus_123',
-            stripeSubscriptionId: 'sub_123',
+            autoRenew: true,
+            razorpaySubscriptionId: 'sub_ABC',
         };
         const result = normalizeSubscription(raw);
         expect(result.planId).toBe('unlimited');
@@ -155,8 +155,8 @@ describe('normalizeSubscription', () => {
         expect(result.advanceBookingDays).toBe(14);
         expect(result.guestPassesRemaining).toBe(2);
         expect(result.lastPaymentId).toBe('pay_123');
-        expect(result.stripeCustomerId).toBe('cus_123');
-        expect(result.stripeSubscriptionId).toBe('sub_123');
+        expect(result.autoRenew).toBe(true);
+        expect(result.razorpaySubscriptionId).toBe('sub_ABC');
     });
 
     it('falls back to planType when planId is absent', () => {
@@ -185,8 +185,8 @@ describe('DEFAULT_SUBSCRIPTION', () => {
         expect(DEFAULT_SUBSCRIPTION.advanceBookingDays).toBe(0);
         expect(DEFAULT_SUBSCRIPTION.guestPassesRemaining).toBe(0);
         expect(DEFAULT_SUBSCRIPTION.lastPaymentId).toBeNull();
-        expect(DEFAULT_SUBSCRIPTION.stripeCustomerId).toBeNull();
-        expect(DEFAULT_SUBSCRIPTION.stripeSubscriptionId).toBeNull();
+        expect(DEFAULT_SUBSCRIPTION.autoRenew).toBe(false);
+        expect(DEFAULT_SUBSCRIPTION.razorpaySubscriptionId).toBeNull();
     });
 });
 

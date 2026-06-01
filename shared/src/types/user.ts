@@ -22,8 +22,8 @@ export interface UserProfile {
         advanceBookingDays: number;
         guestPassesRemaining: number;
         lastPaymentId: string | null;
-        stripeCustomerId: string | null;
-        stripeSubscriptionId: string | null;
+        autoRenew: boolean;
+        razorpaySubscriptionId: string | null;
     };
     stats: {
         totalClassesAttended: number;

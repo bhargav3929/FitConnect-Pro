@@ -11,8 +11,8 @@ export const DEFAULT_SUBSCRIPTION: ClientUser['subscription'] = {
     advanceBookingDays: 0,
     guestPassesRemaining: 0,
     lastPaymentId: null,
-    stripeCustomerId: null,
-    stripeSubscriptionId: null,
+    autoRenew: false,
+    razorpaySubscriptionId: null,
 }
 
 export const DEFAULT_STATS: ClientUser['stats'] = {
@@ -91,8 +91,8 @@ export function normalizeSubscription(raw: Record<string, unknown> | undefined):
         advanceBookingDays: (raw.advanceBookingDays as number) ?? 0,
         guestPassesRemaining: (raw.guestPassesRemaining as number) ?? 0,
         lastPaymentId: (raw.lastPaymentId as string) ?? null,
-        stripeCustomerId: (raw.stripeCustomerId as string) ?? null,
-        stripeSubscriptionId: (raw.stripeSubscriptionId as string) ?? null,
+        autoRenew: (raw.autoRenew as boolean) ?? false,
+        razorpaySubscriptionId: (raw.razorpaySubscriptionId as string) ?? null,
     }
 }
 

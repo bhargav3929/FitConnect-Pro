@@ -477,6 +477,35 @@ export async function callConfirmPayment(
 }
 
 // ---------------------------------------------------------------------------
+// 17d. callCreatePaymentOrder — Create a Razorpay order for subscription
+// ---------------------------------------------------------------------------
+
+export async function callCreatePaymentOrder(
+    planId: string,
+): Promise<{ orderId: string; paymentId: string; amount: number; currency: string; key: string }> {
+    return apiFetch<{ orderId: string; paymentId: string; amount: number; currency: string; key: string }>(
+        '/api/payments/create-order',
+        { method: 'POST', body: { planId } },
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 17e. callVerifyPayment — Verify Razorpay signature and activate subscription
+// ---------------------------------------------------------------------------
+
+export async function callVerifyPayment(payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    paymentId: string;
+}): Promise<{ success: boolean; endDate: string; planId: string; planName: string; credits: number | null }> {
+    return apiFetch<{ success: boolean; endDate: string; planId: string; planName: string; credits: number | null }>(
+        '/api/payments/verify',
+        { method: 'POST', body: payload },
+    );
+}
+
+// ---------------------------------------------------------------------------
 // 18. getBookingStats — Admin dashboard aggregate
 // ---------------------------------------------------------------------------
 
@@ -849,6 +878,76 @@ export async function callUpdateUserProfile(
 ): Promise<void> {
     const userRef = doc(db, 'users', uid);
     await setDoc(userRef, { ...updates, updatedAt: new Date() }, { merge: true });
+}
+
+// ---------------------------------------------------------------------------
+// 29b. subscribeToCheckinClasses — Today's active classes for the check-in panel
+//      Includes 'scheduled' AND 'ongoing' (unlike subscribeToClassesByDate which
+//      only returns 'scheduled'). Filters out 'canceled' and 'completed' client-side
+//      to avoid needing an extra composite index on status + date.
+// ---------------------------------------------------------------------------
+
+export function subscribeToCheckinClasses(
+    date: Date,
+    callback: (classes: ClassSession[]) => void,
+): Unsubscribe {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    const q = query(
+        collection(db, 'classes'),
+        where('date', '>=', Timestamp.fromDate(start)),
+        where('date', '<=', Timestamp.fromDate(end)),
+        orderBy('date'),
+        orderBy('startTime'),
+    );
+
+    return onSnapshot(q, (snapshot) => {
+        const classes = snapshot.docs
+            .map((d) => {
+                const data = d.data();
+                return convertTimestamps({ ...data, id: d.id }) as unknown as ClassSession;
+            })
+            .filter((cls) => cls.status !== 'canceled' && cls.status !== 'completed');
+        callback(classes);
+    });
+}
+
+// ---------------------------------------------------------------------------
+// 30. subscribeToBookingsByClass — Real-time attendee list for a class (admin check-in)
+// ---------------------------------------------------------------------------
+
+export function subscribeToBookingsByClass(
+    classId: string,
+    callback: (bookings: Booking[]) => void,
+): Unsubscribe {
+    const q = query(
+        collection(db, 'bookings'),
+        where('classId', '==', classId),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const bookings = snapshot.docs.map((d) => {
+            const data = d.data();
+            return convertTimestamps({ ...data, id: d.id }) as unknown as Booking;
+        });
+        callback(bookings);
+    });
+}
+
+// ---------------------------------------------------------------------------
+// 31. callCheckInBooking — Admin: mark a booking as attended or no-show
+// ---------------------------------------------------------------------------
+
+export async function callCheckInBooking(
+    bookingId: string,
+    action: 'attended' | 'no-show',
+): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>('/api/bookings/checkin', {
+        method: 'POST',
+        body: { bookingId, action },
+    });
 }
 
 // ---------------------------------------------------------------------------
