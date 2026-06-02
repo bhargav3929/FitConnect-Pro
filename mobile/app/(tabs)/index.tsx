@@ -488,7 +488,7 @@ function FreeClassCTA({
                 <Text style={styles.freeClassSubtitle}>
                     {freeClassBooked
                         ? "You're all set. Swetha will be in touch shortly."
-                        : 'First time? Try a complimentary 30-minute drop-in.'}
+                        : 'First time? Try a 30-minute intro class.'}
                 </Text>
             </View>
             {!freeClassBooked && (

@@ -133,8 +133,7 @@ export default function FreeClassScreen() {
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
                     <Text style={styles.successTitle}>You&apos;re in.</Text>
                     <Text style={styles.successBody}>
-                        Swetha will reach out shortly to lock in your free 30-minute drop-in
-                        session.
+                        Swetha will reach out shortly to lock in your 30-minute intro class.
                     </Text>
                     <TouchableOpacity
                         style={styles.primaryButton}
@@ -167,11 +166,11 @@ export default function FreeClassScreen() {
                         >
                             <Feather name="arrow-left" size={22} color={Colors.olive[600]} />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle}>Free Drop-In</Text>
+                        <Text style={styles.headerTitle}>Intro Class</Text>
                     </View>
 
                     <Text style={styles.intro}>
-                        30 minutes, no commitment, completely free. Tell us a little about
+                        30 minutes, no commitment. Tell us a little about
                         yourself and we&apos;ll be in touch to schedule.
                     </Text>
 

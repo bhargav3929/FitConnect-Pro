@@ -129,7 +129,7 @@ export default function FreeClassPage() {
                         You&apos;re in.
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        Swetha will reach out shortly to lock in your free 30-minute drop-in session.
+                        Swetha will reach out shortly to lock in your 30-minute intro class.
                     </p>
                     <Button
                         onClick={() => router.push('/')}
@@ -147,10 +147,10 @@ export default function FreeClassPage() {
             <div className="max-w-xl mx-auto space-y-8">
                 <header className="space-y-3">
                     <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
-                        Free Drop-In
+                        Intro Class
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        30 minutes, no commitment, completely free. Tell us a little about yourself and we&apos;ll
+                        30 minutes, no commitment. Tell us a little about yourself and we&apos;ll
                         be in touch to schedule.
                     </p>
                 </header>

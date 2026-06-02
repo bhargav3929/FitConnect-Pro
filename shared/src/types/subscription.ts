@@ -39,10 +39,10 @@ export interface PlanDefinition {
 }
 
 export const PLAN_CATALOG: PlanDefinition[] = [
-    // ── Free Drop-In ──────────────────────────────────────────────
+    // ── Intro Class ───────────────────────────────────────────────
     {
         id: 'drop_in',
-        name: 'Free Drop-In',
+        name: 'Intro Class',
         category: 'class_pack',
         price: 0,
         credits: 1,
@@ -51,9 +51,9 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         advanceBookingDays: 7,
         guestPasses: 0,
         autoRenew: false,
-        tagline: 'Drop in. 30 minutes, no commitment, completely free.',
+        tagline: 'Try a 30-minute intro class with no commitment.',
         features: [
-            '1 free 30-minute session',
+            '1 intro 30-minute session',
             'No commitment',
             'New clients only',
         ],
