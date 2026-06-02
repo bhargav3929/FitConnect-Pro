@@ -527,8 +527,8 @@ export default function SubscribeScreen() {
                             <Text style={styles.primaryButtonText}>
                                 {selectedPlan?.id === 'drop_in'
                                     ? hasFreeClassLead === true
-                                        ? 'FREE CLASS BOOKED'
-                                        : 'BOOK FREE CLASS'
+                                        ? 'INTRO CLASS BOOKED'
+                                        : 'BOOK INTRO CLASS'
                                     : 'CONTINUE'}
                             </Text>
                         </TouchableOpacity>

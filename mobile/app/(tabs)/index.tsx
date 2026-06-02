@@ -483,7 +483,7 @@ function FreeClassCTA({
             </View>
             <View style={styles.freeClassTextCol}>
                 <Text style={styles.freeClassTitle}>
-                    {freeClassBooked ? 'Free Class Booked' : 'Book a Free Class'}
+                    {freeClassBooked ? 'Intro Class Booked' : 'Book an Intro Class'}
                 </Text>
                 <Text style={styles.freeClassSubtitle}>
                     {freeClassBooked

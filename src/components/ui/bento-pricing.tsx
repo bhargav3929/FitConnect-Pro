@@ -338,7 +338,7 @@ export function BentoPricing() {
                 <IntroCard
                     plan={dropIn}
                     onSelect={handleSelect}
-                    cta={hasFreeClassLead === true ? 'FREE CLASS BOOKED' : 'BOOK FREE CLASS'}
+                    cta={hasFreeClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS'}
                     ctaDisabled={hasFreeClassLead === true}
                 />
                 <IntroCard plan={kickstarter} onSelect={handleSelect} cta="START KICKSTARTER" featured />

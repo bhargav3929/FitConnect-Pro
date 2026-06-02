@@ -112,10 +112,10 @@ export default function LeadsPage() {
         <div className="p-6 lg:p-10 space-y-8">
             <header className="space-y-2">
                 <h1 className="text-3xl lg:text-4xl font-black text-olive-600 uppercase tracking-normal font-display">
-                    Free Class Leads
+                    Intro Class Leads
                 </h1>
                 <p className="text-olive-400 text-sm">
-                    Submissions from the public free-class signup form.
+                    Submissions from the public intro-class signup form.
                 </p>
             </header>
 

@@ -104,10 +104,10 @@ export default function FreeClassPage() {
             <main className="min-h-screen bg-peach-50 flex items-center justify-center p-6">
                 <div className="max-w-lg text-center space-y-6">
                     <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
-                        Free Class Booked
+                        Intro Class Booked
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        You&apos;ve already booked your free class. Swetha will be in touch — we can&apos;t wait
+                        You&apos;ve already booked your intro class. Swetha will be in touch — we can&apos;t wait
                         to see you on the reformer.
                     </p>
                     <Button
@@ -222,7 +222,7 @@ export default function FreeClassPage() {
                         disabled={submitting}
                         className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl disabled:opacity-60"
                     >
-                        {submitting ? 'SUBMITTING…' : 'BOOK MY FREE CLASS'}
+                        {submitting ? 'SUBMITTING…' : 'BOOK MY INTRO CLASS'}
                     </Button>
                 </form>
             </div>

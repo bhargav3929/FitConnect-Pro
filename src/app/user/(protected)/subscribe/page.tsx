@@ -161,7 +161,7 @@ export default function SubscribePage() {
                             {isProcessing
                                 ? 'OPENING PAYMENT...'
                                 : selectedPlanId === 'drop_in'
-                                    ? (hasFreeClassLead === true ? 'FREE CLASS BOOKED' : 'BOOK FREE CLASS')
+                                    ? (hasFreeClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS')
                                     : 'CONTINUE TO PAYMENT'}
                         </Button>
                     </motion.div>

@@ -109,9 +109,9 @@ export default function FreeClassScreen() {
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <View style={styles.successWrap}>
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
-                    <Text style={styles.successTitle}>Free Class Booked</Text>
+                    <Text style={styles.successTitle}>Intro Class Booked</Text>
                     <Text style={styles.successBody}>
-                        You&apos;ve already booked your free class. Swetha will be in touch — we
+                        You&apos;ve already booked your intro class. Swetha will be in touch — we
                         can&apos;t wait to see you on the reformer.
                     </Text>
                     <TouchableOpacity
@@ -244,7 +244,7 @@ export default function FreeClassScreen() {
                         {submitting ? (
                             <ActivityIndicator color={Colors.white} />
                         ) : (
-                            <Text style={styles.primaryButtonText}>BOOK MY FREE CLASS</Text>
+                            <Text style={styles.primaryButtonText}>BOOK MY INTRO CLASS</Text>
                         )}
                     </TouchableOpacity>
                 </ScrollView>

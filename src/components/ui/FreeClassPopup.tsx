@@ -28,7 +28,7 @@ const STYLES = {
 const COPY = {
   headline: "Your first class is on us.",
   body: "Contrology-based Pilates inside Tavaro Resorts. Try a session free — no commitment.",
-  primaryCta: { label: "Claim Your Free Class", href: "/free-class" },
+  primaryCta: { label: "Claim Your Intro Class", href: "/free-class" },
   secondaryLabel: "Maybe later",
 };
 
