@@ -39,7 +39,7 @@ const STYLES = {
 };
 
 const COPY = {
-  eyebrow: "Boutique Pilates · Hyderabad",
+  eyebrow: "Boutique Pilates - Kokapet - Hyderabad",
   headlineLine1: "Strong body.",
   headlineLine2: "Pain-free life.",
   body: "Contrology-based Pilates in a resort studio designed to make you feel as good as it looks.",

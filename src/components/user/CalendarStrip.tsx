@@ -17,7 +17,7 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
         // Generate next 14 days
         const days = []
         const today = new Date()
-        for (let i = 0; i < 14; i++) {
+        for (let i = 0; i < 90; i++) {
             const date = new Date(today)
             date.setDate(today.getDate() + i)
             days.push(date)

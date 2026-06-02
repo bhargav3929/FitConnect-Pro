@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "SOL Pilates Studio",
-    "slug": "fitconnect-pro",
+    "slug": "sol-pilates",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fitconnect.pro",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "googleServicesFile": "./GoogleService-Info.plist",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
@@ -74,7 +74,18 @@
         "iosReversedClientId": "com.googleusercontent.apps.792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj",
         "androidClientId": "792852037404-5ignujiais7f6bs17l3etikus0lqc5eo.apps.googleusercontent.com",
         "webClientId": "792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj.apps.googleusercontent.com"
+      },
+      "router": {},
+      "eas": {
+        "projectId": "ff3f5d33-aed3-4d7a-8e92-323b9ed97077"
       }
+    },
+    "owner": "dgandras-organization",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ff3f5d33-aed3-4d7a-8e92-323b9ed97077"
     }
   }
 }

@@ -14,13 +14,13 @@ const CONTACT_INFO = [
   {
     icon: Phone,
     label: "Call Us",
-    value: "(212) 555-0180",
-    href: "tel:+12125550180",
+    value: "+91 9642004005",
+    href: "tel:+919642004005",
   },
   {
     icon: MapPin,
     label: "Visit Us",
-    value: "Hyderabad, India",
+    value: "Kokapet Hyderabad, India",
     href: "#",
   },
   {
@@ -107,7 +107,7 @@ export default function ContactPage() {
           <div className="mb-20 overflow-hidden border border-peach-400">
             <iframe
               title="SOL Pilates Studio location"
-              src="https://www.google.com/maps?q=hyderabad+india&output=embed"
+              src="https://www.google.com/maps?q=kokapet+hyderabad+india&output=embed"
               width="100%"
               height="400"
               style={{ border: 0 }}
