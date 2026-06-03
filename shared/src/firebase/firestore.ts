@@ -303,6 +303,10 @@ export function subscribeToClass(
 export function subscribeToClassesByDate(
     date: Date,
     callback: (classes: ClassSession[]) => void,
+    options: {
+        trainerId?: string;
+        classType?: string;
+    } = {},
 ): Unsubscribe {
     const start = new Date(date);
     start.setHours(0, 0, 0, 0);
@@ -312,6 +316,8 @@ export function subscribeToClassesByDate(
     const q = query(
         collection(db, 'classes'),
         where('status', '==', 'scheduled'),
+        ...(options.trainerId ? [where('trainerId', '==', options.trainerId)] : []),
+        ...(options.classType ? [where('classType', '==', options.classType)] : []),
         where('date', '>=', Timestamp.fromDate(start)),
         where('date', '<=', Timestamp.fromDate(end)),
         orderBy('date'),

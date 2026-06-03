@@ -102,11 +102,9 @@ export const Colors = {
 } as const;
 
 // Font family strings usable directly in RN StyleSheet fontFamily.
-// Note: for custom fonts to actually render on iOS/Android, the Expo app must
-// load them via expo-font (see app/_layout.tsx). Until loaded, iOS falls back
-// to the platform serif/sans.
+// Custom fonts are loaded in app/_layout.tsx before screens render.
 export const FontFamily = {
-    display: 'DMSerifDisplay_400Regular',
+    display: 'PlusJakartaSans_700Bold',
     sans: 'PlusJakartaSans_400Regular',
     sansMedium: 'PlusJakartaSans_500Medium',
     sansBold: 'PlusJakartaSans_700Bold',

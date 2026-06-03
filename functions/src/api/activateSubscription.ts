@@ -25,8 +25,14 @@ export const activateSubscription = functions.https.onCall(async (data, context)
             'monthly': 30,
             'quarterly': 90
         };
+        const weeklyLimitMap: Record<string, number> = {
+            'weekly': 2,
+            'monthly': 2,
+            'quarterly': 2
+        };
 
         const duration = durationMap[planType];
+        const weeklyClassLimit = weeklyLimitMap[planType];
 
         // Calculate dates
         const startDate = new Date();
@@ -40,6 +46,10 @@ export const activateSubscription = functions.https.onCall(async (data, context)
             'subscription.endDate': endDate,
             'subscription.status': 'active',
             'subscription.classesRemaining': duration, // Mock logic: 1 per day for duration
+            'subscription.maxClassesPerDay': 1,
+            'subscription.weeklyClassLimit': weeklyClassLimit,
+            'subscription.advanceBookingDays': 14,
+            'subscription.guestPassesRemaining': 0,
             'updatedAt': FieldValue.serverTimestamp()
         });
 

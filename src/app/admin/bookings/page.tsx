@@ -158,10 +158,10 @@ export default function BookingsPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
+                    <h2 className="app-page-title mb-2">
                         Bookings
                     </h2>
-                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
+                    <p className="app-page-subtitle">
                         Track and manage all class reservations, attendance, and cancellations.
                     </p>
                 </div>
@@ -197,9 +197,9 @@ export default function BookingsPage() {
                         {isLoading ? (
                             <div className="h-8 w-16 bg-peach-300/40 rounded animate-pulse mb-1" />
                         ) : (
-                            <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value}</p>
+                            <p className="app-stat-value">{stat.value}</p>
                         )}
-                        <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
+                        <p className="app-stat-label mt-1">{stat.label}</p>
                     </div>
                 ))}
             </motion.div>
@@ -276,13 +276,13 @@ export default function BookingsPage() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-peach-400/15 bg-peach-200/30">
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4 pl-6">User</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Spot</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Class Date</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Status</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Booked At</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Guest</th>
-                                    <th className="text-right text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4 pr-6">Actions</th>
+                                    <th className="text-left app-label p-4 pl-6">User</th>
+                                    <th className="text-left app-label p-4">Spot</th>
+                                    <th className="text-left app-label p-4">Class Date</th>
+                                    <th className="text-left app-label p-4">Status</th>
+                                    <th className="text-left app-label p-4">Booked At</th>
+                                    <th className="text-left app-label p-4">Guest</th>
+                                    <th className="text-right app-label p-4 pr-6">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -321,7 +321,7 @@ export default function BookingsPage() {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(booking.status)}`}>
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 app-badge-text rounded-sm ${getStatusColor(booking.status)}`}>
                                                 {getStatusIcon(booking.status)}
                                                 {booking.status}
                                             </span>
@@ -391,7 +391,7 @@ export default function BookingsPage() {
                                             <p className="text-xs text-olive-300 mt-0.5">Spot #{booking.spotNumber}</p>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(booking.status)}`}>
+                                    <span className={`inline-flex items-center gap-1 px-2 py-1 app-badge-text rounded-sm ${getStatusColor(booking.status)}`}>
                                         {getStatusIcon(booking.status)}
                                         {booking.status}
                                     </span>

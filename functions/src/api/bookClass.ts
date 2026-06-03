@@ -8,6 +8,44 @@ interface BookClassData {
     isGuest: boolean;
 }
 
+function getMondayWeekWindow(date: Date) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const day = start.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + diffToMonday);
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    return { start, end };
+}
+
+function getFallbackWeeklyLimit(planId: unknown): number {
+    switch (planId) {
+        case 'kickstarter':
+        case 'twice_quarterly':
+        case 'twice_6mo':
+        case 'weekly':
+        case 'monthly':
+        case 'quarterly':
+        case 'twice_weekly':
+            return 2;
+        case 'thrice_quarterly':
+        case 'thrice_6mo':
+        case 'unlimited':
+            return 3;
+        case 'drop_in':
+        default:
+            return 1;
+    }
+}
+
+function getPositiveNumber(value: unknown): number | undefined {
+    return typeof value === 'number' && value > 0 ? value : undefined;
+}
+
 export const bookClass = functions.https.onCall(async (data: BookClassData, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Must be logged in to book a class');
@@ -113,6 +151,28 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
                 throw new functions.https.HttpsError(
                     'resource-exhausted',
                     'No classes remaining on your subscription'
+                );
+            }
+
+            const userConfirmedBookingsSnapshot = await db.collection('bookings')
+                .where('userId', '==', userId)
+                .where('status', '==', 'confirmed')
+                .get();
+
+            const weeklyClassLimit = getPositiveNumber(subscription.weeklyClassLimit) ?? getFallbackWeeklyLimit(subscription.planId || subscription.planType);
+            const classWeek = getMondayWeekWindow(classDate);
+            const sameWeekConfirmed = userConfirmedBookingsSnapshot.docs.filter((bookingDoc) => {
+                const bookingDateRaw = bookingDoc.data().classDate;
+                const bookingDate = bookingDateRaw instanceof Timestamp
+                    ? bookingDateRaw.toDate()
+                    : new Date(bookingDateRaw);
+                return bookingDate >= classWeek.start && bookingDate <= classWeek.end;
+            });
+
+            if (sameWeekConfirmed.length >= weeklyClassLimit) {
+                throw new functions.https.HttpsError(
+                    'resource-exhausted',
+                    `You can only book ${weeklyClassLimit} class${weeklyClassLimit === 1 ? '' : 'es'} per week on your current plan`
                 );
             }
 

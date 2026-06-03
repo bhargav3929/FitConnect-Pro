@@ -148,7 +148,7 @@ export default function FacilitySettingsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="pb-6 border-b border-peach-400/20"
                 >
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">Facility</h2>
+                    <h2 className="app-page-title mb-2">Facility</h2>
                     <p className="text-olive-300 text-sm tracking-wide">No facility has been configured yet.</p>
                 </motion.div>
                 <div className="bg-peach-50 border border-peach-400/20 p-12 text-center">
@@ -169,10 +169,10 @@ export default function FacilitySettingsPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
+                    <h2 className="app-page-title mb-2">
                         Facility
                     </h2>
-                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
+                    <p className="app-page-subtitle">
                         Manage your facility details, operating hours, training zones, and amenities.
                     </p>
                 </div>
@@ -219,8 +219,8 @@ export default function FacilitySettingsPage() {
                     >
                         <div className="absolute top-0 right-0 w-24 h-24 bg-terra-400/5 rounded-full blur-2xl -mr-12 -mt-12 transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
                         <stat.icon className="w-5 h-5 text-olive-300 mb-3 group-hover:text-terra-400 transition-colors" />
-                        <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value}</p>
-                        <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
+                        <p className="app-stat-value">{stat.value}</p>
+                        <p className="app-stat-label mt-1">{stat.label}</p>
                     </div>
                 ))}
             </motion.div>
@@ -233,12 +233,12 @@ export default function FacilitySettingsPage() {
                 className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors"
             >
                 <div className="mb-8">
-                    <h3 className="text-xl font-bold text-olive-600 mb-1">General Information</h3>
+                    <h3 className="app-section-title mb-1">General Information</h3>
                     <p className="text-olive-300 text-xs tracking-wider uppercase">Core facility details</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                        <label className="block app-label mb-2.5">
                             Facility Name
                         </label>
                         <input
@@ -250,7 +250,7 @@ export default function FacilitySettingsPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                        <label className="block app-label mb-2.5">
                             Street Address
                         </label>
                         <input
@@ -263,7 +263,7 @@ export default function FacilitySettingsPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">City</label>
+                            <label className="block app-label mb-2.5">City</label>
                             <input
                                 ref={cityRef}
                                 type="text"
@@ -273,7 +273,7 @@ export default function FacilitySettingsPage() {
                             />
                         </div>
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">State</label>
+                            <label className="block app-label mb-2.5">State</label>
                             <input
                                 ref={stateRef}
                                 type="text"
@@ -283,7 +283,7 @@ export default function FacilitySettingsPage() {
                             />
                         </div>
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">ZIP</label>
+                            <label className="block app-label mb-2.5">ZIP</label>
                             <input
                                 ref={zipRef}
                                 type="text"
@@ -295,7 +295,7 @@ export default function FacilitySettingsPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">Phone</label>
+                            <label className="block app-label mb-2.5">Phone</label>
                             <input
                                 ref={phoneRef}
                                 type="text"
@@ -305,7 +305,7 @@ export default function FacilitySettingsPage() {
                             />
                         </div>
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">Email</label>
+                            <label className="block app-label mb-2.5">Email</label>
                             <input
                                 ref={emailRef}
                                 type="text"
@@ -319,7 +319,7 @@ export default function FacilitySettingsPage() {
 
                 {/* Facilities / Description */}
                 <div className="mt-6">
-                    <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                    <label className="block app-label mb-2.5">
                         Facilities & Description
                     </label>
                     <textarea
@@ -345,7 +345,7 @@ export default function FacilitySettingsPage() {
                             <Clock className="w-5 h-5 text-olive-400" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-olive-600">Operating Hours</h3>
+                            <h3 className="app-card-title">Operating Hours</h3>
                             <p className="text-olive-300 text-xs tracking-wider uppercase">Weekly schedule</p>
                         </div>
                     </div>
@@ -381,7 +381,7 @@ export default function FacilitySettingsPage() {
                             <Dumbbell className="w-5 h-5 text-olive-400" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-olive-600">Training Zones & Amenities</h3>
+                            <h3 className="app-card-title">Training Zones & Amenities</h3>
                             <p className="text-olive-300 text-xs tracking-wider uppercase">{zones.length} areas configured</p>
                         </div>
                     </div>
@@ -392,7 +392,7 @@ export default function FacilitySettingsPage() {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.45 + idx * 0.04 }}
-                                className="px-4 py-2.5 bg-peach-200/40 text-olive-400 text-sm font-medium border border-peach-400/15 hover:border-terra-400/30 hover:bg-peach-200/60 transition-all cursor-default"
+                                className="px-4 py-2.5 bg-peach-200/40 app-body font-medium border border-peach-400/15 hover:border-terra-400/30 hover:bg-peach-200/60 transition-all cursor-default"
                             >
                                 {zone}
                             </motion.span>
@@ -409,7 +409,7 @@ export default function FacilitySettingsPage() {
                 className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors"
             >
                 <div className="mb-8">
-                    <h3 className="text-xl font-bold text-olive-600 mb-1">Quick Contact Reference</h3>
+                    <h3 className="app-section-title mb-1">Quick Contact Reference</h3>
                     <p className="text-olive-300 text-xs tracking-wider uppercase">Facility contact details at a glance</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -429,8 +429,8 @@ export default function FacilitySettingsPage() {
                                 <item.icon className="w-4 h-4 text-olive-300 group-hover:text-terra-400 transition-colors" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-olive-300 tracking-wider uppercase font-semibold mb-1">{item.label}</p>
-                                <p className="text-olive-400 text-sm font-medium">{item.value}</p>
+                                <p className="app-stat-label mb-1">{item.label}</p>
+                                <p className="app-body font-medium">{item.value}</p>
                             </div>
                         </motion.div>
                     ))}

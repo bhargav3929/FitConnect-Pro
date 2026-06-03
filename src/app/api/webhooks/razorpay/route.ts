@@ -82,6 +82,7 @@ async function handleSubscriptionCharged(payload: Record<string, unknown>) {
             'subscription.status': 'active',
             'subscription.endDate': newEndDate,
             'subscription.classesRemaining': plan.credits,
+            'subscription.weeklyClassLimit': plan.weeklyClassLimit,
             'subscription.guestPassesRemaining': plan.guestPasses,
             updatedAt: FieldValue.serverTimestamp(),
         });

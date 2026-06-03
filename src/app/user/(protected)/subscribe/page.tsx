@@ -109,7 +109,7 @@ export default function SubscribePage() {
                         </button>
                     )}
 
-                    <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal font-display">
+                    <h1 className="app-page-title">
                         {step === 'plan' ? 'Choose Your Plan' : 'Welcome Aboard'}
                     </h1>
                 </motion.div>
@@ -137,7 +137,7 @@ export default function SubscribePage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="bg-peach-200/30 rounded-2xl p-5 border border-peach-400/10"
                             >
-                                <p className="text-xs font-bold text-olive-400 uppercase tracking-wider mb-3">What you get</p>
+                                <p className="app-label mb-3">What you get</p>
                                 <ul className="space-y-2">
                                     {selectedPlan.features.map((f, i) => (
                                         <li key={i} className="flex items-start gap-2 text-olive-300 text-sm">
@@ -184,10 +184,10 @@ export default function SubscribePage() {
                             <CheckCircle2 className="w-12 h-12 text-terra-400" />
                         </motion.div>
 
-                        <h2 className="text-3xl font-black text-olive-600 mb-2 font-display tracking-normal">
+                        <h2 className="app-hero-title mb-2">
                             You&apos;re All Set!
                         </h2>
-                        <p className="text-olive-300 text-sm mb-8 max-w-xs">
+                        <p className="app-body mb-8 max-w-xs">
                             Your <span className="text-terra-400 font-bold">{resultData.planName}</span> plan is now active.
                             {resultData.credits !== null
                                 ? ` You have ${resultData.credits} credits to use.`

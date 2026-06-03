@@ -98,7 +98,7 @@
     --chart-4: var(--brand-secondary);
     --chart-5: 0 60% 49%;
 
-    --font-display: "Helvetica Now Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-display: var(--font-sans);
     --font-sans: "Plus Jakarta Sans", sans-serif;
     --type-measure: 68ch;
   }
@@ -212,6 +212,61 @@
 
   .type-muted {
     @apply text-sm font-medium leading-6 text-olive-300;
+  }
+
+  .app-page-title {
+    @apply font-display text-4xl font-black leading-none text-olive-600 md:text-5xl;
+    letter-spacing: 0;
+  }
+
+  .app-hero-title {
+    @apply font-display text-3xl font-black leading-none text-olive-600 md:text-4xl;
+    letter-spacing: 0;
+  }
+
+  .app-page-subtitle {
+    @apply max-w-lg text-sm font-normal leading-6 text-olive-300 md:text-base;
+    letter-spacing: 0;
+  }
+
+  .app-section-title {
+    @apply font-sans text-lg font-bold leading-tight text-olive-600;
+    letter-spacing: 0;
+  }
+
+  .app-card-title {
+    @apply font-sans text-sm font-bold leading-snug text-olive-600;
+    letter-spacing: 0;
+  }
+
+  .app-body {
+    @apply text-sm font-normal leading-6 text-olive-400;
+    letter-spacing: 0;
+  }
+
+  .app-stat-value {
+    @apply font-display text-2xl font-black leading-none text-olive-600;
+    letter-spacing: 0;
+  }
+
+  .app-stat-label {
+    @apply text-[11px] font-semibold uppercase text-olive-300;
+    letter-spacing: 0.15em;
+  }
+
+  .app-kicker {
+    @apply text-[11px] font-bold uppercase text-terra-400;
+    letter-spacing: 0.22em;
+  }
+
+  .app-label {
+    @apply text-[11px] font-bold uppercase text-olive-400;
+    letter-spacing: 0.15em;
+  }
+
+  .app-badge-text {
+    @apply text-[10px] font-bold uppercase;
+    letter-spacing: 0.12em;
   }
 }
 

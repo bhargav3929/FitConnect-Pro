@@ -66,7 +66,11 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
                 startDate: null,
                 endDate: null,
                 status: 'expired',
-                classesRemaining: 0
+                classesRemaining: 0,
+                maxClassesPerDay: 0,
+                weeklyClassLimit: 0,
+                advanceBookingDays: 0,
+                guestPassesRemaining: 0
             },
             stats: {
                 totalClassesAttended: 0,

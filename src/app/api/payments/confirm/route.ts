@@ -98,6 +98,7 @@ export async function POST(req: NextRequest) {
                 'subscription.status': 'active',
                 'subscription.classesRemaining': plan.credits,
                 'subscription.maxClassesPerDay': plan.maxClassesPerDay,
+                'subscription.weeklyClassLimit': plan.weeklyClassLimit,
                 'subscription.advanceBookingDays': plan.advanceBookingDays,
                 'subscription.guestPassesRemaining': plan.guestPasses,
                 'subscription.lastPaymentId': paymentRef.id,

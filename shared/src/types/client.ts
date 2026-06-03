@@ -14,6 +14,7 @@ export interface ClientUser {
         status: 'active' | 'expired' | 'canceled';
         classesRemaining: number | null;      // null = unlimited
         maxClassesPerDay: number;
+        weeklyClassLimit: number;
         advanceBookingDays: number;
         guestPassesRemaining: number;
         lastPaymentId: string | null;

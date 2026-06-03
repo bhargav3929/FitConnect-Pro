@@ -222,10 +222,10 @@ export default function TrainersPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
+                    <h2 className="app-page-title mb-2">
                         Trainers
                     </h2>
-                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
+                    <p className="app-page-subtitle">
                         Manage your team of fitness professionals, their specialties, and certifications.
                     </p>
                 </div>
@@ -260,9 +260,9 @@ export default function TrainersPage() {
                         {isLoading ? (
                             <div className="h-8 w-16 bg-peach-300/40 rounded animate-pulse mb-1" />
                         ) : (
-                            <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value}</p>
+                            <p className="app-stat-value">{stat.value}</p>
                         )}
-                        <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
+                        <p className="app-stat-label mt-1">{stat.label}</p>
                     </div>
                 ))}
             </motion.div>
@@ -430,7 +430,7 @@ export default function TrainersPage() {
                                         )}
                                     </div>
                                     {!trainer.isActive && (
-                                        <span className="px-2.5 py-1 bg-red-500/10 text-red-600 text-[10px] font-bold tracking-wider ring-1 ring-red-500/20">
+                                        <span className="px-2.5 py-1 bg-red-500/10 text-red-600 app-badge-text ring-1 ring-red-500/20">
                                             INACTIVE
                                         </span>
                                     )}
@@ -480,7 +480,7 @@ export default function TrainersPage() {
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="bg-peach-50 border-peach-400/20 max-w-xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-olive-600">
+                        <DialogTitle className="app-section-title">
                             {editingTrainer ? 'Edit Trainer' : 'Add New Trainer'}
                         </DialogTitle>
                         <DialogDescription className="text-olive-300 text-sm">
@@ -494,7 +494,7 @@ export default function TrainersPage() {
                         {/* Name + Email */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Full Name
                                 </label>
                                 <input
@@ -506,7 +506,7 @@ export default function TrainersPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Email
                                 </label>
                                 <input
@@ -522,7 +522,7 @@ export default function TrainersPage() {
                         {/* Phone + Experience */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Phone
                                 </label>
                                 <input
@@ -534,7 +534,7 @@ export default function TrainersPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Experience (years)
                                 </label>
                                 <input
@@ -550,7 +550,7 @@ export default function TrainersPage() {
 
                         {/* Specialties */}
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                            <label className="block app-label mb-2">
                                 Specialties (comma-separated)
                             </label>
                             <input
@@ -564,7 +564,7 @@ export default function TrainersPage() {
 
                         {/* Certifications */}
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                            <label className="block app-label mb-2">
                                 Certifications (comma-separated)
                             </label>
                             <input
@@ -578,7 +578,7 @@ export default function TrainersPage() {
 
                         {/* Bio */}
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                            <label className="block app-label mb-2">
                                 Bio
                             </label>
                             <textarea
@@ -592,7 +592,7 @@ export default function TrainersPage() {
 
                         {/* Profile Picture URL */}
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                            <label className="block app-label mb-2">
                                 Profile Picture URL (optional)
                             </label>
                             <input

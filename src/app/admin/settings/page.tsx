@@ -26,10 +26,10 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="pb-6 border-b border-peach-400/20"
             >
-                <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
+                <h2 className="app-page-title mb-2">
                     Settings
                 </h2>
-                <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
+                <p className="app-page-subtitle">
                     View your admin account details and manage your session.
                 </p>
             </motion.div>
@@ -46,14 +46,14 @@ export default function SettingsPage() {
                         <User className="w-5 h-5 text-olive-400" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-olive-600">Profile</h3>
+                        <h3 className="app-card-title">Profile</h3>
                         <p className="text-olive-300 text-xs tracking-wider uppercase">Account information</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                        <label className="block app-label mb-2.5">
                             Display Name
                         </label>
                         <div className="w-full h-12 px-4 bg-peach-200/20 border border-peach-400/10 text-olive-600 flex items-center">
@@ -61,7 +61,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                        <label className="block app-label mb-2.5">
                             Email
                         </label>
                         <div className="w-full h-12 px-4 bg-peach-200/20 border border-peach-400/10 text-olive-600 flex items-center">
@@ -69,7 +69,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2.5">
+                        <label className="block app-label mb-2.5">
                             Role
                         </label>
                         <div className="w-full h-12 px-4 bg-peach-200/20 border border-peach-400/10 text-olive-300 flex items-center">
@@ -91,7 +91,7 @@ export default function SettingsPage() {
                         <Lock className="w-5 h-5 text-olive-400" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-olive-600">Security</h3>
+                        <h3 className="app-card-title">Security</h3>
                         <p className="text-olive-300 text-xs tracking-wider uppercase">Authentication is managed via Firebase</p>
                     </div>
                 </div>

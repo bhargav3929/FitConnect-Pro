@@ -5,19 +5,18 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    TextInput,
     ActivityIndicator,
     Alert,
-    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import RazorpayCheckout from 'react-native-razorpay';
 import { PLAN_CATALOG, getPlanById } from '@fitconnect/shared/types/subscription';
 import type { PlanDefinition, PlanCategory } from '@fitconnect/shared/types/subscription';
 import {
-    callCreatePaymentIntent,
-    callConfirmPayment,
+    callCreatePaymentOrder,
+    callVerifyPayment,
 } from '@fitconnect/shared/firebase/firestore';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { useFreeClassLead } from '../hooks/useFreeClassLead';
@@ -39,28 +38,22 @@ interface PaymentResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatCardNumber(raw: string): string {
-    const digits = raw.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(.{4})/g, '$1 ').trim();
-}
-
-function formatExpiry(raw: string): string {
-    const digits = raw.replace(/\D/g, '').slice(0, 4);
-    if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return digits;
-}
-
-function detectCardBrand(number: string): string {
-    const d = number.replace(/\s/g, '');
-    if (/^4/.test(d)) return 'Visa';
-    if (/^5[1-5]/.test(d) || /^2[2-7]/.test(d)) return 'Mastercard';
-    if (/^3[47]/.test(d)) return 'Amex';
-    return '';
-}
-
 function formatDate(dateStr: string): string {
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getPaymentErrorMessage(err: unknown): string {
+    if (err instanceof Error) return err.message;
+    if (err && typeof err === 'object') {
+        const data = err as {
+            description?: string;
+            code?: string | number;
+            error?: { description?: string; reason?: string };
+        };
+        return data.error?.description || data.error?.reason || data.description || `Payment failed${data.code ? ` (${data.code})` : ''}`;
+    }
+    return 'Something went wrong. Please try again.';
 }
 
 // ---------------------------------------------------------------------------
@@ -296,19 +289,13 @@ const planCardStyles = StyleSheet.create({
 
 export default function SubscribeScreen() {
     const router = useRouter();
-    const { refreshSubscription } = useClientAuthStore();
+    const { clientUser, firebaseUser, refreshSubscription } = useClientAuthStore();
     const { hasFreeClassLead } = useFreeClassLead();
 
     // Flow state
     const [step, setStep] = useState<Step>('plan');
     const [activeTab, setActiveTab] = useState<PlanCategory>('membership');
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-
-    // Payment form state
-    const [cardNumber, setCardNumber] = useState('');
-    const [expiry, setExpiry] = useState('');
-    const [cvc, setCvc] = useState('');
-    const [cardName, setCardName] = useState('');
 
     // Processing state
     const [paymentState, setPaymentState] = useState<
@@ -341,53 +328,44 @@ export default function SubscribeScreen() {
     const handlePay = useCallback(async () => {
         if (!selectedPlan) return;
 
-        // Basic validation
-        const cardDigits = cardNumber.replace(/\s/g, '');
-        if (cardDigits.length < 15) {
-            Alert.alert('Invalid Card', 'Please enter a valid card number.');
-            return;
-        }
-        if (expiry.length < 5) {
-            Alert.alert('Invalid Expiry', 'Please enter a valid expiry date (MM/YY).');
-            return;
-        }
-        if (cvc.length < 3) {
-            Alert.alert('Invalid CVC', 'Please enter a valid CVC.');
-            return;
-        }
-        if (!cardName.trim()) {
-            Alert.alert('Missing Name', 'Please enter the name on card.');
-            return;
-        }
-
         setPaymentState('processing');
         try {
-            const intent = await callCreatePaymentIntent(selectedPlan.id);
-            const result = await callConfirmPayment(intent.paymentId);
+            const order = await callCreatePaymentOrder(selectedPlan.id);
+            const response = await RazorpayCheckout.open({
+                key: order.key,
+                amount: order.amount,
+                currency: order.currency,
+                order_id: order.orderId,
+                name: 'Sol Pilates',
+                description: selectedPlan.name,
+                prefill: {
+                    email: firebaseUser?.email ?? clientUser?.email ?? undefined,
+                    name: firebaseUser?.displayName ?? clientUser?.name ?? undefined,
+                },
+                theme: { color: Colors.terra[400] },
+            });
 
-            if (result.success) {
-                setPaymentResult({
-                    planName: result.planName,
-                    credits: result.credits,
-                    endDate: result.endDate,
-                });
-                setPaymentState('success');
-                // Brief delay then show success step
-                setTimeout(() => {
-                    setStep('success');
-                    refreshSubscription();
-                }, 600);
-            } else {
-                setPaymentState('idle');
-                Alert.alert('Payment Failed', 'Could not confirm payment. Please try again.');
-            }
+            const result = await callVerifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                paymentId: order.paymentId,
+            });
+
+            setPaymentResult({
+                planName: result.planName,
+                credits: result.credits,
+                endDate: result.endDate,
+            });
+            setPaymentState('success');
+            setStep('success');
+            await refreshSubscription();
         } catch (err: unknown) {
             setPaymentState('idle');
-            const message =
-                err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+            const message = getPaymentErrorMessage(err);
             Alert.alert('Payment Error', message);
         }
-    }, [selectedPlan, cardNumber, expiry, cvc, cardName, refreshSubscription]);
+    }, [selectedPlan, firebaseUser, clientUser, refreshSubscription]);
 
     // Back handler
     const handleBack = useCallback(() => {
@@ -545,74 +523,19 @@ export default function SubscribeScreen() {
                             <Text style={styles.orderAmount}>₹{selectedPlan.price}</Text>
                         </View>
 
-                        {/* Payment form */}
+                        {/* Razorpay checkout */}
                         <View style={styles.formSection}>
-                            {/* Card Number */}
-                            <Text style={styles.inputLabel}>CARD NUMBER</Text>
-                            <View style={styles.inputWithIcon}>
-                                <Feather
-                                    name="credit-card"
-                                    size={18}
-                                    color={Colors.olive[300]}
-                                    style={styles.inputIcon}
-                                />
-                                <TextInput
-                                    style={styles.inputWithIconField}
-                                    placeholder="1234 5678 9012 3456"
-                                    placeholderTextColor={Colors.olive[300]}
-                                    value={cardNumber}
-                                    onChangeText={(t) => setCardNumber(formatCardNumber(t))}
-                                    keyboardType="number-pad"
-                                    maxLength={19}
-                                />
-                                {detectCardBrand(cardNumber) !== '' && (
-                                    <Text style={styles.cardBrand}>
-                                        {detectCardBrand(cardNumber)}
+                            <View style={styles.gatewayRow}>
+                                <View style={styles.gatewayIcon}>
+                                    <Feather name="credit-card" size={20} color={Colors.terra[400]} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.gatewayTitle}>Razorpay Checkout</Text>
+                                    <Text style={styles.gatewaySubtitle}>
+                                        Pay securely with UPI, cards, wallets, or net banking.
                                     </Text>
-                                )}
-                            </View>
-
-                            {/* Expiry + CVC */}
-                            <View style={styles.twoColRow}>
-                                <View style={styles.halfCol}>
-                                    <Text style={styles.inputLabel}>EXPIRY</Text>
-                                    <TextInput
-                                        style={styles.formInput}
-                                        placeholder="MM/YY"
-                                        placeholderTextColor={Colors.olive[300]}
-                                        value={expiry}
-                                        onChangeText={(t) => setExpiry(formatExpiry(t))}
-                                        keyboardType="number-pad"
-                                        maxLength={5}
-                                    />
-                                </View>
-                                <View style={styles.halfCol}>
-                                    <Text style={styles.inputLabel}>CVC</Text>
-                                    <TextInput
-                                        style={styles.formInput}
-                                        placeholder="123"
-                                        placeholderTextColor={Colors.olive[300]}
-                                        value={cvc}
-                                        onChangeText={(t) =>
-                                            setCvc(t.replace(/\D/g, '').slice(0, 4))
-                                        }
-                                        keyboardType="number-pad"
-                                        maxLength={4}
-                                        secureTextEntry
-                                    />
                                 </View>
                             </View>
-
-                            {/* Name on Card */}
-                            <Text style={styles.inputLabel}>NAME ON CARD</Text>
-                            <TextInput
-                                style={styles.formInput}
-                                placeholder="John Smith"
-                                placeholderTextColor={Colors.olive[300]}
-                                value={cardName}
-                                onChangeText={setCardName}
-                                autoCapitalize="words"
-                            />
                         </View>
 
                         {/* Pay button */}
@@ -648,7 +571,7 @@ export default function SubscribeScreen() {
                                 </View>
                             ) : (
                                 <Text style={styles.primaryButtonText}>
-                                    PAY ${selectedPlan.price}
+                                    PAY ₹{selectedPlan.price}
                                 </Text>
                             )}
                         </TouchableOpacity>
@@ -680,7 +603,7 @@ export default function SubscribeScreen() {
                             />
                         </View>
 
-                        <Text style={styles.successTitle}>You're All Set!</Text>
+                        <Text style={styles.successTitle}>You&apos;re All Set!</Text>
 
                         {/* Plan summary card */}
                         <View style={styles.successSummary}>
@@ -902,6 +825,34 @@ const styles = StyleSheet.create({
     // Form
     formSection: {
         marginBottom: Spacing.lg,
+    },
+    gatewayRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+        backgroundColor: Colors.peach[100],
+        borderWidth: 1,
+        borderColor: Alpha.peach400_20,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.md,
+    },
+    gatewayIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: BorderRadius.full,
+        backgroundColor: Alpha.terra400_10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    gatewayTitle: {
+        fontSize: FontSize.base,
+        fontWeight: '700',
+        color: Colors.olive[600],
+    },
+    gatewaySubtitle: {
+        fontSize: FontSize.sm,
+        color: Colors.olive[300],
+        marginTop: 2,
     },
     inputLabel: {
         fontSize: FontSize.xs,

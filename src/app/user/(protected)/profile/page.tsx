@@ -134,13 +134,13 @@ export default function ProfilePage() {
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-2xl font-black text-olive-600 tracking-normal font-display truncate">{clientUser.name}</h1>
+                            <h1 className="app-hero-title truncate">{clientUser.name}</h1>
                             <p className="text-olive-300 text-sm flex items-center gap-1.5 mt-0.5 truncate">
                                 <Mail className="w-3 h-3 flex-shrink-0" />
                                 {clientUser.email}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-terra-400/10 text-terra-400 text-[11px] font-bold">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-terra-400/10 text-terra-400 app-badge-text">
                                     {planLabel} Plan
                                 </span>
                             </div>
@@ -154,7 +154,7 @@ export default function ProfilePage() {
                                 <Trophy className="w-3.5 h-3.5 text-terra-400" />
                                 <span className="text-xl font-black text-olive-600 leading-none">{clientUser.stats.totalClassesAttended}</span>
                             </div>
-                            <p className="text-[10px] text-olive-300 font-medium uppercase tracking-wider">Classes</p>
+                            <p className="app-stat-label">Classes</p>
                         </div>
                         <div className="flex-1 py-4 px-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -163,14 +163,14 @@ export default function ProfilePage() {
                                     {isUnlimited ? '∞' : sub.classesRemaining ?? 0}
                                 </span>
                             </div>
-                            <p className="text-[10px] text-olive-300 font-medium uppercase tracking-wider">Credits Left</p>
+                            <p className="app-stat-label">Credits Left</p>
                         </div>
                         <div className="flex-1 py-4 px-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 mb-1">
                                 <Flame className="w-3.5 h-3.5 text-terra-400" />
                                 <span className="text-xl font-black text-olive-600 leading-none">{clientUser.stats.currentStreak}</span>
                             </div>
-                            <p className="text-[10px] text-olive-300 font-medium uppercase tracking-wider">Streak</p>
+                            <p className="app-stat-label">Streak</p>
                         </div>
                     </div>
                 </div>
@@ -182,7 +182,7 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.08 }}
             >
-                <p className="text-[10px] font-bold text-olive-300 uppercase tracking-[0.2em] px-1 mb-3">Membership</p>
+                <p className="app-label px-1 mb-3">Membership</p>
                 <div className="bg-peach-50 border border-peach-400/15 rounded-2xl overflow-hidden">
                     {hasPlan ? (
                         <div className="p-5 space-y-4">
@@ -196,21 +196,21 @@ export default function ProfilePage() {
                                         <p className="text-olive-300 text-xs">{sub.planCategory === 'membership' ? 'Auto-renewing' : 'Class pack'}</p>
                                     </div>
                                 </div>
-                                <span className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-700 text-[10px] font-bold uppercase tracking-wider ring-1 ring-green-500/20">
+                                <span className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-700 app-badge-text ring-1 ring-green-500/20">
                                     Active
                                 </span>
                             </div>
                             <div className="grid grid-cols-3 gap-3 pt-3 border-t border-peach-400/10">
                                 <div>
-                                    <p className="text-olive-300 text-[10px] uppercase tracking-wider font-semibold mb-1">Credits</p>
+                                    <p className="app-stat-label mb-1">Credits</p>
                                     <p className="text-olive-600 font-black text-lg">{isUnlimited ? '∞' : sub.classesRemaining}</p>
                                 </div>
                                 <div>
-                                    <p className="text-olive-300 text-[10px] uppercase tracking-wider font-semibold mb-1">Days Left</p>
+                                    <p className="app-stat-label mb-1">Days Left</p>
                                     <p className="text-olive-600 font-black text-lg">{daysLeft}</p>
                                 </div>
                                 <div>
-                                    <p className="text-olive-300 text-[10px] uppercase tracking-wider font-semibold mb-1">{sub.planCategory === 'membership' ? 'Renews' : 'Expires'}</p>
+                                    <p className="app-stat-label mb-1">{sub.planCategory === 'membership' ? 'Renews' : 'Expires'}</p>
                                     <p className="text-olive-600 font-bold text-xs">{renewalDate}</p>
                                 </div>
                             </div>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
                             <Calendar className="w-5 h-5 text-terra-400" />
                         </div>
                         <p className="text-olive-600 text-sm font-bold">Book a Class</p>
-                        <p className="text-olive-300 text-[11px] mt-0.5">Browse schedule</p>
+                        <p className="app-body text-xs mt-0.5">Browse schedule</p>
                     </div>
                 </Link>
                 <Link href="/user/bookings">
@@ -261,7 +261,7 @@ export default function ProfilePage() {
                             <Target className="w-5 h-5 text-olive-400" />
                         </div>
                         <p className="text-olive-600 text-sm font-bold">My Bookings</p>
-                        <p className="text-olive-300 text-[11px] mt-0.5">View history</p>
+                        <p className="app-body text-xs mt-0.5">View history</p>
                     </div>
                 </Link>
             </motion.div>
@@ -272,7 +272,7 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
             >
-                <p className="text-[10px] font-bold text-olive-300 uppercase tracking-[0.2em] px-1 mb-3">Security</p>
+                <p className="app-label px-1 mb-3">Security</p>
                 <div className="bg-peach-50 border border-peach-400/15 rounded-2xl overflow-hidden">
                     <button
                         onClick={() => setShowPasswordSection(!showPasswordSection)}
@@ -295,7 +295,7 @@ export default function ProfilePage() {
                             className="px-4 pb-5 space-y-3 border-t border-peach-400/10"
                         >
                             <div className="pt-4">
-                                <label className="text-[10px] font-bold text-olive-400 uppercase tracking-wider mb-1.5 block">Current Password</label>
+                                <label className="app-label mb-1.5 block">Current Password</label>
                                 <div className="relative">
                                     <input
                                         type={showCurrent ? 'text' : 'password'}
@@ -314,7 +314,7 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-olive-400 uppercase tracking-wider mb-1.5 block">New Password</label>
+                                <label className="app-label mb-1.5 block">New Password</label>
                                 <div className="relative">
                                     <input
                                         type={showNew ? 'text' : 'password'}
@@ -333,7 +333,7 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-olive-400 uppercase tracking-wider mb-1.5 block">Confirm New Password</label>
+                                <label className="app-label mb-1.5 block">Confirm New Password</label>
                                 <input
                                     type="password"
                                     value={confirmPassword}
@@ -364,7 +364,7 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
             >
-                <p className="text-[10px] font-bold text-olive-300 uppercase tracking-[0.2em] px-1 mb-3">Support</p>
+                <p className="app-label px-1 mb-3">Support</p>
                 <div className="bg-peach-50 border border-peach-400/15 rounded-2xl divide-y divide-peach-400/10 overflow-hidden">
                     <button className="w-full flex items-center gap-4 p-4 hover:bg-peach-100/60 transition-colors group active:bg-peach-200/50">
                         <div className="w-9 h-9 rounded-xl bg-olive-400/8 flex items-center justify-center flex-shrink-0 text-olive-400">

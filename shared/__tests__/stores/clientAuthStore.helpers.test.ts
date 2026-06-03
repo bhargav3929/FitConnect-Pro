@@ -122,6 +122,7 @@ describe('normalizeSubscription', () => {
         expect(result.status).toBe('expired');
         expect(result.classesRemaining).toBe(0);
         expect(result.maxClassesPerDay).toBe(0);
+        expect(result.weeklyClassLimit).toBe(0);
         expect(result.advanceBookingDays).toBe(0);
         expect(result.guestPassesRemaining).toBe(0);
         expect(result.lastPaymentId).toBeNull();
@@ -138,6 +139,7 @@ describe('normalizeSubscription', () => {
             status: 'active',
             classesRemaining: null,
             maxClassesPerDay: 3,
+            weeklyClassLimit: 3,
             advanceBookingDays: 14,
             guestPassesRemaining: 2,
             lastPaymentId: 'pay_123',
@@ -152,6 +154,7 @@ describe('normalizeSubscription', () => {
         expect(result.status).toBe('active');
         expect(result.classesRemaining).toBeNull();
         expect(result.maxClassesPerDay).toBe(3);
+        expect(result.weeklyClassLimit).toBe(3);
         expect(result.advanceBookingDays).toBe(14);
         expect(result.guestPassesRemaining).toBe(2);
         expect(result.lastPaymentId).toBe('pay_123');
@@ -210,6 +213,7 @@ describe('buildClientUser', () => {
                 status: 'active',
                 classesRemaining: null,
                 maxClassesPerDay: 3,
+                weeklyClassLimit: 3,
                 advanceBookingDays: 14,
                 guestPassesRemaining: 2,
             },

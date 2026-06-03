@@ -12,7 +12,6 @@ import {
     ChevronLeft,
     Calendar,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { CalendarStrip } from "@/components/user/CalendarStrip"
 import { SpotSelectionModal } from "@/components/user/SpotSelectionModal"
@@ -99,13 +98,19 @@ export default function SchedulePage() {
     }
 
     useEffect(() => {
-        setIsLoadingClasses(true)
-        const unsub = subscribeToClassesByDate(selectedDate, (result) => {
-            setClasses(result)
-            setIsLoadingClasses(false)
-        })
+        const unsub = subscribeToClassesByDate(
+            selectedDate,
+            (result) => {
+                setClasses(result)
+                setIsLoadingClasses(false)
+            },
+            {
+                trainerId: selectedFilterValues.instructor || undefined,
+                classType: selectedFilterValues.classType || undefined,
+            },
+        )
         return unsub
-    }, [selectedDate])
+    }, [selectedDate, selectedFilterValues.instructor, selectedFilterValues.classType])
 
     useEffect(() => {
         async function loadTrainers() {
@@ -164,6 +169,7 @@ export default function SchedulePage() {
     }
 
     const toggleFilter = (filter: FilterType) => {
+        setIsLoadingClasses(true)
         setVisibleClassCount(CLASS_RENDER_BATCH)
         setActiveFilters(prev => {
             if (prev.includes(filter)) {
@@ -175,6 +181,7 @@ export default function SchedulePage() {
     }
 
     const selectFilterValue = (filter: FilterType, value: string) => {
+        setIsLoadingClasses(true)
         setVisibleClassCount(CLASS_RENDER_BATCH)
         setSelectedFilterValues(prev => ({
             ...prev,
@@ -184,17 +191,17 @@ export default function SchedulePage() {
 
     // Derive unique filter options from classes
     const uniqueClassTypes = [...new Set(classes.map(c => c.classType).filter(Boolean))] as string[]
-    const uniqueInstructors = [...new Set(classes.map(c => {
+    const uniqueInstructors = classes.reduce<Array<{ id: string; name: string }>>((acc, c) => {
         const t = trainers.find(t => t.id === c.trainerId)
-        return t ? t.name : null
-    }).filter(Boolean))] as string[]
+        if (t && !acc.some(item => item.id === t.id)) acc.push({ id: t.id, name: t.name })
+        return acc
+    }, [])
 
     // Apply filters to classes
     const filteredClasses = classes.filter(cls => {
         if (selectedFilterValues.classType && cls.classType !== selectedFilterValues.classType) return false
         if (selectedFilterValues.instructor) {
-            const trainerName = trainers.find(t => t.id === cls.trainerId)?.name
-            if (trainerName !== selectedFilterValues.instructor) return false
+            if (cls.trainerId !== selectedFilterValues.instructor) return false
         }
         return true
     })
@@ -230,7 +237,7 @@ export default function SchedulePage() {
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-1 rounded-md bg-terra-400 text-peach-50 text-[10px] font-black uppercase tracking-wider">
+                        <span className="px-2 py-1 rounded-md bg-terra-400 text-peach-50 app-badge-text">
                             FLAGSHIP
                         </span>
                         <div className="flex items-center gap-1 text-terra-300">
@@ -239,10 +246,10 @@ export default function SchedulePage() {
                             <span className="text-olive-400 text-xs">({FACILITY.reviewCount})</span>
                         </div>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal mb-2 font-display">
+                    <h1 className="app-page-title mb-2">
                         Class Schedule
                     </h1>
-                    <p className="text-olive-300 text-sm flex items-center gap-2">
+                    <p className="app-page-subtitle flex items-center gap-2">
                         <MapPin className="w-3 h-3 text-terra-400" />
                         {FACILITY.address}
                     </p>
@@ -286,6 +293,7 @@ export default function SchedulePage() {
                                 <CalendarStrip
                                     selectedDate={selectedDate}
                                     onDateSelect={(date) => {
+                                        setIsLoadingClasses(true)
                                         setSelectedDate(date)
                                         setVisibleClassCount(CLASS_RENDER_BATCH)
                                     }}
@@ -316,16 +324,16 @@ export default function SchedulePage() {
                                 {/* Active filter value pills */}
                                 {activeFilters.includes('instructor') && uniqueInstructors.length > 0 && (
                                     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pl-6">
-                                        {uniqueInstructors.map(name => (
+                                        {uniqueInstructors.map(instructor => (
                                             <button
-                                                key={name}
-                                                onClick={() => selectFilterValue('instructor', name)}
-                                                className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.instructor === name
+                                                key={instructor.id}
+                                                onClick={() => selectFilterValue('instructor', instructor.id)}
+                                                className={`px-3 py-1 rounded-full app-label normal-case tracking-normal whitespace-nowrap transition-all ${selectedFilterValues.instructor === instructor.id
                                                         ? 'bg-terra-400 text-peach-50'
                                                         : 'bg-peach-200/50 text-olive-400 hover:bg-peach-200/80'
                                                     }`}
                                             >
-                                                {name}
+                                                {instructor.name}
                                             </button>
                                         ))}
                                     </div>
@@ -336,7 +344,7 @@ export default function SchedulePage() {
                                             <button
                                                 key={type}
                                                 onClick={() => selectFilterValue('classType', type)}
-                                                className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${selectedFilterValues.classType === type
+                                                className={`px-3 py-1 rounded-full app-label normal-case tracking-normal whitespace-nowrap transition-all ${selectedFilterValues.classType === type
                                                         ? 'bg-terra-400 text-peach-50'
                                                         : 'bg-peach-200/50 text-olive-400 hover:bg-peach-200/80'
                                                     }`}
@@ -400,11 +408,11 @@ export default function SchedulePage() {
                                                     <div className="flex gap-4">
                                                         <div className="flex flex-col items-center">
                                                             <span className="text-lg font-black text-olive-600 leading-none">{cls.startTime}</span>
-                                                            <span className="text-[10px] text-olive-300 font-medium mt-1">{cls.duration} min</span>
+                                                            <span className="app-stat-label normal-case tracking-normal mt-1">{cls.duration} min</span>
                                                         </div>
                                                         <div className="w-px h-10 bg-peach-400/20" />
                                                         <div>
-                                                            <h3 className="text-olive-600 font-bold group-hover:text-terra-400 transition-colors">
+                                                            <h3 className="app-card-title group-hover:text-terra-400 transition-colors">
                                                                 {cls.classType || 'Pilates Class'}
                                                             </h3>
                                                             <p className="text-olive-300 text-xs flex items-center gap-1 mt-0.5">
@@ -432,7 +440,7 @@ export default function SchedulePage() {
                                                         <span className="text-xs text-olive-400 font-medium">{trainerName}</span>
                                                     </div>
                                                     {spotsLeft < 3 && spotsLeft > 0 && (
-                                                        <span className="text-[10px] text-terra-400 font-bold uppercase tracking-wider">
+                                                        <span className="app-badge-text text-terra-400">
                                                             Only {spotsLeft} spots left
                                                         </span>
                                                     )}
@@ -458,7 +466,7 @@ export default function SchedulePage() {
                                     <div className="w-16 h-16 bg-peach-200/50 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <Calendar className="w-8 h-8 text-olive-300/40" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-olive-600">No classes scheduled</h3>
+                                    <h3 className="app-card-title">No classes scheduled</h3>
                                     <p className="text-olive-300 text-sm mt-2 max-w-xs mx-auto">
                                         There are no classes available on this date. Try selecting a different day.
                                     </p>
@@ -494,7 +502,7 @@ export default function SchedulePage() {
                                             ) : trainer.name.charAt(0)}
                                         </div>
                                         <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                                            <h3 className="text-peach-50 font-bold leading-none mb-1">{trainer.name}</h3>
+                                            <h3 className="app-card-title text-peach-50 leading-none mb-1">{trainer.name}</h3>
                                             <p className="text-terra-400 text-xs font-bold uppercase tracking-wider">
                                                 {trainer.specialties?.[0] || 'Trainer'}
                                             </p>
@@ -518,7 +526,7 @@ export default function SchedulePage() {
                             className="space-y-6"
                         >
                             <div className="bg-peach-50 border border-peach-400/20 p-6">
-                                <h3 className="text-olive-600 font-bold mb-3">About Our Facility</h3>
+                                <h3 className="app-card-title mb-3">About Our Facility</h3>
                                 <p className="text-olive-300 text-sm leading-relaxed mb-4">{FACILITY.description}</p>
                                 <h4 className="text-olive-600 font-bold mb-3 text-sm">Amenities</h4>
                                 <div className="flex flex-wrap gap-2">
@@ -531,7 +539,7 @@ export default function SchedulePage() {
                             </div>
 
                             <div className="bg-peach-50 border border-peach-400/20 p-6">
-                                <h3 className="text-olive-600 font-bold mb-4">Contact & Hours</h3>
+                                <h3 className="app-card-title mb-4">Contact & Hours</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-terra-400/20 flex items-center justify-center text-terra-400">

@@ -130,8 +130,8 @@ export default function BookingsPage() {
         <div className="space-y-8 pb-20">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-olive-600 tracking-normal font-display">My Bookings</h1>
-                <p className="text-olive-300 text-sm mt-1">
+                <h1 className="app-page-title">My Bookings</h1>
+                <p className="app-page-subtitle mt-1">
                     Manage your upcoming classes and view history
                 </p>
             </div>
@@ -140,10 +140,10 @@ export default function BookingsPage() {
             <div className="bg-peach-50 border border-peach-400/20 rounded-xl p-6">
                 <div className="flex items-start justify-between gap-4 mb-4">
                     <div>
-                        <span className="text-terra-400/70 text-[10px] font-bold tracking-[0.25em] uppercase block mb-2">
+                        <span className="app-kicker block mb-2">
                             Practice Milestones
                         </span>
-                        <h2 className="text-xl font-black text-olive-600 font-display">
+                        <h2 className="app-section-title">
                             {attendedCount} / {nextMilestone} classes
                         </h2>
                         <p className="text-olive-300 text-xs mt-1">
@@ -164,7 +164,7 @@ export default function BookingsPage() {
                                     title={`${tier} classes`}
                                 >
                                     <Award className="w-4 h-4" />
-                                    <span className="text-[10px] font-bold mt-0.5">{tier}</span>
+                                    <span className="app-badge-text mt-0.5">{tier}</span>
                                 </div>
                             )
                         })}
@@ -244,11 +244,11 @@ export default function BookingsPage() {
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 ${getStatusColor(booking.status)}`}>
+                                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full app-badge-text mb-3 ${getStatusColor(booking.status)}`}>
                                             {getStatusIcon(booking.status)}
                                             {booking.status}
                                         </div>
-                                        <h3 className="text-xl font-bold text-olive-600 mb-1 group-hover:text-terra-400 transition-colors">
+                                        <h3 className="app-section-title mb-1 group-hover:text-terra-400 transition-colors">
                                             {booking.classType || 'Pilates Class'}
                                         </h3>
                                         <div className="flex items-center gap-2 text-olive-300 text-sm">
@@ -257,7 +257,7 @@ export default function BookingsPage() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-black text-2xl text-olive-600">
+                                        <p className="app-stat-value">
                                             {booking.classStartTime || booking.spotNumber}
                                         </p>
                                         <p className="text-xs font-bold text-olive-300 uppercase">
@@ -347,7 +347,7 @@ export default function BookingsPage() {
                     <div className="w-16 h-16 bg-peach-200/50 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Calendar className="w-8 h-8 text-olive-300/40" />
                     </div>
-                    <h3 className="text-lg font-bold text-olive-600">No bookings found</h3>
+                    <h3 className="app-card-title">No bookings found</h3>
                     <p className="text-olive-300 text-sm mb-6">
                         {activeTab === 'upcoming'
                             ? "You don't have any upcoming classes scheduled."

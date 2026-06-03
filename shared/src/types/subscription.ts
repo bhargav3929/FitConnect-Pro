@@ -21,6 +21,7 @@ export interface PlanDefinition {
     credits: number | null;           // null = unlimited
     durationDays: number;             // validity period
     maxClassesPerDay: number;
+    weeklyClassLimit: number;
     advanceBookingDays: number;
     guestPasses: number;
     autoRenew: boolean;
@@ -48,6 +49,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         credits: 1,
         durationDays: 30,
         maxClassesPerDay: 1,
+        weeklyClassLimit: 1,
         advanceBookingDays: 7,
         guestPasses: 0,
         autoRenew: false,
@@ -68,6 +70,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         credits: 4,
         durationDays: 14,
         maxClassesPerDay: 1,
+        weeklyClassLimit: 2,
         advanceBookingDays: 14,
         guestPasses: 0,
         autoRenew: false,
@@ -91,6 +94,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         credits: 24,
         durationDays: 90,
         maxClassesPerDay: 1,
+        weeklyClassLimit: 2,
         advanceBookingDays: 14,
         guestPasses: 0,
         autoRenew: true,
@@ -114,6 +118,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         credits: 48,
         durationDays: 180,
         maxClassesPerDay: 1,
+        weeklyClassLimit: 2,
         advanceBookingDays: 14,
         guestPasses: 1,
         autoRenew: true,
@@ -139,6 +144,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         credits: 36,
         durationDays: 90,
         maxClassesPerDay: 1,
+        weeklyClassLimit: 3,
         advanceBookingDays: 14,
         guestPasses: 0,
         autoRenew: true,
@@ -163,6 +169,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         credits: 72,
         durationDays: 180,
         maxClassesPerDay: 1,
+        weeklyClassLimit: 3,
         advanceBookingDays: 14,
         guestPasses: 2,
         autoRenew: true,

@@ -21,7 +21,7 @@ import { UserProfile } from "@fitconnect/shared/types/user"
 import { toast } from "sonner"
 
 const PLAN_FILTERS = ["All Plans", "unlimited", "twice_weekly", "once_weekly", "drop_in", "five_pack", "ten_pack"]
-const STATUS_FILTERS = ["All Status", "active", "expired", "canceled"]
+const STATUS_FILTERS = ["All Status", "active", "No Plan", "expired", "canceled"]
 const PAGE_SIZE = 12
 
 export default function MembersPage() {
@@ -42,7 +42,7 @@ export default function MembersPage() {
             pageSize: PAGE_SIZE,
             cursor: currentCursor,
             planId: planFilter === "All Plans" ? undefined : planFilter,
-            status: statusFilter === "All Status" ? undefined : statusFilter as UserProfile['subscription']['status'],
+            status: statusFilter === "All Status" || statusFilter === "No Plan" ? undefined : statusFilter as UserProfile['subscription']['status'],
         })
             .then((pageResult) => {
                 if (cancelled) return
@@ -70,7 +70,10 @@ export default function MembersPage() {
         const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             member.email.toLowerCase().includes(searchQuery.toLowerCase())
         const matchesPlan = planFilter === "All Plans" || member.subscription.planId === planFilter
-        const matchesStatus = statusFilter === "All Status" || member.subscription.status === statusFilter
+        const matchesStatus =
+            statusFilter === "All Status" ||
+            (statusFilter === "No Plan" && !member.subscription.planId) ||
+            member.subscription.status === statusFilter
         return matchesSearch && matchesPlan && matchesStatus
     })
     const totalPages = Math.max(1, Math.ceil(totalMembers / PAGE_SIZE))
@@ -80,11 +83,19 @@ export default function MembersPage() {
     const activeCount = members.filter(m => m.subscription.status === 'active').length
     const totalCredits = members.reduce((sum, m) => sum + (m.subscription.classesRemaining ?? 0), 0)
 
+    const getDisplayStatus = (member: UserProfile) => {
+        if (!member.subscription.planId && member.subscription.status === 'expired') {
+            return 'No Plan'
+        }
+        return member.subscription.status
+    }
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'active': return 'bg-green-500/10 text-green-700 ring-1 ring-green-500/20'
             case 'expired': return 'bg-red-500/10 text-red-600 ring-1 ring-red-500/20'
             case 'canceled': return 'bg-yellow-500/10 text-yellow-700 ring-1 ring-yellow-500/20'
+            case 'No Plan': return 'bg-peach-300/40 text-olive-500 ring-1 ring-olive-400/15'
             default: return 'bg-peach-300/30 text-olive-400'
         }
     }
@@ -104,10 +115,10 @@ export default function MembersPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
+                    <h2 className="app-page-title mb-2">
                         Members
                     </h2>
-                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
+                    <p className="app-page-subtitle">
                         Manage member accounts, subscriptions, and class attendance across your studio.
                     </p>
                 </div>
@@ -154,9 +165,9 @@ export default function MembersPage() {
                         {isLoading ? (
                             <div className="h-8 w-16 bg-peach-300/40 rounded animate-pulse mb-1" />
                         ) : (
-                            <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value.toLocaleString()}</p>
+                            <p className="app-stat-value">{stat.value.toLocaleString()}</p>
                         )}
-                        <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
+                        <p className="app-stat-label mt-1">{stat.label}</p>
                     </div>
                 ))}
             </motion.div>
@@ -246,13 +257,13 @@ export default function MembersPage() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-peach-400/15 bg-peach-200/30">
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4 pl-6">Member</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Plan</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Status</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Joined</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Credits</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Classes</th>
-                                    <th className="text-right text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4 pr-6">Actions</th>
+                                    <th className="text-left app-label p-4 pl-6">Member</th>
+                                    <th className="text-left app-label p-4">Plan</th>
+                                    <th className="text-left app-label p-4">Status</th>
+                                    <th className="text-left app-label p-4">Joined</th>
+                                    <th className="text-left app-label p-4">Credits</th>
+                                    <th className="text-left app-label p-4">Classes</th>
+                                    <th className="text-right app-label p-4 pr-6">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -281,8 +292,8 @@ export default function MembersPage() {
                                             <span className="text-olive-400 capitalize text-sm font-medium">{member.subscription.planId?.replace(/_/g, ' ') || 'None'}</span>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`inline-flex px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(member.subscription.status)}`}>
-                                                {member.subscription.status}
+                                            <span className={`inline-flex px-2.5 py-1 app-badge-text rounded-sm ${getStatusColor(getDisplayStatus(member))}`}>
+                                                {getDisplayStatus(member)}
                                             </span>
                                         </td>
                                         <td className="p-4">
@@ -299,7 +310,7 @@ export default function MembersPage() {
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">
                                                 <Activity className="w-3.5 h-3.5 text-olive-300" />
-                                                <span className="text-olive-400 text-sm font-medium">{member.stats.totalClassesAttended}</span>
+                                                <span className="app-body font-medium">{member.stats.totalClassesAttended}</span>
                                             </div>
                                         </td>
                                         <td className="p-4 pr-6 text-right">
@@ -340,21 +351,21 @@ export default function MembersPage() {
                                             <p className="text-xs text-olive-300 mt-0.5">{member.email}</p>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex px-2 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(member.subscription.status)}`}>
-                                        {member.subscription.status}
+                                    <span className={`inline-flex px-2 py-1 app-badge-text rounded-sm ${getStatusColor(getDisplayStatus(member))}`}>
+                                        {getDisplayStatus(member)}
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 text-sm ml-[52px]">
                                     <div>
-                                        <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Plan</p>
+                                        <p className="app-stat-label mb-0.5">Plan</p>
                                         <p className="text-olive-400 font-medium capitalize">{member.subscription.planId?.replace(/_/g, ' ') || 'None'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Classes</p>
+                                        <p className="app-stat-label mb-0.5">Classes</p>
                                         <p className="text-olive-400 font-medium">{member.stats.totalClassesAttended}</p>
                                     </div>
                                     <div>
-                                        <p className="text-olive-300 text-[10px] tracking-wider uppercase font-semibold mb-0.5">Credits</p>
+                                        <p className="app-stat-label mb-0.5">Credits</p>
                                         <p className="text-olive-600 font-black">{member.subscription.classesRemaining === null ? '∞' : member.subscription.classesRemaining}</p>
                                     </div>
                                 </div>
@@ -363,12 +374,12 @@ export default function MembersPage() {
                     </div>
 
                     {filteredMembers.length === 0 && (
-                        <div className="text-center py-16">
-                            <div className="w-16 h-16 bg-peach-200/40 flex items-center justify-center mx-auto mb-4">
+                        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                            <div className="w-16 h-16 bg-peach-200/40 flex items-center justify-center mb-4">
                                 <Users className="w-8 h-8 text-olive-300/30" />
                             </div>
-                            <p className="text-olive-600 font-bold mb-1">No members found</p>
-                            <p className="text-olive-300 text-sm">Try adjusting your search or filter criteria</p>
+                            <p className="app-card-title mb-1">No members found</p>
+                            <p className="app-body max-w-none">Try adjusting your search or filter criteria</p>
                         </div>
                     )}
                     {filteredMembers.length > 0 && (

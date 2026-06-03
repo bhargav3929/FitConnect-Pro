@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                         <div>
                             <p className="text-olive-300 text-sm font-medium tracking-wide">{getGreeting()}, Admin</p>
-                            <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal font-display mt-1">
+                            <h1 className="app-hero-title mt-1">
                                 Studio Dashboard
                             </h1>
                         </div>
@@ -168,12 +168,12 @@ export default function AdminDashboardPage() {
                             >
                                 <div className="flex items-center gap-2 mb-2">
                                     <stat.icon weight="duotone" className={`w-4 h-4 ${stat.color}`} />
-                                    <p className="text-[10px] text-olive-300 font-bold uppercase tracking-wider">{stat.label}</p>
+                                    <p className="app-stat-label">{stat.label}</p>
                                 </div>
                                 {isLoading ? (
                                     <div className="h-8 w-16 bg-peach-300/30 rounded animate-pulse" />
                                 ) : (
-                                    <p className="text-2xl md:text-3xl font-black text-olive-600 leading-none">
+                                    <p className="app-stat-value md:text-3xl">
                                         {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                                     </p>
                                 )}
@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-lg font-bold text-olive-600">Weekly Attendance</h3>
+                            <h3 className="app-card-title">Weekly Attendance</h3>
                             <p className="text-olive-300 text-xs mt-0.5">Classes attended this week</p>
                         </div>
                         <Link href="/admin/reports" className="text-xs font-bold text-terra-400 hover:text-terra-300 transition-colors flex items-center gap-1 tracking-wider">
@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
                     className="bg-peach-50 border border-peach-400/15 rounded-2xl p-6 md:p-8 flex flex-col"
                 >
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-olive-600">Recent Activity</h3>
+                        <h3 className="app-card-title">Recent Activity</h3>
                         <Link href="/admin/bookings" className="text-xs font-bold text-terra-400 hover:text-terra-300 transition-colors tracking-wider">
                             ALL
                         </Link>

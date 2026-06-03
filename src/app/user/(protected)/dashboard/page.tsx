@@ -130,7 +130,7 @@ export default function UserDashboard() {
                     <div className="flex items-start justify-between mb-1">
                         <div>
                             <p className="text-olive-300 text-sm font-medium tracking-wide">{getGreeting()}</p>
-                            <h1 className="text-3xl md:text-4xl font-black text-olive-600 tracking-normal font-display mt-1">
+                            <h1 className="app-hero-title mt-1">
                                 {clientUser.name.split(' ')[0]}
                             </h1>
                         </div>
@@ -156,7 +156,7 @@ export default function UserDashboard() {
                                     <span className="text-lg font-black text-olive-600 leading-none">{clientUser.stats.currentStreak}</span>
                                 </div>
                             </div>
-                            <p className="text-[10px] text-olive-300 font-bold tracking-wider mt-1.5 uppercase">Streak</p>
+                            <p className="app-stat-label mt-1.5">Streak</p>
                         </div>
                     </div>
 
@@ -165,19 +165,19 @@ export default function UserDashboard() {
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <Trophy className="w-3.5 h-3.5 text-terra-400" />
-                                <p className="text-2xl font-black text-olive-600 leading-none">{clientUser.stats.totalClassesAttended}</p>
+                                <p className="app-stat-value">{clientUser.stats.totalClassesAttended}</p>
                             </div>
-                            <p className="text-[11px] text-olive-300 font-medium">Classes Attended</p>
+                            <p className="app-stat-label normal-case tracking-normal">Classes Attended</p>
                         </div>
                         <div className="w-px h-10 bg-olive-400/10" />
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <Star className="w-3.5 h-3.5 text-terra-300" />
-                                <p className="text-2xl font-black text-olive-600 leading-none">
+                                <p className="app-stat-value">
                                     {clientUser.subscription.classesRemaining === null ? '∞' : clientUser.subscription.classesRemaining}
                                 </p>
                             </div>
-                            <p className="text-[11px] text-olive-300 font-medium">Classes Left</p>
+                            <p className="app-stat-label normal-case tracking-normal">Classes Left</p>
                         </div>
                     </div>
 
@@ -199,16 +199,16 @@ export default function UserDashboard() {
                                         <div>
                                             <p className="text-sm font-bold text-olive-600 leading-none">
                                                 {currentTier.name}
-                                                <span className="text-[10px] text-olive-300 font-medium ml-1.5">Tier</span>
+                                                <span className="app-stat-label normal-case tracking-normal ml-1.5">Tier</span>
                                             </p>
-                                            <p className="text-[10px] text-olive-300 mt-0.5">
+                                            <p className="app-body text-xs mt-0.5">
                                                 {nextTier
                                                     ? `${nextTier.threshold - clientUser.stats.totalClassesAttended} classes to ${nextTier.name}`
                                                     : 'Max tier reached!'}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="text-[11px] font-bold text-olive-400">
+                                    <span className="app-label">
                                         {clientUser.stats.totalClassesAttended}/{nextTier ? nextTier.threshold : currentTier.threshold}
                                     </span>
                                 </div>
@@ -295,11 +295,11 @@ export default function UserDashboard() {
 
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
                         <div>
-                            <div className="inline-flex items-center gap-2 bg-peach-50/15 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-bold text-peach-50 mb-3 tracking-wider">
+                            <div className="inline-flex items-center gap-2 bg-peach-50/15 backdrop-blur-sm px-3 py-1 rounded-full app-badge-text text-peach-50 mb-3">
                                 <Clock className="w-3 h-3" />
                                 UPCOMING SESSION
                             </div>
-                            <h2 className="text-2xl font-black text-peach-50 mb-1">
+                            <h2 className="app-hero-title text-peach-50 mb-1">
                                 {(upcomingBooking as Booking & { classType?: string }).classType || 'Pilates Class'}
                             </h2>
                             <p className="text-peach-50/70 text-sm font-medium">
@@ -324,7 +324,7 @@ export default function UserDashboard() {
                     <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-terra-400/5" />
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h2 className="text-lg font-bold text-olive-600">Your Next Move</h2>
+                            <h2 className="app-card-title">Your Next Move</h2>
                             <p className="text-olive-300 text-sm mt-1 max-w-md">
                                 No upcoming sessions. Browse the schedule to find your perfect class.
                             </p>
@@ -357,7 +357,7 @@ export default function UserDashboard() {
                             </div>
                         </div>
                         <Calendar className="w-7 h-7 text-peach-200/60 mb-4" />
-                        <h3 className="text-peach-50 font-bold text-lg">Book Your Next Class</h3>
+                        <h3 className="app-card-title text-peach-50">Book Your Next Class</h3>
                         <p className="text-peach-200/60 text-sm mt-1 max-w-sm">
                             Browse available sessions, pick your spot, and reserve your reformer.
                         </p>
@@ -370,7 +370,7 @@ export default function UserDashboard() {
                         <div className="w-10 h-10 rounded-xl bg-terra-400/8 flex items-center justify-center mb-4 group-hover:bg-terra-400/15 transition-colors">
                             <Target className="w-5 h-5 text-terra-400" />
                         </div>
-                        <h3 className="text-olive-600 font-bold">My Bookings</h3>
+                        <h3 className="app-card-title">My Bookings</h3>
                         <p className="text-olive-300 text-xs mt-1 flex-1">Upcoming sessions and past history</p>
                         <div className="flex items-center gap-1 text-terra-400 text-xs font-bold mt-4 group-hover:gap-2 transition-all">
                             VIEW ALL <ArrowRight className="w-3 h-3" />

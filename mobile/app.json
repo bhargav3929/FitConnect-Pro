@@ -36,6 +36,11 @@
       "infoPlist": {
         "CFBundleDisplayName": "SOL Pilates",
         "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": [
+          "tez",
+          "phonepe",
+          "paytmmp"
+        ],
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [

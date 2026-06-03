@@ -88,8 +88,8 @@ export default function AdminFeedbackPage() {
       {/* Page Header */}
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-olive-600 tracking-tight font-display">FEEDBACK</h1>
-          <p className="text-sm text-olive-300 mt-1">
+          <h1 className="app-page-title">Feedback</h1>
+          <p className="app-page-subtitle mt-1">
             {unreadCount > 0 ? `${unreadCount} unread submission${unreadCount > 1 ? "s" : ""}` : "All caught up"}
           </p>
         </div>
@@ -138,10 +138,10 @@ export default function AdminFeedbackPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-bold text-olive-600 text-sm">{item.name}</span>
                     {item.status === "unread" && (
-                      <span className="px-2 py-0.5 bg-terra-400 text-peach-50 text-[10px] font-bold tracking-wider uppercase">NEW</span>
+                      <span className="px-2 py-0.5 bg-terra-400 text-peach-50 app-badge-text">NEW</span>
                     )}
                     {item.category && (
-                      <span className="px-2 py-0.5 bg-peach-300 text-olive-400 text-[10px] font-bold tracking-wider uppercase border border-peach-400">{item.category}</span>
+                      <span className="px-2 py-0.5 bg-peach-300 text-olive-400 app-badge-text border border-peach-400">{item.category}</span>
                     )}
                   </div>
                   <div className="flex gap-0.5 mb-3">

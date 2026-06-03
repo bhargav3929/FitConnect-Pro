@@ -10,7 +10,7 @@ import {
     signInWithCredential,
     User as FirebaseUser,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, type Unsubscribe } from 'firebase/firestore'
 import { auth, db } from '../firebase/config'
 import { ClientUser } from '../types/client'
 import {
@@ -41,7 +41,9 @@ async function fetchClientProfile(uid: string): Promise<ClientUser | null> {
         const docRef = doc(db, 'users', uid)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
-            return buildClientUser(uid, docSnap.data() as Record<string, unknown>)
+            const data = docSnap.data() as Record<string, unknown>
+            await backfillClientProfile(uid, data)
+            return buildClientUser(uid, data)
         }
         return null
     } catch {
@@ -72,19 +74,78 @@ async function finalizeGoogleLogin(
 }
 
 async function createClientProfile(uid: string, email: string, name: string): Promise<ClientUser> {
+    const profileData = {
+        uid,
+        email,
+        name,
+        age: 0,
+        fitnessGoals: [],
+        profilePictureUrl: null,
+        isFoundingMember: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        subscription: { ...DEFAULT_SUBSCRIPTION },
+        stats: { ...DEFAULT_STATS },
+    }
     const profile: ClientUser = {
         id: uid,
         name,
         email,
+        isFoundingMember: false,
         subscription: { ...DEFAULT_SUBSCRIPTION },
         stats: { ...DEFAULT_STATS },
     }
     try {
-        await setDoc(doc(db, 'users', uid), profile)
+        await setDoc(doc(db, 'users', uid), profileData)
     } catch {
         // Firestore write may fail if rules aren't set up yet — still return the profile
     }
     return profile
+}
+
+async function backfillClientProfile(uid: string, data: Record<string, unknown>) {
+    const patch: Record<string, unknown> = {}
+
+    if (!data.uid) patch.uid = uid
+    if (!data.createdAt) patch.createdAt = serverTimestamp()
+    if (!data.updatedAt) patch.updatedAt = serverTimestamp()
+    if (!data.fitnessGoals) patch.fitnessGoals = []
+    if (data.age === undefined) patch.age = 0
+    if (data.isFoundingMember === undefined) patch.isFoundingMember = false
+
+    const subscription = data.subscription as Record<string, unknown> | undefined
+    if (!subscription) {
+        patch.subscription = { ...DEFAULT_SUBSCRIPTION }
+    } else {
+        const subscriptionPatch: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(DEFAULT_SUBSCRIPTION)) {
+            if (subscription[key] === undefined) subscriptionPatch[key] = value
+        }
+        if (Object.keys(subscriptionPatch).length > 0) {
+            patch.subscription = { ...subscription, ...subscriptionPatch }
+        }
+    }
+
+    const stats = data.stats as Record<string, unknown> | undefined
+    if (!stats) {
+        patch.stats = { ...DEFAULT_STATS }
+    } else {
+        const statsPatch: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(DEFAULT_STATS)) {
+            if (stats[key] === undefined) statsPatch[key] = value
+        }
+        if (Object.keys(statsPatch).length > 0) {
+            patch.stats = { ...stats, ...statsPatch }
+        }
+    }
+
+    if (Object.keys(patch).length === 0) return
+
+    try {
+        await setDoc(doc(db, 'users', uid), patch, { merge: true })
+    } catch {
+        // Ignore client-side backfill failures; auth can still proceed.
+    }
 }
 
 export const useClientAuthStore = create<ClientAuthState>()((set, get) => ({

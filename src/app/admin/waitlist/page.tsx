@@ -107,13 +107,13 @@ export default function WaitlistPage() {
     return (
         <div className="p-6 lg:p-10 space-y-8">
             <header className="space-y-1">
-                <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-terra-400">
+                <p className="app-kicker">
                     Founding Membership
                 </p>
-                <h1 className="text-3xl lg:text-4xl font-black text-olive-600 uppercase tracking-normal font-display">
+                <h1 className="app-page-title">
                     Waitlist
                 </h1>
-                <p className="text-olive-400 text-sm">
+                <p className="app-body">
                     People who joined the founding membership waitlist.
                 </p>
             </header>
@@ -122,8 +122,8 @@ export default function WaitlistPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {(["all", ...STATUS_OPTIONS] as const).map((s) => (
                     <div key={s} className="rounded-2xl border border-peach-400/20 bg-peach-50 p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-olive-400 capitalize">{s}</p>
-                        <p className="text-2xl font-black text-olive-600 mt-1">{counts[s] ?? 0}</p>
+                        <p className="app-label capitalize">{s}</p>
+                        <p className="app-stat-value mt-1">{counts[s] ?? 0}</p>
                     </div>
                 ))}
             </div>
@@ -164,7 +164,7 @@ export default function WaitlistPage() {
                         >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                    <h3 className="text-lg font-bold text-olive-600">{entry.name}</h3>
+                                    <h3 className="app-card-title">{entry.name}</h3>
                                     <div className="flex flex-wrap gap-x-5 gap-y-1 mt-1.5 text-sm text-olive-400">
                                         <span className="inline-flex items-center gap-1.5">
                                             <Mail className="w-3.5 h-3.5" />
@@ -179,7 +179,7 @@ export default function WaitlistPage() {
                                     </div>
                                 </div>
                                 <span
-                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLES[entry.status] ?? STATUS_STYLES.new}`}
+                                    className={`px-3 py-1 rounded-full app-badge-text ${STATUS_STYLES[entry.status] ?? STATUS_STYLES.new}`}
                                 >
                                     {entry.status ?? "new"}
                                 </span>
@@ -190,7 +190,7 @@ export default function WaitlistPage() {
                                     <button
                                         key={s}
                                         onClick={() => updateStatus(entry.id, s)}
-                                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-peach-200/50 text-olive-400 hover:bg-terra-400 hover:text-peach-50 transition-colors capitalize"
+                                        className="px-3 py-1.5 rounded-lg app-badge-text bg-peach-200/50 text-olive-400 hover:bg-terra-400 hover:text-peach-50 transition-colors capitalize"
                                     >
                                         Mark {s}
                                     </button>

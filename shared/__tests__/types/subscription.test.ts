@@ -19,6 +19,7 @@ describe('PLAN_CATALOG', () => {
             expect(plan.price).toBeGreaterThanOrEqual(0);
             expect(plan.durationDays).toBeGreaterThan(0);
             expect(plan.maxClassesPerDay).toBeGreaterThanOrEqual(1);
+            expect(plan.weeklyClassLimit).toBeGreaterThanOrEqual(1);
             expect(plan.advanceBookingDays).toBeGreaterThanOrEqual(0);
             expect(plan.guestPasses).toBeGreaterThanOrEqual(0);
             expect(typeof plan.autoRenew).toBe('boolean');
@@ -39,10 +40,19 @@ describe('PLAN_CATALOG', () => {
 
     it('drop_in is free', () => {
         expect(getPlanById('drop_in')?.price).toBe(0);
+        expect(getPlanById('drop_in')?.weeklyClassLimit).toBe(1);
     });
 
     it('kickstarter requires consultation', () => {
         expect(getPlanById('kickstarter')?.requiresConsultation).toBe(true);
+        expect(getPlanById('kickstarter')?.weeklyClassLimit).toBe(2);
+    });
+
+    it('enforces expected weekly plan limits', () => {
+        expect(getPlanById('twice_quarterly')?.weeklyClassLimit).toBe(2);
+        expect(getPlanById('twice_6mo')?.weeklyClassLimit).toBe(2);
+        expect(getPlanById('thrice_quarterly')?.weeklyClassLimit).toBe(3);
+        expect(getPlanById('thrice_6mo')?.weeklyClassLimit).toBe(3);
     });
 });
 

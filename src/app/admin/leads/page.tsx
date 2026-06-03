@@ -111,10 +111,10 @@ export default function LeadsPage() {
     return (
         <div className="p-6 lg:p-10 space-y-8">
             <header className="space-y-2">
-                <h1 className="text-3xl lg:text-4xl font-black text-olive-600 uppercase tracking-normal font-display">
+                <h1 className="app-page-title">
                     Intro Class Leads
                 </h1>
-                <p className="text-olive-400 text-sm">
+                <p className="app-body">
                     Submissions from the public intro-class signup form.
                 </p>
             </header>
@@ -154,7 +154,7 @@ export default function LeadsPage() {
                         >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                    <h3 className="text-lg font-bold text-olive-600">{lead.name}</h3>
+                                    <h3 className="app-card-title">{lead.name}</h3>
                                     <div className="flex flex-wrap gap-x-5 gap-y-1 mt-1.5 text-sm text-olive-400">
                                         <span className="inline-flex items-center gap-1.5">
                                             <Mail className="w-3.5 h-3.5" /> {lead.email}
@@ -171,7 +171,7 @@ export default function LeadsPage() {
                                     </div>
                                 </div>
                                 <span
-                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLES[lead.status] ?? STATUS_STYLES.new}`}
+                                    className={`px-3 py-1 rounded-full app-badge-text ${STATUS_STYLES[lead.status] ?? STATUS_STYLES.new}`}
                                 >
                                     {lead.status ?? "new"}
                                 </span>
@@ -181,7 +181,7 @@ export default function LeadsPage() {
                                 <div className="grid md:grid-cols-2 gap-4 pt-2 border-t border-peach-400/20">
                                     {lead.goals && (
                                         <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-olive-400 mb-1">
+                                            <p className="app-label mb-1">
                                                 Goals
                                             </p>
                                             <p className="text-sm text-olive-600 leading-relaxed">{lead.goals}</p>
@@ -189,7 +189,7 @@ export default function LeadsPage() {
                                     )}
                                     {lead.concerns && (
                                         <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-olive-400 mb-1">
+                                            <p className="app-label mb-1">
                                                 Concerns
                                             </p>
                                             <p className="text-sm text-olive-600 leading-relaxed">{lead.concerns}</p>
@@ -203,7 +203,7 @@ export default function LeadsPage() {
                                     <button
                                         key={s}
                                         onClick={() => updateStatus(lead.id, s)}
-                                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-peach-200/50 text-olive-400 hover:bg-terra-400 hover:text-peach-50 transition-colors"
+                                        className="px-3 py-1.5 rounded-lg app-badge-text bg-peach-200/50 text-olive-400 hover:bg-terra-400 hover:text-peach-50 transition-colors"
                                     >
                                         Mark {s}
                                     </button>

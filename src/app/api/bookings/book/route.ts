@@ -1,6 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { getPlanById, LEGACY_PLAN_MAP } from '@fitconnect/shared/types/subscription';
+
+function getMondayWeekWindow(date: Date) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const day = start.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + diffToMonday);
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    return { start, end };
+}
+
+function getPlanWeeklyLimit(planId: unknown): number | undefined {
+    if (typeof planId !== 'string') return undefined;
+    const mappedPlanId = LEGACY_PLAN_MAP[planId] ?? planId;
+    return getPlanById(mappedPlanId)?.weeklyClassLimit;
+}
+
+function getPositiveNumber(value: unknown): number | undefined {
+    return typeof value === 'number' && value > 0 ? value : undefined;
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -146,7 +171,7 @@ export async function POST(req: NextRequest) {
             }
 
             // ── Per-day booking limit ────────────────────────────────
-            const maxPerDay = subscription.maxClassesPerDay ?? 1;
+            const maxPerDay = getPositiveNumber(subscription.maxClassesPerDay) ?? 1;
             const classDayStart = new Date(classDate);
             classDayStart.setHours(0, 0, 0, 0);
             const classDayEnd = new Date(classDate);
@@ -167,6 +192,25 @@ export async function POST(req: NextRequest) {
 
             if (sameDayConfirmed.length >= maxPerDay) {
                 throw { status: 409, error: `You can only book ${maxPerDay} class per day on your current plan`, code: 'daily-limit-reached' };
+            }
+
+            // ── Weekly booking limit (Monday-Sunday) ────────────────
+            const fallbackPlanLimit = getPlanWeeklyLimit(subscription.planId || subscription.planType);
+            const weeklyClassLimit = getPositiveNumber(subscription.weeklyClassLimit) ?? fallbackPlanLimit ?? 1;
+            const classWeek = getMondayWeekWindow(classDate);
+
+            const sameWeekConfirmed = userBookingsSnapshot.docs.filter(d => {
+                const bDate = d.data().classDate;
+                const bookingDate = bDate?.toDate ? bDate.toDate() : new Date(bDate);
+                return bookingDate >= classWeek.start && bookingDate <= classWeek.end;
+            });
+
+            if (sameWeekConfirmed.length >= weeklyClassLimit) {
+                throw {
+                    status: 409,
+                    error: `You can only book ${weeklyClassLimit} class${weeklyClassLimit === 1 ? '' : 'es'} per week on your current plan`,
+                    code: 'weekly-limit-reached',
+                };
             }
 
             // Check for duplicate booking (same user, same class)

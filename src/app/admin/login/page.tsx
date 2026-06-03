@@ -134,7 +134,7 @@ export default function AdminLoginPage() {
                         <div className="w-16 h-16 bg-terra-400/10 flex items-center justify-center mb-6">
                             <Shield className="w-8 h-8 text-terra-400" />
                         </div>
-                        <h2 className="text-3xl font-black text-olive-600 tracking-normal font-display">
+                        <h2 className="app-hero-title">
                             ADMIN LOGIN
                         </h2>
                         <p className="text-olive-300 mt-2 text-sm tracking-wider">

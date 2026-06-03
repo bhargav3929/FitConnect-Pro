@@ -14,6 +14,7 @@ import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { subscribeToUserBookings } from '@fitconnect/shared/firebase/firestore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import type { Booking } from '@fitconnect/shared/types/booking';
+import type { ClientUser } from '@fitconnect/shared/types/client';
 import Svg, { Circle } from 'react-native-svg';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
@@ -225,20 +226,7 @@ function SubscriptionCard({
     subscription,
     onViewPlans,
 }: {
-    subscription: {
-        planId: string | null;
-        planCategory: string | null;
-        startDate: Date | null;
-        endDate: Date | null;
-        status: 'active' | 'expired' | 'canceled';
-        classesRemaining: number | null;
-        maxClassesPerDay: number;
-        advanceBookingDays: number;
-        guestPassesRemaining: number;
-        lastPaymentId: string | null;
-        stripeCustomerId: string | null;
-        stripeSubscriptionId: string | null;
-    };
+    subscription: ClientUser['subscription'];
     onViewPlans: () => void;
 }) {
     if (!subscription) return null;
@@ -515,7 +503,6 @@ export default function DashboardScreen() {
     // Subscribe to user bookings (real-time)
     useEffect(() => {
         if (!clientUser?.id) {
-            setIsLoadingBookings(false);
             return;
         }
 
@@ -534,7 +521,7 @@ export default function DashboardScreen() {
     const navigateToSchedule = useCallback(() => router.push('/(tabs)/schedule'), [router]);
     const navigateToBookings = useCallback(() => router.push('/(tabs)/bookings'), [router]);
     const navigateToSubscribe = useCallback(() => router.push('/subscribe'), [router]);
-    const navigateToFreeClass = useCallback(() => router.push('/free-class' as any), [router]);
+    const navigateToFreeClass = useCallback(() => router.push('/free-class'), [router]);
 
     // Loading state
     if (!clientUser) {

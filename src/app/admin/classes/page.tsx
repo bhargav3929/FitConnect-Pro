@@ -297,10 +297,10 @@ export default function ClassesPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">
+                    <h2 className="app-page-title mb-2">
                         Classes
                     </h2>
-                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">
+                    <p className="app-page-subtitle">
                         Schedule, manage, and track all fitness classes and their capacity across your studio.
                     </p>
                 </div>
@@ -335,9 +335,9 @@ export default function ClassesPage() {
                         {isLoading ? (
                             <div className="h-8 w-16 bg-peach-300/40 rounded animate-pulse mb-1" />
                         ) : (
-                            <p className="text-2xl font-black text-olive-600 tracking-normal">{stat.value.toLocaleString()}</p>
+                            <p className="app-stat-value">{stat.value.toLocaleString()}</p>
                         )}
-                        <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1">{stat.label}</p>
+                        <p className="app-stat-label mt-1">{stat.label}</p>
                     </div>
                 ))}
             </motion.div>
@@ -414,13 +414,13 @@ export default function ClassesPage() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-peach-400/15 bg-peach-200/30">
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4 pl-6">Class</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Trainer</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Schedule</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Location</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Capacity</th>
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4">Status</th>
-                                    <th className="text-right text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase p-4 pr-6">Actions</th>
+                                    <th className="text-left app-label p-4 pl-6">Class</th>
+                                    <th className="text-left app-label p-4">Trainer</th>
+                                    <th className="text-left app-label p-4">Schedule</th>
+                                    <th className="text-left app-label p-4">Location</th>
+                                    <th className="text-left app-label p-4">Capacity</th>
+                                    <th className="text-left app-label p-4">Status</th>
+                                    <th className="text-right app-label p-4 pr-6">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -453,7 +453,7 @@ export default function ClassesPage() {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-olive-400 text-sm font-medium">{getTrainerName(cls.trainerId)}</span>
+                                            <span className="app-body font-medium">{getTrainerName(cls.trainerId)}</span>
                                         </td>
                                         <td className="p-4">
                                             <div className="space-y-1">
@@ -483,11 +483,11 @@ export default function ClassesPage() {
                                                         />
                                                     </div>
                                                 </div>
-                                                <span className="text-olive-400 text-sm font-medium">{cls.bookedCount}/{cls.totalSpots || cls.capacity}</span>
+                                                <span className="app-body font-medium">{cls.bookedCount}/{cls.totalSpots || cls.capacity}</span>
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(cls.status)}`}>
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 app-badge-text rounded-sm ${getStatusColor(cls.status)}`}>
                                                 {getStatusIcon(cls.status)}
                                                 {cls.status}
                                             </span>
@@ -549,7 +549,7 @@ export default function ClassesPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${getStatusColor(cls.status)}`}>
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 app-badge-text rounded-sm ${getStatusColor(cls.status)}`}>
                                             {getStatusIcon(cls.status)}
                                             {cls.status}
                                         </span>
@@ -641,7 +641,7 @@ export default function ClassesPage() {
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="bg-peach-50 border-peach-400/20 max-w-xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-olive-600">
+                        <DialogTitle className="app-section-title">
                             {editingClass ? 'Edit Class' : 'Add New Class'}
                         </DialogTitle>
                         <DialogDescription className="text-olive-300 text-sm">
@@ -654,7 +654,7 @@ export default function ClassesPage() {
                     <div className="space-y-5 mt-2">
                         {/* Class Type */}
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                            <label className="block app-label mb-2">
                                 Class Type
                             </label>
                             <select
@@ -681,7 +681,7 @@ export default function ClassesPage() {
 
                         {/* Trainer */}
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                            <label className="block app-label mb-2">
                                 Trainer
                             </label>
                             <select
@@ -699,7 +699,7 @@ export default function ClassesPage() {
                         {/* Date + Time row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Date
                                 </label>
                                 <input
@@ -710,7 +710,7 @@ export default function ClassesPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Start Time
                                 </label>
                                 <select
@@ -734,7 +734,7 @@ export default function ClassesPage() {
                         {/* Duration + Capacity row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Duration (min)
                                 </label>
                                 <input
@@ -747,7 +747,7 @@ export default function ClassesPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Capacity (spots)
                                 </label>
                                 <input
@@ -764,7 +764,7 @@ export default function ClassesPage() {
                         {/* Difficulty + Location row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Difficulty
                                 </label>
                                 <select
@@ -778,7 +778,7 @@ export default function ClassesPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                                <label className="block app-label mb-2">
                                     Location
                                 </label>
                                 <select
@@ -795,7 +795,7 @@ export default function ClassesPage() {
 
                         {/* Description */}
                         <div>
-                            <label className="block text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase mb-2">
+                            <label className="block app-label mb-2">
                                 Description (optional)
                             </label>
                             <textarea

@@ -60,9 +60,9 @@ function MetricCard({ label, value, subValue, icon: Icon, delay = 0, isLoading }
                 {isLoading ? (
                     <div className="h-8 w-24 bg-peach-300/40 rounded animate-pulse mb-1" />
                 ) : (
-                    <p className="text-3xl font-black text-olive-600 tracking-normal group-hover:translate-x-1 transition-transform duration-300">{value}</p>
+                    <p className="app-stat-value text-3xl group-hover:translate-x-1 transition-transform duration-300">{value}</p>
                 )}
-                <p className="text-[11px] text-olive-300 tracking-[0.15em] uppercase font-semibold mt-1.5">{label}</p>
+                <p className="app-stat-label mt-1.5">{label}</p>
             </div>
         </motion.div>
     )
@@ -124,8 +124,8 @@ export default function ReportsPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-peach-400/20"
             >
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-normal mb-2 font-display">Reports</h2>
-                    <p className="text-olive-300 text-sm md:text-base tracking-wide max-w-lg">Business performance insights, attendance trends, and membership analytics.</p>
+                    <h2 className="app-page-title mb-2">Reports</h2>
+                    <p className="app-page-subtitle">Business performance insights, attendance trends, and membership analytics.</p>
                 </div>
             </motion.div>
 
@@ -140,7 +140,7 @@ export default function ReportsPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
-                        <h3 className="text-xl font-bold text-olive-600 mb-1">Weekly Attendance Pattern</h3>
+                        <h3 className="app-section-title mb-1">Weekly Attendance Pattern</h3>
                         <p className="text-olive-300 text-xs tracking-wider uppercase">Classes attended by day of week (last 30 days)</p>
                     </div>
                 </div>
@@ -179,7 +179,7 @@ export default function ReportsPage() {
                 {/* Membership Distribution */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors">
                     <div className="mb-6">
-                        <h3 className="text-xl font-bold text-olive-600 mb-1">Membership Distribution</h3>
+                        <h3 className="app-section-title mb-1">Membership Distribution</h3>
                         <p className="text-olive-300 text-xs tracking-wider uppercase">Active plan breakdown by type</p>
                     </div>
                     <div className="h-64 flex items-center justify-center">
@@ -215,7 +215,7 @@ export default function ReportsPage() {
                 {/* Class Popularity */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors">
                     <div className="mb-6">
-                        <h3 className="text-xl font-bold text-olive-600 mb-1">Class Popularity</h3>
+                        <h3 className="app-section-title mb-1">Class Popularity</h3>
                         <p className="text-olive-300 text-xs tracking-wider uppercase">Bookings by class type</p>
                     </div>
                     <div className="h-64">
@@ -250,7 +250,7 @@ export default function ReportsPage() {
             {/* Location Utilization */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="bg-peach-50 border border-peach-400/20 p-6 sm:p-8 hover:border-peach-400/30 transition-colors">
                 <div className="mb-8">
-                    <h3 className="text-xl font-bold text-olive-600 mb-1">Location Utilization</h3>
+                    <h3 className="app-section-title mb-1">Location Utilization</h3>
                     <p className="text-olive-300 text-xs tracking-wider uppercase">Space usage across studio rooms</p>
                 </div>
                 {isLoading ? (
@@ -270,9 +270,9 @@ export default function ReportsPage() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-peach-400/15">
-                                    <th className="text-left text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase pb-4">Location</th>
-                                    <th className="text-right text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase pb-4">Bookings</th>
-                                    <th className="text-right text-[11px] font-bold text-olive-400 tracking-[0.15em] uppercase pb-4 w-48">Utilization</th>
+                                    <th className="text-left app-label pb-4">Location</th>
+                                    <th className="text-right app-label pb-4">Bookings</th>
+                                    <th className="text-right app-label pb-4 w-48">Utilization</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -285,7 +285,7 @@ export default function ReportsPage() {
                                                 <div className="w-24 h-2 bg-peach-300/30 rounded-full overflow-hidden">
                                                     <motion.div initial={{ width: 0 }} animate={{ width: `${loc.utilization}%` }} transition={{ delay: 0.7 + idx * 0.1, duration: 0.8, ease: "easeOut" }} className={`h-full rounded-full ${loc.utilization >= 85 ? 'bg-terra-400' : 'bg-olive-400/60'}`} />
                                                 </div>
-                                                <span className="text-olive-400 text-sm font-bold w-10 text-right">{loc.utilization}%</span>
+                                                <span className="app-body font-bold w-10 text-right">{loc.utilization}%</span>
                                             </div>
                                         </td>
                                     </motion.tr>

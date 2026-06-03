@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import { useFonts, DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display';
+import { useFonts } from 'expo-font';
 import {
     PlusJakartaSans_300Light,
     PlusJakartaSans_400Regular,
@@ -24,7 +24,6 @@ void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 export default function RootLayout() {
     const [minimumSplashDone, setMinimumSplashDone] = useState(false);
     const [fontsLoaded] = useFonts({
-        DMSerifDisplay_400Regular,
         PlusJakartaSans_300Light,
         PlusJakartaSans_400Regular,
         PlusJakartaSans_500Medium,
