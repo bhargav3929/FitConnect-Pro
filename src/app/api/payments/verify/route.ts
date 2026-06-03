@@ -4,6 +4,15 @@ import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { verifyPaymentSignature } from '@fitconnect/shared/payments/razorpay-processor';
 import { FieldValue } from 'firebase-admin/firestore';
 
+function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
+    if (!subscription || subscription.status !== 'active') return false;
+    if (!subscription.endDate) return true;
+    const endDate = subscription.endDate && typeof subscription.endDate === 'object' && 'toDate' in subscription.endDate
+        ? (subscription.endDate as { toDate: () => Date }).toDate()
+        : new Date((subscription.endDate as string | number | Date | undefined) || 0);
+    return endDate > new Date();
+}
+
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
@@ -93,11 +102,8 @@ export async function POST(req: NextRequest) {
 
             if (plan.category === 'membership') {
                 const currentSub = userDoc.data()!.subscription;
-                if (currentSub?.status === 'active' && currentSub?.planCategory === 'membership') {
-                    const existingEnd = currentSub.endDate?.toDate ? currentSub.endDate.toDate() : new Date(currentSub.endDate || 0);
-                    if (existingEnd > new Date()) {
-                        throw { status: 400, error: 'You already have an active membership.', code: 'subscription-already-active' };
-                    }
+                if (isActiveUnexpiredSubscription(currentSub)) {
+                    throw { status: 400, error: 'You already have an active membership.', code: 'subscription-already-active' };
                 }
             }
 

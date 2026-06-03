@@ -3,6 +3,7 @@
     "name": "SOL Pilates Studio",
     "slug": "sol-pilates",
     "version": "1.0.0",
+    "newArchEnabled": false,
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

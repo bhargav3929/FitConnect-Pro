@@ -9,6 +9,7 @@ import {
     ScrollView,
     TouchableOpacity,
     Dimensions,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -102,6 +103,8 @@ export default function ScheduleScreen() {
     const [facility, setFacility] = useState<GymCenter | null>(null);
     const [loadingClasses, setLoadingClasses] = useState(true);
     const [loadingTrainers, setLoadingTrainers] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [refreshTick, setRefreshTick] = useState(0);
     const [selectedDate, setSelectedDate] = useState(() => {
         const d = new Date();
         d.setHours(0, 0, 0, 0);
@@ -124,33 +127,47 @@ export default function ScheduleScreen() {
         const unsubscribe = subscribeToClassesByDate(selectedDate, (data) => {
             setClasses(data);
             setLoadingClasses(false);
+            setRefreshing(false);
         });
         return unsubscribe;
-    }, [selectedDate]);
+    }, [selectedDate, refreshTick]);
 
-    useEffect(() => {
-        (async () => {
-            setLoadingTrainers(true);
-            try {
-                const data = await getTrainers();
-                setTrainers(data);
-            } catch {
-                setTrainers([]);
-            }
-            setLoadingTrainers(false);
-        })();
+    const loadTrainers = useCallback(async () => {
+        setLoadingTrainers(true);
+        try {
+            const data = await getTrainers();
+            setTrainers(data);
+        } catch {
+            setTrainers([]);
+        }
+        setLoadingTrainers(false);
+    }, []);
+
+    const loadFacility = useCallback(async () => {
+        try {
+            const data = await getFacility();
+            if (data) setFacility(data);
+        } catch {
+            // use fallback
+        }
     }, []);
 
     useEffect(() => {
+        void loadTrainers();
+    }, [loadTrainers]);
+
+    useEffect(() => {
+        void loadFacility();
+    }, [loadFacility]);
+
+    const handleRefresh = useCallback(() => {
+        setRefreshing(true);
+        setRefreshTick((tick) => tick + 1);
         (async () => {
-            try {
-                const data = await getFacility();
-                if (data) setFacility(data);
-            } catch {
-                // use fallback
-            }
+            await Promise.all([loadTrainers(), loadFacility()]);
+            setRefreshing(false);
         })();
-    }, []);
+    }, [loadFacility, loadTrainers]);
 
     const getTrainerName = (trainerId: string) =>
         trainers.find((t) => t.id === trainerId)?.name || 'Instructor';
@@ -229,6 +246,13 @@ export default function ScheduleScreen() {
                     (loadingClasses || classes.length === 0) && styles.classListStateContent,
                 ]}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor={Colors.terra[400]}
+                    />
+                }
                 ListEmptyComponent={
                     loadingClasses ? (
                         <View style={styles.loaderContainer}>
@@ -409,6 +433,13 @@ export default function ScheduleScreen() {
                     style={styles.container}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={handleRefresh}
+                            tintColor={Colors.terra[400]}
+                        />
+                    }
                 >
                     <View style={styles.tabContent}>
                         {activeTab === 'trainers' && renderTrainersTab()}

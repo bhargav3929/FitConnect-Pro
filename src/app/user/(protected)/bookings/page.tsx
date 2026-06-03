@@ -9,10 +9,13 @@ import Link from "next/link"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import {
     callCancelBooking,
+    callCheckInBooking,
+    getFacility,
     getUserBookingsPage,
     type FirestorePageCursor,
 } from "@fitconnect/shared/firebase/firestore"
 import { Booking } from "@fitconnect/shared/types/booking"
+import type { GymCenter } from "@fitconnect/shared/types/gym"
 import { toast } from "sonner"
 
 interface EnrichedBooking extends Booking {
@@ -25,16 +28,49 @@ interface EnrichedBooking extends Booking {
 
 const PAGE_SIZE = 6
 
+function buildFacilityAddress(address?: GymCenter['address']): string | null {
+    if (!address) return null
+    const line = [
+        address.street,
+        address.city,
+        [address.state, address.zip].filter(Boolean).join(' '),
+        address.country,
+    ].filter(Boolean).join(', ')
+    return line || null
+}
+
+function buildDirectionsUrl(address: string | null): string | null {
+    return address ? `https://maps.google.com/?q=${encodeURIComponent(address)}` : null
+}
+
 export default function BookingsPage() {
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
     const [bookings, setBookings] = useState<EnrichedBooking[]>([])
     const [totalBookings, setTotalBookings] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [cancelingId, setCancelingId] = useState<string | null>(null)
+    const [checkingInId, setCheckingInId] = useState<string | null>(null)
     const [requestedPage, setRequestedPage] = useState(1)
     const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
+    const [directionsUrl, setDirectionsUrl] = useState<string | null>(null)
     const { firebaseUser } = useClientAuthStore()
     const currentCursor = pageCursors[requestedPage - 1] || null
+
+    useEffect(() => {
+        let cancelled = false
+        getFacility()
+            .then((facility) => {
+                if (cancelled) return
+                setDirectionsUrl(buildDirectionsUrl(buildFacilityAddress(facility?.address)))
+            })
+            .catch(() => {
+                if (!cancelled) setDirectionsUrl(null)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
 
     useEffect(() => {
         if (!firebaseUser) return
@@ -98,6 +134,23 @@ export default function BookingsPage() {
         }
     }
 
+    const handleCheckIn = async (bookingId: string) => {
+        setCheckingInId(bookingId)
+        try {
+            await callCheckInBooking(bookingId, 'attended')
+            setBookings(prev => prev.filter(b => b.id !== bookingId))
+            setTotalBookings(prev => Math.max(0, prev - 1))
+            toast.success("Checked in", {
+                description: "You're marked as attended for this class.",
+            })
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to check in"
+            toast.error("Check-in failed", { description: message })
+        } finally {
+            setCheckingInId(null)
+        }
+    }
+
     const formatDate = (date: Date | string) => {
         const d = typeof date === 'string' ? new Date(date) : date
         const now = new Date()
@@ -124,6 +177,23 @@ export default function BookingsPage() {
             case 'no-show': return <XCircle className="w-3 h-3" />
             default: return null
         }
+    }
+
+    const getClassStart = (booking: EnrichedBooking) => {
+        const classDate = typeof booking.classDate === 'string' ? new Date(booking.classDate) : new Date(booking.classDate)
+        const [hh, mm] = (booking.classStartTime || '00:00').split(':').map(part => parseInt(part, 10))
+        classDate.setHours(Number.isFinite(hh) ? hh : 0, Number.isFinite(mm) ? mm : 0, 0, 0)
+        return classDate
+    }
+
+    const canSelfCheckIn = (booking: EnrichedBooking) => {
+        if (booking.status !== 'confirmed') return false
+        const classStart = getClassStart(booking)
+        const opensAt = new Date(classStart.getTime() - 60 * 60 * 1000)
+        const duration = booking.classDuration && booking.classDuration > 0 ? booking.classDuration : 60
+        const closesAt = new Date(classStart.getTime() + duration * 60 * 1000)
+        const now = new Date()
+        return now >= opensAt && now <= closesAt
     }
 
     return (
@@ -297,7 +367,20 @@ export default function BookingsPage() {
                                 </div>
 
                                 {activeTab === 'upcoming' && (
-                                    <div className="flex gap-3">
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        {canSelfCheckIn(booking) && (
+                                            <Button
+                                                className="flex-1 h-12 bg-olive-500 text-peach-50 hover:bg-olive-400 font-bold rounded-xl"
+                                                onClick={() => handleCheckIn(booking.id)}
+                                                disabled={checkingInId === booking.id}
+                                            >
+                                                {checkingInId === booking.id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    "Check In"
+                                                )}
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="outline"
                                             className="flex-1 h-12 border-red-500/20 text-red-500 hover:bg-red-500/10 hover:text-red-600 font-bold rounded-xl"
@@ -311,7 +394,13 @@ export default function BookingsPage() {
                                             )}
                                         </Button>
                                         <Button
-                                            onClick={() => window.open('https://maps.google.com/?q=250+West+54th+Street+New+York+NY+10019', '_blank')}
+                                            onClick={() => {
+                                                if (!directionsUrl) {
+                                                    toast.error("Facility address is not configured")
+                                                    return
+                                                }
+                                                window.open(directionsUrl, '_blank')
+                                            }}
                                             className="flex-1 h-12 bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold rounded-xl"
                                         >
                                             Get Directions

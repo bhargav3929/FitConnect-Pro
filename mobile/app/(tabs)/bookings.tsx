@@ -16,10 +16,13 @@ import { Feather } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import {
     callCancelBooking,
+    callCheckInBooking,
+    getFacility,
     getUserBookingsPage,
     type FirestorePageCursor,
 } from '@fitconnect/shared/firebase/firestore';
 import type { Booking } from '@fitconnect/shared/types/booking';
+import type { GymCenter } from '@fitconnect/shared/types/gym';
 import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
 
@@ -71,6 +74,21 @@ function isUpcoming(booking: Booking): boolean {
     return booking.status === 'confirmed' && classDate >= now;
 }
 
+function buildFacilityAddress(address?: GymCenter['address']): string | null {
+    if (!address) return null;
+    const line = [
+        address.street,
+        address.city,
+        [address.state, address.zip].filter(Boolean).join(' '),
+        address.country,
+    ].filter(Boolean).join(', ');
+    return line || null;
+}
+
+function buildDirectionsUrl(address: string | null): string | null {
+    return address ? `https://maps.google.com/?q=${encodeURIComponent(address)}` : null;
+}
+
 // ---------------------------------------------------------------------------
 // Status config
 // ---------------------------------------------------------------------------
@@ -115,15 +133,18 @@ const STATUS_CONFIG: Record<BookingStatus, {
 
 export default function BookingsScreen() {
     const router = useRouter();
-    const { clientUser } = useClientAuthStore();
+    const { firebaseUser } = useClientAuthStore();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [totalBookings, setTotalBookings] = useState(0);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
     const [cancelingId, setCancelingId] = useState<string | null>(null);
+    const [checkingInId, setCheckingInId] = useState<string | null>(null);
     const [requestedPage, setRequestedPage] = useState(1);
     const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null]);
+    const [directionsUrl, setDirectionsUrl] = useState<string | null>(null);
+    const [refreshTick, setRefreshTick] = useState(0);
     const currentCursor = pageCursors[requestedPage - 1] || null;
 
     // -----------------------------------------------------------------------
@@ -131,14 +152,30 @@ export default function BookingsScreen() {
     // -----------------------------------------------------------------------
 
     useEffect(() => {
-        if (!clientUser?.id) {
+        let cancelled = false;
+        getFacility()
+            .then((facility) => {
+                if (cancelled) return;
+                setDirectionsUrl(buildDirectionsUrl(buildFacilityAddress(facility?.address)));
+            })
+            .catch(() => {
+                if (!cancelled) setDirectionsUrl(null);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!firebaseUser?.uid) {
             setLoading(false);
             return;
         }
 
         let cancelled = false;
         setLoading(true);
-        getUserBookingsPage(clientUser.id, {
+        getUserBookingsPage(firebaseUser.uid, {
             pageSize: PAGE_SIZE,
             cursor: currentCursor,
             statuses: activeTab === 'upcoming'
@@ -166,7 +203,7 @@ export default function BookingsScreen() {
         return () => {
             cancelled = true;
         };
-    }, [clientUser?.id, activeTab, requestedPage, currentCursor]);
+    }, [firebaseUser?.uid, activeTab, requestedPage, currentCursor, refreshTick]);
 
     // -----------------------------------------------------------------------
     // Filtered + sorted bookings
@@ -188,8 +225,9 @@ export default function BookingsScreen() {
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        // Listener auto-updates; timeout is a safety net.
-        setTimeout(() => setRefreshing(false), 2000);
+        setRequestedPage(1);
+        setPageCursors([null]);
+        setRefreshTick((tick) => tick + 1);
     }, []);
 
     const handleCancel = useCallback((booking: Booking) => {
@@ -224,6 +262,36 @@ export default function BookingsScreen() {
         );
     }, []);
 
+    const handleCheckIn = useCallback((booking: Booking) => {
+        Alert.alert(
+            'Check In',
+            'Mark yourself as attended for this class?',
+            [
+                { text: 'Not Yet', style: 'cancel' },
+                {
+                    text: 'Check In',
+                    onPress: async () => {
+                        setCheckingInId(booking.id);
+                        try {
+                            await callCheckInBooking(booking.id, 'attended');
+                            setBookings((prev) => prev.filter((b) => b.id !== booking.id));
+                            setTotalBookings((prev) => Math.max(0, prev - 1));
+                            Alert.alert('Checked In', "You're marked as attended for this class.");
+                        } catch (error: unknown) {
+                            const message =
+                                error instanceof Error
+                                    ? error.message
+                                    : 'Failed to check in. Please try again.';
+                            Alert.alert('Check-in Failed', message);
+                        } finally {
+                            setCheckingInId(null);
+                        }
+                    },
+                },
+            ],
+        );
+    }, []);
+
     // -----------------------------------------------------------------------
     // Render helpers
     // -----------------------------------------------------------------------
@@ -243,7 +311,17 @@ export default function BookingsScreen() {
     const renderBookingCard = ({ item: booking }: { item: Booking }) => {
         const classDate = toDate(booking.classDate);
         const isCanceling = cancelingId === booking.id;
+        const isCheckingIn = checkingInId === booking.id;
         const isUpcomingBooking = isUpcoming(booking);
+        const classStart = new Date(classDate);
+        const startTime = (booking as unknown as Record<string, unknown>).classStartTime as string | undefined;
+        const [hh, mm] = (startTime || '00:00').split(':').map((part) => parseInt(part, 10));
+        classStart.setHours(Number.isFinite(hh) ? hh : 0, Number.isFinite(mm) ? mm : 0, 0, 0);
+        const duration = (booking as unknown as Record<string, unknown>).classDuration as number | undefined;
+        const opensAt = new Date(classStart.getTime() - 60 * 60 * 1000);
+        const closesAt = new Date(classStart.getTime() + (duration && duration > 0 ? duration : 60) * 60 * 1000);
+        const now = new Date();
+        const canCheckIn = booking.status === 'confirmed' && now >= opensAt && now <= closesAt;
 
         return (
             <View style={styles.card}>
@@ -300,7 +378,21 @@ export default function BookingsScreen() {
 
                 {/* Action buttons — upcoming confirmed */}
                 {isUpcomingBooking && booking.status === 'confirmed' && (
-                    <View style={styles.actionRow}>
+                    <View style={[styles.actionRow, canCheckIn && styles.actionRowStacked]}>
+                        {canCheckIn && (
+                            <TouchableOpacity
+                                style={styles.checkInButton}
+                                onPress={() => handleCheckIn(booking)}
+                                disabled={isCheckingIn}
+                                activeOpacity={0.7}
+                            >
+                                {isCheckingIn ? (
+                                    <ActivityIndicator size="small" color={Colors.peach[50]} />
+                                ) : (
+                                    <Text style={styles.checkInButtonText}>Check In</Text>
+                                )}
+                            </TouchableOpacity>
+                        )}
                         <TouchableOpacity
                             style={styles.cancelButton}
                             onPress={() => handleCancel(booking)}
@@ -315,11 +407,13 @@ export default function BookingsScreen() {
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.directionsButton}
-                            onPress={() =>
-                                Linking.openURL(
-                                    'https://maps.google.com/?q=250+West+54th+Street+New+York+NY+10019',
-                                )
-                            }
+                            onPress={() => {
+                                if (!directionsUrl) {
+                                    Alert.alert('Address Missing', 'Facility address is not configured yet.');
+                                    return;
+                                }
+                                Linking.openURL(directionsUrl);
+                            }}
                             activeOpacity={0.7}
                         >
                             <Text style={styles.directionsButtonText}>Get Directions</Text>
@@ -796,6 +890,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: Spacing.sm + 4,
         marginTop: Spacing.md,
+    },
+    actionRowStacked: {
+        flexDirection: 'column',
+    },
+    checkInButton: {
+        flex: 1,
+        backgroundColor: Colors.olive[500],
+        borderRadius: BorderRadius.xl,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm + 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    checkInButtonText: {
+        fontSize: FontSize.sm,
+        fontWeight: '800',
+        color: Colors.peach[50],
     },
     cancelButton: {
         flex: 1,

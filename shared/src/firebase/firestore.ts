@@ -1138,7 +1138,9 @@ export function subscribeToBookingsByClass(
 }
 
 // ---------------------------------------------------------------------------
-// 31. callCheckInBooking — Admin: mark a booking as attended or no-show
+// 31. callCheckInBooking — Mark a booking as attended or no-show.
+// Members may mark their own booking attended during the check-in window;
+// admins may mark attended/no-show.
 // ---------------------------------------------------------------------------
 
 export async function callCheckInBooking(

@@ -310,6 +310,10 @@ export default function SubscribeScreen() {
     );
 
     const selectedPlan = selectedPlanId ? getPlanById(selectedPlanId) : null;
+    const hasActiveSubscription = clientUser?.subscription?.status === 'active' && (
+        !clientUser.subscription.endDate ||
+        new Date(clientUser.subscription.endDate).getTime() > Date.now()
+    );
 
     // Navigate to checkout
     const handleContinue = useCallback(() => {
@@ -321,12 +325,26 @@ export default function SubscribeScreen() {
             router.push('/free-class');
             return;
         }
+        if (selectedPlan.category === 'membership' && hasActiveSubscription) {
+            Alert.alert(
+                'Active Membership',
+                'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
+            );
+            return;
+        }
         setStep('checkout');
-    }, [selectedPlan, router]);
+    }, [selectedPlan, hasActiveSubscription, router]);
 
     // Process payment
     const handlePay = useCallback(async () => {
         if (!selectedPlan) return;
+        if (selectedPlan.category === 'membership' && hasActiveSubscription) {
+            Alert.alert(
+                'Active Membership',
+                'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
+            );
+            return;
+        }
 
         setPaymentState('processing');
         try {
@@ -365,7 +383,7 @@ export default function SubscribeScreen() {
             const message = getPaymentErrorMessage(err);
             Alert.alert('Payment Error', message);
         }
-    }, [selectedPlan, firebaseUser, clientUser, refreshSubscription]);
+    }, [selectedPlan, hasActiveSubscription, firebaseUser, clientUser, refreshSubscription]);
 
     // Back handler
     const handleBack = useCallback(() => {

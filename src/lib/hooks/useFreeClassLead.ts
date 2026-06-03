@@ -13,8 +13,8 @@ export function useFreeClassLead(): {
     hasFreeClassLead: boolean | null;
     refresh: () => void;
 } {
-    const { clientUser } = useClientAuthStore();
-    const userId = clientUser?.id ?? null;
+    const { firebaseUser } = useClientAuthStore();
+    const userId = firebaseUser?.uid ?? null;
     const [hasFreeClassLead, setHas] = useState<boolean | null>(null);
     const [tick, setTick] = useState(0);
 

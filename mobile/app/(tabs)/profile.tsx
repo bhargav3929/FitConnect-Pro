@@ -11,6 +11,7 @@ import {
     Animated,
     Linking,
     Platform,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -48,8 +49,9 @@ function getInitials(name: string | undefined): string {
 // ---------------------------------------------------------------------------
 
 export default function ProfileScreen() {
-    const { clientUser, logoutClient } = useClientAuthStore();
+    const { clientUser, logoutClient, refreshSubscription } = useClientAuthStore();
     const router = useRouter();
+    const [refreshing, setRefreshing] = useState(false);
 
     // Password section state
     const [securityExpanded, setSecurityExpanded] = useState(false);
@@ -67,6 +69,15 @@ export default function ProfileScreen() {
     const plan = subscription?.planId ? getPlanById(subscription.planId) : null;
     const isActive = subscription?.status === 'active';
     const planBadgeLabel = isActive && plan ? plan.name : 'Free Plan';
+
+    const handleRefresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            await refreshSubscription();
+        } finally {
+            setRefreshing(false);
+        }
+    }, [refreshSubscription]);
 
     const toggleSecurity = useCallback(() => {
         const toValue = securityExpanded ? 0 : 1;
@@ -233,6 +244,13 @@ export default function ProfileScreen() {
                 style={styles.container}
                 contentContainerStyle={styles.contentContainer}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor={Colors.terra[400]}
+                    />
+                }
             >
                 {/* ─── Hero Card ──────────────────────────────────── */}
                 <View style={styles.heroCard}>

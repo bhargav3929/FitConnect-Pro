@@ -6,6 +6,7 @@ import {
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -493,29 +494,45 @@ function FreeClassCTA({
 // ---------------------------------------------------------------------------
 
 export default function DashboardScreen() {
-    const { clientUser } = useClientAuthStore();
+    const { clientUser, firebaseUser, refreshSubscription } = useClientAuthStore();
     const router = useRouter();
-    const { hasFreeClassLead } = useFreeClassLead();
+    const { hasFreeClassLead, refresh: refreshFreeClassLead } = useFreeClassLead();
 
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
     const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [refreshTick, setRefreshTick] = useState(0);
 
     // Subscribe to user bookings (real-time)
     useEffect(() => {
-        if (!clientUser?.id) {
+        if (!firebaseUser?.uid) {
+            setIsLoadingBookings(false);
             return;
         }
 
-        const unsubscribe = subscribeToUserBookings(clientUser.id, (bookings) => {
+        setIsLoadingBookings(true);
+        const unsubscribe = subscribeToUserBookings(firebaseUser.uid, (bookings) => {
             // Matches web dashboard behavior: first confirmed booking wins.
             // Query returns classDate-desc, so this is the most future confirmed booking.
             const upcoming = bookings.find((b) => b.status === 'confirmed') ?? null;
             setNextBooking(upcoming);
             setIsLoadingBookings(false);
+            setRefreshing(false);
         });
 
         return unsubscribe;
-    }, [clientUser?.id]);
+    }, [firebaseUser?.uid, refreshTick]);
+
+    const handleRefresh = useCallback(async () => {
+        setRefreshing(true);
+        refreshFreeClassLead();
+        setRefreshTick((tick) => tick + 1);
+        try {
+            await refreshSubscription();
+        } finally {
+            setRefreshing(false);
+        }
+    }, [refreshFreeClassLead, refreshSubscription]);
 
     // Navigation callbacks
     const navigateToSchedule = useCallback(() => router.push('/(tabs)/schedule'), [router]);
@@ -539,6 +556,13 @@ export default function DashboardScreen() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor={Colors.terra[400]}
+                    />
+                }
             >
                 <FreeClassCTA
                     onFreeClass={navigateToFreeClass}

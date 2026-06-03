@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { Colors, Spacing, FontSize, Shadows, Alpha } from '../../constants/theme';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -13,6 +15,13 @@ const TAB_ICONS: Record<string, { active: IoniconName; inactive: IoniconName }> 
 };
 
 export default function TabLayout() {
+    const { firebaseUser, startProfileListener } = useClientAuthStore();
+
+    useEffect(() => {
+        if (!firebaseUser) return undefined;
+        return startProfileListener();
+    }, [firebaseUser, startProfileListener]);
+
     return (
         <Tabs
             screenOptions={({ route }) => ({

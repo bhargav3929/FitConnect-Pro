@@ -31,7 +31,7 @@ const EMPTY: FormState = { name: '', email: '', phone: '', goals: '', concerns: 
 
 export default function FreeClassScreen() {
     const router = useRouter();
-    const { isAuthenticated, isLoading, initAuth, clientUser } = useClientAuthStore();
+    const { isAuthenticated, isLoading, initAuth, clientUser, firebaseUser } = useClientAuthStore();
     const { hasFreeClassLead } = useFreeClassLead();
     const [form, setForm] = useState<FormState>(EMPTY);
     const [submitting, setSubmitting] = useState(false);
@@ -85,12 +85,16 @@ export default function FreeClassScreen() {
             setError('Please enter a valid email.');
             return;
         }
+        if (!firebaseUser?.uid) {
+            setError('Please sign in again before booking your intro class.');
+            return;
+        }
 
         setSubmitting(true);
         try {
             await addDoc(collection(db, 'freeClassLeads'), {
                 ...form,
-                userId: clientUser?.id ?? null,
+                userId: firebaseUser?.uid ?? null,
                 source: 'mobile-free-class-form',
                 status: 'new',
                 createdAt: serverTimestamp(),

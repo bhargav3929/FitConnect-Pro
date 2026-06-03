@@ -8,6 +8,7 @@ import { PlanSelector } from "@/components/user/PlanSelector"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { callCreatePaymentOrder, callVerifyPayment } from "@fitconnect/shared/firebase/firestore"
 import { getPlanById, type PlanId } from "@fitconnect/shared/types/subscription"
+import type { ClientUser } from "@fitconnect/shared/types/client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -16,6 +17,12 @@ import { useRazorpay } from "@/lib/hooks/useRazorpay"
 
 type Step = 'plan' | 'success'
 
+function isActiveUnexpiredSubscription(subscription: ClientUser['subscription'] | undefined): boolean {
+    if (!subscription || subscription.status !== 'active') return false;
+    if (!subscription.endDate) return true;
+    return new Date(subscription.endDate).getTime() > Date.now();
+}
+
 export default function SubscribePage() {
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -23,6 +30,7 @@ export default function SubscribePage() {
     const preselectedPlan = searchParams.get('plan')
 
     const firebaseUser = useClientAuthStore(state => state.firebaseUser)
+    const clientUser = useClientAuthStore(state => state.clientUser)
     const refreshSubscription = useClientAuthStore(state => state.refreshSubscription)
     const { hasFreeClassLead } = useFreeClassLead()
     const { openCheckout } = useRazorpay()
@@ -39,11 +47,18 @@ export default function SubscribePage() {
     } | null>(null)
 
     const selectedPlan = selectedPlanId ? getPlanById(selectedPlanId) : null
+    const hasActiveSubscription = isActiveUnexpiredSubscription(clientUser?.subscription)
 
     const handleContinueToCheckout = async () => {
         if (!selectedPlanId) return
         if (selectedPlanId === 'drop_in') {
             router.push('/free-class')
+            return
+        }
+        if (selectedPlan?.category === 'membership' && hasActiveSubscription) {
+            toast.error('Active membership found', {
+                description: 'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
+            })
             return
         }
         setIsProcessing(true)
@@ -154,6 +169,7 @@ export default function SubscribePage() {
                             disabled={
                                 !selectedPlanId ||
                                 isProcessing ||
+                                (selectedPlan?.category === 'membership' && hasActiveSubscription) ||
                                 (selectedPlanId === 'drop_in' && hasFreeClassLead === true)
                             }
                             className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide text-base rounded-xl transition-all hover:shadow-lg hover:shadow-terra-400/20 disabled:opacity-50"
@@ -162,6 +178,8 @@ export default function SubscribePage() {
                                 ? 'OPENING PAYMENT...'
                                 : selectedPlanId === 'drop_in'
                                     ? (hasFreeClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS')
+                                    : selectedPlan?.category === 'membership' && hasActiveSubscription
+                                        ? 'ACTIVE MEMBERSHIP'
                                     : 'CONTINUE TO PAYMENT'}
                         </Button>
                     </motion.div>

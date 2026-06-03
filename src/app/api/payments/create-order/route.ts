@@ -3,6 +3,15 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS } from '@fitconnect/shared/types/subscription';
 import { createRazorpayOrder } from '@fitconnect/shared/payments/razorpay-processor';
 
+function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
+    if (!subscription || subscription.status !== 'active') return false;
+    if (!subscription.endDate) return true;
+    const endDate = subscription.endDate && typeof subscription.endDate === 'object' && 'toDate' in subscription.endDate
+        ? (subscription.endDate as { toDate: () => Date }).toDate()
+        : new Date((subscription.endDate as string | number | Date | undefined) || 0);
+    return endDate > new Date();
+}
+
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
@@ -39,17 +48,11 @@ export async function POST(req: NextRequest) {
         const userDoc = await adminDb.collection('users').doc(userId).get();
         const userData = userDoc.exists ? userDoc.data()! : null;
 
-        if (plan.category === 'membership' && userData) {
-            const sub = userData.subscription;
-            if (sub?.status === 'active' && sub?.planCategory === 'membership') {
-                const endDate = sub.endDate?.toDate?.() || new Date(sub.endDate);
-                if (endDate > new Date()) {
-                    return NextResponse.json(
-                        { error: 'You already have an active membership. Wait for it to expire or cancel first.', code: 'already-exists' },
-                        { status: 409 },
-                    );
-                }
-            }
+        if (plan.category === 'membership' && isActiveUnexpiredSubscription(userData?.subscription)) {
+            return NextResponse.json(
+                { error: 'You already have an active membership. Wait for it to expire or cancel first.', code: 'already-exists' },
+                { status: 409 },
+            );
         }
 
         const isFoundingMember = userData?.isFoundingMember === true;
