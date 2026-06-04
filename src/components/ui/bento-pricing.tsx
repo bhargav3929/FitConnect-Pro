@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckIcon, SparklesIcon } from 'lucide-react';
 import { PLAN_CATALOG, type PlanDefinition } from '@fitconnect/shared/types/subscription';
 import { useIntroClassLead } from '@/lib/hooks/useIntroClassLead';
+import { callGetPricing } from '@fitconnect/shared/firebase/firestore';
 
 function FilledCheck() {
     return (
@@ -64,13 +65,16 @@ function IntroCard({
     cta,
     featured,
     ctaDisabled,
+    displayPrice,
 }: {
     plan: PlanDefinition;
     onSelect: (id: string) => void;
     cta: string;
     featured?: boolean;
     ctaDisabled?: boolean;
+    displayPrice?: number;
 }) {
+    const price = displayPrice ?? plan.price;
     return (
         <div className={cn(
             'relative overflow-hidden rounded-2xl border flex flex-col bg-peach-50 transition-all duration-300',
@@ -97,7 +101,7 @@ function IntroCard({
             <div className="p-6 pt-4 flex flex-col h-full">
                 <div className="flex items-end gap-2 mb-1">
                     <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
-                        {formatPrice(plan.price)}
+                        {formatPrice(price)}
                     </span>
                     <span className="text-olive-400 text-sm font-semibold uppercase pb-2">
                         {priceSuffix(plan)}
@@ -142,11 +146,16 @@ function IntroCard({
 function HighlightedMembershipCard({
     plan,
     onSelect,
+    displayPrice,
 }: {
     plan: PlanDefinition;
     onSelect: (id: string) => void;
+    displayPrice?: number;
 }) {
-    const perClass = getPerClassPrice(plan);
+    const price = displayPrice ?? plan.price;
+    const perClass = price > 0 && plan.credits && plan.credits > 1
+        ? `≈ ₹${Math.round(price / plan.credits).toLocaleString('en-IN')} / class`
+        : getPerClassPrice(plan);
 
     return (
         <div className={cn(
@@ -178,7 +187,7 @@ function HighlightedMembershipCard({
                 <div className="mb-1">
                     <div className="flex items-end gap-1.5">
                         <span className="font-mono text-4xl font-bold tracking-tight text-peach-50">
-                            {formatPrice(plan.price)}
+                            {formatPrice(price)}
                         </span>
                         <span className="text-peach-300 text-xs font-semibold uppercase pb-1.5">
                             {priceSuffix(plan)}
@@ -200,7 +209,7 @@ function HighlightedMembershipCard({
                             {formatPrice(plan.foundingPrice)}
                         </p>
                         <p className="text-peach-400 text-[10px] mt-1">
-                            First 25 members only · Save {formatPrice(plan.price - plan.foundingPrice)}
+                            First 25 members only · Save {formatPrice(price - plan.foundingPrice)}
                         </p>
                     </div>
                 )}
@@ -236,10 +245,13 @@ function HighlightedMembershipCard({
 function MembershipCard({
     plan,
     onSelect,
+    displayPrice,
 }: {
     plan: PlanDefinition;
     onSelect: (id: string) => void;
+    displayPrice?: number;
 }) {
+    const price = displayPrice ?? plan.price;
     const perClass = getPerClassPrice(plan);
 
     return (
@@ -258,7 +270,7 @@ function MembershipCard({
                 <div className="mb-1">
                     <div className="flex items-end gap-1.5">
                         <span className="font-mono text-3xl font-bold tracking-tight text-olive-600">
-                            {formatPrice(plan.price)}
+                            {formatPrice(price)}
                         </span>
                         <span className="text-olive-400 text-xs font-semibold uppercase pb-1.5">
                             {priceSuffix(plan)}
@@ -281,7 +293,7 @@ function MembershipCard({
                             {formatPrice(plan.foundingPrice)}
                         </p>
                         <p className="text-olive-300 text-[10px] mt-1">
-                            First 25 only · Save {formatPrice(plan.price - plan.foundingPrice)}
+                            First 25 only · Save {formatPrice(price - plan.foundingPrice)}
                         </p>
                     </div>
                 )}
@@ -317,6 +329,19 @@ function MembershipCard({
 export function BentoPricing() {
     const router = useRouter();
     const { hasIntroClassLead } = useIntroClassLead();
+    const [priceOverrides, setPriceOverrides] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        callGetPricing()
+            .then(data => {
+                const overrides: Record<string, number> = {};
+                for (const p of data.plans) {
+                    if (p.configured) overrides[p.planId] = p.price;
+                }
+                setPriceOverrides(overrides);
+            })
+            .catch(() => {/* use hardcoded fallback */});
+    }, []);
 
     const handleSelect = (planId: string) => {
         if (planId === 'drop_in') {
@@ -340,8 +365,15 @@ export function BentoPricing() {
                     onSelect={handleSelect}
                     cta={hasIntroClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS'}
                     ctaDisabled={hasIntroClassLead === true}
+                    displayPrice={priceOverrides[dropIn.id]}
                 />
-                <IntroCard plan={kickstarter} onSelect={handleSelect} cta="START KICKSTARTER" featured />
+                <IntroCard
+                    plan={kickstarter}
+                    onSelect={handleSelect}
+                    cta="START KICKSTARTER"
+                    featured
+                    displayPrice={priceOverrides[kickstarter.id]}
+                />
             </div>
 
             {/* SECTION 2: MEMBERSHIPS */}
@@ -357,9 +389,19 @@ export function BentoPricing() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start pt-4">
                     {memberships.map((plan) =>
                         plan.recommended ? (
-                            <HighlightedMembershipCard key={plan.id} plan={plan} onSelect={handleSelect} />
+                            <HighlightedMembershipCard
+                                key={plan.id}
+                                plan={plan}
+                                onSelect={handleSelect}
+                                displayPrice={priceOverrides[plan.id]}
+                            />
                         ) : (
-                            <MembershipCard key={plan.id} plan={plan} onSelect={handleSelect} />
+                            <MembershipCard
+                                key={plan.id}
+                                plan={plan}
+                                onSelect={handleSelect}
+                                displayPrice={priceOverrides[plan.id]}
+                            />
                         )
                     )}
                 </div>

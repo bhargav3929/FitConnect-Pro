@@ -14,8 +14,10 @@
 import Razorpay from 'razorpay';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { fileURLToPath } from 'url';
 
-const root = resolve(import.meta.dirname, '..');
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const root = resolve(__dirname, '..');
 const env = readFileSync(resolve(root, '.env.local'), 'utf8');
 const get = (key: string) => env.match(new RegExp(`^${key}=(.+)$`, 'm'))?.[1]?.replace(/['"]/g, '') ?? '';
 

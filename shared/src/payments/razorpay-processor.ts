@@ -79,6 +79,119 @@ export async function createRazorpaySubscription(
 }
 
 /**
+ * Cancels a Razorpay subscription. Defaults to cancel at end of current billing cycle.
+ * Pass cancelAtCycleEnd=false to cancel immediately.
+ */
+export async function cancelRazorpaySubscription(
+    subscriptionId: string,
+    keyId: string,
+    keySecret: string,
+    cancelAtCycleEnd = true,
+): Promise<{ id: string; status: string }> {
+    const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    const result = await (client.subscriptions as unknown as {
+        cancel: (id: string, opts: { cancel_at_cycle_end: number }) => Promise<{ id: string; status: string }>;
+    }).cancel(subscriptionId, { cancel_at_cycle_end: cancelAtCycleEnd ? 1 : 0 });
+    return { id: result.id, status: result.status };
+}
+
+/**
+ * Fetches a Razorpay subscription. Returns the subscription object including short_url.
+ */
+export async function fetchRazorpaySubscription(
+    subscriptionId: string,
+    keyId: string,
+    keySecret: string,
+): Promise<{ id: string; status: string; short_url: string }> {
+    const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    const result = await (client.subscriptions as unknown as {
+        fetch: (id: string) => Promise<{ id: string; status: string; short_url: string }>;
+    }).fetch(subscriptionId);
+    return { id: result.id, status: result.status, short_url: result.short_url };
+}
+
+/**
+ * Lists all Razorpay plans. Returns plans with their item amounts (in paise) and notes.
+ * Use notes.fitconnect_plan_id to match against our PlanId values.
+ */
+export async function listRazorpayPlans(
+    keyId: string,
+    keySecret: string,
+): Promise<Array<{
+    id: string;
+    amount: number;        // in paise
+    currency: string;
+    name: string;
+    period: string;
+    interval: number;
+    fitconnectPlanId?: string;
+}>> {
+    const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    const result = await (client.plans as unknown as {
+        all: (opts?: Record<string, unknown>) => Promise<{ items: Array<{
+            id: string;
+            interval: number;
+            period: string;
+            item: { amount: number; currency: string; name: string };
+            notes?: Record<string, string>;
+        }>; count: number }>
+    }).all({ count: 100 });
+
+    return result.items.map((plan) => ({
+        id: plan.id,
+        amount: plan.item.amount,
+        currency: plan.item.currency,
+        name: plan.item.name,
+        period: plan.period,
+        interval: plan.interval,
+        fitconnectPlanId: plan.notes?.fitconnect_plan_id,
+    }));
+}
+
+/**
+ * Lists all active Razorpay Items. Items are used as a pricing catalog when the
+ * Subscriptions product is not yet enabled on the account.
+ * Match to our plan catalog via description field containing "fitconnect_plan_id:<planId>".
+ */
+export async function listRazorpayItems(
+    keyId: string,
+    keySecret: string,
+): Promise<Array<{
+    id: string;
+    name: string;
+    description: string;
+    amount: number;    // in paise
+    currency: string;
+    fitconnectPlanId?: string;
+}>> {
+    const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    const result = await (client.items as unknown as {
+        all: (opts?: Record<string, unknown>) => Promise<{ items: Array<{
+            id: string;
+            name: string;
+            description?: string;
+            amount: number;
+            currency: string;
+            active: boolean;
+        }>; count: number }>
+    }).all({ count: 100 });
+
+    return result.items
+        .filter(item => item.active)
+        .map(item => {
+            const match = item.description?.match(/fitconnect_plan_id:(\S+)/);
+            return {
+                id: item.id,
+                name: item.name,
+                description: item.description ?? '',
+                amount: item.amount,
+                currency: item.currency,
+                fitconnectPlanId: match?.[1],
+            };
+        });
+}
+
+/**
  * Creates a Razorpay order. Amount must be in INR rupees; this converts to paise internally.
  */
 export async function createRazorpayOrder(

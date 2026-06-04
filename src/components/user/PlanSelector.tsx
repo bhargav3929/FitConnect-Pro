@@ -9,16 +9,19 @@ import { cn } from "@/lib/utils"
 interface PlanSelectorProps {
     selectedPlanId: PlanId | null
     onSelect: (planId: PlanId) => void
+    priceOverrides?: Partial<Record<string, number>>
 }
 
 function PlanCard({
     plan,
     isSelected,
     onSelect,
+    displayPrice,
 }: {
     plan: PlanDefinition
     isSelected: boolean
     onSelect: () => void
+    displayPrice: number
 }) {
     return (
         <motion.button
@@ -56,7 +59,7 @@ function PlanCard({
 
                 <div className="flex items-end gap-1.5 mb-2">
                     <span className="font-mono text-3xl font-bold tracking-normal text-olive-600">
-                        {plan.price === 0 ? 'FREE' : `₹${plan.price.toLocaleString('en-IN')}`}
+                        {displayPrice === 0 ? 'FREE' : `₹${displayPrice.toLocaleString('en-IN')}`}
                     </span>
                     <span className="text-olive-400 text-xs font-semibold pb-1">
                         {plan.durationDays === 90
@@ -81,7 +84,7 @@ function PlanCard({
     )
 }
 
-export function PlanSelector({ selectedPlanId, onSelect }: PlanSelectorProps) {
+export function PlanSelector({ selectedPlanId, onSelect, priceOverrides }: PlanSelectorProps) {
     const [activeTab, setActiveTab] = useState<'membership' | 'class_pack'>('membership')
 
     const memberships = PLAN_CATALOG.filter(p => p.category === 'membership')
@@ -124,6 +127,7 @@ export function PlanSelector({ selectedPlanId, onSelect }: PlanSelectorProps) {
                         plan={plan}
                         isSelected={selectedPlanId === plan.id}
                         onSelect={() => onSelect(plan.id)}
+                        displayPrice={priceOverrides?.[plan.id] ?? plan.price}
                     />
                 ))}
             </div>

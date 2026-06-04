@@ -17,6 +17,7 @@ import type { PlanDefinition, PlanCategory } from '@fitconnect/shared/types/subs
 import {
     callCreatePaymentOrder,
     callVerifyPayment,
+    callCancelSubscription,
 } from '@fitconnect/shared/firebase/firestore';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { useIntroClassLead } from '../hooks/useIntroClassLead';
@@ -292,6 +293,35 @@ export default function SubscribeScreen() {
     const { clientUser, firebaseUser, refreshSubscription } = useClientAuthStore();
     const { hasIntroClassLead } = useIntroClassLead();
 
+    // Cancel state
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    const handleCancelSubscription = useCallback(() => {
+        Alert.alert(
+            'Cancel your plan?',
+            "Your plan stays active until the current period ends. You won't be charged again.",
+            [
+                { text: 'Keep Plan', style: 'cancel' },
+                {
+                    text: 'Yes, Cancel',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setIsCancelling(true);
+                        try {
+                            await callCancelSubscription();
+                            await refreshSubscription();
+                            Alert.alert('Cancelled', 'Your plan stays active until the current period ends.');
+                        } catch {
+                            Alert.alert('Error', 'Failed to cancel. Please try again.');
+                        } finally {
+                            setIsCancelling(false);
+                        }
+                    },
+                },
+            ],
+        );
+    }, [refreshSubscription]);
+
     // Flow state
     const [step, setStep] = useState<Step>('plan');
     const [activeTab, setActiveTab] = useState<PlanCategory>('membership');
@@ -429,6 +459,37 @@ export default function SubscribeScreen() {
                 {/* ─── PLAN SELECTION STEP ─────────────────── */}
                 {step === 'plan' && (
                     <View>
+                        {/* Active subscription management */}
+                        {hasActiveSubscription && clientUser?.subscription.planId && (
+                            <View style={styles.mgmtCard}>
+                                <View style={styles.mgmtHeader}>
+                                    <View style={styles.mgmtIcon}>
+                                        <Feather name="credit-card" size={18} color={Colors.terra[400]} />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.mgmtPlanName}>
+                                            {clientUser.subscription.planId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                                        </Text>
+                                        <Text style={styles.mgmtSubtitle}>Active membership</Text>
+                                    </View>
+                                    <View style={styles.activeBadge}>
+                                        <Text style={styles.activeBadgeText}>ACTIVE</Text>
+                                    </View>
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.cancelBtn}
+                                    onPress={handleCancelSubscription}
+                                    disabled={isCancelling}
+                                    activeOpacity={0.85}
+                                >
+                                    <Feather name="x-circle" size={14} color={Colors.terra[400]} />
+                                    <Text style={styles.cancelBtnText}>
+                                        {isCancelling ? 'CANCELLING...' : 'CANCEL PLAN'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
                         {/* Tab toggle */}
                         <View style={styles.tabToggleContainer}>
                             <TouchableOpacity
@@ -719,6 +780,72 @@ const styles = StyleSheet.create({
         fontSize: FontSize['2xl'],
         fontWeight: '800',
         color: Colors.olive[600],
+    },
+
+    // Active subscription management card
+    mgmtCard: {
+        backgroundColor: Colors.peach[50],
+        borderRadius: BorderRadius['2xl'],
+        borderWidth: 1,
+        borderColor: `${Colors.peach[400]}26`,
+        padding: Spacing.md,
+        gap: Spacing.sm,
+        marginBottom: Spacing.md,
+    },
+    mgmtHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    mgmtIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: Alpha.terra400_10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    mgmtPlanName: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.sm,
+        color: Colors.olive[600],
+    },
+    mgmtSubtitle: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.xs,
+        color: Colors.olive[300],
+        marginTop: 1,
+    },
+    activeBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 99,
+        backgroundColor: 'rgba(34,197,94,0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(34,197,94,0.2)',
+    },
+    activeBadgeText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: 9,
+        color: 'rgb(21,128,61)',
+        letterSpacing: 0.8,
+    },
+    cancelBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        borderWidth: 2,
+        borderColor: Colors.terra[400],
+        backgroundColor: `${Colors.terra[400]}1A`,
+        borderRadius: BorderRadius.xl,
+        paddingVertical: 10,
+    },
+    cancelBtnText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.xs,
+        color: Colors.terra[400],
+        letterSpacing: 0.8,
     },
 
     // Tab toggle

@@ -21,19 +21,25 @@ import {
     EyeOff,
     Loader2,
     CheckCircle2,
+    XCircle,
+    AlertTriangle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
 import { auth } from "@fitconnect/shared/firebase/config"
+import { callCancelSubscription } from "@fitconnect/shared/firebase/firestore"
 import { toast } from "sonner"
 import Link from "next/link"
+import { AnimatePresence, motion as m } from "framer-motion"
 
 export default function ProfilePage() {
-    const { clientUser, logoutClient } = useClientAuthStore()
+    const { clientUser, logoutClient, refreshSubscription } = useClientAuthStore()
     const router = useRouter()
     const [showPasswordSection, setShowPasswordSection] = useState(false)
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+    const [isCancelling, setIsCancelling] = useState(false)
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -83,6 +89,22 @@ export default function ProfilePage() {
             }
         } finally {
             setIsChangingPassword(false)
+        }
+    }
+
+    const handleCancelSubscription = async () => {
+        setIsCancelling(true)
+        try {
+            await callCancelSubscription()
+            await refreshSubscription()
+            setShowCancelConfirm(false)
+            toast.success('Subscription cancelled', {
+                description: 'Your plan stays active until the current period ends.',
+            })
+        } catch (err: unknown) {
+            toast.error('Error', { description: err instanceof Error ? err.message : 'Failed to cancel' })
+        } finally {
+            setIsCancelling(false)
         }
     }
 
@@ -214,11 +236,60 @@ export default function ProfilePage() {
                                     <p className="text-olive-600 font-bold text-xs">{renewalDate}</p>
                                 </div>
                             </div>
-                            <Link href="/user/subscribe" className="block pt-2">
-                                <Button variant="outline" className="w-full h-11 border-peach-400/20 text-olive-400 hover:bg-peach-200/50 font-bold text-xs tracking-wider rounded-xl">
-                                    UPGRADE PLAN
-                                </Button>
-                            </Link>
+                            <div className="flex gap-2 pt-2">
+                                <Link href="/user/subscribe" className="flex-1">
+                                    <Button className="w-full h-11 bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold text-xs tracking-wider rounded-xl flex items-center justify-center gap-1.5">
+                                        UPGRADE
+                                        <ArrowRight className="w-3.5 h-3.5" />
+                                    </Button>
+                                </Link>
+                                <button
+                                    onClick={() => setShowCancelConfirm(true)}
+                                    className="flex-1 h-11 rounded-xl border-2 border-terra-400 bg-terra-400/10 text-terra-400 font-black text-xs tracking-wider flex items-center justify-center gap-1.5 hover:bg-terra-400/20 transition-colors"
+                                >
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    CANCEL PLAN
+                                </button>
+                            </div>
+
+                            {/* Cancel confirmation */}
+                            <AnimatePresence>
+                                {showCancelConfirm && (
+                                    <m.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="overflow-hidden rounded-xl border border-terra-400/20 bg-terra-400/5 px-4 py-3 space-y-3 mt-1"
+                                    >
+                                        <div className="flex items-start gap-2.5">
+                                            <AlertTriangle className="w-4 h-4 text-terra-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="text-olive-600 font-bold text-xs">Cancel your plan?</p>
+                                                <p className="text-olive-400 text-xs mt-0.5 leading-relaxed">
+                                                    You&apos;ll keep access until {renewalDate}. No further charges.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setShowCancelConfirm(false)}
+                                                disabled={isCancelling}
+                                                className="flex-1 h-8 border-peach-400/30 text-olive-400 font-bold text-xs rounded-lg"
+                                            >
+                                                KEEP PLAN
+                                            </Button>
+                                            <Button
+                                                onClick={handleCancelSubscription}
+                                                disabled={isCancelling}
+                                                className="flex-1 h-8 bg-terra-400 hover:bg-terra-300 text-peach-50 font-bold text-xs rounded-lg disabled:opacity-50"
+                                            >
+                                                {isCancelling ? 'CANCELLING...' : 'YES, CANCEL'}
+                                            </Button>
+                                        </div>
+                                    </m.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     ) : (
                         <Link href="/user/subscribe" className="block">

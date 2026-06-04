@@ -15,18 +15,13 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
     const { planId, status, classesRemaining, endDate } = subscription
     const [nowMs] = useState(() => Date.now())
 
-    // No plan state
+    // No plan / expired / cancelled state
     if (!planId || status === 'expired' || status === 'canceled') {
         const isExpired = planId && status === 'expired'
 
         return (
-            <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 {isExpired ? (
-                    // Expired plan warning
                     <div className="relative overflow-hidden rounded-2xl border border-terra-400/20 bg-terra-400/5 p-6">
                         <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-xl bg-terra-400/15 flex items-center justify-center shrink-0">
@@ -46,7 +41,6 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
                         </div>
                     </div>
                 ) : (
-                    // No plan CTA
                     <Link href="/user/subscribe" className="block group">
                         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-terra-400 to-terra-300 p-6">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-peach-200/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
@@ -74,7 +68,7 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
     // Active plan
     const isUnlimited = classesRemaining === null
     const planLabel = planId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-    // Safe date parsing (handles Date, Timestamp, string, { seconds } formats)
+
     const endDateObj = (() => {
         if (!endDate) return null
         if (endDate instanceof Date && !isNaN(endDate.getTime())) return endDate
@@ -89,7 +83,6 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
     const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - nowMs) / (1000 * 60 * 60 * 24))) : 0
     const renewalDate = endDateObj ? endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
 
-    // Credits progress ring — use plan's original credit count for the ring max
     const credits = classesRemaining ?? 0
     const maxCredits = isUnlimited ? 1 : Math.max(credits, 1)
     const creditFraction = isUnlimited ? 1 : credits / maxCredits
@@ -103,6 +96,7 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
             transition={{ delay: 0.1 }}
             className="relative overflow-hidden rounded-2xl border border-peach-400/15 bg-peach-50 p-5"
         >
+            {/* Plan info row */}
             <div className="flex items-center gap-4">
                 {/* Credits ring */}
                 <div className="relative w-14 h-14 shrink-0">
@@ -145,6 +139,7 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
                     <p className="text-[10px] text-olive-300 font-medium mt-0.5">days left</p>
                 </div>
             </div>
+
         </motion.div>
     )
 }

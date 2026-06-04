@@ -30,7 +30,16 @@ export async function POST(req: NextRequest) {
             case 'subscription.halted':
                 await handleSubscriptionHalted(event.payload);
                 break;
-            // subscription.activated, subscription.completed, subscription.cancelled — acknowledged, no action
+            case 'subscription.cancelled':
+                await handleSubscriptionCancelled(event.payload);
+                break;
+            case 'subscription.completed':
+                await handleSubscriptionCompleted(event.payload);
+                break;
+            case 'payment.failed':
+                await handlePaymentFailed(event.payload);
+                break;
+            // subscription.activated — no action needed, verify-subscription already handles activation
             default:
                 break;
         }
@@ -113,4 +122,78 @@ async function handleSubscriptionHalted(payload: Record<string, unknown>) {
             updatedAt: FieldValue.serverTimestamp(),
         });
     });
+}
+
+async function handleSubscriptionCancelled(payload: Record<string, unknown>) {
+    const sub = (payload.subscription as { entity: { id: string } }).entity;
+    const subscriptionId = sub.id;
+
+    const userSnap = await adminDb
+        .collection('users')
+        .where('subscription.razorpaySubscriptionId', '==', subscriptionId)
+        .limit(1)
+        .get();
+
+    if (userSnap.empty) {
+        console.warn(`[webhook] subscription.cancelled: no user found for subscriptionId=${subscriptionId}`);
+        return;
+    }
+
+    const userRef = userSnap.docs[0].ref;
+    await adminDb.runTransaction(async (transaction) => {
+        const doc = await transaction.get(userRef);
+        if (!doc.exists) return;
+        const currentStatus = doc.data()?.subscription?.status;
+        // Only update if not already cancelled — our cancel API may have already set this
+        if (currentStatus !== 'canceled') {
+            transaction.update(userRef, {
+                'subscription.status': 'canceled',
+                'subscription.autoRenew': false,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+        }
+    });
+}
+
+async function handleSubscriptionCompleted(payload: Record<string, unknown>) {
+    // All billing cycles exhausted — let the subscription expire at endDate naturally.
+    // Just disable autoRenew so the UI shows it correctly.
+    const sub = (payload.subscription as { entity: { id: string } }).entity;
+    const subscriptionId = sub.id;
+
+    const userSnap = await adminDb
+        .collection('users')
+        .where('subscription.razorpaySubscriptionId', '==', subscriptionId)
+        .limit(1)
+        .get();
+
+    if (userSnap.empty) {
+        console.warn(`[webhook] subscription.completed: no user found for subscriptionId=${subscriptionId}`);
+        return;
+    }
+
+    const userRef = userSnap.docs[0].ref;
+    await adminDb.runTransaction(async (transaction) => {
+        const doc = await transaction.get(userRef);
+        if (!doc.exists) return;
+        transaction.update(userRef, {
+            'subscription.autoRenew': false,
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+    });
+}
+
+async function handlePaymentFailed(payload: Record<string, unknown>) {
+    // Log to Firestore for visibility — no user-facing action (Razorpay handles retries)
+    const payment = (payload.payment as { entity: { id: string; order_id?: string; description?: string; error_description?: string } }).entity;
+    try {
+        await adminDb.collection('paymentFailures').add({
+            razorpayPaymentId: payment.id,
+            orderId: payment.order_id ?? null,
+            errorDescription: payment.error_description ?? payment.description ?? null,
+            recordedAt: FieldValue.serverTimestamp(),
+        });
+    } catch (err) {
+        console.error('[webhook] payment.failed: failed to log:', err);
+    }
 }

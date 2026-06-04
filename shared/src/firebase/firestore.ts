@@ -675,6 +675,54 @@ export async function callVerifyPayment(payload: {
 }
 
 // ---------------------------------------------------------------------------
+// 17f. callCancelSubscription — Cancel the current subscription
+// ---------------------------------------------------------------------------
+
+export async function callCancelSubscription(): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>('/api/subscriptions/cancel', { method: 'POST' });
+}
+
+// ---------------------------------------------------------------------------
+// 17g. callGetSubscriptionPortalLink — Get Razorpay subscription management URL
+// ---------------------------------------------------------------------------
+
+export async function callGetSubscriptionPortalLink(): Promise<{ url: string; status: string }> {
+    return apiFetch<{ url: string; status: string }>('/api/subscriptions/portal-link', { method: 'GET' });
+}
+
+// ---------------------------------------------------------------------------
+// 17h. callGetPricing — Fetch live Razorpay pricing
+// ---------------------------------------------------------------------------
+
+export async function callGetPricing(): Promise<{
+    plans: Array<{
+        planId: string;
+        name: string;
+        price: number;
+        razorpayPlanId: string | null;
+        configured: boolean;
+        category: string;
+    }>;
+    lastSyncedAt: string | null;
+}> {
+    // Public endpoint — no auth needed
+    const baseUrl = getApiBaseUrl();
+    const res = await fetch(`${baseUrl}/api/subscriptions/pricing`);
+    if (!res.ok) throw new Error('Failed to fetch pricing');
+    return res.json() as Promise<{
+        plans: Array<{
+            planId: string;
+            name: string;
+            price: number;
+            razorpayPlanId: string | null;
+            configured: boolean;
+            category: string;
+        }>;
+        lastSyncedAt: string | null;
+    }>;
+}
+
+// ---------------------------------------------------------------------------
 // 18. getBookingStats — Admin dashboard aggregate
 // ---------------------------------------------------------------------------
 

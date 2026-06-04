@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
-import { callDeleteAccount } from '@fitconnect/shared/firebase/firestore';
+import { callDeleteAccount, callCancelSubscription } from '@fitconnect/shared/firebase/firestore';
 import {
     updatePassword,
     EmailAuthProvider,
@@ -64,11 +64,51 @@ export default function ProfileScreen() {
     const [pwLoading, setPwLoading] = useState(false);
     const [chevronRotation] = useState(new Animated.Value(0));
 
+    const [isCancelling, setIsCancelling] = useState(false);
+
     const subscription = clientUser?.subscription;
     const stats = clientUser?.stats;
     const plan = subscription?.planId ? getPlanById(subscription.planId) : null;
     const isActive = subscription?.status === 'active';
     const planBadgeLabel = isActive && plan ? plan.name : 'Free Plan';
+
+    const endDateObj = (() => {
+        const raw = subscription?.endDate as unknown;
+        if (!raw) return null;
+        if (raw instanceof Date) return raw;
+        if (typeof raw === 'object' && 'seconds' in (raw as Record<string, unknown>))
+            return new Date((raw as { seconds: number }).seconds * 1000);
+        const d = new Date(raw as string | number);
+        return isNaN(d.getTime()) ? null : d;
+    })();
+    const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - Date.now()) / 86400000)) : 0;
+    const expiryLabel = endDateObj ? endDateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+
+    const handleCancelSubscription = useCallback(() => {
+        Alert.alert(
+            'Cancel your plan?',
+            `You'll keep access until ${expiryLabel}. No further charges.`,
+            [
+                { text: 'Keep Plan', style: 'cancel' },
+                {
+                    text: 'Yes, Cancel',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setIsCancelling(true);
+                        try {
+                            await callCancelSubscription();
+                            await refreshSubscription();
+                            Alert.alert('Cancelled', 'Your plan stays active until the current period ends.');
+                        } catch {
+                            Alert.alert('Error', 'Failed to cancel subscription. Please try again.');
+                        } finally {
+                            setIsCancelling(false);
+                        }
+                    },
+                },
+            ],
+        );
+    }, [expiryLabel, refreshSubscription]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -329,26 +369,76 @@ export default function ProfileScreen() {
 
                 {/* ─── Membership ─────────────────────────────────── */}
                 <Text style={styles.sectionLabel}>MEMBERSHIP</Text>
-                <TouchableOpacity
-                    style={styles.rowCard}
-                    onPress={() => router.push('/subscribe')}
-                    activeOpacity={0.85}
-                >
-                    <View style={styles.rowIconSquare}>
-                        <Feather name="credit-card" size={20} color={Colors.terra[400]} />
+                <View style={styles.membershipCard}>
+                    {/* Header row */}
+                    <View style={styles.membershipHeader}>
+                        <View style={styles.rowIconSquare}>
+                            <Feather name="credit-card" size={20} color={Colors.terra[400]} />
+                        </View>
+                        <View style={styles.rowTextCol}>
+                            <Text style={styles.rowTitle}>
+                                {isActive && plan ? plan.name : 'No Active Plan'}
+                            </Text>
+                            <Text style={styles.rowSubtitle}>
+                                {isActive && plan
+                                    ? plan.category === 'membership' ? 'Membership' : 'Class Pack'
+                                    : 'Choose a plan to start booking classes'}
+                            </Text>
+                        </View>
+                        {isActive && (
+                            <View style={styles.activeBadge}>
+                                <Text style={styles.activeBadgeText}>ACTIVE</Text>
+                            </View>
+                        )}
                     </View>
-                    <View style={styles.rowTextCol}>
-                        <Text style={styles.rowTitle}>
-                            {isActive && plan ? plan.name : 'No Active Plan'}
-                        </Text>
-                        <Text style={styles.rowSubtitle}>
-                            {isActive && plan
-                                ? `${plan.category === 'membership' ? 'Membership' : 'Class Pack'}`
-                                : 'Choose a plan to start booking classes'}
-                        </Text>
+
+                    {/* Stats grid — only when active */}
+                    {isActive && plan && (
+                        <View style={styles.membershipStats}>
+                            <View style={styles.membershipStat}>
+                                <Text style={styles.membershipStatLabel}>CREDITS</Text>
+                                <Text style={styles.membershipStatValue}>
+                                    {subscription?.classesRemaining === null ? '∞' : subscription?.classesRemaining ?? 0}
+                                </Text>
+                            </View>
+                            <View style={styles.membershipStatDivider} />
+                            <View style={styles.membershipStat}>
+                                <Text style={styles.membershipStatLabel}>DAYS LEFT</Text>
+                                <Text style={styles.membershipStatValue}>{daysLeft}</Text>
+                            </View>
+                            <View style={styles.membershipStatDivider} />
+                            <View style={styles.membershipStat}>
+                                <Text style={styles.membershipStatLabel}>EXPIRES</Text>
+                                <Text style={[styles.membershipStatValue, { fontSize: FontSize.xs }]}>{expiryLabel}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Action buttons */}
+                    <View style={styles.membershipActions}>
+                        <TouchableOpacity
+                            style={styles.upgradeBtn}
+                            onPress={() => router.push('/subscribe')}
+                            activeOpacity={0.85}
+                        >
+                            <Text style={styles.upgradeBtnText}>UPGRADE</Text>
+                            <Feather name="arrow-right" size={14} color={Colors.peach[50]} />
+                        </TouchableOpacity>
+                        {isActive && (
+                            <TouchableOpacity
+                                style={styles.cancelBtn}
+                                onPress={handleCancelSubscription}
+                                disabled={isCancelling}
+                                activeOpacity={0.85}
+                            >
+                                <Feather name="x-circle" size={14} color={Colors.terra[400]} />
+                                <Text style={styles.cancelBtnText}>
+                                    {isCancelling ? 'CANCELLING...' : 'CANCEL PLAN'}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
-                    <Feather name="arrow-right" size={18} color={Colors.terra[400]} />
-                </TouchableOpacity>
+                </View>
 
                 {/* ─── Quick Actions ─────────────────────────────── */}
                 <View style={styles.quickRow}>
@@ -782,6 +872,100 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius['2xl'],
         paddingVertical: Spacing.md,
         paddingHorizontal: Spacing.md,
+    },
+    membershipCard: {
+        backgroundColor: Colors.peach[50],
+        borderRadius: BorderRadius['2xl'],
+        borderWidth: 1,
+        borderColor: `${Colors.peach[400]}26`,
+        overflow: 'hidden',
+    },
+    membershipHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+        padding: Spacing.md,
+    },
+    membershipStats: {
+        flexDirection: 'row',
+        borderTopWidth: 1,
+        borderTopColor: `${Colors.peach[400]}1A`,
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+    },
+    membershipStat: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    membershipStatDivider: {
+        width: 1,
+        backgroundColor: `${Colors.peach[400]}26`,
+    },
+    membershipStatLabel: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: 9,
+        color: Colors.olive[300],
+        letterSpacing: 0.8,
+        marginBottom: 2,
+    },
+    membershipStatValue: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.lg,
+        color: Colors.olive[600],
+    },
+    activeBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 99,
+        backgroundColor: 'rgba(34,197,94,0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(34,197,94,0.2)',
+    },
+    activeBadgeText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: 9,
+        color: 'rgb(21,128,61)',
+        letterSpacing: 0.8,
+    },
+    membershipActions: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+        padding: Spacing.md,
+        paddingTop: 0,
+    },
+    upgradeBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: Colors.terra[400],
+        borderRadius: BorderRadius.xl,
+        paddingVertical: 10,
+    },
+    upgradeBtnText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.xs,
+        color: Colors.peach[50],
+        letterSpacing: 0.8,
+    },
+    cancelBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        borderWidth: 2,
+        borderColor: Colors.terra[400],
+        backgroundColor: `${Colors.terra[400]}1A`,
+        borderRadius: BorderRadius.xl,
+        paddingVertical: 10,
+    },
+    cancelBtnText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.xs,
+        color: Colors.terra[400],
+        letterSpacing: 0.8,
     },
     rowIconSquare: {
         width: 44,

@@ -42,9 +42,25 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        if (!plan.razorpayPlanId) {
+        // Look up the razorpayPlanId: prefer Firestore (synced from Razorpay dashboard), fall back to static catalog
+        let razorpayPlanId: string | undefined = plan.razorpayPlanId;
+        try {
+            const settingsDoc = await adminDb.collection('settings').doc('razorpayPlans').get();
+            if (settingsDoc.exists) {
+                const data = settingsDoc.data();
+                const mapped = (data?.planIdMap as Record<string, string> | undefined)?.[planId];
+                if (mapped) razorpayPlanId = mapped;
+            }
+        } catch {
+            // non-fatal: fall through to static catalog value or 503 below
+        }
+
+        if (!razorpayPlanId) {
             return NextResponse.json(
-                { error: `Plan '${planId}' is not yet configured for subscriptions. Run scripts/create-razorpay-plans.ts first.`, code: 'plan-not-configured' },
+                {
+                    error: `Plan '${planId}' is not yet configured for subscriptions. Visit /api/subscriptions/pricing to sync plans from Razorpay.`,
+                    code: 'plan-not-configured',
+                },
                 { status: 503 },
             );
         }
@@ -63,7 +79,7 @@ export async function POST(req: NextRequest) {
         const keySecret = process.env.RAZORPAY_KEY_SECRET!;
 
         const rzpSub = await createRazorpaySubscription(
-            plan.razorpayPlanId,
+            razorpayPlanId,
             plan.razorpayTotalCount ?? 24,
             keyId,
             keySecret,
