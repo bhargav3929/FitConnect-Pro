@@ -19,7 +19,7 @@ const COPY = {
   body: "The first 25 members get founding pricing — locked in forever, no matter what rates become. Once they're gone, they're gone.",
   spotsLabel: "25 spots · only a few left",
   ctaLabel: "Join the waitlist",
-  ctaHref: "/free-class", // TODO: swap to /waitlist once interest form route exists
+  ctaHref: "/intro-class", // TODO: swap to /waitlist once interest form route exists
   helper: "No commitment. We'll share pricing details when you join.",
   totalSpots: 10,
   filledSpots: 3,

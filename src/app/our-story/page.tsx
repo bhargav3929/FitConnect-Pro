@@ -152,7 +152,7 @@ export default function AboutPage() {
                 transition={{ duration: 0.6, ease: [...E], delay: 0.1 }}
               >
                 <Link
-                  href="/free-class"
+                  href="/intro-class"
                   className="inline-flex items-center gap-3 px-8 py-4 bg-terra-400 text-peach-50 font-black text-xs tracking-widest uppercase hover:bg-terra-300 transition-all shadow-glow"
                 >
                   Book your intro class

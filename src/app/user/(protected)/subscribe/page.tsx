@@ -12,7 +12,7 @@ import type { ClientUser } from "@fitconnect/shared/types/client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import Link from "next/link"
-import { useFreeClassLead } from "@/lib/hooks/useFreeClassLead"
+import { useIntroClassLead } from "@/lib/hooks/useIntroClassLead"
 import { useRazorpay } from "@/lib/hooks/useRazorpay"
 
 type Step = 'plan' | 'success'
@@ -32,7 +32,7 @@ export default function SubscribePage() {
     const firebaseUser = useClientAuthStore(state => state.firebaseUser)
     const clientUser = useClientAuthStore(state => state.clientUser)
     const refreshSubscription = useClientAuthStore(state => state.refreshSubscription)
-    const { hasFreeClassLead } = useFreeClassLead()
+    const { hasIntroClassLead } = useIntroClassLead()
     const { openCheckout } = useRazorpay()
 
     const [step, setStep] = useState<Step>('plan')
@@ -52,7 +52,7 @@ export default function SubscribePage() {
     const handleContinueToCheckout = async () => {
         if (!selectedPlanId) return
         if (selectedPlanId === 'drop_in') {
-            router.push('/free-class')
+            router.push('/intro-class')
             return
         }
         if (selectedPlan?.category === 'membership' && hasActiveSubscription) {
@@ -170,14 +170,14 @@ export default function SubscribePage() {
                                 !selectedPlanId ||
                                 isProcessing ||
                                 (selectedPlan?.category === 'membership' && hasActiveSubscription) ||
-                                (selectedPlanId === 'drop_in' && hasFreeClassLead === true)
+                                (selectedPlanId === 'drop_in' && hasIntroClassLead === true)
                             }
                             className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide text-base rounded-xl transition-all hover:shadow-lg hover:shadow-terra-400/20 disabled:opacity-50"
                         >
                             {isProcessing
                                 ? 'OPENING PAYMENT...'
                                 : selectedPlanId === 'drop_in'
-                                    ? (hasFreeClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS')
+                                    ? (hasIntroClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS')
                                     : selectedPlan?.category === 'membership' && hasActiveSubscription
                                         ? 'ACTIVE MEMBERSHIP'
                                     : 'CONTINUE TO PAYMENT'}

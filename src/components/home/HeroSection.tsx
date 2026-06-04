@@ -39,11 +39,11 @@ const STYLES = {
 };
 
 const COPY = {
-  eyebrow: "Boutique Pilates - Kokapet - Hyderabad",
+  eyebrow: "Boutique Pilates · Kokapet · Hyderabad",
   headlineLine1: "Strong body.",
   headlineLine2: "Pain-free life.",
   body: "Contrology-based Pilates in a resort studio designed to make you feel as good as it looks.",
-  primaryCta: { label: "Claim Your Intro Class", href: "/free-class" },
+  primaryCta: { label: "Claim Your Intro Class", href: "/intro-class" },
   secondaryCta: { label: "Get Started" },
 };
 
@@ -137,7 +137,7 @@ export function HeroSection() {
           transition={{ duration: 0.5, delay: 0.2, ease: [...E] }}
           className={STYLES.eyebrow}
         >
-          {COPY.eyebrow}
+          Boutique Pilates · <em>Kokapet</em> · Hyderabad
         </motion.span>
 
         {/* Headline — line-by-line mask reveal (y: 110% → 0%) */}

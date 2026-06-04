@@ -19,7 +19,7 @@ import type { ClientUser } from '@fitconnect/shared/types/client';
 import Svg, { Circle } from 'react-native-svg';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
-import { useFreeClassLead } from '../../hooks/useFreeClassLead';
+import { useIntroClassLead } from '../../hooks/useIntroClassLead';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -404,12 +404,46 @@ function UpcomingSessionCard({
 function QuickActions({
     onBookClass,
     onMyBookings,
+    onFreeClass,
+    freeClassBooked,
 }: {
     onBookClass: () => void;
     onMyBookings: () => void;
+    onFreeClass: () => void;
+    freeClassBooked: boolean;
 }) {
     return (
         <View style={styles.quickActionsColumn}>
+            {/* Book Intro Class — terra outline card */}
+            <TouchableOpacity
+                style={[styles.freeClassCard, freeClassBooked && { opacity: 0.7 }]}
+                onPress={freeClassBooked ? undefined : onFreeClass}
+                disabled={freeClassBooked}
+                activeOpacity={freeClassBooked ? 1 : 0.85}
+            >
+                <View style={styles.freeClassIconCircle}>
+                    <Feather
+                        name={freeClassBooked ? 'check-circle' : 'gift'}
+                        size={20}
+                        color={Colors.terra[400]}
+                    />
+                </View>
+                <Text style={styles.freeClassTitle}>
+                    {freeClassBooked ? 'Intro Class Booked' : 'Book an Intro Class'}
+                </Text>
+                <Text style={styles.freeClassSubtitle}>
+                    {freeClassBooked
+                        ? "You're all set — Swetha will be in touch shortly."
+                        : 'First time? Try a complimentary 30-minute drop-in.'}
+                </Text>
+                {!freeClassBooked && (
+                    <View style={styles.freeClassArrowCircle}>
+                        <Feather name="arrow-right" size={14} color={Colors.terra[400]} />
+                    </View>
+                )}
+            </TouchableOpacity>
+
+            {/* Book Your Next Class — dark olive feature card */}
             <TouchableOpacity
                 style={styles.bookNextCard}
                 onPress={onBookClass}
@@ -496,7 +530,7 @@ function FreeClassCTA({
 export default function DashboardScreen() {
     const { clientUser, firebaseUser, refreshSubscription } = useClientAuthStore();
     const router = useRouter();
-    const { hasFreeClassLead, refresh: refreshFreeClassLead } = useFreeClassLead();
+    const { hasIntroClassLead } = useIntroClassLead();
 
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
     const [isLoadingBookings, setIsLoadingBookings] = useState(true);
@@ -525,20 +559,19 @@ export default function DashboardScreen() {
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-        refreshFreeClassLead();
         setRefreshTick((tick) => tick + 1);
         try {
             await refreshSubscription();
         } finally {
             setRefreshing(false);
         }
-    }, [refreshFreeClassLead, refreshSubscription]);
+    }, [refreshSubscription]);
 
     // Navigation callbacks
     const navigateToSchedule = useCallback(() => router.push('/(tabs)/schedule'), [router]);
     const navigateToBookings = useCallback(() => router.push('/(tabs)/bookings'), [router]);
     const navigateToSubscribe = useCallback(() => router.push('/subscribe'), [router]);
-    const navigateToFreeClass = useCallback(() => router.push('/free-class'), [router]);
+    const navigateToIntroClass = useCallback(() => router.push('/intro-class' as any), [router]);
 
     // Loading state
     if (!clientUser) {
@@ -565,8 +598,8 @@ export default function DashboardScreen() {
                 }
             >
                 <FreeClassCTA
-                    onFreeClass={navigateToFreeClass}
-                    freeClassBooked={hasFreeClassLead === true}
+                    onFreeClass={navigateToIntroClass}
+                    freeClassBooked={hasIntroClassLead === true}
                 />
                 <View style={{ height: Spacing.md }} />
                 {/* A. Welcome Banner */}
@@ -600,6 +633,8 @@ export default function DashboardScreen() {
                 <QuickActions
                     onBookClass={navigateToSchedule}
                     onMyBookings={navigateToBookings}
+                    onFreeClass={navigateToIntroClass}
+                    freeClassBooked={hasIntroClassLead === true}
                 />
             </ScrollView>
         </SafeAreaView>

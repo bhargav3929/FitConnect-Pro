@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckIcon, SparklesIcon } from 'lucide-react';
 import { PLAN_CATALOG, type PlanDefinition } from '@fitconnect/shared/types/subscription';
-import { useFreeClassLead } from '@/lib/hooks/useFreeClassLead';
+import { useIntroClassLead } from '@/lib/hooks/useIntroClassLead';
 
 function FilledCheck() {
     return (
@@ -316,12 +316,12 @@ function MembershipCard({
 
 export function BentoPricing() {
     const router = useRouter();
-    const { hasFreeClassLead } = useFreeClassLead();
+    const { hasIntroClassLead } = useIntroClassLead();
 
     const handleSelect = (planId: string) => {
         if (planId === 'drop_in') {
-            if (hasFreeClassLead === true) return;
-            router.push('/free-class');
+            if (hasIntroClassLead === true) return;
+            router.push('/intro-class');
             return;
         }
         router.push(`/user/subscribe?plan=${planId}`);
@@ -338,8 +338,8 @@ export function BentoPricing() {
                 <IntroCard
                     plan={dropIn}
                     onSelect={handleSelect}
-                    cta={hasFreeClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS'}
-                    ctaDisabled={hasFreeClassLead === true}
+                    cta={hasIntroClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS'}
+                    ctaDisabled={hasIntroClassLead === true}
                 />
                 <IntroCard plan={kickstarter} onSelect={handleSelect} cta="START KICKSTARTER" featured />
             </div>

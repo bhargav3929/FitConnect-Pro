@@ -19,6 +19,7 @@ import {
     CaretLeft,
     X,
     Star,
+    CheckSquare,
 } from "@phosphor-icons/react"
 import { useState } from "react"
 import { useAdminAuthStore } from "@fitconnect/shared/stores/adminAuthStore"
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
     { label: "Leads", icon: EnvelopeSimple, href: "/admin/leads" },
     { label: "Waitlist", icon: Star, href: "/admin/waitlist" },
     { label: "Bookings", icon: BookmarkSimple, href: "/admin/bookings" },
+    { label: "Check-In", icon: CheckSquare, href: "/admin/checkin" },
     { label: "Feedback", icon: ChatCircle, href: "/admin/feedback" },
     { label: "Reports", icon: ChartBar, href: "/admin/reports" },
 ]

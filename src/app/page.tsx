@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore";
-import { FreeClassPopup } from "@/components/ui/FreeClassPopup";
+import { IntroClassPopup } from "@/components/ui/IntroClassPopup";
 import { HeroSection } from "@/components/home/HeroSection";
 import { WhySolSection } from "@/components/home/WhySolSection";
 import { ClassTypesSection } from "@/components/home/ClassTypesSection";
@@ -28,7 +28,7 @@ export default function Home() {
       <TavaroSection />
       <FoundingMembershipSection />
       <InstagramSection id={"solpilatesstudio.in"}/>
-      <FreeClassPopup isAuthenticated={isAuthenticated} />
+      <IntroClassPopup isAuthenticated={isAuthenticated} />
     </main>
   );
 }

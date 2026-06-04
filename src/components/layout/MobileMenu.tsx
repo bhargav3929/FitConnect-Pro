@@ -12,6 +12,7 @@ interface MobileMenuProps {
 const MENU_ITEMS = [
     { label: "HOME", href: "/" },
     { label: "PRICING", href: "/subscription" },
+    { label: "SCHEDULE", href: "/user/schedule" },
     { label: "OUR STORY", href: "/our-story" },
     { label: "SHOP", href: "/shop" },
     { label: "CONTACT US", href: "/contact" },

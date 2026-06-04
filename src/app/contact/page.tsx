@@ -14,7 +14,7 @@ const CONTACT_INFO = [
   {
     icon: Phone,
     label: "Call Us",
-    value: "+91 9642004005",
+    value: "+91 96420 04005",
     href: "tel:+919642004005",
   },
   {
@@ -243,8 +243,8 @@ export default function ContactPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-terra-400" />
-                    <a href="tel:+12125550180" className="text-peach-200 text-sm hover:text-terra-300 transition-colors">
-                      (212) 555-0180
+                    <a href="tel:+919642004005" className="text-peach-200 text-sm hover:text-terra-300 transition-colors">
+                      +91 96420 04005
                     </a>
                   </div>
                 </div>

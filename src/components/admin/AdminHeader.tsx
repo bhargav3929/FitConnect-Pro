@@ -22,6 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/admin/trainers': 'Trainer Management',
     '/admin/members': 'Member Management',
     '/admin/bookings': 'Bookings',
+    '/admin/checkin': 'Check-In',
     '/admin/reports': 'Reports & Analytics',
     '/admin/settings': 'Settings',
 }

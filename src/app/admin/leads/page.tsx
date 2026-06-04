@@ -62,7 +62,7 @@ export default function LeadsPage() {
     useEffect(() => {
         let cancelled = false
 
-        getCollectionPage<Lead>("freeClassLeads", {
+        getCollectionPage<Lead>("introClassLeads", {
             pageSize: PAGE_SIZE,
             cursor: currentCursor,
             orderField: "createdAt",
@@ -92,7 +92,7 @@ export default function LeadsPage() {
 
     const updateStatus = async (id: string, status: LeadStatus) => {
         try {
-            await updateDoc(doc(db, "freeClassLeads", id), { status })
+            await updateDoc(doc(db, "introClassLeads", id), { status })
             toast.success(`Marked as ${status}`)
         } catch {
             toast.error("Failed to update status")

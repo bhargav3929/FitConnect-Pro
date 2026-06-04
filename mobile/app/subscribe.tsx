@@ -19,7 +19,7 @@ import {
     callVerifyPayment,
 } from '@fitconnect/shared/firebase/firestore';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
-import { useFreeClassLead } from '../hooks/useFreeClassLead';
+import { useIntroClassLead } from '../hooks/useIntroClassLead';
 import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../constants/theme';
 
 // ---------------------------------------------------------------------------
@@ -290,7 +290,7 @@ const planCardStyles = StyleSheet.create({
 export default function SubscribeScreen() {
     const router = useRouter();
     const { clientUser, firebaseUser, refreshSubscription } = useClientAuthStore();
-    const { hasFreeClassLead } = useFreeClassLead();
+    const { hasIntroClassLead } = useIntroClassLead();
 
     // Flow state
     const [step, setStep] = useState<Step>('plan');
@@ -322,7 +322,7 @@ export default function SubscribeScreen() {
             return;
         }
         if (selectedPlan.id === 'drop_in') {
-            router.push('/free-class');
+            router.push('/intro-class');
             return;
         }
         if (selectedPlan.category === 'membership' && hasActiveSubscription) {
@@ -509,20 +509,20 @@ export default function SubscribeScreen() {
                                 styles.primaryButton,
                                 (!selectedPlan ||
                                     (selectedPlan?.id === 'drop_in' &&
-                                        hasFreeClassLead === true)) &&
+                                        hasIntroClassLead === true)) &&
                                     styles.buttonDisabled,
                             ]}
                             onPress={handleContinue}
                             disabled={
                                 !selectedPlan ||
                                 (selectedPlan?.id === 'drop_in' &&
-                                    hasFreeClassLead === true)
+                                    hasIntroClassLead === true)
                             }
                             activeOpacity={0.7}
                         >
                             <Text style={styles.primaryButtonText}>
                                 {selectedPlan?.id === 'drop_in'
-                                    ? hasFreeClassLead === true
+                                    ? hasIntroClassLead === true
                                         ? 'INTRO CLASS BOOKED'
                                         : 'BOOK INTRO CLASS'
                                     : 'CONTINUE'}
