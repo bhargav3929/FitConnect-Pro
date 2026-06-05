@@ -26,6 +26,7 @@ import {
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import {
     callCancelBooking,
+    getBookingStats,
     getBookingsPage,
     type FirestorePageCursor,
 } from "@fitconnect/shared/firebase/firestore"
@@ -42,6 +43,14 @@ function getBookingUserLabel(booking: Booking) {
 export default function BookingsPage() {
     const [bookings, setBookings] = useState<Booking[]>([])
     const [totalBookings, setTotalBookings] = useState(0)
+    const [bookingStats, setBookingStats] = useState({
+        totalBookings: 0,
+        confirmedBookings: 0,
+        canceledBookings: 0,
+        attendedBookings: 0,
+        noShowBookings: 0,
+        todayBookings: 0,
+    })
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState("All Status")
@@ -49,6 +58,22 @@ export default function BookingsPage() {
     const [requestedPage, setRequestedPage] = useState(1)
     const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
     const currentCursor = pageCursors[requestedPage - 1] || null
+
+    useEffect(() => {
+        let cancelled = false
+
+        getBookingStats()
+            .then((stats) => {
+                if (!cancelled) setBookingStats(stats)
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load booking stats")
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
 
     useEffect(() => {
         let cancelled = false
@@ -87,6 +112,8 @@ export default function BookingsPage() {
             setBookings(prev => prev.map(b =>
                 b.id === bookingId ? { ...b, status: 'canceled' as const } : b
             ))
+            const stats = await getBookingStats()
+            setBookingStats(stats)
             toast.success("Booking cancelled")
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to cancel booking"
@@ -108,13 +135,6 @@ export default function BookingsPage() {
     const totalPages = Math.max(1, Math.ceil(totalBookings / PAGE_SIZE))
     const page = Math.min(requestedPage, totalPages)
     const paginatedBookings = filteredBookings
-
-    const statusCounts = {
-        attended: bookings.filter(b => b.status === 'attended').length,
-        confirmed: bookings.filter(b => b.status === 'confirmed').length,
-        canceled: bookings.filter(b => b.status === 'canceled').length,
-        noShow: bookings.filter(b => b.status === 'no-show').length,
-    }
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -169,7 +189,7 @@ export default function BookingsPage() {
                     {!isLoading && (
                         <span className="text-olive-300 text-xs font-mono bg-peach-200/50 px-3 py-1.5 rounded-full border border-peach-400/20 flex items-center gap-2">
                             <BookOpen className="w-3 h-3" />
-                            {bookings.length} total
+                            {bookingStats.totalBookings} total
                         </span>
                     )}
                 </div>
@@ -183,10 +203,10 @@ export default function BookingsPage() {
                 className="grid grid-cols-2 lg:grid-cols-4 gap-4"
             >
                 {[
-                    { label: "Attended", value: statusCounts.attended, icon: CheckCircle2, color: "text-green-600" },
-                    { label: "Confirmed", value: statusCounts.confirmed, icon: UserCheck, color: "text-blue-500" },
-                    { label: "Canceled", value: statusCounts.canceled, icon: XCircle, color: "text-red-500" },
-                    { label: "No-Show", value: statusCounts.noShow, icon: Ban, color: "text-yellow-600" },
+                    { label: "Attended", value: bookingStats.attendedBookings, icon: CheckCircle2, color: "text-green-600" },
+                    { label: "Confirmed", value: bookingStats.confirmedBookings, icon: UserCheck, color: "text-blue-500" },
+                    { label: "Canceled", value: bookingStats.canceledBookings, icon: XCircle, color: "text-red-500" },
+                    { label: "No-Show", value: bookingStats.noShowBookings, icon: Ban, color: "text-yellow-600" },
                 ].map((stat) => (
                     <div
                         key={stat.label}
@@ -441,7 +461,7 @@ export default function BookingsPage() {
                 >
                     <span>Showing {filteredBookings.length} of {bookings.length} bookings</span>
                     <span className="font-mono bg-peach-200/30 px-3 py-1 rounded-full border border-peach-400/15">
-                        {statusCounts.attended} attended &bull; {statusCounts.confirmed} pending
+                        {bookingStats.attendedBookings} attended &bull; {bookingStats.confirmedBookings} pending
                     </span>
                 </motion.div>
             )}

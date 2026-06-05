@@ -73,7 +73,6 @@ function buildPatch(uid, authUser, existing = {}) {
     if (existing.age === undefined) patch.age = 0;
     if (!existing.fitnessGoals) patch.fitnessGoals = [];
     if (existing.profilePictureUrl === undefined) patch.profilePictureUrl = authUser.photoURL || null;
-    if (existing.isFoundingMember === undefined) patch.isFoundingMember = false;
     if (!existing.createdAt) patch.createdAt = FieldValue.serverTimestamp();
     patch.updatedAt = FieldValue.serverTimestamp();
 

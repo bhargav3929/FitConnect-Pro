@@ -5,6 +5,9 @@ export { onUserCreate } from './triggers/onUserCreate';
 export { onBookingStatusChange } from './triggers/onBookingStatusChange';
 export { sendBookingConfirmation } from './triggers/sendBookingConfirmation';
 
+// Scheduled jobs
+export { expireSubscriptions } from './scheduled/expireSubscriptions';
+
 // HTTPS callable functions
 export { activateSubscription } from './api/activateSubscription';
 export { bookClass } from './api/bookClass';

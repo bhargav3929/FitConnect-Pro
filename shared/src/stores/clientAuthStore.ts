@@ -81,7 +81,6 @@ async function createClientProfile(uid: string, email: string, name: string): Pr
         age: 0,
         fitnessGoals: [],
         profilePictureUrl: null,
-        isFoundingMember: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         subscription: { ...DEFAULT_SUBSCRIPTION },
@@ -91,12 +90,11 @@ async function createClientProfile(uid: string, email: string, name: string): Pr
         id: uid,
         name,
         email,
-        isFoundingMember: false,
         subscription: { ...DEFAULT_SUBSCRIPTION },
         stats: { ...DEFAULT_STATS },
     }
     try {
-        await setDoc(doc(db, 'users', uid), profileData)
+        await setDoc(doc(db, 'users', uid), profileData, { merge: true })
     } catch {
         // Firestore write may fail if rules aren't set up yet — still return the profile
     }
@@ -111,8 +109,6 @@ async function backfillClientProfile(uid: string, data: Record<string, unknown>)
     if (!data.updatedAt) patch.updatedAt = serverTimestamp()
     if (!data.fitnessGoals) patch.fitnessGoals = []
     if (data.age === undefined) patch.age = 0
-    if (data.isFoundingMember === undefined) patch.isFoundingMember = false
-
     const subscription = data.subscription as Record<string, unknown> | undefined
     if (!subscription) {
         patch.subscription = { ...DEFAULT_SUBSCRIPTION }

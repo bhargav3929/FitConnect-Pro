@@ -48,6 +48,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
             await addDoc(collection(db, "waitlist"), {
                 name: name.trim(),
                 email: email.toLowerCase().trim(),
+                emailLower: email.toLowerCase().trim(),
                 status: "new",
                 createdAt: serverTimestamp(),
             })

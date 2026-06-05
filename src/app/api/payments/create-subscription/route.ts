@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS } from '@fitconnect/shared/types/subscription';
 import { createRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
+import { getSyncedPlanEntry } from '@/lib/razorpay/pricing';
 
 function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
     if (!subscription || subscription.status !== 'active') return false;
@@ -42,18 +43,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Look up the razorpayPlanId: prefer Firestore (synced from Razorpay dashboard), fall back to static catalog
-        let razorpayPlanId: string | undefined = plan.razorpayPlanId;
-        try {
-            const settingsDoc = await adminDb.collection('settings').doc('razorpayPlans').get();
-            if (settingsDoc.exists) {
-                const data = settingsDoc.data();
-                const mapped = (data?.planIdMap as Record<string, string> | undefined)?.[planId];
-                if (mapped) razorpayPlanId = mapped;
-            }
-        } catch {
-            // non-fatal: fall through to static catalog value or 503 below
-        }
+        const syncedPlan = await getSyncedPlanEntry(planId);
+        const razorpayPlanId = syncedPlan?.razorpayPlanId ?? plan.razorpayPlanId;
+        const chargeAmount = syncedPlan?.price ?? plan.price;
 
         if (!razorpayPlanId) {
             return NextResponse.json(
@@ -91,7 +83,7 @@ export async function POST(req: NextRequest) {
             id: paymentRef.id,
             razorpaySubscriptionId: rzpSub.id,
             userId,
-            amount: plan.price,
+            amount: chargeAmount,
             currency: 'INR',
             status: 'pending',
             planId,
@@ -100,6 +92,10 @@ export async function POST(req: NextRequest) {
                 planCategory: plan.category,
                 credits: plan.credits,
                 durationDays: plan.durationDays,
+                listPrice: chargeAmount,
+                pricingSource: syncedPlan?.source ?? 'static',
+                razorpayPlanId,
+                razorpayItemId: syncedPlan?.razorpayItemId ?? null,
             },
             createdAt: new Date(),
             paidAt: null,
@@ -108,7 +104,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             subscriptionId: rzpSub.id,
             paymentId: paymentRef.id,
-            amount: plan.price * 100,
+            amount: chargeAmount * 100,
             currency: 'INR',
             key: keyId,
         });

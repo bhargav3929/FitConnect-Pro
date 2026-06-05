@@ -429,6 +429,34 @@ export async function getClassesPage(
     );
 }
 
+export async function getClassStats(): Promise<{
+    totalClasses: number;
+    scheduledClasses: number;
+    completedClasses: number;
+    totalCapacity: number;
+}> {
+    const snapshot = await getDocs(collection(db, 'classes'));
+    let totalClasses = 0;
+    let scheduledClasses = 0;
+    let completedClasses = 0;
+    let totalCapacity = 0;
+
+    snapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        totalClasses++;
+        if (data.status === 'scheduled') scheduledClasses++;
+        if (data.status === 'completed') completedClasses++;
+        totalCapacity += (data.totalSpots as number) || (data.capacity as number) || 0;
+    });
+
+    return {
+        totalClasses,
+        scheduledClasses,
+        completedClasses,
+        totalCapacity,
+    };
+}
+
 // ---------------------------------------------------------------------------
 // 9. getAllBookings — Admin: all bookings
 // ---------------------------------------------------------------------------
@@ -700,10 +728,13 @@ export async function callGetPricing(): Promise<{
         name: string;
         price: number;
         razorpayPlanId: string | null;
+        razorpayItemId: string | null;
         configured: boolean;
         category: string;
+        source: 'plans' | 'items' | 'static';
     }>;
     lastSyncedAt: string | null;
+    source: 'plans' | 'items' | 'static';
 }> {
     // Public endpoint — no auth needed
     const baseUrl = getApiBaseUrl();
@@ -715,10 +746,13 @@ export async function callGetPricing(): Promise<{
             name: string;
             price: number;
             razorpayPlanId: string | null;
+            razorpayItemId: string | null;
             configured: boolean;
             category: string;
+            source: 'plans' | 'items' | 'static';
         }>;
         lastSyncedAt: string | null;
+        source: 'plans' | 'items' | 'static';
     }>;
 }
 
@@ -731,6 +765,7 @@ export async function getBookingStats(): Promise<{
     confirmedBookings: number;
     canceledBookings: number;
     attendedBookings: number;
+    noShowBookings: number;
     todayBookings: number;
 }> {
     const allBookingsSnap = await getDocs(collection(db, 'bookings'));
@@ -738,6 +773,7 @@ export async function getBookingStats(): Promise<{
     let confirmedBookings = 0;
     let canceledBookings = 0;
     let attendedBookings = 0;
+    let noShowBookings = 0;
     let todayBookings = 0;
 
     const today = new Date();
@@ -759,6 +795,9 @@ export async function getBookingStats(): Promise<{
             case 'attended':
                 attendedBookings++;
                 break;
+            case 'no-show':
+                noShowBookings++;
+                break;
         }
 
         const classDate = toDate(data.classDate);
@@ -772,6 +811,7 @@ export async function getBookingStats(): Promise<{
         confirmedBookings,
         canceledBookings,
         attendedBookings,
+        noShowBookings,
         todayBookings,
     };
 }

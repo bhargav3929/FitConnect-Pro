@@ -121,7 +121,7 @@ export default function AdminFeedbackPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <Star className="w-12 h-12 text-peach-400 mx-auto mb-4" />
-          <p className="text-olive-400 font-medium">No feedback submissions yet.</p>
+          <div className="text-olive-400 font-medium">No feedback submissions yet.</div>
         </div>
       ) : (
         <div className="space-y-4">

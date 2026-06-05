@@ -62,6 +62,25 @@ function hasValidSubscription(sub: { planId: unknown; status: string; endDate: u
     return true
 }
 
+function parseSubscriptionEndDate(endDate: unknown): Date | null {
+    if (!endDate) return null
+    if (endDate instanceof Date && !isNaN(endDate.getTime())) return endDate
+    if (endDate && typeof endDate === 'object' && 'seconds' in (endDate as Record<string, unknown>)) {
+        return new Date((endDate as { seconds: number }).seconds * 1000)
+    }
+    const parsed = new Date(endDate as string | number)
+    return isNaN(parsed.getTime()) ? null : parsed
+}
+
+function isDateAfterSubscriptionEnd(date: Date, endDate: Date | null): boolean {
+    if (!endDate) return false
+    const day = new Date(date)
+    day.setHours(0, 0, 0, 0)
+    const limit = new Date(endDate)
+    limit.setHours(0, 0, 0, 0)
+    return day > limit
+}
+
 export default function SchedulePage() {
     const [selectedTab, setSelectedTab] = useState<'classes' | 'trainers' | 'info'>('classes')
     const [selectedDate, setSelectedDate] = useState(new Date())
@@ -91,6 +110,7 @@ export default function SchedulePage() {
     const [visibleClassCount, setVisibleClassCount] = useState(CLASS_RENDER_BATCH)
 
     const clientUser = useClientAuthStore(state => state.clientUser)
+    const subscriptionEndDate = parseSubscriptionEndDate(clientUser?.subscription?.endDate)
 
     const formatDate = (date: Date) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -132,6 +152,13 @@ export default function SchedulePage() {
         if (!hasValidSubscription(clientUser?.subscription)) {
             setPendingClassId(cls.id)
             setSubscriptionPromptOpen(true)
+            return
+        }
+
+        if (isDateAfterSubscriptionEnd(selectedDate, subscriptionEndDate)) {
+            toast.error("Plan expires before this class", {
+                description: "Please renew your plan to book classes after your subscription end date.",
+            })
             return
         }
 
@@ -292,6 +319,7 @@ export default function SchedulePage() {
                             <div className="mb-6">
                                 <CalendarStrip
                                     selectedDate={selectedDate}
+                                    disabledAfter={subscriptionEndDate}
                                     onDateSelect={(date) => {
                                         setIsLoadingClasses(true)
                                         setSelectedDate(date)

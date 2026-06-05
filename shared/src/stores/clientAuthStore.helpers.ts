@@ -13,6 +13,8 @@ export const DEFAULT_SUBSCRIPTION: ClientUser['subscription'] = {
     guestPassesRemaining: 0,
     lastPaymentId: null,
     autoRenew: false,
+    cancelAtPeriodEnd: false,
+    canceledAt: null,
     razorpaySubscriptionId: null,
 }
 
@@ -94,6 +96,8 @@ export function normalizeSubscription(raw: Record<string, unknown> | undefined):
         guestPassesRemaining: (raw.guestPassesRemaining as number) ?? 0,
         lastPaymentId: (raw.lastPaymentId as string) ?? null,
         autoRenew: (raw.autoRenew as boolean) ?? false,
+        cancelAtPeriodEnd: (raw.cancelAtPeriodEnd as boolean) ?? false,
+        canceledAt: toSafeDate(raw.canceledAt),
         razorpaySubscriptionId: (raw.razorpaySubscriptionId as string) ?? null,
     }
 }
@@ -104,6 +108,7 @@ export function buildClientUser(uid: string, data: Record<string, unknown>): Cli
         name: (data.name as string) || 'Member',
         email: (data.email as string) || '',
         avatar: data.avatar as string | undefined,
+        isFoundingMember: data.isFoundingMember === true,
         subscription: normalizeSubscription(data.subscription as Record<string, unknown>),
         stats: {
             totalClassesAttended: (data.stats as Record<string, unknown>)?.totalClassesAttended as number ?? 0,

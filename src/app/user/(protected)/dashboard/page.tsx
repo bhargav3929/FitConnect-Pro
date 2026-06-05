@@ -156,7 +156,7 @@ export default function UserDashboard() {
                                     <span className="text-lg font-black text-olive-600 leading-none">{clientUser.stats.currentStreak}</span>
                                 </div>
                             </div>
-                            <p className="app-stat-label mt-1.5">Streak</p>
+                            <p className="app-stat-label mt-1.5 font-bold">Streak</p>
                         </div>
                     </div>
 
@@ -167,7 +167,7 @@ export default function UserDashboard() {
                                 <Trophy className="w-3.5 h-3.5 text-terra-400" />
                                 <p className="app-stat-value">{clientUser.stats.totalClassesAttended}</p>
                             </div>
-                            <p className="app-stat-label normal-case tracking-normal">Classes Attended</p>
+                            <p className="app-stat-label normal-case font-bold tracking-normal">Classes Attended</p>
                         </div>
                         <div className="w-px h-10 bg-olive-400/10" />
                         <div>
@@ -177,7 +177,7 @@ export default function UserDashboard() {
                                     {clientUser.subscription.classesRemaining === null ? '∞' : clientUser.subscription.classesRemaining}
                                 </p>
                             </div>
-                            <p className="app-stat-label normal-case tracking-normal">Classes Left</p>
+                            <p className="app-stat-label normal-case font-bold tracking-normal">Classes Left</p>
                         </div>
                     </div>
 

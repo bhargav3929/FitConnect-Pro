@@ -35,7 +35,7 @@ import Link from "next/link"
 import { AnimatePresence, motion as m } from "framer-motion"
 
 export default function ProfilePage() {
-    const { clientUser, logoutClient, refreshSubscription } = useClientAuthStore()
+    const { clientUser, firebaseUser, logoutClient, refreshSubscription } = useClientAuthStore()
     const router = useRouter()
     const [showPasswordSection, setShowPasswordSection] = useState(false)
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
@@ -132,6 +132,11 @@ export default function ProfilePage() {
     const planLabel = sub.planId?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Free'
     const daysLeft = sub.endDate ? Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
     const renewalDate = sub.endDate ? new Date(sub.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+    const providerData = firebaseUser?.providerData ?? auth.currentUser?.providerData ?? []
+    const hasPasswordProvider = providerData.some((provider) => provider.providerId === 'password')
+    const hasGoogleProvider = providerData.some((provider) => provider.providerId === 'google.com')
+    const shouldShowPasswordChange = providerData.length === 0 || hasPasswordProvider
+    const externalProviderLabel = hasGoogleProvider ? 'Google' : 'your sign-in provider'
 
     const inputClasses = "w-full bg-peach-100 border border-peach-400/20 rounded-xl px-4 py-3 text-olive-600 text-sm font-medium placeholder:text-olive-300/50 focus:outline-none focus:ring-2 focus:ring-terra-400/30 focus:border-terra-400/40 transition-all"
 
@@ -345,86 +350,102 @@ export default function ProfilePage() {
             >
                 <p className="app-label px-1 mb-3">Security</p>
                 <div className="bg-peach-50 border border-peach-400/15 rounded-2xl overflow-hidden">
-                    <button
-                        onClick={() => setShowPasswordSection(!showPasswordSection)}
-                        className="w-full flex items-center gap-4 p-4 hover:bg-peach-100/60 transition-colors group active:bg-peach-200/50"
-                    >
-                        <div className="w-9 h-9 rounded-xl bg-olive-400/8 flex items-center justify-center flex-shrink-0 text-olive-400">
-                            <Lock className="w-[18px] h-[18px]" />
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                            <p className="text-olive-600 font-semibold text-sm">Change Password</p>
-                            <p className="text-olive-300 text-xs">Update your account password</p>
-                        </div>
-                        <ChevronRight className={`w-4 h-4 text-olive-300/30 transition-transform ${showPasswordSection ? 'rotate-90' : ''}`} />
-                    </button>
-
-                    {showPasswordSection && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            className="px-4 pb-5 space-y-3 border-t border-peach-400/10"
-                        >
-                            <div className="pt-4">
-                                <label className="app-label mb-1.5 block">Current Password</label>
-                                <div className="relative">
-                                    <input
-                                        type={showCurrent ? 'text' : 'password'}
-                                        value={currentPassword}
-                                        onChange={(e) => setCurrentPassword(e.target.value)}
-                                        placeholder="Enter current password"
-                                        className={inputClasses}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowCurrent(!showCurrent)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-olive-300/50 hover:text-olive-400"
-                                    >
-                                        {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="app-label mb-1.5 block">New Password</label>
-                                <div className="relative">
-                                    <input
-                                        type={showNew ? 'text' : 'password'}
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        placeholder="At least 6 characters"
-                                        className={inputClasses}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowNew(!showNew)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-olive-300/50 hover:text-olive-400"
-                                    >
-                                        {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="app-label mb-1.5 block">Confirm New Password</label>
-                                <input
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    placeholder="Repeat new password"
-                                    className={inputClasses}
-                                />
-                            </div>
-                            <Button
-                                onClick={handleChangePassword}
-                                disabled={isChangingPassword}
-                                className="w-full h-11 bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold text-xs tracking-wider rounded-xl mt-2"
+                    {shouldShowPasswordChange ? (
+                        <>
+                            <button
+                                onClick={() => setShowPasswordSection(!showPasswordSection)}
+                                className="w-full flex items-center gap-4 p-4 hover:bg-peach-100/60 transition-colors group active:bg-peach-200/50"
                             >
-                                {isChangingPassword ? (
-                                    <><Loader2 className="w-4 h-4 animate-spin mr-2" /> UPDATING...</>
-                                ) : (
-                                    'UPDATE PASSWORD'
-                                )}
-                            </Button>
-                        </motion.div>
+                                <div className="w-9 h-9 rounded-xl bg-olive-400/8 flex items-center justify-center flex-shrink-0 text-olive-400">
+                                    <Lock className="w-[18px] h-[18px]" />
+                                </div>
+                                <div className="flex-1 text-left min-w-0">
+                                    <p className="text-olive-600 font-semibold text-sm">Change Password</p>
+                                    <p className="text-olive-300 text-xs">Update your account password</p>
+                                </div>
+                                <ChevronRight className={`w-4 h-4 text-olive-300/30 transition-transform ${showPasswordSection ? 'rotate-90' : ''}`} />
+                            </button>
+
+                            {showPasswordSection && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    className="px-4 pb-5 space-y-3 border-t border-peach-400/10"
+                                >
+                                    <div className="pt-4">
+                                        <label className="app-label mb-1.5 block">Current Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showCurrent ? 'text' : 'password'}
+                                                value={currentPassword}
+                                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                                placeholder="Enter current password"
+                                                className={inputClasses}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCurrent(!showCurrent)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-olive-300/50 hover:text-olive-400"
+                                            >
+                                                {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="app-label mb-1.5 block">New Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showNew ? 'text' : 'password'}
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                placeholder="At least 6 characters"
+                                                className={inputClasses}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNew(!showNew)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-olive-300/50 hover:text-olive-400"
+                                            >
+                                                {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="app-label mb-1.5 block">Confirm New Password</label>
+                                        <input
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            placeholder="Repeat new password"
+                                            className={inputClasses}
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={handleChangePassword}
+                                        disabled={isChangingPassword}
+                                        className="w-full h-11 bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold text-xs tracking-wider rounded-xl mt-2"
+                                    >
+                                        {isChangingPassword ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> UPDATING...</>
+                                        ) : (
+                                            'UPDATE PASSWORD'
+                                        )}
+                                    </Button>
+                                </motion.div>
+                            )}
+                        </>
+                    ) : (
+                        <div
+                            className="w-full flex items-center gap-4 p-4"
+                        >
+                            <div className="w-9 h-9 rounded-xl bg-olive-400/8 flex items-center justify-center flex-shrink-0 text-olive-400">
+                                <Shield className="w-[18px] h-[18px]" />
+                            </div>
+                            <div className="flex-1 text-left min-w-0">
+                                <p className="text-olive-600 font-semibold text-sm">Signed in with {externalProviderLabel}</p>
+                                <p className="text-olive-300 text-xs">Password is managed by {externalProviderLabel}</p>
+                            </div>
+                        </div>
                     )}
                 </div>
             </motion.div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS } from '@fitconnect/shared/types/subscription';
 import { processPayment } from '@fitconnect/shared/payments/mock-processor';
+import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
 
 export async function POST(req: NextRequest) {
     try {
@@ -55,9 +56,11 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Use founding member price if eligible
+        const syncedPlan = await getSyncedPlanEntry(planId);
+
+        // Use synced Razorpay base price, then apply founding member discount if eligible.
         const isFoundingMember = userData?.isFoundingMember === true;
-        const chargeAmount = (isFoundingMember && plan.foundingPrice) ? plan.foundingPrice : plan.price;
+        const chargeAmount = getChargeAmount(plan, syncedPlan, isFoundingMember);
 
         // Process mock payment
         const result = await processPayment(chargeAmount);
@@ -86,6 +89,11 @@ export async function POST(req: NextRequest) {
                 planCategory: plan.category,
                 credits: plan.credits,
                 durationDays: plan.durationDays,
+                listPrice: syncedPlan?.price ?? plan.price,
+                pricingSource: syncedPlan?.source ?? 'static',
+                razorpayPlanId: syncedPlan?.razorpayPlanId ?? null,
+                razorpayItemId: syncedPlan?.razorpayItemId ?? null,
+                foundingMemberDiscountApplied: isFoundingMember && !!plan.foundingPrice,
             },
             createdAt: now,
             paidAt: null,

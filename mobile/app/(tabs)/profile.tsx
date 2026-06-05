@@ -49,7 +49,7 @@ function getInitials(name: string | undefined): string {
 // ---------------------------------------------------------------------------
 
 export default function ProfileScreen() {
-    const { clientUser, logoutClient, refreshSubscription } = useClientAuthStore();
+    const { clientUser, firebaseUser, logoutClient, refreshSubscription } = useClientAuthStore();
     const router = useRouter();
     const [refreshing, setRefreshing] = useState(false);
 
@@ -83,6 +83,11 @@ export default function ProfileScreen() {
     })();
     const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - Date.now()) / 86400000)) : 0;
     const expiryLabel = endDateObj ? endDateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+    const providerData = firebaseUser?.providerData ?? auth.currentUser?.providerData ?? [];
+    const hasPasswordProvider = providerData.some((provider) => provider.providerId === 'password');
+    const hasGoogleProvider = providerData.some((provider) => provider.providerId === 'google.com');
+    const shouldShowPasswordChange = providerData.length === 0 || hasPasswordProvider;
+    const externalProviderLabel = hasGoogleProvider ? 'Google' : 'your sign-in provider';
 
     const handleCancelSubscription = useCallback(() => {
         Alert.alert(
@@ -470,72 +475,90 @@ export default function ProfileScreen() {
                 {/* ─── Security ──────────────────────────────────── */}
                 <Text style={styles.sectionLabel}>SECURITY</Text>
                 <View style={styles.securityCard}>
-                    <TouchableOpacity
-                        style={styles.securityHeader}
-                        onPress={toggleSecurity}
-                        activeOpacity={0.85}
-                    >
-                        <View style={styles.rowIconSquare}>
-                            <Feather name="lock" size={20} color={Colors.olive[400]} />
-                        </View>
-                        <View style={styles.rowTextCol}>
-                            <Text style={styles.rowTitle}>Change Password</Text>
-                            <Text style={styles.rowSubtitle}>
-                                Update your account password
-                            </Text>
-                        </View>
-                        <Animated.View style={{ transform: [{ rotate: chevronRotateDeg }] }}>
-                            <Feather
-                                name="chevron-right"
-                                size={20}
-                                color={Colors.olive[300]}
-                            />
-                        </Animated.View>
-                    </TouchableOpacity>
-
-                    {securityExpanded && (
-                        <View style={styles.passwordForm}>
-                            <Text style={styles.passwordFieldLabel}>CURRENT PASSWORD</Text>
-                            <PasswordField
-                                placeholder="Enter current password"
-                                value={currentPassword}
-                                onChangeText={setCurrentPassword}
-                                visible={showCurrentPw}
-                                onToggle={() => setShowCurrentPw(!showCurrentPw)}
-                            />
-                            <Text style={styles.passwordFieldLabel}>NEW PASSWORD</Text>
-                            <PasswordField
-                                placeholder="At least 6 characters"
-                                value={newPassword}
-                                onChangeText={setNewPassword}
-                                visible={showNewPw}
-                                onToggle={() => setShowNewPw(!showNewPw)}
-                            />
-                            <Text style={styles.passwordFieldLabel}>CONFIRM NEW PASSWORD</Text>
-                            <PasswordField
-                                placeholder="Repeat new password"
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                                visible={showConfirmPw}
-                                onToggle={() => setShowConfirmPw(!showConfirmPw)}
-                            />
+                    {shouldShowPasswordChange ? (
+                        <>
                             <TouchableOpacity
-                                style={[
-                                    styles.updatePwButton,
-                                    pwLoading && styles.buttonDisabled,
-                                ]}
-                                onPress={handleChangePassword}
-                                disabled={pwLoading}
-                                activeOpacity={0.7}
+                                style={styles.securityHeader}
+                                onPress={toggleSecurity}
+                                activeOpacity={0.85}
                             >
-                                {pwLoading ? (
-                                    <ActivityIndicator size="small" color={Colors.white} />
-                                ) : (
-                                    <Text style={styles.updatePwButtonText}>
-                                        UPDATE PASSWORD
+                                <View style={styles.rowIconSquare}>
+                                    <Feather name="lock" size={20} color={Colors.olive[400]} />
+                                </View>
+                                <View style={styles.rowTextCol}>
+                                    <Text style={styles.rowTitle}>Change Password</Text>
+                                    <Text style={styles.rowSubtitle}>
+                                        Update your account password
                                     </Text>
-                                )}
+                                </View>
+                                <Animated.View style={{ transform: [{ rotate: chevronRotateDeg }] }}>
+                                    <Feather
+                                        name="chevron-right"
+                                        size={20}
+                                        color={Colors.olive[300]}
+                                    />
+                                </Animated.View>
                             </TouchableOpacity>
+
+                            {securityExpanded && (
+                                <View style={styles.passwordForm}>
+                                    <Text style={styles.passwordFieldLabel}>CURRENT PASSWORD</Text>
+                                    <PasswordField
+                                        placeholder="Enter current password"
+                                        value={currentPassword}
+                                        onChangeText={setCurrentPassword}
+                                        visible={showCurrentPw}
+                                        onToggle={() => setShowCurrentPw(!showCurrentPw)}
+                                    />
+                                    <Text style={styles.passwordFieldLabel}>NEW PASSWORD</Text>
+                                    <PasswordField
+                                        placeholder="At least 6 characters"
+                                        value={newPassword}
+                                        onChangeText={setNewPassword}
+                                        visible={showNewPw}
+                                        onToggle={() => setShowNewPw(!showNewPw)}
+                                    />
+                                    <Text style={styles.passwordFieldLabel}>CONFIRM NEW PASSWORD</Text>
+                                    <PasswordField
+                                        placeholder="Repeat new password"
+                                        value={confirmPassword}
+                                        onChangeText={setConfirmPassword}
+                                        visible={showConfirmPw}
+                                        onToggle={() => setShowConfirmPw(!showConfirmPw)}
+                                    />
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.updatePwButton,
+                                            pwLoading && styles.buttonDisabled,
+                                        ]}
+                                        onPress={handleChangePassword}
+                                        disabled={pwLoading}
+                                        activeOpacity={0.7}
+                                    >
+                                        {pwLoading ? (
+                                            <ActivityIndicator size="small" color={Colors.white} />
+                                        ) : (
+                                            <Text style={styles.updatePwButtonText}>
+                                                UPDATE PASSWORD
+                                            </Text>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </>
+                    ) : (
+                        <View style={styles.securityHeader}>
+                            <View style={styles.rowIconSquare}>
+                                <Feather name="shield" size={20} color={Colors.olive[400]} />
+                            </View>
+                            <View style={styles.rowTextCol}>
+                                <Text style={styles.rowTitle}>
+                                    Signed in with {externalProviderLabel}
+                                </Text>
+                                <Text style={styles.rowSubtitle}>
+                                    Password is managed by {externalProviderLabel}
+                                </Text>
+                            </View>
                         </View>
                     )}
                 </View>

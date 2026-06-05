@@ -24,6 +24,8 @@ export interface UserProfile {
         guestPassesRemaining: number;
         lastPaymentId: string | null;
         autoRenew: boolean;
+        cancelAtPeriodEnd?: boolean;
+        canceledAt?: Date | null;
         razorpaySubscriptionId: string | null;
     };
     stats: {

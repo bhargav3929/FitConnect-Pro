@@ -7,6 +7,19 @@ import { FieldValue } from 'firebase-admin/firestore';
 // Razorpay sends the raw body — Next.js must not parse it before we verify.
 export const dynamic = 'force-dynamic';
 
+function toDate(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
+        return (value as { toDate: () => Date }).toDate();
+    }
+    if (typeof value === 'object' && 'seconds' in value) {
+        return new Date((value as { seconds: number }).seconds * 1000);
+    }
+    const date = new Date(value as string | number);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export async function POST(req: NextRequest) {
     const signature = req.headers.get('x-razorpay-signature');
     if (!signature) {
@@ -143,15 +156,17 @@ async function handleSubscriptionCancelled(payload: Record<string, unknown>) {
     await adminDb.runTransaction(async (transaction) => {
         const doc = await transaction.get(userRef);
         if (!doc.exists) return;
-        const currentStatus = doc.data()?.subscription?.status;
-        // Only update if not already cancelled — our cancel API may have already set this
-        if (currentStatus !== 'canceled') {
-            transaction.update(userRef, {
-                'subscription.status': 'canceled',
-                'subscription.autoRenew': false,
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-        }
+        const subscription = doc.data()?.subscription;
+        const endDate = toDate(subscription?.endDate);
+        const isStillUsable = !!endDate && endDate > new Date();
+
+        transaction.update(userRef, {
+            'subscription.status': isStillUsable ? 'active' : 'canceled',
+            'subscription.autoRenew': false,
+            'subscription.cancelAtPeriodEnd': isStillUsable,
+            'subscription.canceledAt': subscription?.canceledAt ?? FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
     });
 }
 

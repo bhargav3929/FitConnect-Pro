@@ -16,6 +16,7 @@ interface CalendarStripProps {
     selectedDate: Date;
     onDateSelect: (date: Date) => void;
     daysCount?: number;
+    disabledAfter?: Date | null;
 }
 
 const DAY_ITEM_WIDTH = 56;
@@ -27,6 +28,7 @@ export default function CalendarStrip({
     selectedDate,
     onDateSelect,
     daysCount = 14,
+    disabledAfter,
 }: CalendarStripProps) {
     const scrollRef = useRef<ScrollView>(null);
     const today = new Date();
@@ -65,6 +67,15 @@ export default function CalendarStrip({
     const canScrollLeft = scrollX > 2;
     const canScrollRight = scrollX < maxScroll - 2;
 
+    const isAfterDisabledDate = (date: Date) => {
+        if (!disabledAfter) return false;
+        const day = new Date(date);
+        day.setHours(0, 0, 0, 0);
+        const limit = new Date(disabledAfter);
+        limit.setHours(0, 0, 0, 0);
+        return day > limit;
+    };
+
     // Progress thumb dimensions as % of track
     const thumbRatio =
         contentWidth > 0 && viewportWidth > 0
@@ -91,6 +102,7 @@ export default function CalendarStrip({
                     {days.map((day) => {
                         const isSelected = isSameDay(day, selectedDate);
                         const isToday = isSameDay(day, today);
+                        const isDisabled = isAfterDisabledDate(day);
 
                         return (
                             <TouchableOpacity
@@ -99,14 +111,19 @@ export default function CalendarStrip({
                                     styles.dayItem,
                                     isToday && !isSelected && styles.dayItemToday,
                                     isSelected && styles.dayItemSelected,
+                                    isDisabled && styles.dayItemDisabled,
                                 ]}
-                                onPress={() => onDateSelect(day)}
-                                activeOpacity={0.7}
+                                onPress={() => {
+                                    if (!isDisabled) onDateSelect(day);
+                                }}
+                                disabled={isDisabled}
+                                activeOpacity={isDisabled ? 1 : 0.7}
                             >
                                 <Text
                                     style={[
                                         styles.dayName,
                                         isSelected && styles.dayNameSelected,
+                                        isDisabled && styles.dayTextDisabled,
                                     ]}
                                 >
                                     {formatDayName(day)}
@@ -115,6 +132,7 @@ export default function CalendarStrip({
                                     style={[
                                         styles.dayNumber,
                                         isSelected && styles.dayNumberSelected,
+                                        isDisabled && styles.dayTextDisabled,
                                     ]}
                                 >
                                     {day.getDate()}
@@ -189,6 +207,10 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
         ...Shadows.lg,
     },
+    dayItemDisabled: {
+        backgroundColor: Alpha.peach200_60,
+        opacity: 0.45,
+    },
     dayName: {
         fontSize: FontSize.xs,
         color: Colors.olive[400],
@@ -205,6 +227,9 @@ const styles = StyleSheet.create({
     },
     dayNumberSelected: {
         color: Colors.white,
+    },
+    dayTextDisabled: {
+        color: Colors.olive[300],
     },
     todayDot: {
         width: 5,

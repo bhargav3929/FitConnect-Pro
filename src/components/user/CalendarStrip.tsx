@@ -7,9 +7,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 interface CalendarStripProps {
     selectedDate: Date
     onDateSelect: (date: Date) => void
+    disabledAfter?: Date | null
 }
 
-export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps) {
+export function CalendarStrip({ selectedDate, onDateSelect, disabledAfter }: CalendarStripProps) {
     const [dates, setDates] = useState<Date[]>([])
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -35,6 +36,15 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
         return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     }
 
+    const isAfterDisabledDate = (date: Date) => {
+        if (!disabledAfter) return false
+        const day = new Date(date)
+        day.setHours(0, 0, 0, 0)
+        const limit = new Date(disabledAfter)
+        limit.setHours(0, 0, 0, 0)
+        return day > limit
+    }
+
     return (
         <div className="w-full">
             {/* Days Strip */}
@@ -53,14 +63,21 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
                     {dates.map((date, i) => {
                         const isSelected = isSameDate(date, selectedDate)
                         const isToday = isSameDate(date, new Date())
+                        const isDisabled = isAfterDisabledDate(date)
 
                         return (
                             <button
                                 key={i}
-                                onClick={() => onDateSelect(date)}
+                                onClick={() => {
+                                    if (!isDisabled) onDateSelect(date)
+                                }}
+                                disabled={isDisabled}
+                                aria-disabled={isDisabled}
                                 className={`
                                     flex flex-col items-center justify-center min-w-[56px] min-h-[72px] py-3 px-1 rounded-2xl transition-all snap-center active:scale-95
-                                    ${isSelected
+                                    ${isDisabled
+                                        ? 'cursor-not-allowed bg-peach-100/40 text-olive-200 opacity-45'
+                                        : isSelected
                                         ? 'bg-terra-400 text-peach-50 shadow-lg shadow-terra-400/20'
                                         : isToday
                                             ? 'bg-peach-200/60 text-olive-600'
@@ -68,7 +85,7 @@ export function CalendarStrip({ selectedDate, onDateSelect }: CalendarStripProps
                                     }
                                 `}
                             >
-                                <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-peach-50/70' : 'text-olive-300'}`}>
+                                <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDisabled ? 'text-olive-200' : isSelected ? 'text-peach-50/70' : 'text-olive-300'}`}>
                                     {isToday && isSelected ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}
                                 </span>
                                 <span className="text-xl font-black leading-none">

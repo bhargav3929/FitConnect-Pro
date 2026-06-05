@@ -13,10 +13,7 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { PaginationControls } from "@/components/ui/pagination-controls"
-import {
-    getMembersPage,
-    type FirestorePageCursor,
-} from "@fitconnect/shared/firebase/firestore"
+import { getAllMembers } from "@fitconnect/shared/firebase/firestore"
 import { UserProfile } from "@fitconnect/shared/types/user"
 import { toast } from "sonner"
 
@@ -24,35 +21,28 @@ const PLAN_FILTERS = ["All Plans", "unlimited", "twice_weekly", "once_weekly", "
 const STATUS_FILTERS = ["All Status", "active", "No Plan", "expired", "canceled"]
 const PAGE_SIZE = 12
 
+function getDateTime(date: Date | string | null | undefined): number {
+    if (!date) return 0
+    const d = typeof date === 'string' ? new Date(date) : date
+    const time = d.getTime()
+    return Number.isNaN(time) ? 0 : time
+}
+
 export default function MembersPage() {
     const [members, setMembers] = useState<UserProfile[]>([])
-    const [totalMembers, setTotalMembers] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [planFilter, setPlanFilter] = useState("All Plans")
     const [statusFilter, setStatusFilter] = useState("All Status")
-    const [requestedPage, setRequestedPage] = useState(1)
-    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
-    const currentCursor = pageCursors[requestedPage - 1] || null
+    const [page, setPage] = useState(1)
 
     useEffect(() => {
         let cancelled = false
 
-        getMembersPage({
-            pageSize: PAGE_SIZE,
-            cursor: currentCursor,
-            planId: planFilter === "All Plans" ? undefined : planFilter,
-            status: statusFilter === "All Status" || statusFilter === "No Plan" ? undefined : statusFilter as UserProfile['subscription']['status'],
-        })
-            .then((pageResult) => {
+        getAllMembers()
+            .then((items) => {
                 if (cancelled) return
-                setMembers(pageResult.items)
-                setTotalMembers(pageResult.total)
-                setPageCursors(prev => {
-                    const next = prev.slice(0, requestedPage)
-                    next[requestedPage] = pageResult.nextCursor
-                    return next
-                })
+                setMembers(items.sort((a, b) => getDateTime(b.createdAt) - getDateTime(a.createdAt)))
             })
             .catch(() => {
                 if (!cancelled) toast.error("Failed to load members")
@@ -64,7 +54,7 @@ export default function MembersPage() {
         return () => {
             cancelled = true
         }
-    }, [requestedPage, currentCursor, planFilter, statusFilter])
+    }, [])
 
     const filteredMembers = members.filter(member => {
         const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,9 +66,18 @@ export default function MembersPage() {
             member.subscription.status === statusFilter
         return matchesSearch && matchesPlan && matchesStatus
     })
-    const totalPages = Math.max(1, Math.ceil(totalMembers / PAGE_SIZE))
-    const page = Math.min(requestedPage, totalPages)
-    const paginatedMembers = filteredMembers
+    const totalMembers = members.length
+    const totalFilteredMembers = filteredMembers.length
+    const totalPages = Math.max(1, Math.ceil(totalFilteredMembers / PAGE_SIZE))
+    const currentPage = Math.min(page, totalPages)
+    const paginatedMembers = filteredMembers.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+    )
+
+    useEffect(() => {
+        setPage(1)
+    }, [searchQuery, planFilter, statusFilter])
 
     const activeCount = members.filter(m => m.subscription.status === 'active').length
     const totalCredits = members.reduce((sum, m) => sum + (m.subscription.classesRemaining ?? 0), 0)
@@ -185,20 +184,13 @@ export default function MembersPage() {
                         type="text"
                         placeholder="Search by name or email..."
                         value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value)
-                            setRequestedPage(1)
-                        }}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                     />
                 </div>
                 <select
                     value={planFilter}
-                    onChange={(e) => {
-                        setPlanFilter(e.target.value)
-                        setRequestedPage(1)
-                        setPageCursors([null])
-                    }}
+                    onChange={(e) => setPlanFilter(e.target.value)}
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {PLAN_FILTERS.map(plan => (
@@ -207,11 +199,7 @@ export default function MembersPage() {
                 </select>
                 <select
                     value={statusFilter}
-                    onChange={(e) => {
-                        setStatusFilter(e.target.value)
-                        setRequestedPage(1)
-                        setPageCursors([null])
-                    }}
+                    onChange={(e) => setStatusFilter(e.target.value)}
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {STATUS_FILTERS.map(status => (
@@ -384,11 +372,11 @@ export default function MembersPage() {
                     )}
                     {filteredMembers.length > 0 && (
                         <PaginationControls
-                            page={page}
-                            totalItems={totalMembers}
+                            page={currentPage}
+                            totalItems={totalFilteredMembers}
                             pageSize={PAGE_SIZE}
                             itemLabel="members"
-                            onPageChange={setRequestedPage}
+                            onPageChange={setPage}
                         />
                     )}
                 </motion.div>
@@ -402,7 +390,9 @@ export default function MembersPage() {
                     transition={{ delay: 0.5 }}
                     className="flex items-center justify-between text-olive-300 text-xs tracking-wider"
                 >
-                    <span>Showing page {page} of {Math.max(1, Math.ceil(totalMembers / PAGE_SIZE))} members</span>
+                    <span>
+                        Showing {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, totalFilteredMembers)} of {totalFilteredMembers} filtered members
+                    </span>
                     <span className="font-mono bg-peach-200/30 px-3 py-1 rounded-full border border-peach-400/15">
                         {activeCount} active &bull; {members.length - activeCount} inactive
                     </span>

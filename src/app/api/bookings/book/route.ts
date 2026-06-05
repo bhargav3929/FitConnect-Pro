@@ -27,6 +27,19 @@ function getPositiveNumber(value: unknown): number | undefined {
     return typeof value === 'number' && value > 0 ? value : undefined;
 }
 
+function getClassStartDate(classDate: Date, startTime: unknown): Date {
+    const date = new Date(classDate);
+    if (typeof startTime === 'string') {
+        const match = startTime.trim().match(/^(\d{1,2}):(\d{2})/);
+        if (match) {
+            date.setHours(Number(match[1]), Number(match[2]), 0, 0);
+            return date;
+        }
+    }
+    date.setHours(0, 0, 0, 0);
+    return date;
+}
+
 export async function POST(req: NextRequest) {
     try {
         // Verify auth
@@ -145,6 +158,15 @@ export async function POST(req: NextRequest) {
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 throw { status: 400, error: 'Your subscription has expired. Please renew to continue booking.', code: 'subscription-expired' };
+            }
+
+            const classStartDate = getClassStartDate(classDate, classData.startTime);
+            if (classStartDate > subEndDate) {
+                throw {
+                    status: 400,
+                    error: 'This class is after your subscription end date. Please renew to book it.',
+                    code: 'subscription-expired-before-class',
+                };
             }
 
             // Determine credit type

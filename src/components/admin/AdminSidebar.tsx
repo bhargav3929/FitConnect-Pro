@@ -28,14 +28,14 @@ import { useRouter } from "next/navigation"
 
 const NAV_ITEMS = [
     { label: "Dashboard", icon: SquaresFour, href: "/admin/dashboard" },
+    { label: "Check-In", icon: CheckSquare, href: "/admin/checkin" },
+    { label: "Bookings", icon: BookmarkSimple, href: "/admin/bookings" },
     { label: "Classes", icon: CalendarDots, href: "/admin/classes" },
-    { label: "Facility", icon: MapPin, href: "/admin/locations" },
-    { label: "Trainers", icon: UsersThree, href: "/admin/trainers" },
     { label: "Members", icon: UserCircle, href: "/admin/members" },
     { label: "Leads", icon: EnvelopeSimple, href: "/admin/leads" },
     { label: "Waitlist", icon: Star, href: "/admin/waitlist" },
-    { label: "Bookings", icon: BookmarkSimple, href: "/admin/bookings" },
-    { label: "Check-In", icon: CheckSquare, href: "/admin/checkin" },
+    { label: "Trainers", icon: UsersThree, href: "/admin/trainers" },
+    { label: "Facility", icon: MapPin, href: "/admin/locations" },
     { label: "Feedback", icon: ChatCircle, href: "/admin/feedback" },
     { label: "Reports", icon: ChartBar, href: "/admin/reports" },
 ]

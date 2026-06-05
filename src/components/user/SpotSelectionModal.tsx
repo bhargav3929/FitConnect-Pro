@@ -268,7 +268,7 @@ export function SpotSelectionModal({
                                                 </div>
 
                                                 {/* Right column: reformers 6+ — offset down to stagger rows */}
-                                                <div className="flex flex-col gap-4 flex-1 mt-10">
+                                                <div className="flex flex-col gap-4 flex-1">
                                                     {spots.slice(5).map((spotNum) => (
                                                         <ReformerCell
                                                             key={spotNum}

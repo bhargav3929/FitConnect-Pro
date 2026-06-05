@@ -129,7 +129,7 @@ export default function IntroClassPage() {
                         You&apos;re in.
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        Swetha will reach out shortly to lock in your free 30-minute drop-in session.
+                        Swetha will reach out shortly to lock in your 30-minute intro session.
                     </p>
                     <Button
                         onClick={() => router.push('/')}

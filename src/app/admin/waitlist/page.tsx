@@ -1,15 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { doc, updateDoc, Timestamp } from "firebase/firestore"
+import { collection, doc, getDocs, orderBy, query, updateDoc, Timestamp } from "firebase/firestore"
 import { db } from "@fitconnect/shared/firebase/config"
 import { toast } from "sonner"
 import { Mail, Calendar } from "lucide-react"
 import { PaginationControls } from "@/components/ui/pagination-controls"
-import {
-    getCollectionPage,
-    type FirestorePageCursor,
-} from "@fitconnect/shared/firebase/firestore"
 
 type WaitlistStatus = "new" | "contacted" | "converted" | "archived"
 
@@ -48,31 +44,20 @@ function formatCreatedAt(createdAt?: Timestamp | Date | string | number | { seco
 
 export default function WaitlistPage() {
     const [entries, setEntries] = useState<WaitlistEntry[]>([])
-    const [totalEntries, setTotalEntries] = useState(0)
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState<"all" | WaitlistStatus>("all")
-    const [requestedPage, setRequestedPage] = useState(1)
-    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
-    const currentCursor = pageCursors[requestedPage - 1] || null
+    const [page, setPage] = useState(1)
 
     useEffect(() => {
         let cancelled = false
 
-        getCollectionPage<WaitlistEntry>("waitlist", {
-            pageSize: PAGE_SIZE,
-            cursor: currentCursor,
-            orderField: "createdAt",
-            filters: filter === "all" ? undefined : [{ field: "status", op: "==", value: filter }],
-        })
-            .then((pageResult) => {
+        getDocs(query(collection(db, "waitlist"), orderBy("createdAt", "desc")))
+            .then((snapshot) => {
                 if (cancelled) return
-                setEntries(pageResult.items)
-                setTotalEntries(pageResult.total)
-                setPageCursors(prev => {
-                    const next = prev.slice(0, requestedPage)
-                    next[requestedPage] = pageResult.nextCursor
-                    return next
-                })
+                setEntries(snapshot.docs.map((docSnap) => ({
+                    id: docSnap.id,
+                    ...docSnap.data(),
+                })) as WaitlistEntry[])
             })
             .catch(() => {
                 if (!cancelled) toast.error("Failed to load waitlist")
@@ -84,21 +69,31 @@ export default function WaitlistPage() {
         return () => {
             cancelled = true
         }
-    }, [requestedPage, currentCursor, filter])
+    }, [])
+
+    useEffect(() => {
+        setPage(1)
+    }, [filter])
 
     const updateStatus = async (id: string, status: WaitlistStatus) => {
         try {
             await updateDoc(doc(db, "waitlist", id), { status })
+            setEntries(prev => prev.map((entry) => entry.id === id ? { ...entry, status } : entry))
             toast.success(`Marked as ${status}`)
         } catch {
             toast.error("Failed to update status")
         }
     }
 
-    const filtered = entries
-    const totalPages = Math.max(1, Math.ceil(totalEntries / PAGE_SIZE))
-    const page = Math.min(requestedPage, totalPages)
-    const paginated = filtered
+    const filtered = filter === "all" ? entries : entries.filter((entry) => entry.status === filter)
+    const totalEntries = entries.length
+    const totalFilteredEntries = filtered.length
+    const totalPages = Math.max(1, Math.ceil(totalFilteredEntries / PAGE_SIZE))
+    const currentPage = Math.min(page, totalPages)
+    const paginated = filtered.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+    )
     const counts = STATUS_OPTIONS.reduce<Record<string, number>>(
         (acc, s) => ({ ...acc, [s]: entries.filter((e) => e.status === s).length }),
         { all: totalEntries },
@@ -133,11 +128,7 @@ export default function WaitlistPage() {
                 {(["all", ...STATUS_OPTIONS] as const).map((s) => (
                     <button
                         key={s}
-                        onClick={() => {
-                            setFilter(s)
-                            setRequestedPage(1)
-                            setPageCursors([null])
-                        }}
+                        onClick={() => setFilter(s)}
                         className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all capitalize ${
                             filter === s
                                 ? "bg-terra-400 text-peach-50 shadow-lg shadow-terra-400/20"
@@ -199,11 +190,11 @@ export default function WaitlistPage() {
                         </article>
                     ))}
                     <PaginationControls
-                        page={page}
-                        totalItems={totalEntries}
+                        page={currentPage}
+                        totalItems={totalFilteredEntries}
                         pageSize={PAGE_SIZE}
                         itemLabel="entries"
-                        onPageChange={setRequestedPage}
+                        onPageChange={setPage}
                     />
                 </div>
             )}

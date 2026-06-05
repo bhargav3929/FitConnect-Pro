@@ -3,6 +3,7 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, LEGACY_PLAN_MAP, VALID_PLAN_IDS, type PlanId } from '@fitconnect/shared/types/subscription';
 import { FieldValue } from 'firebase-admin/firestore';
 import { processPayment } from '@fitconnect/shared/payments/mock-processor';
+import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
 
 export async function POST(req: NextRequest) {
     try {
@@ -61,8 +62,12 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const syncedPlan = await getSyncedPlanEntry(planId);
+        const isFoundingMember = userDoc.data()?.isFoundingMember === true;
+        const chargeAmount = getChargeAmount(plan, syncedPlan, isFoundingMember);
+
         // Process mock payment
-        const paymentResult = await processPayment(plan.price);
+        const paymentResult = await processPayment(chargeAmount);
 
         // Create payment record
         const paymentRef = adminDb.collection('payments').doc();
@@ -74,7 +79,7 @@ export async function POST(req: NextRequest) {
             id: paymentRef.id,
             paymentIntentId: paymentResult.paymentIntentId,
             userId,
-            amount: plan.price,
+            amount: chargeAmount,
             currency: 'usd',
             status: paymentResult.success ? 'succeeded' : 'failed',
             planId,
@@ -83,6 +88,11 @@ export async function POST(req: NextRequest) {
                 planCategory: plan.category,
                 credits: plan.credits,
                 durationDays: plan.durationDays,
+                listPrice: syncedPlan?.price ?? plan.price,
+                pricingSource: syncedPlan?.source ?? 'static',
+                razorpayPlanId: syncedPlan?.razorpayPlanId ?? null,
+                razorpayItemId: syncedPlan?.razorpayItemId ?? null,
+                foundingMemberDiscountApplied: isFoundingMember && !!plan.foundingPrice,
             },
             createdAt: now,
             paidAt: paymentResult.success ? now : null,

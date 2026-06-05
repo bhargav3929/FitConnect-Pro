@@ -45,7 +45,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         id: 'drop_in',
         name: 'Intro Class',
         category: 'class_pack',
-        price: 0,
+        price: 1000,
         credits: 1,
         durationDays: 30,
         maxClassesPerDay: 1,
@@ -56,6 +56,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         tagline: 'Try a 30-minute intro class with no commitment.',
         features: [
             '1 intro 30-minute session',
+            'SolMare coupon',
             'No commitment',
             'New clients only',
         ],

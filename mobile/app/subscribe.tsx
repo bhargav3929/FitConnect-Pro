@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -18,10 +18,11 @@ import {
     callCreatePaymentOrder,
     callVerifyPayment,
     callCancelSubscription,
+    callGetPricing,
 } from '@fitconnect/shared/firebase/firestore';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { useIntroClassLead } from '../hooks/useIntroClassLead';
-import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha, FontFamily } from '../constants/theme';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,10 +161,12 @@ function PlanCard({
     plan,
     selected,
     onSelect,
+    displayPrice,
 }: {
     plan: PlanDefinition;
     selected: boolean;
     onSelect: () => void;
+    displayPrice: number;
 }) {
     return (
         <TouchableOpacity
@@ -197,9 +200,13 @@ function PlanCard({
             <Text style={planCardStyles.planName}>{plan.name}</Text>
 
             <View style={planCardStyles.priceRow}>
-                <Text style={planCardStyles.price}>₹{plan.price}</Text>
+                <Text style={planCardStyles.price}>₹{displayPrice.toLocaleString('en-IN')}</Text>
                 <Text style={planCardStyles.priceSuffix}>
-                    {plan.category === 'membership' ? '/month' : '/pack'}
+                    {plan.id === 'drop_in'
+                        ? '/session'
+                        : plan.category === 'membership'
+                            ? '/month'
+                            : '/pack'}
                 </Text>
             </View>
 
@@ -326,6 +333,7 @@ export default function SubscribeScreen() {
     const [step, setStep] = useState<Step>('plan');
     const [activeTab, setActiveTab] = useState<PlanCategory>('membership');
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+    const [priceOverrides, setPriceOverrides] = useState<Record<string, number>>({});
 
     // Processing state
     const [paymentState, setPaymentState] = useState<
@@ -340,10 +348,32 @@ export default function SubscribeScreen() {
     );
 
     const selectedPlan = selectedPlanId ? getPlanById(selectedPlanId) : null;
+    const selectedPlanPrice = selectedPlan ? priceOverrides[selectedPlan.id] ?? selectedPlan.price : 0;
     const hasActiveSubscription = clientUser?.subscription?.status === 'active' && (
         !clientUser.subscription.endDate ||
         new Date(clientUser.subscription.endDate).getTime() > Date.now()
     );
+
+    useEffect(() => {
+        let mounted = true;
+
+        callGetPricing()
+            .then((data) => {
+                if (!mounted) return;
+                const overrides: Record<string, number> = {};
+                for (const plan of data.plans) {
+                    overrides[plan.planId] = plan.price;
+                }
+                setPriceOverrides(overrides);
+            })
+            .catch(() => {
+                // Static PLAN_CATALOG prices remain the offline fallback.
+            });
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     // Navigate to checkout
     const handleContinue = useCallback(() => {
@@ -543,6 +573,7 @@ export default function SubscribeScreen() {
                                 plan={plan}
                                 selected={selectedPlanId === plan.id}
                                 onSelect={() => setSelectedPlanId(plan.id)}
+                                displayPrice={priceOverrides[plan.id] ?? plan.price}
                             />
                         ))}
 
@@ -599,7 +630,7 @@ export default function SubscribeScreen() {
                         <View style={styles.orderSummary}>
                             <Text style={styles.orderPlanName}>{selectedPlan.name}</Text>
                             <Text style={styles.orderLabel}>One-time payment</Text>
-                            <Text style={styles.orderAmount}>₹{selectedPlan.price}</Text>
+                            <Text style={styles.orderAmount}>₹{selectedPlanPrice.toLocaleString('en-IN')}</Text>
                         </View>
 
                         {/* Razorpay checkout */}

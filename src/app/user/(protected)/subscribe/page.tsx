@@ -42,7 +42,7 @@ export default function SubscribePage() {
             .then(data => {
                 const overrides: Record<string, number> = {}
                 for (const p of data.plans) {
-                    if (p.configured) overrides[p.planId] = p.price
+                    overrides[p.planId] = p.price
                 }
                 setPriceOverrides(overrides)
             })

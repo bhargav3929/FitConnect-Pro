@@ -103,7 +103,7 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
                 }
             }
 
-            await setDoc(doc(db, "users", userCredential.user.uid), userData)
+            await setDoc(doc(db, "users", userCredential.user.uid), userData, { merge: true })
 
             toast.success("Account created successfully!")
             setOpen(false)

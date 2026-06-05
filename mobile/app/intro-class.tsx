@@ -133,7 +133,7 @@ export default function IntroClassScreen() {
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
                     <Text style={styles.successTitle}>You&apos;re in.</Text>
                     <Text style={styles.successBody}>
-                        Swetha will reach out shortly to lock in your free 30-minute drop-in
+                        Swetha will reach out shortly to lock in your 30-minute intro
                         session.
                     </Text>
                     <TouchableOpacity

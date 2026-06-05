@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS } from '@fitconnect/shared/types/subscription';
 import { createRazorpayOrder } from '@fitconnect/shared/payments/razorpay-processor';
+import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
 
 function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
     if (!subscription || subscription.status !== 'active') return false;
@@ -55,8 +56,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const syncedPlan = await getSyncedPlanEntry(planId);
         const isFoundingMember = userData?.isFoundingMember === true;
-        const chargeAmount = (isFoundingMember && plan.foundingPrice) ? plan.foundingPrice : plan.price;
+        const chargeAmount = getChargeAmount(plan, syncedPlan, isFoundingMember);
 
         const keyId = process.env.RAZORPAY_KEY_ID!;
         const keySecret = process.env.RAZORPAY_KEY_SECRET!;
@@ -79,6 +81,11 @@ export async function POST(req: NextRequest) {
                 planCategory: plan.category,
                 credits: plan.credits,
                 durationDays: plan.durationDays,
+                listPrice: syncedPlan?.price ?? plan.price,
+                pricingSource: syncedPlan?.source ?? 'static',
+                razorpayPlanId: syncedPlan?.razorpayPlanId ?? null,
+                razorpayItemId: syncedPlan?.razorpayItemId ?? null,
+                foundingMemberDiscountApplied: isFoundingMember && !!plan.foundingPrice,
             },
             createdAt: now,
             paidAt: null,

@@ -13,14 +13,14 @@ const SOURCES: Record<LogoVariant, number> = {
     cream: require('../assets/sol-wordmark-cream.png'),
 };
 
-const WORDMARK_ASPECT_RATIO = 316 / 262;
+const LOGO_ASPECT_RATIO = 245 / 227;
 
 export default function Logo({ variant = 'terra', height = 56, style }: LogoProps) {
     return (
         <Image
             source={SOURCES[variant]}
             resizeMode="contain"
-            style={[{ height, width: height * WORDMARK_ASPECT_RATIO }, style]}
+            style={[{ height, width: height * LOGO_ASPECT_RATIO }, style]}
             accessibilityLabel="SOL Pilates Studio"
         />
     );

@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
     Dimensions,
     RefreshControl,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -18,6 +19,7 @@ import {
     getTrainers,
     getFacility,
 } from '@fitconnect/shared/firebase/firestore';
+import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import type { ClassSession } from '@fitconnect/shared/types/class';
 import type { Trainer } from '@fitconnect/shared/types/trainer';
 import type { GymCenter } from '@fitconnect/shared/types/gym';
@@ -78,6 +80,25 @@ function formatFullDate(date: Date): string {
     return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+function parseSubscriptionEndDate(endDate: unknown): Date | null {
+    if (!endDate) return null;
+    if (endDate instanceof Date && !isNaN(endDate.getTime())) return endDate;
+    if (endDate && typeof endDate === 'object' && 'seconds' in (endDate as Record<string, unknown>)) {
+        return new Date((endDate as { seconds: number }).seconds * 1000);
+    }
+    const parsed = new Date(endDate as string | number);
+    return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isDateAfterSubscriptionEnd(date: Date, endDate: Date | null): boolean {
+    if (!endDate) return false;
+    const day = new Date(date);
+    day.setHours(0, 0, 0, 0);
+    const limit = new Date(endDate);
+    limit.setHours(0, 0, 0, 0);
+    return day > limit;
+}
+
 function isToday(date: Date): boolean {
     const now = new Date();
     return (
@@ -97,6 +118,7 @@ function parseFacilities(raw: string | string[]): string[] {
 type FilterKey = 'instructor' | 'classType';
 
 export default function ScheduleScreen() {
+    const clientUser = useClientAuthStore((state) => state.clientUser);
     const [activeTab, setActiveTab] = useState<SectionTab>('schedule');
     const [classes, setClasses] = useState<ClassSession[]>([]);
     const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -172,9 +194,20 @@ export default function ScheduleScreen() {
     const getTrainerName = (trainerId: string) =>
         trainers.find((t) => t.id === trainerId)?.name || 'Instructor';
 
+    const subscriptionEndDate = parseSubscriptionEndDate(clientUser?.subscription?.endDate);
+
     const handleDateSelect = (date: Date) => setSelectedDate(date);
 
-    const handleBook = (cls: ClassSession) => setSelectedClass(cls);
+    const handleBook = (cls: ClassSession) => {
+        if (isDateAfterSubscriptionEnd(selectedDate, subscriptionEndDate)) {
+            Alert.alert(
+                'Plan Expires Before This Class',
+                'Please renew your plan to book classes after your subscription end date.',
+            );
+            return;
+        }
+        setSelectedClass(cls);
+    };
 
     const handleBooked = () => {
         // Real-time subscription refreshes class data automatically
@@ -211,6 +244,7 @@ export default function ScheduleScreen() {
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
                 daysCount={14}
+                disabledAfter={subscriptionEndDate}
             />
 
             {/* Date header + Today button */}

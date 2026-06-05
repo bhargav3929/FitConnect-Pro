@@ -102,7 +102,7 @@ describe('Subscribe screen — plan catalog integration', () => {
         const dropIn = getPlanById('drop_in');
         expect(dropIn).toBeDefined();
         expect(dropIn!.credits).toBe(1);
-        expect(dropIn!.price).toBe(0);
+        expect(dropIn!.price).toBe(1000);
     });
 
     it('ten_pack plan has correct values', async () => {

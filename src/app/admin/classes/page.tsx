@@ -37,6 +37,7 @@ import {
     callCreateClass,
     callDeleteClass,
     callUpdateClass,
+    getClassStats,
     getClassesPage,
     getTrainers,
     type FirestorePageCursor,
@@ -83,6 +84,12 @@ const defaultFormData: ClassFormData = {
 export default function ClassesPage() {
     const [classes, setClasses] = useState<ClassSession[]>([])
     const [totalClasses, setTotalClasses] = useState(0)
+    const [classStats, setClassStats] = useState({
+        totalClasses: 0,
+        scheduledClasses: 0,
+        completedClasses: 0,
+        totalCapacity: 0,
+    })
     const [trainers, setTrainers] = useState<Trainer[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
@@ -100,12 +107,14 @@ export default function ClassesPage() {
 
     useEffect(() => {
         let cancelled = false
-        getTrainers()
-            .then((data) => {
-                if (!cancelled) setTrainers(data)
+        Promise.all([getTrainers(), getClassStats()])
+            .then(([trainerData, stats]) => {
+                if (cancelled) return
+                setTrainers(trainerData)
+                setClassStats(stats)
             })
             .catch(() => {
-                // Trainers load silently
+                if (!cancelled) toast.error("Failed to load class stats")
             })
         return () => {
             cancelled = true
@@ -147,6 +156,8 @@ export default function ClassesPage() {
         try {
             await callDeleteClass(classId, "Canceled by admin")
             setClasses(prev => prev.filter(c => c.id !== classId))
+            const stats = await getClassStats()
+            setClassStats(stats)
             toast.success("Class deleted")
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to delete class"
@@ -228,6 +239,8 @@ export default function ClassesPage() {
             }
             setDialogOpen(false)
             setIsLoading(true)
+            const stats = await getClassStats()
+            setClassStats(stats)
             setRequestedPage(1)
             setPageCursors([null])
         } catch (err: unknown) {
@@ -246,10 +259,6 @@ export default function ClassesPage() {
     const totalPages = Math.max(1, Math.ceil(totalClasses / PAGE_SIZE))
     const page = Math.min(requestedPage, totalPages)
     const paginatedClasses = filteredClasses
-
-    const scheduledCount = classes.filter(c => c.status === 'scheduled').length
-    const completedCount = classes.filter(c => c.status === 'completed').length
-    const totalCapacity = classes.reduce((sum, c) => sum + (c.totalSpots || c.capacity || 0), 0)
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -321,10 +330,10 @@ export default function ClassesPage() {
                 className="grid grid-cols-2 lg:grid-cols-4 gap-4"
             >
                 {[
-                    { label: "Total Classes", value: classes.length, icon: Dumbbell },
-                    { label: "Scheduled", value: scheduledCount, icon: Calendar },
-                    { label: "Completed", value: completedCount, icon: CheckCircle2 },
-                    { label: "Total Capacity", value: totalCapacity, icon: Users },
+                    { label: "Total Classes", value: classStats.totalClasses, icon: Dumbbell },
+                    { label: "Scheduled", value: classStats.scheduledClasses, icon: Calendar },
+                    { label: "Completed", value: classStats.completedClasses, icon: CheckCircle2 },
+                    { label: "Total Capacity", value: classStats.totalCapacity, icon: Users },
                 ].map((stat) => (
                     <div
                         key={stat.label}
@@ -630,9 +639,9 @@ export default function ClassesPage() {
                     transition={{ delay: 0.5 }}
                     className="flex items-center justify-between text-olive-300 text-xs tracking-wider"
                 >
-                    <span>Showing {filteredClasses.length} of {classes.length} classes</span>
+                    <span>Showing {filteredClasses.length} of {totalClasses} classes</span>
                     <span className="font-mono bg-peach-200/30 px-3 py-1 rounded-full border border-peach-400/15">
-                        {scheduledCount} upcoming &bull; {completedCount} completed
+                        {classStats.scheduledClasses} upcoming &bull; {classStats.completedClasses} completed
                     </span>
                 </motion.div>
             )}

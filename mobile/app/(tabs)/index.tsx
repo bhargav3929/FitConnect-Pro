@@ -404,45 +404,12 @@ function UpcomingSessionCard({
 function QuickActions({
     onBookClass,
     onMyBookings,
-    onFreeClass,
-    freeClassBooked,
 }: {
     onBookClass: () => void;
     onMyBookings: () => void;
-    onFreeClass: () => void;
-    freeClassBooked: boolean;
 }) {
     return (
         <View style={styles.quickActionsColumn}>
-            {/* Book Intro Class — terra outline card */}
-            <TouchableOpacity
-                style={[styles.freeClassCard, freeClassBooked && { opacity: 0.7 }]}
-                onPress={freeClassBooked ? undefined : onFreeClass}
-                disabled={freeClassBooked}
-                activeOpacity={freeClassBooked ? 1 : 0.85}
-            >
-                <View style={styles.freeClassIconCircle}>
-                    <Feather
-                        name={freeClassBooked ? 'check-circle' : 'gift'}
-                        size={20}
-                        color={Colors.terra[400]}
-                    />
-                </View>
-                <Text style={styles.freeClassTitle}>
-                    {freeClassBooked ? 'Intro Class Booked' : 'Book an Intro Class'}
-                </Text>
-                <Text style={styles.freeClassSubtitle}>
-                    {freeClassBooked
-                        ? "You're all set — Swetha will be in touch shortly."
-                        : 'First time? Try a complimentary 30-minute drop-in.'}
-                </Text>
-                {!freeClassBooked && (
-                    <View style={styles.freeClassArrowCircle}>
-                        <Feather name="arrow-right" size={14} color={Colors.terra[400]} />
-                    </View>
-                )}
-            </TouchableOpacity>
-
             {/* Book Your Next Class — dark olive feature card */}
             <TouchableOpacity
                 style={styles.bookNextCard}
@@ -581,6 +548,8 @@ export default function DashboardScreen() {
     const name = clientUser.name || 'there';
     const totalClassesAttended = clientUser.stats?.totalClassesAttended ?? 0;
     const creditsRemaining = clientUser.subscription?.classesRemaining ?? null;
+    const hasActiveSubscription = clientUser.subscription?.status === 'active' && !!clientUser.subscription?.planId;
+    const showIntroClassCta = !hasActiveSubscription;
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -597,11 +566,15 @@ export default function DashboardScreen() {
                     />
                 }
             >
-                <FreeClassCTA
-                    onFreeClass={navigateToIntroClass}
-                    freeClassBooked={hasIntroClassLead === true}
-                />
-                <View style={{ height: Spacing.md }} />
+                {showIntroClassCta && (
+                    <>
+                        <FreeClassCTA
+                            onFreeClass={navigateToIntroClass}
+                            freeClassBooked={hasIntroClassLead === true}
+                        />
+                        <View style={{ height: Spacing.md }} />
+                    </>
+                )}
                 {/* A. Welcome Banner */}
                 <WelcomeBanner
                     name={name}
@@ -633,8 +606,6 @@ export default function DashboardScreen() {
                 <QuickActions
                     onBookClass={navigateToSchedule}
                     onMyBookings={navigateToBookings}
-                    onFreeClass={navigateToIntroClass}
-                    freeClassBooked={hasIntroClassLead === true}
                 />
             </ScrollView>
         </SafeAreaView>
@@ -755,6 +726,7 @@ const styles = StyleSheet.create({
     },
     streakLabel: {
         fontFamily: FontFamily.sansBold,
+        fontWeight: 'bold', 
         fontSize: FontSize.xs,
         color: Colors.olive[300],
         letterSpacing: 1.5,
@@ -787,7 +759,7 @@ const styles = StyleSheet.create({
     },
     statLabel: {
         fontSize: 11,
-        fontWeight: '500',
+        fontWeight: 'bold',
         color: Colors.olive[300],
     },
     statsDivider: {

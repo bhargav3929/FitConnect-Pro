@@ -3,6 +3,19 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { cancelRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
 import { FieldValue } from 'firebase-admin/firestore';
 
+function toDate(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
+        return (value as { toDate: () => Date }).toDate();
+    }
+    if (typeof value === 'object' && 'seconds' in value) {
+        return new Date((value as { seconds: number }).seconds * 1000);
+    }
+    const date = new Date(value as string | number);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
@@ -40,9 +53,14 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        const endDate = toDate(subscription.endDate);
+        const isStillUsable = !!endDate && endDate > new Date();
+
         await userRef.update({
-            'subscription.status': 'canceled',
+            'subscription.status': isStillUsable ? 'active' : 'canceled',
             'subscription.autoRenew': false,
+            'subscription.cancelAtPeriodEnd': isStillUsable,
+            'subscription.canceledAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
 

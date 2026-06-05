@@ -1,15 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { doc, updateDoc, Timestamp } from "firebase/firestore"
+import { collection, doc, getDocs, orderBy, query, updateDoc, Timestamp } from "firebase/firestore"
 import { db } from "@fitconnect/shared/firebase/config"
 import { toast } from "sonner"
 import { Mail, Phone, Calendar } from "lucide-react"
 import { PaginationControls } from "@/components/ui/pagination-controls"
-import {
-    getCollectionPage,
-    type FirestorePageCursor,
-} from "@fitconnect/shared/firebase/firestore"
 
 type LeadStatus = "new" | "contacted" | "converted" | "archived"
 
@@ -52,31 +48,20 @@ function formatCreatedAt(createdAt?: Timestamp | Date | string | number | { seco
 
 export default function LeadsPage() {
     const [leads, setLeads] = useState<Lead[]>([])
-    const [totalLeads, setTotalLeads] = useState(0)
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState<"all" | LeadStatus>("all")
-    const [requestedPage, setRequestedPage] = useState(1)
-    const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
-    const currentCursor = pageCursors[requestedPage - 1] || null
+    const [page, setPage] = useState(1)
 
     useEffect(() => {
         let cancelled = false
 
-        getCollectionPage<Lead>("introClassLeads", {
-            pageSize: PAGE_SIZE,
-            cursor: currentCursor,
-            orderField: "createdAt",
-            filters: filter === "all" ? undefined : [{ field: "status", op: "==", value: filter }],
-        })
-            .then((pageResult) => {
+        getDocs(query(collection(db, "introClassLeads"), orderBy("createdAt", "desc")))
+            .then((snapshot) => {
                 if (cancelled) return
-                setLeads(pageResult.items)
-                setTotalLeads(pageResult.total)
-                setPageCursors(prev => {
-                    const next = prev.slice(0, requestedPage)
-                    next[requestedPage] = pageResult.nextCursor
-                    return next
-                })
+                setLeads(snapshot.docs.map((docSnap) => ({
+                    id: docSnap.id,
+                    ...docSnap.data(),
+                })) as Lead[])
             })
             .catch(() => {
                 if (!cancelled) toast.error("Failed to load leads")
@@ -88,21 +73,31 @@ export default function LeadsPage() {
         return () => {
             cancelled = true
         }
-    }, [requestedPage, currentCursor, filter])
+    }, [])
+
+    useEffect(() => {
+        setPage(1)
+    }, [filter])
 
     const updateStatus = async (id: string, status: LeadStatus) => {
         try {
             await updateDoc(doc(db, "introClassLeads", id), { status })
+            setLeads(prev => prev.map((lead) => lead.id === id ? { ...lead, status } : lead))
             toast.success(`Marked as ${status}`)
         } catch {
             toast.error("Failed to update status")
         }
     }
 
-    const filtered = leads
-    const totalPages = Math.max(1, Math.ceil(totalLeads / PAGE_SIZE))
-    const page = Math.min(requestedPage, totalPages)
-    const paginated = filtered
+    const filtered = filter === "all" ? leads : leads.filter((lead) => lead.status === filter)
+    const totalLeads = leads.length
+    const totalFilteredLeads = filtered.length
+    const totalPages = Math.max(1, Math.ceil(totalFilteredLeads / PAGE_SIZE))
+    const currentPage = Math.min(page, totalPages)
+    const paginated = filtered.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+    )
     const counts = STATUS_OPTIONS.reduce<Record<string, number>>(
         (acc, s) => ({ ...acc, [s]: leads.filter((l) => l.status === s).length }),
         { all: totalLeads },
@@ -123,11 +118,7 @@ export default function LeadsPage() {
                 {(["all", ...STATUS_OPTIONS] as const).map((s) => (
                     <button
                         key={s}
-                        onClick={() => {
-                            setFilter(s)
-                            setRequestedPage(1)
-                            setPageCursors([null])
-                        }}
+                        onClick={() => setFilter(s)}
                         className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                             filter === s
                                 ? "bg-terra-400 text-peach-50 shadow-lg shadow-terra-400/20"
@@ -212,11 +203,11 @@ export default function LeadsPage() {
                         </article>
                     ))}
                     <PaginationControls
-                        page={page}
-                        totalItems={totalLeads}
+                        page={currentPage}
+                        totalItems={totalFilteredLeads}
                         pageSize={PAGE_SIZE}
                         itemLabel="leads"
-                        onPageChange={setRequestedPage}
+                        onPageChange={setPage}
                     />
                 </div>
             )}
