@@ -149,7 +149,7 @@ function BrandedSplash() {
                     },
                 ]}
             >
-                <Logo variant="terra" height={156} />
+                <Logo height={156} />
                 <View style={styles.splashLineTrack}>
                     <Animated.View
                         style={[

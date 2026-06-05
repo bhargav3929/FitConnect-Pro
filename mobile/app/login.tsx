@@ -329,7 +329,7 @@ export default function LoginScreen() {
                             style={styles.heroGradient}
                         >
                             <View style={styles.heroTopline}>
-                                <Logo variant="terra" height={isCompact ? 68 : 82} />
+                                <Logo height={isCompact ? 68 : 82} />
                             </View>
 
                             <View style={styles.heroCopy}>

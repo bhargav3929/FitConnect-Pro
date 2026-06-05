@@ -37,6 +37,7 @@
       "infoPlist": {
         "CFBundleDisplayName": "SOL Pilates",
         "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "SOL Pilates may need access to your photo library if you choose to upload or update a profile photo.",
         "LSApplicationQueriesSchemes": [
           "tez",
           "phonepe",
