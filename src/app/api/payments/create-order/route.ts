@@ -37,6 +37,12 @@ export async function POST(req: NextRequest) {
         }
 
         const planId = body.planId as string;
+        const requestMetadata = body.metadata && typeof body.metadata === 'object'
+            ? body.metadata as Record<string, unknown>
+            : {};
+        const introClassLead = requestMetadata.introClassLead && typeof requestMetadata.introClassLead === 'object'
+            ? requestMetadata.introClassLead
+            : undefined;
         if (!planId || !VALID_PLAN_IDS.includes(planId as typeof VALID_PLAN_IDS[number])) {
             return NextResponse.json(
                 { error: `Invalid planId. Must be one of: ${VALID_PLAN_IDS.join(', ')}`, code: 'invalid-argument' },
@@ -54,6 +60,26 @@ export async function POST(req: NextRequest) {
                 { error: 'You already have an active membership. Wait for it to expire or cancel first.', code: 'already-exists' },
                 { status: 409 },
             );
+        }
+
+        if (plan.id === 'drop_in') {
+            if (isActiveUnexpiredSubscription(userData?.subscription)) {
+                return NextResponse.json(
+                    { error: 'Intro class is only available before your first active plan.', code: 'already-exists' },
+                    { status: 409 },
+                );
+            }
+
+            const existingLead = await adminDb.collection('introClassLeads')
+                .where('userId', '==', userId)
+                .limit(1)
+                .get();
+            if (!existingLead.empty) {
+                return NextResponse.json(
+                    { error: 'Intro class has already been booked.', code: 'already-exists' },
+                    { status: 409 },
+                );
+            }
         }
 
         const syncedPlan = await getSyncedPlanEntry(planId);
@@ -86,6 +112,7 @@ export async function POST(req: NextRequest) {
                 razorpayPlanId: syncedPlan?.razorpayPlanId ?? null,
                 razorpayItemId: syncedPlan?.razorpayItemId ?? null,
                 foundingMemberDiscountApplied: isFoundingMember && !!plan.foundingPrice,
+                ...(introClassLead ? { introClassLead } : {}),
             },
             createdAt: now,
             paidAt: null,

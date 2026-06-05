@@ -679,10 +679,11 @@ export async function callConfirmPayment(
 
 export async function callCreatePaymentOrder(
     planId: string,
+    metadata?: Record<string, unknown>,
 ): Promise<{ orderId: string; paymentId: string; amount: number; currency: string; key: string }> {
     return apiFetch<{ orderId: string; paymentId: string; amount: number; currency: string; key: string }>(
         '/api/payments/create-order',
-        { method: 'POST', body: { planId } },
+        { method: 'POST', body: { planId, metadata } },
     );
 }
 

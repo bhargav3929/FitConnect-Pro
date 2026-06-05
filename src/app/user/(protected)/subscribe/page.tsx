@@ -68,14 +68,16 @@ export default function SubscribePage() {
 
     const handleContinueToCheckout = async () => {
         if (!selectedPlanId) return
-        if (selectedPlanId === 'drop_in') {
-            router.push('/intro-class')
+        if (hasActiveSubscription) {
+            toast.error('Active membership found', {
+                description: selectedPlanId === 'drop_in'
+                    ? 'Intro class is only available before your first active plan.'
+                    : 'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
+            })
             return
         }
-        if (selectedPlan?.category === 'membership' && hasActiveSubscription) {
-            toast.error('Active membership found', {
-                description: 'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
-            })
+        if (selectedPlanId === 'drop_in') {
+            router.push('/intro-class')
             return
         }
         setIsProcessing(true)
@@ -300,17 +302,17 @@ export default function SubscribePage() {
                             disabled={
                                 !selectedPlanId ||
                                 isProcessing ||
-                                (selectedPlan?.category === 'membership' && hasActiveSubscription) ||
+                                hasActiveSubscription ||
                                 (selectedPlanId === 'drop_in' && hasIntroClassLead === true)
                             }
                             className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide text-base rounded-xl transition-all hover:shadow-lg hover:shadow-terra-400/20 disabled:opacity-50"
                         >
                             {isProcessing
                                 ? 'OPENING PAYMENT...'
+                                : hasActiveSubscription
+                                    ? 'ACTIVE MEMBERSHIP'
                                 : selectedPlanId === 'drop_in'
                                     ? (hasIntroClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS')
-                                    : selectedPlan?.category === 'membership' && hasActiveSubscription
-                                        ? 'ACTIVE MEMBERSHIP'
                                     : 'CONTINUE TO PAYMENT'}
                         </Button>
                     </motion.div>

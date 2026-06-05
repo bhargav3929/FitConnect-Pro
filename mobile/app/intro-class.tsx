@@ -13,9 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@fitconnect/shared/firebase/config';
+import RazorpayCheckout from 'react-native-razorpay';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
+import { callCreatePaymentOrder, callGetPricing, callVerifyPayment } from '@fitconnect/shared/firebase/firestore';
+import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { Colors, Spacing, FontSize, BorderRadius, Alpha } from '../constants/theme';
 import { useIntroClassLead } from '../hooks/useIntroClassLead';
 
@@ -29,14 +30,25 @@ type FormState = {
 
 const EMPTY: FormState = { name: '', email: '', phone: '', goals: '', concerns: '' };
 
+function hasActivePlan(subscription: { status?: string; endDate?: unknown } | undefined): boolean {
+    if (!subscription || subscription.status !== 'active') return false;
+    if (!subscription.endDate) return true;
+    const endDate = subscription.endDate instanceof Date
+        ? subscription.endDate
+        : new Date(subscription.endDate as string | number);
+    return !Number.isNaN(endDate.getTime()) && endDate > new Date();
+}
+
 export default function IntroClassScreen() {
     const router = useRouter();
-    const { isAuthenticated, isLoading, initAuth, clientUser } = useClientAuthStore();
-    const { hasIntroClassLead } = useIntroClassLead();
+    const { isAuthenticated, isLoading, initAuth, clientUser, firebaseUser, refreshSubscription } = useClientAuthStore();
+    const { hasIntroClassLead, refresh: refreshIntroClassLead } = useIntroClassLead();
     const [form, setForm] = useState<FormState>(EMPTY);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [done, setDone] = useState(false);
+    const [price, setPrice] = useState(() => getPlanById('drop_in')?.price ?? 1000);
+    const hasActiveSubscription = hasActivePlan(clientUser?.subscription);
 
     useEffect(() => {
         const unsubscribe = initAuth();
@@ -60,6 +72,22 @@ export default function IntroClassScreen() {
             }));
         }
     }, [clientUser]);
+
+    useEffect(() => {
+        let mounted = true;
+        callGetPricing()
+            .then((data) => {
+                if (!mounted) return;
+                const dropIn = data.plans.find((plan) => plan.planId === 'drop_in');
+                if (dropIn?.price) setPrice(dropIn.price);
+            })
+            .catch(() => {
+                // Static PLAN_CATALOG price remains the fallback.
+            });
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     if (isLoading || !isAuthenticated) {
         return (
@@ -85,20 +113,51 @@ export default function IntroClassScreen() {
             setError('Please enter a valid email.');
             return;
         }
+        if (hasIntroClassLead === true) {
+            setError('You have already booked your intro class.');
+            return;
+        }
+        if (hasActiveSubscription) {
+            setError('Intro class is only available before your first active plan.');
+            return;
+        }
 
         setSubmitting(true);
         try {
-            await addDoc(collection(db, 'introClassLeads'), {
-                ...form,
-                userId: clientUser?.id ?? null,
-                source: 'mobile-intro-class-form',
-                status: 'new',
-                createdAt: serverTimestamp(),
+            const order = await callCreatePaymentOrder('drop_in', {
+                introClassLead: {
+                    ...form,
+                    source: 'mobile-intro-class-payment-form',
+                },
             });
+            const response = await RazorpayCheckout.open({
+                key: order.key,
+                amount: order.amount,
+                currency: order.currency,
+                order_id: order.orderId,
+                name: 'Sol Pilates',
+                description: 'Intro Class',
+                prefill: {
+                    email: form.email || firebaseUser?.email || undefined,
+                    name: form.name || firebaseUser?.displayName || undefined,
+                    contact: form.phone || undefined,
+                },
+                theme: { color: Colors.terra[400] },
+            });
+
+            await callVerifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                paymentId: order.paymentId,
+            });
+
+            await refreshSubscription();
+            refreshIntroClassLead();
             setDone(true);
         } catch (err) {
             console.error(err);
-            setError('Something went wrong. Please try again.');
+            setError(getPaymentErrorMessage(err));
         } finally {
             setSubmitting(false);
         }
@@ -126,6 +185,28 @@ export default function IntroClassScreen() {
         );
     }
 
+    if (hasActiveSubscription && !done) {
+        return (
+            <SafeAreaView style={styles.safeArea} edges={['top']}>
+                <View style={styles.successWrap}>
+                    <Feather name="check-circle" size={64} color={Colors.terra[400]} />
+                    <Text style={styles.successTitle}>Active Plan Found</Text>
+                    <Text style={styles.successBody}>
+                        Intro class is for new clients before their first active plan. You can
+                        book regular classes from the schedule.
+                    </Text>
+                    <TouchableOpacity
+                        style={styles.primaryButton}
+                        onPress={() => router.replace('/(tabs)/schedule')}
+                        activeOpacity={0.85}
+                    >
+                        <Text style={styles.primaryButtonText}>VIEW SCHEDULE</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     if (done) {
         return (
             <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -133,8 +214,8 @@ export default function IntroClassScreen() {
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
                     <Text style={styles.successTitle}>You&apos;re in.</Text>
                     <Text style={styles.successBody}>
-                        Swetha will reach out shortly to lock in your 30-minute intro
-                        session.
+                        Payment received. Swetha will reach out shortly to lock in your
+                        30-minute intro session.
                     </Text>
                     <TouchableOpacity
                         style={styles.primaryButton}
@@ -167,12 +248,12 @@ export default function IntroClassScreen() {
                         >
                             <Feather name="arrow-left" size={22} color={Colors.olive[600]} />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle}>Intro Drop-In</Text>
+                        <Text style={styles.headerTitle}>Intro Class</Text>
                     </View>
 
                     <Text style={styles.intro}>
-                        30 minutes, no commitment, completely free. Tell us a little about
-                        yourself and we&apos;ll be in touch to schedule.
+                        30 minutes, no commitment. Tell us a little about yourself, then
+                        complete the ₹{price.toLocaleString('en-IN')} payment to book.
                     </Text>
 
                     <Text style={styles.label}>FULL NAME *</Text>
@@ -244,13 +325,28 @@ export default function IntroClassScreen() {
                         {submitting ? (
                             <ActivityIndicator color={Colors.white} />
                         ) : (
-                            <Text style={styles.primaryButtonText}>BOOK MY INTRO CLASS</Text>
+                            <Text style={styles.primaryButtonText}>
+                                PAY ₹{price.toLocaleString('en-IN')} & BOOK
+                            </Text>
                         )}
                     </TouchableOpacity>
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
+}
+
+function getPaymentErrorMessage(err: unknown): string {
+    if (err instanceof Error) return err.message;
+    if (err && typeof err === 'object') {
+        const data = err as {
+            description?: string;
+            code?: string | number;
+            error?: { description?: string; reason?: string };
+        };
+        return data.error?.description || data.error?.reason || data.description || `Payment failed${data.code ? ` (${data.code})` : ''}`;
+    }
+    return 'Payment could not be completed. Please try again.';
 }
 
 const styles = StyleSheet.create({

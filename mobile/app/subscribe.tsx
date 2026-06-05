@@ -381,15 +381,17 @@ export default function SubscribeScreen() {
             Alert.alert('Select a Plan', 'Please choose a plan to continue.');
             return;
         }
-        if (selectedPlan.id === 'drop_in') {
-            router.push('/intro-class');
-            return;
-        }
-        if (selectedPlan.category === 'membership' && hasActiveSubscription) {
+        if (hasActiveSubscription) {
             Alert.alert(
                 'Active Membership',
-                'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
+                selectedPlan.id === 'drop_in'
+                    ? 'Intro class is only available before your first active plan.'
+                    : 'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
             );
+            return;
+        }
+        if (selectedPlan.id === 'drop_in') {
+            router.push('/intro-class');
             return;
         }
         setStep('checkout');
@@ -600,6 +602,7 @@ export default function SubscribeScreen() {
                             style={[
                                 styles.primaryButton,
                                 (!selectedPlan ||
+                                    hasActiveSubscription ||
                                     (selectedPlan?.id === 'drop_in' &&
                                         hasIntroClassLead === true)) &&
                                     styles.buttonDisabled,
@@ -607,13 +610,16 @@ export default function SubscribeScreen() {
                             onPress={handleContinue}
                             disabled={
                                 !selectedPlan ||
+                                hasActiveSubscription ||
                                 (selectedPlan?.id === 'drop_in' &&
                                     hasIntroClassLead === true)
                             }
                             activeOpacity={0.7}
                         >
                             <Text style={styles.primaryButtonText}>
-                                {selectedPlan?.id === 'drop_in'
+                                {hasActiveSubscription
+                                    ? 'ACTIVE MEMBERSHIP'
+                                    : selectedPlan?.id === 'drop_in'
                                     ? hasIntroClassLead === true
                                         ? 'INTRO CLASS BOOKED'
                                         : 'BOOK INTRO CLASS'

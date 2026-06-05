@@ -133,6 +133,33 @@ export async function POST(req: NextRequest) {
                 updatedAt: FieldValue.serverTimestamp(),
             });
 
+            if (plan.id === 'drop_in') {
+                const metadata = paymentData.metadata as Record<string, unknown> | undefined;
+                const lead = metadata?.introClassLead && typeof metadata.introClassLead === 'object'
+                    ? metadata.introClassLead as Record<string, unknown>
+                    : {};
+                const leadRef = adminDb.collection('introClassLeads').doc(userId);
+
+                transaction.set(leadRef, {
+                    name: typeof lead.name === 'string' ? lead.name : userDoc.data()!.name ?? decoded.name ?? '',
+                    email: typeof lead.email === 'string' ? lead.email : decoded.email ?? '',
+                    phone: typeof lead.phone === 'string' ? lead.phone : '',
+                    goals: typeof lead.goals === 'string' ? lead.goals : '',
+                    concerns: typeof lead.concerns === 'string' ? lead.concerns : '',
+                    userId,
+                    source: typeof lead.source === 'string' ? lead.source : 'intro-class-payment',
+                    status: 'new',
+                    paymentStatus: 'paid',
+                    paymentId: paymentRef.id,
+                    razorpayOrderId: razorpay_order_id,
+                    razorpayPaymentId: razorpay_payment_id,
+                    amount: paymentData.amount,
+                    currency: paymentData.currency,
+                    createdAt: FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp(),
+                }, { merge: true });
+            }
+
             return {
                 endDate: endDate.toISOString(),
                 planId: plan.id,

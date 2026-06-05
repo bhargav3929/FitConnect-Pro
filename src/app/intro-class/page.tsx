@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@fitconnect/shared/firebase/config';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { Button } from '@/components/ui/button';
 import { useIntroClassLead } from '@/lib/hooks/useIntroClassLead';
+import { useRazorpay } from '@/lib/hooks/useRazorpay';
+import { callCreatePaymentOrder, callGetPricing, callVerifyPayment } from '@fitconnect/shared/firebase/firestore';
+import { getPlanById } from '@fitconnect/shared/types/subscription';
 
 type FormState = {
     name: string;
@@ -18,14 +19,26 @@ type FormState = {
 
 const EMPTY: FormState = { name: '', email: '', phone: '', goals: '', concerns: '' };
 
+function hasActivePlan(subscription: { status?: string; endDate?: unknown } | undefined): boolean {
+    if (!subscription || subscription.status !== 'active') return false;
+    if (!subscription.endDate) return true;
+    const endDate = subscription.endDate instanceof Date
+        ? subscription.endDate
+        : new Date(subscription.endDate as string | number);
+    return !Number.isNaN(endDate.getTime()) && endDate > new Date();
+}
+
 export default function IntroClassPage() {
     const router = useRouter();
-    const { isAuthenticated, isLoading, initAuth, clientUser } = useClientAuthStore();
-    const { hasIntroClassLead } = useIntroClassLead();
+    const { isAuthenticated, isLoading, initAuth, clientUser, firebaseUser, refreshSubscription } = useClientAuthStore();
+    const { hasIntroClassLead, refresh: refreshIntroClassLead } = useIntroClassLead();
+    const { openCheckout } = useRazorpay();
     const [form, setForm] = useState<FormState>(EMPTY);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [done, setDone] = useState(false);
+    const [price, setPrice] = useState(() => getPlanById('drop_in')?.price ?? 1000);
+    const hasActiveSubscription = hasActivePlan(clientUser?.subscription);
 
     useEffect(() => {
         const unsubscribe = initAuth();
@@ -48,6 +61,17 @@ export default function IntroClassPage() {
             }));
         }
     }, [clientUser]);
+
+    useEffect(() => {
+        callGetPricing()
+            .then((data) => {
+                const dropIn = data.plans.find((plan) => plan.planId === 'drop_in');
+                if (dropIn?.price) setPrice(dropIn.price);
+            })
+            .catch(() => {
+                // Static PLAN_CATALOG price remains the fallback.
+            });
+    }, []);
 
     if (isLoading || !isAuthenticated) {
         return (
@@ -80,21 +104,62 @@ export default function IntroClassPage() {
             setError('Please enter a valid email.');
             return;
         }
+        if (hasIntroClassLead === true) {
+            setError('You have already booked your intro class.');
+            return;
+        }
+        if (hasActiveSubscription) {
+            setError('Intro class is only available before your first active plan.');
+            return;
+        }
 
         setSubmitting(true);
         try {
-            await addDoc(collection(db, 'introClassLeads'), {
-                ...form,
-                userId: clientUser?.id ?? null,
-                source: 'intro-class-form',
-                status: 'new',
-                createdAt: serverTimestamp(),
+            const order = await callCreatePaymentOrder('drop_in', {
+                introClassLead: {
+                    ...form,
+                    source: 'intro-class-payment-form',
+                },
             });
-            setDone(true);
+
+            await openCheckout({
+                key: order.key,
+                amount: order.amount,
+                currency: order.currency,
+                order_id: order.orderId,
+                name: 'Sol Pilates',
+                description: 'Intro Class',
+                prefill: {
+                    email: form.email || firebaseUser?.email || undefined,
+                    name: form.name || firebaseUser?.displayName || undefined,
+                    contact: form.phone || undefined,
+                },
+                theme: { color: '#FF6A3D' },
+                modal: {
+                    ondismiss: () => setSubmitting(false),
+                },
+                handler: async (response) => {
+                    try {
+                        await callVerifyPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            paymentId: order.paymentId,
+                        });
+                        await refreshSubscription();
+                        refreshIntroClassLead();
+                        setDone(true);
+                    } catch (err) {
+                        console.error(err);
+                        setError('Payment verification failed. Please contact support if money was deducted.');
+                    } finally {
+                        setSubmitting(false);
+                    }
+                },
+            });
         } catch (err) {
             console.error(err);
-            setError('Something went wrong. Please try again.');
-        } finally {
+            setError(err instanceof Error ? err.message : 'Payment could not be started. Please try again.');
             setSubmitting(false);
         }
     };
@@ -121,15 +186,36 @@ export default function IntroClassPage() {
         );
     }
 
+    if (hasActiveSubscription && !done) {
+        return (
+            <main className="min-h-screen bg-peach-50 flex items-center justify-center p-6">
+                <div className="max-w-lg text-center space-y-6">
+                    <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
+                        Active Plan Found
+                    </h1>
+                    <p className="text-olive-400 leading-relaxed">
+                        Intro class is for new clients before their first active plan. You can book regular classes from the schedule.
+                    </p>
+                    <Button
+                        onClick={() => router.push('/user/schedule')}
+                        className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 px-8 rounded-xl"
+                    >
+                        VIEW SCHEDULE
+                    </Button>
+                </div>
+            </main>
+        );
+    }
+
     if (done) {
         return (
             <main className="min-h-screen bg-peach-50 flex items-center justify-center p-6">
                 <div className="max-w-lg text-center space-y-6">
                     <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
-                        You&apos;re in.
+                        You&apos;re booked.
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        Swetha will reach out shortly to lock in your 30-minute intro session.
+                        Payment received. Swetha will reach out shortly to lock in your 30-minute intro session.
                     </p>
                     <Button
                         onClick={() => router.push('/')}
@@ -147,11 +233,10 @@ export default function IntroClassPage() {
             <div className="max-w-xl mx-auto space-y-8">
                 <header className="space-y-3">
                     <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
-                        Intro Drop-In
+                        Intro Class
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        30 minutes, no commitment, completely free. Tell us a little about yourself and we&apos;ll
-                        be in touch to schedule.
+                        30 minutes, no commitment. Tell us a little about yourself, then complete the ₹{price.toLocaleString('en-IN')} payment to book.
                     </p>
                 </header>
 
@@ -222,7 +307,7 @@ export default function IntroClassPage() {
                         disabled={submitting}
                         className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl disabled:opacity-60"
                     >
-                        {submitting ? 'SUBMITTING…' : 'BOOK MY INTRO CLASS'}
+                        {submitting ? 'OPENING PAYMENT…' : `PAY ₹${price.toLocaleString('en-IN')} & BOOK`}
                     </Button>
                 </form>
             </div>
