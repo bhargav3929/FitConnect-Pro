@@ -223,7 +223,13 @@ export default function ScheduleScreen() {
     // ── Derived facility data ──
     // Guard against Firestore docs missing address subfields — fall back to static address.
     const formatFacilityAddress = (f: GymCenter | null): string => {
-        const parts = [f?.address?.street, f?.address?.city].filter(
+        const stateAndZip = [f?.address?.state, f?.address?.zip].filter(Boolean).join(' ');
+        const parts = [
+            f?.address?.street,
+            f?.address?.city,
+            stateAndZip,
+            f?.address?.country,
+        ].filter(
             (p): p is string => Boolean(p && p.trim()),
         );
         return parts.length > 0 ? parts.join(', ') : FALLBACK_FACILITY.address;

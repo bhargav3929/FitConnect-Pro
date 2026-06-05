@@ -17,13 +17,14 @@ import { CalendarStrip } from "@/components/user/CalendarStrip"
 import { SpotSelectionModal } from "@/components/user/SpotSelectionModal"
 import { SubscriptionPromptModal } from "@/components/user/SubscriptionPromptModal"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { subscribeToClassesByDate, getTrainers, callBookClass } from "@fitconnect/shared/firebase/firestore"
+import { subscribeToClassesByDate, getTrainers, getFacility, callBookClass } from "@fitconnect/shared/firebase/firestore"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { ClassSession } from "@fitconnect/shared/types/class"
 import { Trainer } from "@fitconnect/shared/types/trainer"
+import { GymCenter } from "@fitconnect/shared/types/gym"
 import { toast } from "sonner"
 
-const FACILITY = {
+const FALLBACK_FACILITY = {
     name: "SOL Pilates Studio",
     address: "250 West 54th Street, New York, NY 10019",
     rating: 4.9,
@@ -81,6 +82,19 @@ function isDateAfterSubscriptionEnd(date: Date, endDate: Date | null): boolean {
     return day > limit
 }
 
+function formatFacilityAddress(address?: GymCenter['address']): string {
+    if (!address) return FALLBACK_FACILITY.address
+    const stateAndZip = [address.state, address.zip].filter(Boolean).join(' ')
+    const parts = [
+        address.street,
+        address.city,
+        stateAndZip,
+        address.country,
+    ].filter((part): part is string => Boolean(part && part.trim()))
+
+    return parts.length > 0 ? parts.join(', ') : FALLBACK_FACILITY.address
+}
+
 export default function SchedulePage() {
     const [selectedTab, setSelectedTab] = useState<'classes' | 'trainers' | 'info'>('classes')
     const [selectedDate, setSelectedDate] = useState(new Date())
@@ -105,12 +119,14 @@ export default function SchedulePage() {
     })
     const [classes, setClasses] = useState<ClassSession[]>([])
     const [trainers, setTrainers] = useState<Trainer[]>([])
+    const [facility, setFacility] = useState<GymCenter | null>(null)
     const [isLoadingClasses, setIsLoadingClasses] = useState(true)
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(true)
     const [visibleClassCount, setVisibleClassCount] = useState(CLASS_RENDER_BATCH)
 
     const clientUser = useClientAuthStore(state => state.clientUser)
     const subscriptionEndDate = parseSubscriptionEndDate(clientUser?.subscription?.endDate)
+    const facilityAddress = formatFacilityAddress(facility?.address)
 
     const formatDate = (date: Date) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -145,6 +161,18 @@ export default function SchedulePage() {
             }
         }
         loadTrainers()
+    }, [])
+
+    useEffect(() => {
+        async function loadFacility() {
+            try {
+                const result = await getFacility()
+                setFacility(result)
+            } catch {
+                setFacility(null)
+            }
+        }
+        loadFacility()
     }, [])
 
     const handleBook = (cls: ClassSession) => {
@@ -263,22 +291,12 @@ export default function SchedulePage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-1 rounded-md bg-terra-400 text-peach-50 app-badge-text">
-                            FLAGSHIP
-                        </span>
-                        <div className="flex items-center gap-1 text-terra-300">
-                            <Star className="w-3 h-3 fill-current" />
-                            <span className="text-xs font-bold">{FACILITY.rating}</span>
-                            <span className="text-olive-400 text-xs">({FACILITY.reviewCount})</span>
-                        </div>
-                    </div>
                     <h1 className="app-page-title mb-2">
                         Class Schedule
                     </h1>
                     <p className="app-page-subtitle flex items-center gap-2">
                         <MapPin className="w-3 h-3 text-terra-400" />
-                        {FACILITY.address}
+                        {facilityAddress}
                     </p>
                 </motion.div>
             </div>
@@ -555,10 +573,10 @@ export default function SchedulePage() {
                         >
                             <div className="bg-peach-50 border border-peach-400/20 p-6">
                                 <h3 className="app-card-title mb-3">About Our Facility</h3>
-                                <p className="text-olive-300 text-sm leading-relaxed mb-4">{FACILITY.description}</p>
+                                <p className="text-olive-300 text-sm leading-relaxed mb-4">{FALLBACK_FACILITY.description}</p>
                                 <h4 className="text-olive-600 font-bold mb-3 text-sm">Amenities</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {FACILITY.amenities.map(item => (
+                                    {FALLBACK_FACILITY.amenities.map(item => (
                                         <span key={item} className="px-3 py-1.5 bg-peach-200/50 text-olive-400 text-xs font-medium border border-peach-400/20">
                                             {item}
                                         </span>
@@ -573,21 +591,21 @@ export default function SchedulePage() {
                                         <div className="w-8 h-8 bg-terra-400/20 flex items-center justify-center text-terra-400">
                                             <Phone className="w-4 h-4" />
                                         </div>
-                                        <span className="text-sm text-olive-400">{FACILITY.contact.phone}</span>
+                                        <span className="text-sm text-olive-400">{facility?.contactInfo?.phone || FALLBACK_FACILITY.contact.phone}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-terra-400/20 flex items-center justify-center text-terra-400">
                                             <Mail className="w-4 h-4" />
                                         </div>
-                                        <span className="text-sm text-olive-400">{FACILITY.contact.email}</span>
+                                        <span className="text-sm text-olive-400">{facility?.contactInfo?.email || FALLBACK_FACILITY.contact.email}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-terra-400/20 flex items-center justify-center text-terra-400">
                                             <Clock className="w-4 h-4" />
                                         </div>
                                         <div className="flex flex-col text-sm">
-                                            <span className="text-olive-400">Mon-Fri: {FACILITY.hours.weekday}</span>
-                                            <span className="text-olive-400">Sat-Sun: {FACILITY.hours.weekend}</span>
+                                            <span className="text-olive-400">Mon-Fri: {FALLBACK_FACILITY.hours.weekday}</span>
+                                            <span className="text-olive-400">Sat-Sun: {FALLBACK_FACILITY.hours.weekend}</span>
                                         </div>
                                     </div>
                                 </div>
