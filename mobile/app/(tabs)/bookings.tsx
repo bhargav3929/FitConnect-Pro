@@ -24,6 +24,7 @@ import {
 import type { Booking } from '@fitconnect/shared/types/booking';
 import type { GymCenter } from '@fitconnect/shared/types/gym';
 import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../../constants/theme';
+import { withAlpha } from '@fitconnect/shared/theme';
 import TabHeader from '../../components/TabHeader';
 
 const PAGE_SIZE = 6;
@@ -120,10 +121,10 @@ const STATUS_CONFIG: Record<BookingStatus, {
         textColor: Colors.error,
     },
     'no-show': {
-        icon: 'x-circle',
+        icon: 'user-x',
         label: 'NO SHOW',
-        bgColor: Colors.errorBg,
-        textColor: Colors.error,
+        bgColor: withAlpha(Colors.warning, 0.15),
+        textColor: Colors.warning,
     },
 };
 

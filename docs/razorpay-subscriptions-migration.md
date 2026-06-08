@@ -2,7 +2,18 @@
 
 ## Status
 
-Draft proposal. No implementation has been started from this document.
+Implemented in app code.
+
+Current implementation:
+
+- Web and mobile membership checkout use Razorpay Subscriptions.
+- Intro Class remains a one-time Razorpay Order.
+- Active Intro members can start a membership subscription.
+- Active Razorpay membership members update the existing subscription instead of creating a duplicate checkout.
+- Higher/equal price plan changes apply immediately through Razorpay subscription update.
+- Lower price plan changes are scheduled for cycle end.
+- Razorpay webhooks are idempotent and are the long-term billing sync source.
+- Pull sync is available at `/api/subscriptions/sync` for repair/reconciliation.
 
 ## Goals
 
@@ -22,22 +33,18 @@ Draft proposal. No implementation has been started from this document.
 
 ## Current State
 
-The active checkout flow uses Razorpay Orders:
+Membership checkout now uses Razorpay Subscriptions:
 
-- Web subscribe page calls `callCreatePaymentOrder()`.
-- Mobile subscribe page calls `callCreatePaymentOrder()`.
-- `/api/payments/create-order` creates a Razorpay order.
-- `/api/payments/verify` verifies the order payment and updates `users/{uid}.subscription`.
+- Web subscribe page calls `callCreateRazorpaySubscription()`.
+- Mobile subscribe page calls `callCreateRazorpaySubscription()`.
+- Razorpay Checkout opens with `subscription_id`.
+- `/api/payments/verify-subscription` verifies the subscription checkout payment and activates local access.
+- `/api/webhooks/razorpay` handles renewals, plan changes, halted state, cancellations, and payment failures.
 
-There is partial Razorpay Subscriptions code already:
+One-time checkout still uses Razorpay Orders:
 
-- `/api/payments/create-subscription`
-- `/api/payments/verify-subscription`
-- `createRazorpaySubscription(...)`
-- `cancelRazorpaySubscription(...)`
-- `/api/webhooks/razorpay`
-
-But the web/mobile subscribe UI is not currently wired to the subscription checkout path.
+- Intro Class and non-recurring packs call `callCreatePaymentOrder()`.
+- `/api/payments/verify` verifies one-time order payments.
 
 Email status today:
 
@@ -128,36 +135,44 @@ Intro credit policy:
 - If the intro credit is already used, keep `introCreditRemaining = 0`.
 - Canceling an Intro Class booking restores `introCreditRemaining`.
 
+### Kickstarter to Membership
+
+Current plan is `kickstarter`:
+
+- Allow membership purchase anytime.
+- Create a new Razorpay subscription.
+- On successful activation, replace the local `kickstarter` plan with the membership.
+- Carry unused Kickstarter `classesRemaining` into the first membership balance once.
+- Store `kickstarterCreditsCarriedForward = true` and `carriedForwardCredits` for audit/debugging.
+- Do not carry Kickstarter credits again on renewal, webhook replay, or pull sync.
+
+Example:
+
+- Kickstarter has `classesRemaining = 3`.
+- User buys `twice_quarterly`, which grants 24 credits.
+- First membership balance becomes 27 credits.
+- Next renewal resets to the plan credits, 24.
+
 ### Membership Upgrade
 
 Current plan is active membership:
 
 - Same plan: block and show `Current Plan`.
-- Higher plan: update existing Razorpay subscription.
-- Lower plan: schedule change at end of current billing cycle.
-
-Suggested rank:
-
-```ts
-const PLAN_RANK = {
-  twice_quarterly: 20,
-  twice_6mo: 25,
-  thrice_quarterly: 30,
-  thrice_6mo: 35,
-};
-```
+- Higher or equal price plan: update existing Razorpay subscription immediately.
+- Lower price plan: schedule change at end of current billing cycle.
 
 Immediate upgrade:
 
 - Use Razorpay subscription update API.
 - Let Razorpay calculate extra charge or credit behavior.
-- Update Firestore after webhook or successful API response.
+- Update Firestore after successful API response.
+- Webhook later reconciles the same state idempotently.
 
 End-of-cycle switch:
 
 - Use Razorpay scheduled update at end of cycle.
 - Store pending change in Firestore.
-- Allow canceling pending change.
+- Pending-change cancellation is future work.
 
 Razorpay docs say subscriptions can be updated for plan, quantity, start date, and total count, either immediately or at end of cycle. Immediate updates may create prorated charge/refund behavior. End-of-cycle updates avoid mid-cycle adjustment.
 
@@ -165,16 +180,22 @@ Reference: https://razorpay.com/docs/payments/subscriptions/update/?preferred-co
 
 ### Cancellation
 
-Cancel membership from our UI.
+Cancel plan from our UI.
 
-Default behavior:
+Membership behavior:
 
 - Cancel at period end.
 - User keeps access until current period end.
 - `subscription.cancelAtPeriodEnd = true`.
 - Daily expiry job changes status to `canceled` at end date.
 
-Immediate cancellation should be admin-only unless business explicitly wants member self-service immediate cancellation.
+Class pack behavior:
+
+- `drop_in` and `kickstarter` cancel immediately.
+- Remaining credits are removed.
+- `subscription.status = canceled`.
+
+Immediate membership cancellation should be admin-only unless business explicitly wants member self-service immediate cancellation.
 
 ## Backend Architecture
 
@@ -190,7 +211,7 @@ Rules:
 
 - Reject non-membership plans.
 - Allow if current subscription is inactive, expired, canceled, or `drop_in`.
-- Reject active membership unless caller is using change-plan endpoint.
+- Reject active membership unless caller is using `/api/subscriptions/update`.
 - Require mapped Razorpay Plan ID.
 - Create Razorpay subscription with `customer_notify`.
 - Store pending payment record.
@@ -217,58 +238,87 @@ Rules:
 - Mark payment as succeeded.
 - Activate user subscription.
 - Store `razorpaySubscriptionId`.
-- Write a `subscriptionEvents` audit record.
+- Store `razorpayPlanId`.
+- Preserve `introCreditRemaining`.
 
-#### Change Plan Preview
+#### Abandon Subscription Checkout
 
-`POST /api/subscriptions/change-plan/preview`
+`POST /api/payments/abandon-subscription`
+
+Use when Razorpay Checkout is dismissed or fails before subscription verification.
+
+Rules:
+
+- Require `paymentId` and `subscriptionId`.
+- Verify the pending payment belongs to the current user.
+- Cancel the Razorpay subscription immediately.
+- Mark the local payment as `abandoned`.
+- Do not touch the member's active subscription state.
+
+#### Update Subscription
+
+`POST /api/subscriptions/update`
 
 Purpose:
 
-- Return current plan, target plan, action, start timing, and expected billing behavior before opening payment or updating Razorpay.
+- Update an active Razorpay membership in place.
+
+Rules:
+
+- Reject non-membership target plans.
+- Reject same-plan updates.
+- Require existing `razorpaySubscriptionId`.
+- Require target Razorpay Plan mapping.
+- Compare current and target synced prices.
+- Apply higher/equal price plans immediately with `schedule_change_at = now`.
+- Schedule lower price plans with `schedule_change_at = cycle_end`.
+- Store pending plan fields when Razorpay schedules the change.
 
 Response:
 
 ```json
 {
-  "action": "upgrade_immediate",
-  "currentPlanId": "twice_quarterly",
-  "targetPlanId": "thrice_quarterly",
-  "effectiveAt": "immediate",
-  "billingNote": "Razorpay may charge or credit the prorated difference."
+  "success": true,
+  "mode": "immediate",
+  "planId": "thrice_quarterly",
+  "planName": "3x Weekly · Quarterly",
+  "effectiveAt": "2026-06-08T12:00:00.000Z",
+  "endDate": "2026-09-06T12:00:00.000Z"
 }
 ```
 
-#### Change Plan Commit
+#### Pull Sync
 
-`POST /api/subscriptions/change-plan`
+`POST /api/subscriptions/sync`
 
-Actions:
+Purpose:
 
-- `upgrade_immediate`
-- `switch_end_of_cycle`
-- `cancel_pending_change`
+- Repair local Firestore from Razorpay if a webhook is delayed or missed.
 
-This route should own all active-membership plan changes.
+Rules:
+
+- Fetch current Razorpay subscription.
+- Map Razorpay `plan_id` to app `planId`.
+- Sync local status, plan, period dates, pending update fields, and Razorpay ids.
+- Reset credits only when Razorpay shows a newer billing period than Firestore already has.
 
 ### Razorpay Helper Additions
 
 Add helpers in `shared/src/payments/razorpay-processor.ts`:
 
 ```ts
-updateRazorpaySubscription(subscriptionId, {
-  planId,
-  totalCount,
+createRazorpaySubscription(razorpayPlanId, totalCount, keyId, keySecret, notes)
+
+updateRazorpaySubscription(subscriptionId, razorpayPlanId, keyId, keySecret, {
+  remainingCount,
   scheduleChangeAt: 'now' | 'cycle_end',
   customerNotify,
 })
 
-fetchRazorpaySubscriptionPendingUpdate(subscriptionId)
-
-cancelRazorpaySubscriptionUpdate(subscriptionId)
+fetchRazorpaySubscription(subscriptionId, keyId, keySecret)
 ```
 
-Exact request fields should match Razorpay API requirements during implementation.
+Pending-update fetch and cancel helpers are not implemented yet.
 
 ## Firestore Data Model
 
@@ -279,13 +329,10 @@ subscription: {
   planId: PlanId | null;
   planCategory: 'membership' | 'class_pack' | null;
   status: 'active' | 'expired' | 'canceled' | 'halted' | 'pending';
-  billingProvider: 'razorpay' | 'manual' | null;
   razorpaySubscriptionId: string | null;
   razorpayPlanId: string | null;
   startDate: Date | null;
   endDate: Date | null;
-  currentPeriodStart: Date | null;
-  currentPeriodEnd: Date | null;
   classesRemaining: number | null;
   introCreditRemaining: number;
   weeklyClassLimit: number;
@@ -294,67 +341,61 @@ subscription: {
   autoRenew: boolean;
   cancelAtPeriodEnd: boolean;
   canceledAt: Date | null;
-  pendingPlanChange?: {
-    targetPlanId: PlanId;
-    razorpayPlanId: string;
-    effectiveAt: Date;
-    scheduleChangeAt: 'cycle_end';
-    requestedAt: Date;
-    status: 'scheduled';
-  };
-  previousPlan?: {
-    planId: PlanId;
-    status: string;
-    replacedAt: Date;
-    reason: 'intro_upgrade' | 'membership_upgrade' | 'admin_change';
-  };
+  pendingPlanId?: PlanId | null;
+  pendingRazorpayPlanId?: string | null;
+  pendingPlanEffectiveAt?: Date | null;
+  lastSyncedAt?: Date | null;
 }
 ```
 
 Add collection:
 
 ```txt
-subscriptionEvents/{eventId}
+razorpayWebhookEvents/{eventId}
+subscriptionChanges/{changeId}
 ```
 
-Fields:
+`subscriptionChanges` fields:
 
 - `userId`
-- `eventType`
-- `source`
 - `razorpaySubscriptionId`
-- `razorpayPaymentId`
 - `fromPlanId`
 - `toPlanId`
+- `razorpayPlanId`
+- `scheduleChangeAt`
+- `status`
 - `effectiveAt`
-- `rawWebhookEventId`
-- `createdAt`
+- `requestedAt`
+- `source`
+
+`razorpayWebhookEvents` fields:
+
+- `event`
+- `receivedAt`
+- `processedAt`
+- `status`
+- `error`
 
 Use this for audit and debugging.
 
 ## Webhook Handling
 
-Current webhook route already handles:
+Current webhook route handles:
 
+- `subscription.activated`
 - `subscription.charged`
+- `invoice.paid`
+- `subscription.updated`
 - `subscription.halted`
 - `subscription.cancelled`
 - `subscription.completed`
 - `payment.failed`
 
-Recommended additions:
-
-- `subscription.activated`
-- `subscription.pending`
-- `subscription.authenticated`
-- `subscription.updated` if available for account/event setup
-- invoice/payment events needed to reconcile recurring charges
-
 Webhook rules:
 
 - Verify signature against raw request body.
-- Make handlers idempotent.
-- Store processed event IDs if Razorpay event ID is available.
+- Make handlers idempotent with `razorpayWebhookEvents`.
+- Store processed event IDs when Razorpay provides one, with a deterministic fallback key.
 - Never trust client verification alone for long-term subscription state.
 - Use webhooks to reconcile payment retries, halted state, cancellation, and renewal.
 
@@ -365,7 +406,6 @@ Renewal behavior:
   - `classesRemaining = plan.credits`
   - preserve `introCreditRemaining`
   - `weeklyClassLimit = plan.weeklyClassLimit`
-  - `currentPeriodStart/currentPeriodEnd`
   - `endDate`
 - Write a payment/subscription event.
 
@@ -520,17 +560,17 @@ Checkout should fail closed if a membership has no Razorpay Plan ID.
 
 ### Phase 4: Webhook Reconciliation
 
-- Add missing subscription events.
-- Add idempotency.
-- Add `subscriptionEvents` audit logs.
-- Add admin visibility for payment failures and halted subscriptions.
+- Implemented subscription activation, charge, update, halted, cancelled, completed, invoice paid, and payment failed handlers.
+- Implemented webhook idempotency.
+- Added `razorpayWebhookEvents` processing logs.
+- Added `paymentFailures` logging.
 
 ### Phase 5: Plan Changes
 
-- Add change-plan preview endpoint.
-- Add immediate upgrade support.
-- Add end-of-cycle switch support.
-- Add cancel pending change support.
+- Implemented active membership update endpoint.
+- Implemented immediate higher/equal price changes.
+- Implemented end-of-cycle lower price changes.
+- Pending-change cancellation is future work.
 
 ### Phase 6: Branded Emails
 
@@ -560,6 +600,7 @@ Manual migration is only worth it if there are already many active paid members.
 
 - No plan → 2x membership subscription.
 - Payment success activates subscription.
+- Checkout dismiss/failure abandons the pending Razorpay subscription.
 - Webhook renewal resets credits.
 - Payment failure logs failure.
 
@@ -573,19 +614,29 @@ Manual migration is only worth it if there are already many active paid members.
 - Normal classes become bookable.
 - Intro-only plan restrictions no longer apply to normal classes after membership activation.
 
+### Kickstarter Upgrade
+
+- `kickstarter` active → membership allowed.
+- Membership replaces starter pack.
+- Unused Kickstarter class credits carry into the first membership cycle once.
+- Webhook activation must not double-add carried credits after client verification.
+- Renewals reset to normal plan credits only.
+
 ### Active Membership Upgrade
 
 - 2x → 3x immediate upgrade.
 - Same plan blocked.
 - 3x → 2x scheduled at cycle end.
-- Pending scheduled change can be canceled.
+- Pending scheduled change is stored in Firestore.
+- Pending scheduled change cancellation is future work.
 
 ### Cancellation
 
-- Cancel at period end.
-- User retains access until end date.
-- Daily expiry job changes status after end date.
-- Razorpay cancellation webhook does not prematurely remove access.
+- Membership: cancel at period end.
+- Membership: user retains access until end date.
+- Membership: daily expiry job changes status after end date.
+- Membership: Razorpay cancellation webhook does not prematurely remove access.
+- Class pack: cancel immediately and remove remaining credits.
 
 ### Emails
 

@@ -11,7 +11,7 @@ export interface ClientUser {
         planCategory: PlanCategory | null;
         startDate: Date | null;
         endDate: Date | null;
-        status: 'active' | 'expired' | 'canceled';
+        status: 'active' | 'expired' | 'canceled' | 'pending' | 'halted';
         classesRemaining: number | null;      // null = unlimited
         introCreditRemaining: number;
         maxClassesPerDay: number;
@@ -23,6 +23,13 @@ export interface ClientUser {
         cancelAtPeriodEnd?: boolean;
         canceledAt?: Date | null;
         razorpaySubscriptionId: string | null;
+        razorpayPlanId?: string | null;
+        pendingPlanId?: PlanId | null;
+        pendingRazorpayPlanId?: string | null;
+        pendingPlanEffectiveAt?: Date | null;
+        lastSyncedAt?: Date | null;
+        kickstarterCreditsCarriedForward?: boolean;
+        carriedForwardCredits?: number;
     };
     stats: {
         totalClassesAttended: number;

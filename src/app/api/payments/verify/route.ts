@@ -13,6 +13,11 @@ function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | u
     return endDate > new Date();
 }
 
+function isActiveMembership(subscription: Record<string, unknown> | undefined | null): boolean {
+    const plan = subscription?.planId ? getPlanById(subscription.planId as string) : null;
+    return isActiveUnexpiredSubscription(subscription) && (subscription?.planCategory === 'membership' || plan?.category === 'membership');
+}
+
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
@@ -109,6 +114,10 @@ export async function POST(req: NextRequest) {
                 if (isActiveUnexpiredSubscription(currentSub)) {
                     throw { status: 400, error: 'You already have an active membership.', code: 'subscription-already-active' };
                 }
+            }
+
+            if (plan.category === 'class_pack' && plan.id !== 'drop_in' && isActiveMembership(currentSub)) {
+                throw { status: 400, error: 'Starter packs are only available before an active membership.', code: 'subscription-already-active' };
             }
 
             const now = new Date();

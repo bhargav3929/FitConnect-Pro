@@ -13,6 +13,11 @@ function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | u
     return endDate > new Date();
 }
 
+function isActiveMembership(subscription: Record<string, unknown> | undefined | null): boolean {
+    const plan = subscription?.planId ? getPlanById(subscription.planId as string) : null;
+    return isActiveUnexpiredSubscription(subscription) && (subscription?.planCategory === 'membership' || plan?.category === 'membership');
+}
+
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
@@ -74,12 +79,23 @@ export async function POST(req: NextRequest) {
             if (!plan) throw { status: 400, error: 'Invalid plan on payment', code: 'failed-precondition' };
 
             const currentSub = userDoc.data()!.subscription as Record<string, unknown> | undefined;
-            if (isActiveUnexpiredSubscription(currentSub)) {
+            if (isActiveMembership(currentSub)) {
                 throw { status: 400, error: 'You already have an active membership.', code: 'subscription-already-active' };
             }
             const currentIntroCredit = typeof currentSub?.introCreditRemaining === 'number'
                 ? Math.max(0, currentSub.introCreditRemaining)
                 : 0;
+            const shouldCarryKickstarterCredits =
+                currentSub?.planId === 'kickstarter' &&
+                currentSub?.kickstarterCreditsCarriedForward !== true &&
+                typeof currentSub.classesRemaining === 'number' &&
+                currentSub.classesRemaining > 0;
+            const carriedKickstarterCredits = shouldCarryKickstarterCredits
+                ? Math.max(0, currentSub.classesRemaining as number)
+                : 0;
+            const membershipCredits = typeof plan.credits === 'number'
+                ? plan.credits + carriedKickstarterCredits
+                : plan.credits;
 
             const now = new Date();
             const endDate = new Date(now);
@@ -88,6 +104,7 @@ export async function POST(req: NextRequest) {
             transaction.update(paymentRef, {
                 status: 'succeeded',
                 razorpayPaymentId: razorpay_payment_id,
+                razorpaySubscriptionId: razorpay_subscription_id,
                 paidAt: now,
             });
 
@@ -97,7 +114,7 @@ export async function POST(req: NextRequest) {
                 'subscription.startDate': now,
                 'subscription.endDate': endDate,
                 'subscription.status': 'active',
-                'subscription.classesRemaining': plan.credits,
+                'subscription.classesRemaining': membershipCredits,
                 'subscription.introCreditRemaining': currentIntroCredit,
                 'subscription.maxClassesPerDay': plan.maxClassesPerDay,
                 'subscription.weeklyClassLimit': plan.weeklyClassLimit,
@@ -106,10 +123,16 @@ export async function POST(req: NextRequest) {
                 'subscription.lastPaymentId': paymentRef.id,
                 'subscription.autoRenew': plan.autoRenew,
                 'subscription.razorpaySubscriptionId': razorpay_subscription_id,
+                'subscription.razorpayPlanId': paymentData.metadata?.razorpayPlanId ?? null,
+                'subscription.kickstarterCreditsCarriedForward': carriedKickstarterCredits > 0,
+                'subscription.carriedForwardCredits': carriedKickstarterCredits,
+                'subscription.pendingPlanId': null,
+                'subscription.pendingRazorpayPlanId': null,
+                'subscription.pendingPlanEffectiveAt': null,
                 updatedAt: FieldValue.serverTimestamp(),
             });
 
-            return { endDate: endDate.toISOString(), planId: plan.id, planName: plan.name, credits: plan.credits };
+            return { endDate: endDate.toISOString(), planId: plan.id, planName: plan.name, credits: membershipCredits };
         });
 
         return NextResponse.json({ success: true, ...result });

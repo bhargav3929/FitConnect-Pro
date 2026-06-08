@@ -1,5 +1,5 @@
 import { adminDb } from '@/lib/firebase/admin';
-import { PLAN_CATALOG, type PlanDefinition } from '@fitconnect/shared/types/subscription';
+import { PLAN_CATALOG, type PlanDefinition, type PlanId } from '@fitconnect/shared/types/subscription';
 import { listRazorpayItems, listRazorpayPlans } from '@fitconnect/shared/payments/razorpay-processor';
 
 export type PricingSource = 'plans' | 'items' | 'static';
@@ -193,6 +193,15 @@ export async function getSyncedPricing(): Promise<SyncedPricing> {
 export async function getSyncedPlanEntry(planId: string): Promise<SyncedPlanEntry | null> {
     const pricing = await getSyncedPricing();
     return pricing.plans.find((plan) => plan.planId === planId) ?? null;
+}
+
+export async function getPlanIdForRazorpayPlanId(razorpayPlanId: string): Promise<PlanId | null> {
+    const pricing = await getSyncedPricing();
+    const syncedMatch = pricing.plans.find((plan) => plan.razorpayPlanId === razorpayPlanId);
+    if (syncedMatch) return syncedMatch.planId as PlanId;
+
+    const staticMatch = PLAN_CATALOG.find((plan) => plan.razorpayPlanId === razorpayPlanId);
+    return staticMatch?.id ?? null;
 }
 
 export function getChargeAmount(plan: PlanDefinition, syncedPlan: SyncedPlanEntry | null, isFoundingMember: boolean): number {

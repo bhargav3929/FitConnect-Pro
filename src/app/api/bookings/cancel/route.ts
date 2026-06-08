@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
         const token = authHeader.split('Bearer ')[1];
         const decoded = await adminAuth.verifyIdToken(token);
         const userId = decoded.uid;
+        const isAdmin = decoded.admin === true;
 
         let body: Record<string, unknown>;
         try {
@@ -45,8 +46,8 @@ export async function POST(req: NextRequest) {
 
             const bookingData = bookingDoc.data()!;
 
-            // Validate ownership
-            if (bookingData.userId !== userId) {
+            // Validate ownership. Admins can cancel any confirmed booking.
+            if (!isAdmin && bookingData.userId !== userId) {
                 throw { status: 403, error: 'You can only cancel your own bookings', code: 'permission-denied' };
             }
 
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
 
             const classRef = adminDb.collection('classes').doc(bookingData.classId);
             const classDoc = await transaction.get(classRef);
-            const userRef = adminDb.collection('users').doc(userId);
+            const userRef = adminDb.collection('users').doc(bookingData.userId);
 
             const now = FieldValue.serverTimestamp();
 

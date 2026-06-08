@@ -13,6 +13,11 @@ function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | u
     return endDate > new Date();
 }
 
+function isActiveMembership(subscription: Record<string, unknown> | undefined | null): boolean {
+    const plan = subscription?.planId ? getPlanById(subscription.planId as string) : null;
+    return isActiveUnexpiredSubscription(subscription) && (subscription?.planCategory === 'membership' || plan?.category === 'membership');
+}
+
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
@@ -58,6 +63,13 @@ export async function POST(req: NextRequest) {
         if (plan.category === 'membership' && isActiveUnexpiredSubscription(userData?.subscription)) {
             return NextResponse.json(
                 { error: 'You already have an active membership. Wait for it to expire or cancel first.', code: 'already-exists' },
+                { status: 409 },
+            );
+        }
+
+        if (plan.category === 'class_pack' && plan.id !== 'drop_in' && isActiveMembership(userData?.subscription)) {
+            return NextResponse.json(
+                { error: 'Starter packs are only available before an active membership.', code: 'already-exists' },
                 { status: 409 },
             );
         }

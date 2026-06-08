@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
+import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { cancelRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -36,7 +37,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'No active subscription to cancel', code: 'failed-precondition' }, { status: 400 });
         }
 
+        const plan = subscription.planId ? getPlanById(subscription.planId as string) : null;
+        const isMembership = subscription.planCategory === 'membership' || plan?.category === 'membership';
         const razorpaySubscriptionId = subscription.razorpaySubscriptionId as string | null;
+
+        if (!isMembership) {
+            return NextResponse.json(
+                {
+                    error: 'Class packs do not auto-renew. Credits remain usable until the plan expires.',
+                    code: 'non-renewing-plan',
+                },
+                { status: 400 },
+            );
+        }
 
         // Cancel on Razorpay if a subscription ID exists (memberships)
         if (razorpaySubscriptionId) {
@@ -64,7 +77,7 @@ export async function POST(req: NextRequest) {
             updatedAt: FieldValue.serverTimestamp(),
         });
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, mode: isStillUsable ? 'period_end' : 'immediate' });
     } catch (error) {
         console.error('Error cancelling subscription:', error);
         return NextResponse.json({ error: 'Failed to cancel subscription', code: 'internal' }, { status: 500 });

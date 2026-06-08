@@ -17,6 +17,13 @@ export const DEFAULT_SUBSCRIPTION: ClientUser['subscription'] = {
     cancelAtPeriodEnd: false,
     canceledAt: null,
     razorpaySubscriptionId: null,
+    razorpayPlanId: null,
+    pendingPlanId: null,
+    pendingRazorpayPlanId: null,
+    pendingPlanEffectiveAt: null,
+    lastSyncedAt: null,
+    kickstarterCreditsCarriedForward: false,
+    carriedForwardCredits: 0,
 }
 
 export const DEFAULT_STATS: ClientUser['stats'] = {
@@ -103,6 +110,13 @@ export function normalizeSubscription(raw: Record<string, unknown> | undefined):
         cancelAtPeriodEnd: (raw.cancelAtPeriodEnd as boolean) ?? false,
         canceledAt: toSafeDate(raw.canceledAt),
         razorpaySubscriptionId: (raw.razorpaySubscriptionId as string) ?? null,
+        razorpayPlanId: (raw.razorpayPlanId as string) ?? null,
+        pendingPlanId: (raw.pendingPlanId as ClientUser['subscription']['pendingPlanId']) ?? null,
+        pendingRazorpayPlanId: (raw.pendingRazorpayPlanId as string) ?? null,
+        pendingPlanEffectiveAt: toSafeDate(raw.pendingPlanEffectiveAt),
+        lastSyncedAt: toSafeDate(raw.lastSyncedAt),
+        kickstarterCreditsCarriedForward: raw.kickstarterCreditsCarriedForward === true,
+        carriedForwardCredits: typeof raw.carriedForwardCredits === 'number' ? raw.carriedForwardCredits : 0,
     }
 }
 

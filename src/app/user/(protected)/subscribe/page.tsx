@@ -6,7 +6,18 @@ import { ArrowLeft, CheckCircle2, Calendar, AlertTriangle, ExternalLink, XCircle
 import { Button } from "@/components/ui/button"
 import { PlanSelector } from "@/components/user/PlanSelector"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
-import { callCreatePaymentOrder, callVerifyPayment, callCancelSubscription, callGetSubscriptionPortalLink, callGetPricing } from "@fitconnect/shared/firebase/firestore"
+import {
+    callAbandonRazorpaySubscription,
+    callCancelSubscription,
+    callCreatePaymentOrder,
+    callCreateRazorpaySubscription,
+    callGetPricing,
+    callGetSubscriptionPortalLink,
+    callSyncRazorpaySubscription,
+    callUpdateRazorpaySubscription,
+    callVerifyPayment,
+    callVerifyRazorpaySubscription,
+} from "@fitconnect/shared/firebase/firestore"
 import { getPlanById, type PlanId } from "@fitconnect/shared/types/subscription"
 import type { ClientUser } from "@fitconnect/shared/types/client"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -65,14 +76,15 @@ export default function SubscribePage() {
 
     const selectedPlan = selectedPlanId ? getPlanById(selectedPlanId) : null
     const hasActiveSubscription = isActiveUnexpiredSubscription(clientUser?.subscription)
+    const currentPlan = clientUser?.subscription.planId ? getPlanById(clientUser.subscription.planId) : null
+    const hasActiveMembership = hasActiveSubscription && (clientUser?.subscription.planCategory === 'membership' || currentPlan?.category === 'membership')
+    const selectedCurrentPlan = hasActiveMembership && selectedPlanId === clientUser?.subscription.planId
 
     const handleContinueToCheckout = async () => {
         if (!selectedPlanId) return
-        if (hasActiveSubscription) {
+        if (selectedPlanId === 'drop_in' && hasActiveSubscription) {
             toast.error('Active membership found', {
-                description: selectedPlanId === 'drop_in'
-                    ? 'Intro class is only available before your first active plan.'
-                    : 'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
+                description: 'Intro class is only available before your first active plan.',
             })
             return
         }
@@ -80,15 +92,115 @@ export default function SubscribePage() {
             router.push('/intro-class')
             return
         }
+
+        if (selectedPlan?.category === 'class_pack' && hasActiveMembership) {
+            toast.error('Active membership found', {
+                description: 'Starter packs are only available before an active membership.',
+            })
+            return
+        }
+
+        if (hasActiveMembership) {
+            if (selectedCurrentPlan) {
+                toast.info('You are already on this plan.')
+                return
+            }
+
+            setIsProcessing(true)
+            try {
+                const result = await callUpdateRazorpaySubscription(selectedPlanId)
+                await refreshSubscription()
+                if (result.mode === 'scheduled') {
+                    toast.success('Plan change scheduled', {
+                        description: result.effectiveAt
+                            ? `Your ${result.planName} plan starts on ${new Date(result.effectiveAt).toLocaleDateString()}.`
+                            : `Your ${result.planName} plan starts at the end of this billing cycle.`,
+                    })
+                    setIsProcessing(false)
+                    return
+                }
+
+                const plan = getPlanById(result.planId)
+                setResultData({
+                    planName: result.planName,
+                    credits: plan?.credits ?? null,
+                    endDate: result.endDate,
+                })
+                setStep('success')
+            } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : 'Failed to update membership'
+                toast.error('Membership update failed', { description: msg })
+            } finally {
+                setIsProcessing(false)
+            }
+            return
+        }
+
         setIsProcessing(true)
         try {
-            const order = await callCreatePaymentOrder(selectedPlanId)
+            if (selectedPlan?.category === 'class_pack') {
+                const order = await callCreatePaymentOrder(selectedPlanId)
+
+                await openCheckout({
+                    key: order.key,
+                    amount: order.amount,
+                    currency: order.currency,
+                    order_id: order.orderId,
+                    name: 'Sol Pilates',
+                    description: selectedPlan.name,
+                    prefill: {
+                        email: firebaseUser?.email ?? undefined,
+                        name: firebaseUser?.displayName ?? undefined,
+                    },
+                    theme: { color: '#FF6A3D' },
+                    modal: {
+                        ondismiss: () => setIsProcessing(false),
+                    },
+                    handler: async (response) => {
+                        try {
+                            if (!response.razorpay_order_id) {
+                                throw new Error('Missing Razorpay order id in checkout response')
+                            }
+                            const result = await callVerifyPayment({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                paymentId: order.paymentId,
+                            })
+                            setResultData({
+                                planName: result.planName,
+                                credits: result.credits,
+                                endDate: result.endDate,
+                            })
+                            await refreshSubscription()
+                            setStep('success')
+                        } catch (err: unknown) {
+                            const msg = err instanceof Error ? err.message : 'Payment verification failed'
+                            toast.error('Payment error', { description: msg })
+                            setIsProcessing(false)
+                        }
+                    },
+                })
+                return
+            }
+
+            const subscription = await callCreateRazorpaySubscription(selectedPlanId)
+            const abandonSubscription = async () => {
+                try {
+                    await callAbandonRazorpaySubscription({
+                        subscriptionId: subscription.subscriptionId,
+                        paymentId: subscription.paymentId,
+                    })
+                } catch (err) {
+                    console.warn('Failed to abandon Razorpay subscription checkout', err)
+                }
+            }
 
             await openCheckout({
-                key: order.key,
-                amount: order.amount,
-                currency: order.currency,
-                order_id: order.orderId,
+                key: subscription.key,
+                amount: subscription.amount,
+                currency: subscription.currency,
+                subscription_id: subscription.subscriptionId,
                 name: 'Sol Pilates',
                 description: selectedPlan?.name ?? 'Membership',
                 prefill: {
@@ -97,15 +209,21 @@ export default function SubscribePage() {
                 },
                 theme: { color: '#FF6A3D' },
                 modal: {
-                    ondismiss: () => setIsProcessing(false),
+                    ondismiss: () => {
+                        void abandonSubscription()
+                        setIsProcessing(false)
+                    },
                 },
                 handler: async (response) => {
                     try {
-                        const result = await callVerifyPayment({
-                            razorpay_order_id: response.razorpay_order_id,
+                        if (!response.razorpay_subscription_id) {
+                            throw new Error('Missing Razorpay subscription id in checkout response')
+                        }
+                        const result = await callVerifyRazorpaySubscription({
+                            razorpay_subscription_id: response.razorpay_subscription_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
-                            paymentId: order.paymentId,
+                            paymentId: subscription.paymentId,
                         })
                         setResultData({
                             planName: result.planName,
@@ -115,6 +233,7 @@ export default function SubscribePage() {
                         await refreshSubscription()
                         setStep('success')
                     } catch (err: unknown) {
+                        await abandonSubscription()
                         const msg = err instanceof Error ? err.message : 'Payment verification failed'
                         toast.error('Payment error', { description: msg })
                         setIsProcessing(false)
@@ -128,14 +247,30 @@ export default function SubscribePage() {
         }
     }
 
+    const handleSyncSubscription = async () => {
+        setIsLoadingPortal(true)
+        try {
+            await callSyncRazorpaySubscription()
+            await refreshSubscription()
+            toast.success('Membership synced')
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Could not sync membership'
+            toast.error('Sync failed', { description: msg })
+        } finally {
+            setIsLoadingPortal(false)
+        }
+    }
+
     const handleCancelSubscription = async () => {
         setIsCancelling(true)
         try {
-            await callCancelSubscription()
+            const result = await callCancelSubscription()
             await refreshSubscription()
             setShowCancelConfirm(false)
-            toast.success('Subscription cancelled', {
-                description: 'Your plan will remain active until the current period ends.',
+            toast.success(result.mode === 'immediate' ? 'Plan cancelled' : 'Renewal cancelled', {
+                description: result.mode === 'immediate'
+                    ? 'Your plan has been cancelled.'
+                    : 'Your membership will remain active until the current period ends.',
             })
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Failed to cancel subscription'
@@ -221,21 +356,33 @@ export default function SubscribePage() {
                                         </Button>
                                     )}
 
-                                    {/* Cancel plan */}
-                                    <button
-                                        onClick={() => setShowCancelConfirm(true)}
-                                        className="flex-1 h-10 rounded-xl border-2 border-terra-400 bg-terra-400/10 text-terra-400 font-black text-xs flex items-center justify-center gap-1.5 hover:bg-terra-400/20 transition-colors"
-                                    >
-                                        <XCircle className="w-3.5 h-3.5" />
-                                        CANCEL PLAN
-                                    </button>
+                                    {clientUser.subscription.razorpaySubscriptionId && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleSyncSubscription}
+                                            disabled={isLoadingPortal}
+                                            className="flex-1 h-10 border-peach-400/30 text-olive-500 hover:bg-peach-200/50 font-bold text-xs rounded-xl flex items-center gap-1.5 disabled:opacity-50"
+                                        >
+                                            SYNC
+                                        </Button>
+                                    )}
+
+                                    {hasActiveMembership && (
+                                        <button
+                                            onClick={() => setShowCancelConfirm(true)}
+                                            className="flex-1 h-10 rounded-xl border-2 border-terra-400 bg-terra-400/10 text-terra-400 font-black text-xs flex items-center justify-center gap-1.5 hover:bg-terra-400/20 transition-colors"
+                                        >
+                                            <XCircle className="w-3.5 h-3.5" />
+                                            CANCEL RENEWAL
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
 
                         {/* ── Cancel confirmation modal ── */}
                         <AnimatePresence>
-                            {showCancelConfirm && (
+                            {showCancelConfirm && hasActiveMembership && (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.97 }}
                                     animate={{ opacity: 1, scale: 1 }}
@@ -245,9 +392,13 @@ export default function SubscribePage() {
                                     <div className="flex items-start gap-3">
                                         <AlertTriangle className="w-5 h-5 text-terra-400 mt-0.5 shrink-0" />
                                         <div>
-                                            <p className="text-olive-600 font-bold text-sm">Cancel your plan?</p>
+                                            <p className="text-olive-600 font-bold text-sm">
+                                                {hasActiveMembership ? 'Cancel renewal?' : 'Cancel your plan?'}
+                                            </p>
                                             <p className="text-olive-400 text-xs mt-1 leading-relaxed">
-                                                Your membership will stay active until the current period ends. You won&apos;t be charged again.
+                                                {hasActiveMembership
+                                                    ? "Your membership will stay active until the current period ends. You won't be charged again."
+                                                    : 'Class packs do not auto-renew. Credits remain usable until the plan expires.'}
                                             </p>
                                         </div>
                                     </div>
@@ -265,7 +416,7 @@ export default function SubscribePage() {
                                             disabled={isCancelling}
                                             className="flex-1 h-10 bg-terra-400 hover:bg-terra-300 text-peach-50 font-bold text-xs rounded-xl disabled:opacity-50"
                                         >
-                                            {isCancelling ? 'CANCELLING...' : 'YES, CANCEL'}
+                                            {isCancelling ? 'CANCELLING...' : hasActiveMembership ? 'YES, CANCEL RENEWAL' : 'YES, CANCEL'}
                                         </Button>
                                     </div>
                                 </motion.div>
@@ -302,18 +453,24 @@ export default function SubscribePage() {
                             disabled={
                                 !selectedPlanId ||
                                 isProcessing ||
-                                hasActiveSubscription ||
+                                selectedCurrentPlan ||
+                                (selectedPlanId === 'drop_in' && hasActiveSubscription) ||
+                                (selectedPlan?.category === 'class_pack' && hasActiveMembership) ||
                                 (selectedPlanId === 'drop_in' && hasIntroClassLead === true)
                             }
                             className="w-full h-14 bg-terra-400 text-peach-50 hover:bg-terra-300 font-black tracking-wide text-base rounded-xl transition-all hover:shadow-lg hover:shadow-terra-400/20 disabled:opacity-50"
                         >
                             {isProcessing
                                 ? 'OPENING PAYMENT...'
-                                : hasActiveSubscription
-                                    ? 'ACTIVE MEMBERSHIP'
+                                : selectedCurrentPlan
+                                    ? 'CURRENT PLAN'
                                 : selectedPlanId === 'drop_in'
                                     ? (hasIntroClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS')
-                                    : 'CONTINUE TO PAYMENT'}
+                                    : selectedPlan?.category === 'class_pack' && hasActiveMembership
+                                        ? 'ACTIVE MEMBERSHIP'
+                                    : hasActiveMembership
+                                        ? 'UPDATE MEMBERSHIP'
+                                        : 'CONTINUE TO PAYMENT'}
                         </Button>
                     </motion.div>
                 )}

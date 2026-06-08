@@ -13,6 +13,11 @@ function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | u
     return endDate > new Date();
 }
 
+function isActiveMembership(subscription: Record<string, unknown> | undefined | null): boolean {
+    const plan = subscription?.planId ? getPlanById(subscription.planId as string) : null;
+    return isActiveUnexpiredSubscription(subscription) && (subscription?.planCategory === 'membership' || plan?.category === 'membership');
+}
+
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization');
@@ -60,9 +65,12 @@ export async function POST(req: NextRequest) {
         const userDoc = await adminDb.collection('users').doc(userId).get();
         const userData = userDoc.exists ? userDoc.data()! : null;
 
-        if (isActiveUnexpiredSubscription(userData?.subscription)) {
+        if (isActiveMembership(userData?.subscription)) {
             return NextResponse.json(
-                { error: 'You already have an active membership.', code: 'already-exists' },
+                {
+                    error: 'You already have an active membership. Use the upgrade flow to change your plan.',
+                    code: 'active-membership-update-required',
+                },
                 { status: 409 },
             );
         }
@@ -87,6 +95,7 @@ export async function POST(req: NextRequest) {
             currency: 'INR',
             status: 'pending',
             planId,
+            kind: 'subscription_create',
             metadata: {
                 planName: plan.name,
                 planCategory: plan.category,
@@ -107,6 +116,7 @@ export async function POST(req: NextRequest) {
             amount: chargeAmount * 100,
             currency: 'INR',
             key: keyId,
+            status: rzpSub.status,
         });
     } catch (error) {
         console.error('Error creating Razorpay subscription:', error);

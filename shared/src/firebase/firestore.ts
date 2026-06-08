@@ -704,15 +704,82 @@ export async function callVerifyPayment(payload: {
 }
 
 // ---------------------------------------------------------------------------
-// 17f. callCancelSubscription — Cancel the current subscription
+// 17f. callCreateRazorpaySubscription — Create recurring membership subscription
 // ---------------------------------------------------------------------------
 
-export async function callCancelSubscription(): Promise<{ success: boolean }> {
-    return apiFetch<{ success: boolean }>('/api/subscriptions/cancel', { method: 'POST' });
+export async function callCreateRazorpaySubscription(
+    planId: string,
+): Promise<{ subscriptionId: string; paymentId: string; amount: number; currency: string; key: string; status: string }> {
+    return apiFetch<{ subscriptionId: string; paymentId: string; amount: number; currency: string; key: string; status: string }>(
+        '/api/payments/create-subscription',
+        { method: 'POST', body: { planId } },
+    );
 }
 
 // ---------------------------------------------------------------------------
-// 17g. callGetSubscriptionPortalLink — Get Razorpay subscription management URL
+// 17g. callVerifyRazorpaySubscription — Verify subscription checkout
+// ---------------------------------------------------------------------------
+
+export async function callVerifyRazorpaySubscription(payload: {
+    razorpay_subscription_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    paymentId: string;
+}): Promise<{ success: boolean; endDate: string; planId: string; planName: string; credits: number | null }> {
+    return apiFetch<{ success: boolean; endDate: string; planId: string; planName: string; credits: number | null }>(
+        '/api/payments/verify-subscription',
+        { method: 'POST', body: payload },
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 17h. callAbandonRazorpaySubscription — Cancel abandoned subscription checkout
+// ---------------------------------------------------------------------------
+
+export async function callAbandonRazorpaySubscription(payload: {
+    subscriptionId: string;
+    paymentId: string;
+}): Promise<{ success: boolean; razorpayCancelled?: boolean; skipped?: boolean; status?: string }> {
+    return apiFetch<{ success: boolean; razorpayCancelled?: boolean; skipped?: boolean; status?: string }>(
+        '/api/payments/abandon-subscription',
+        { method: 'POST', body: payload },
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 17i. callUpdateRazorpaySubscription — Upgrade/downgrade current subscription
+// ---------------------------------------------------------------------------
+
+export async function callUpdateRazorpaySubscription(
+    planId: string,
+): Promise<{ success: boolean; mode: 'immediate' | 'scheduled'; planId: string; planName: string; effectiveAt: string | null; endDate: string; status: string }> {
+    return apiFetch<{ success: boolean; mode: 'immediate' | 'scheduled'; planId: string; planName: string; effectiveAt: string | null; endDate: string; status: string }>(
+        '/api/subscriptions/update',
+        { method: 'POST', body: { planId } },
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 17j. callSyncRazorpaySubscription — Pull current Razorpay state into Firestore
+// ---------------------------------------------------------------------------
+
+export async function callSyncRazorpaySubscription(): Promise<{ success: boolean; planId: string; status: string; razorpayStatus: string; endDate: string | null }> {
+    return apiFetch<{ success: boolean; planId: string; status: string; razorpayStatus: string; endDate: string | null }>(
+        '/api/subscriptions/sync',
+        { method: 'POST' },
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 17k. callCancelSubscription — Cancel the current subscription
+// ---------------------------------------------------------------------------
+
+export async function callCancelSubscription(): Promise<{ success: boolean; mode?: 'immediate' | 'period_end' }> {
+    return apiFetch<{ success: boolean; mode?: 'immediate' | 'period_end' }>('/api/subscriptions/cancel', { method: 'POST' });
+}
+
+// ---------------------------------------------------------------------------
+// 17l. callGetSubscriptionPortalLink — Get Razorpay subscription management URL
 // ---------------------------------------------------------------------------
 
 export async function callGetSubscriptionPortalLink(): Promise<{ url: string; status: string }> {
@@ -720,7 +787,7 @@ export async function callGetSubscriptionPortalLink(): Promise<{ url: string; st
 }
 
 // ---------------------------------------------------------------------------
-// 17h. callGetPricing — Fetch live Razorpay pricing
+// 17m. callGetPricing — Fetch live Razorpay pricing
 // ---------------------------------------------------------------------------
 
 export async function callGetPricing(): Promise<{

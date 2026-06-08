@@ -32,6 +32,13 @@ export async function GET(req: NextRequest) {
             process.env.RAZORPAY_KEY_SECRET!,
         );
 
+        if (!rzpSub.short_url) {
+            return NextResponse.json(
+                { error: 'Razorpay did not return a subscription management link.', code: 'not-found' },
+                { status: 404 },
+            );
+        }
+
         return NextResponse.json({ url: rzpSub.short_url, status: rzpSub.status });
     } catch (error) {
         console.error('Error fetching portal link:', error);

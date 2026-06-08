@@ -140,6 +140,9 @@ export default function IntroClassPage() {
                 },
                 handler: async (response) => {
                     try {
+                        if (!response.razorpay_order_id) {
+                            throw new Error('Missing Razorpay order id in checkout response');
+                        }
                         await callVerifyPayment({
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,

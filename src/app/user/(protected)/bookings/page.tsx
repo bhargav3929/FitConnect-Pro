@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, Clock, MapPin, User, CheckCircle2, AlertCircle, XCircle, Loader2, Award } from "lucide-react"
+import { Calendar, Clock, MapPin, User, CheckCircle2, AlertCircle, XCircle, Loader2, Award, Ban } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import Link from "next/link"
@@ -164,7 +164,7 @@ export default function BookingsPage() {
             case 'confirmed': return 'bg-terra-400/15 text-terra-400'
             case 'attended': return 'bg-green-500/15 text-green-600'
             case 'canceled': return 'bg-red-500/15 text-red-600'
-            case 'no-show': return 'bg-red-500/15 text-red-600'
+            case 'no-show': return 'bg-yellow-500/15 text-yellow-700'
             default: return 'bg-peach-300/30 text-olive-400'
         }
     }
@@ -174,7 +174,7 @@ export default function BookingsPage() {
             case 'confirmed': return <AlertCircle className="w-3 h-3" />
             case 'attended': return <CheckCircle2 className="w-3 h-3" />
             case 'canceled': return <XCircle className="w-3 h-3" />
-            case 'no-show': return <XCircle className="w-3 h-3" />
+            case 'no-show': return <Ban className="w-3 h-3" />
             default: return null
         }
     }

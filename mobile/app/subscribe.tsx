@@ -15,8 +15,12 @@ import RazorpayCheckout from 'react-native-razorpay';
 import { PLAN_CATALOG, getPlanById } from '@fitconnect/shared/types/subscription';
 import type { PlanDefinition, PlanCategory } from '@fitconnect/shared/types/subscription';
 import {
+    callAbandonRazorpaySubscription,
     callCreatePaymentOrder,
+    callCreateRazorpaySubscription,
     callVerifyPayment,
+    callVerifyRazorpaySubscription,
+    callUpdateRazorpaySubscription,
     callCancelSubscription,
     callGetPricing,
 } from '@fitconnect/shared/firebase/firestore';
@@ -303,32 +307,6 @@ export default function SubscribeScreen() {
     // Cancel state
     const [isCancelling, setIsCancelling] = useState(false);
 
-    const handleCancelSubscription = useCallback(() => {
-        Alert.alert(
-            'Cancel your plan?',
-            "Your plan stays active until the current period ends. You won't be charged again.",
-            [
-                { text: 'Keep Plan', style: 'cancel' },
-                {
-                    text: 'Yes, Cancel',
-                    style: 'destructive',
-                    onPress: async () => {
-                        setIsCancelling(true);
-                        try {
-                            await callCancelSubscription();
-                            await refreshSubscription();
-                            Alert.alert('Cancelled', 'Your plan stays active until the current period ends.');
-                        } catch {
-                            Alert.alert('Error', 'Failed to cancel. Please try again.');
-                        } finally {
-                            setIsCancelling(false);
-                        }
-                    },
-                },
-            ],
-        );
-    }, [refreshSubscription]);
-
     // Flow state
     const [step, setStep] = useState<Step>('plan');
     const [activeTab, setActiveTab] = useState<PlanCategory>('membership');
@@ -353,6 +331,43 @@ export default function SubscribeScreen() {
         !clientUser.subscription.endDate ||
         new Date(clientUser.subscription.endDate).getTime() > Date.now()
     );
+    const currentPlan = clientUser?.subscription?.planId ? getPlanById(clientUser.subscription.planId) : null;
+    const activePlanIsMembership = clientUser?.subscription?.planCategory === 'membership' || currentPlan?.category === 'membership';
+    const hasActiveMembership = hasActiveSubscription && (clientUser?.subscription?.planCategory === 'membership' || currentPlan?.category === 'membership');
+    const selectedCurrentPlan = hasActiveMembership && selectedPlan?.id === clientUser?.subscription?.planId;
+
+    const handleCancelSubscription = useCallback(() => {
+        Alert.alert(
+            activePlanIsMembership ? 'Cancel renewal?' : 'Cancel your plan?',
+            activePlanIsMembership
+                ? "Your plan stays active until the current period ends. You won't be charged again."
+                : 'Class packs do not auto-renew. Credits remain usable until the plan expires.',
+            [
+                { text: 'Keep Plan', style: 'cancel' },
+                {
+                    text: 'Yes, Cancel',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setIsCancelling(true);
+                        try {
+                            const result = await callCancelSubscription();
+                            await refreshSubscription();
+                            Alert.alert(
+                                result.mode === 'immediate' ? 'Plan cancelled' : 'Renewal cancelled',
+                                result.mode === 'immediate'
+                                    ? 'Your plan has been cancelled.'
+                                    : 'Your membership stays active until the current period ends.',
+                            );
+                        } catch {
+                            Alert.alert('Error', 'Failed to cancel. Please try again.');
+                        } finally {
+                            setIsCancelling(false);
+                        }
+                    },
+                },
+            ],
+        );
+    }, [activePlanIsMembership, refreshSubscription]);
 
     useEffect(() => {
         let mounted = true;
@@ -381,56 +396,131 @@ export default function SubscribeScreen() {
             Alert.alert('Select a Plan', 'Please choose a plan to continue.');
             return;
         }
-        if (hasActiveSubscription) {
+        if (selectedPlan.id === 'drop_in' && hasActiveSubscription) {
             Alert.alert(
                 'Active Membership',
-                selectedPlan.id === 'drop_in'
-                    ? 'Intro class is only available before your first active plan.'
-                    : 'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
+                'Intro class is only available before your first active plan.',
             );
+            return;
+        }
+        if (selectedCurrentPlan) {
+            Alert.alert('Current Plan', 'You are already on this membership.');
             return;
         }
         if (selectedPlan.id === 'drop_in') {
             router.push('/intro-class');
             return;
         }
+        if (selectedPlan.category === 'class_pack' && hasActiveMembership) {
+            Alert.alert(
+                'Active Membership',
+                'Starter packs are only available before an active membership.',
+            );
+            return;
+        }
         setStep('checkout');
-    }, [selectedPlan, hasActiveSubscription, router]);
+    }, [selectedPlan, hasActiveSubscription, selectedCurrentPlan, hasActiveMembership, router]);
 
     // Process payment
     const handlePay = useCallback(async () => {
         if (!selectedPlan) return;
-        if (selectedPlan.category === 'membership' && hasActiveSubscription) {
-            Alert.alert(
-                'Active Membership',
-                'Membership upgrades are not enabled yet. Please wait for your current plan to expire.',
-            );
-            return;
-        }
-
         setPaymentState('processing');
         try {
-            const order = await callCreatePaymentOrder(selectedPlan.id);
-            const response = await RazorpayCheckout.open({
-                key: order.key,
-                amount: order.amount,
-                currency: order.currency,
-                order_id: order.orderId,
-                name: 'Sol Pilates',
-                description: selectedPlan.name,
-                prefill: {
-                    email: firebaseUser?.email ?? clientUser?.email ?? undefined,
-                    name: firebaseUser?.displayName ?? clientUser?.name ?? undefined,
-                },
-                theme: { color: Colors.terra[400] },
-            });
+            if (selectedPlan.category === 'membership' && hasActiveMembership) {
+                const result = await callUpdateRazorpaySubscription(selectedPlan.id);
+                await refreshSubscription();
 
-            const result = await callVerifyPayment({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                paymentId: order.paymentId,
-            });
+                if (result.mode === 'scheduled') {
+                    setPaymentState('idle');
+                    setStep('plan');
+                    Alert.alert(
+                        'Plan Change Scheduled',
+                        result.effectiveAt
+                            ? `Your ${result.planName} membership starts on ${formatDate(result.effectiveAt)}.`
+                            : `Your ${result.planName} membership starts at the end of this billing cycle.`,
+                    );
+                    return;
+                }
+
+                setPaymentResult({
+                    planName: result.planName,
+                    credits: selectedPlan.credits,
+                    endDate: result.endDate,
+                });
+                setPaymentState('success');
+                setStep('success');
+                return;
+            }
+
+            const result = selectedPlan.category === 'membership'
+                ? await (async () => {
+                    const subscription = await callCreateRazorpaySubscription(selectedPlan.id);
+                    let response: {
+                        razorpay_subscription_id?: string;
+                        razorpay_payment_id: string;
+                        razorpay_signature: string;
+                    };
+
+                    try {
+                        response = await RazorpayCheckout.open({
+                            key: subscription.key,
+                            amount: subscription.amount,
+                            currency: subscription.currency,
+                            subscription_id: subscription.subscriptionId,
+                            name: 'Sol Pilates',
+                            description: selectedPlan.name,
+                            prefill: {
+                                email: firebaseUser?.email ?? clientUser?.email ?? undefined,
+                                name: firebaseUser?.displayName ?? clientUser?.name ?? undefined,
+                            },
+                            theme: { color: Colors.terra[400] },
+                        } as unknown as Parameters<typeof RazorpayCheckout.open>[0]) as typeof response;
+                    } catch (error) {
+                        await callAbandonRazorpaySubscription({
+                            subscriptionId: subscription.subscriptionId,
+                            paymentId: subscription.paymentId,
+                        }).catch(() => undefined);
+                        throw error;
+                    }
+
+                    if (!response.razorpay_subscription_id) {
+                        await callAbandonRazorpaySubscription({
+                            subscriptionId: subscription.subscriptionId,
+                            paymentId: subscription.paymentId,
+                        }).catch(() => undefined);
+                        throw new Error('Missing Razorpay subscription id in checkout response');
+                    }
+
+                    return callVerifyRazorpaySubscription({
+                        razorpay_subscription_id: response.razorpay_subscription_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        paymentId: subscription.paymentId,
+                    });
+                })()
+                : await (async () => {
+                    const order = await callCreatePaymentOrder(selectedPlan.id);
+                    const response = await RazorpayCheckout.open({
+                        key: order.key,
+                        amount: order.amount,
+                        currency: order.currency,
+                        order_id: order.orderId,
+                        name: 'Sol Pilates',
+                        description: selectedPlan.name,
+                        prefill: {
+                            email: firebaseUser?.email ?? clientUser?.email ?? undefined,
+                            name: firebaseUser?.displayName ?? clientUser?.name ?? undefined,
+                        },
+                        theme: { color: Colors.terra[400] },
+                    });
+
+                    return callVerifyPayment({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        paymentId: order.paymentId,
+                    });
+                })();
 
             setPaymentResult({
                 planName: result.planName,
@@ -445,7 +535,7 @@ export default function SubscribeScreen() {
             const message = getPaymentErrorMessage(err);
             Alert.alert('Payment Error', message);
         }
-    }, [selectedPlan, hasActiveSubscription, firebaseUser, clientUser, refreshSubscription]);
+    }, [selectedPlan, hasActiveMembership, firebaseUser, clientUser, refreshSubscription]);
 
     // Back handler
     const handleBack = useCallback(() => {
@@ -508,17 +598,19 @@ export default function SubscribeScreen() {
                                         <Text style={styles.activeBadgeText}>ACTIVE</Text>
                                     </View>
                                 </View>
-                                <TouchableOpacity
-                                    style={styles.cancelBtn}
-                                    onPress={handleCancelSubscription}
-                                    disabled={isCancelling}
-                                    activeOpacity={0.85}
-                                >
-                                    <Feather name="x-circle" size={14} color={Colors.terra[400]} />
-                                    <Text style={styles.cancelBtnText}>
-                                        {isCancelling ? 'CANCELLING...' : 'CANCEL PLAN'}
-                                    </Text>
-                                </TouchableOpacity>
+                                {activePlanIsMembership && (
+                                    <TouchableOpacity
+                                        style={styles.cancelBtn}
+                                        onPress={handleCancelSubscription}
+                                        disabled={isCancelling}
+                                        activeOpacity={0.85}
+                                    >
+                                        <Feather name="x-circle" size={14} color={Colors.terra[400]} />
+                                        <Text style={styles.cancelBtnText}>
+                                            {isCancelling ? 'CANCELLING...' : 'CANCEL RENEWAL'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         )}
 
@@ -602,7 +694,9 @@ export default function SubscribeScreen() {
                             style={[
                                 styles.primaryButton,
                                 (!selectedPlan ||
-                                    hasActiveSubscription ||
+                                    selectedCurrentPlan ||
+                                    (selectedPlan?.id === 'drop_in' && hasActiveSubscription) ||
+                                    (selectedPlan?.category === 'class_pack' && hasActiveMembership) ||
                                     (selectedPlan?.id === 'drop_in' &&
                                         hasIntroClassLead === true)) &&
                                     styles.buttonDisabled,
@@ -610,20 +704,26 @@ export default function SubscribeScreen() {
                             onPress={handleContinue}
                             disabled={
                                 !selectedPlan ||
-                                hasActiveSubscription ||
+                                selectedCurrentPlan ||
+                                (selectedPlan?.id === 'drop_in' && hasActiveSubscription) ||
+                                (selectedPlan?.category === 'class_pack' && hasActiveMembership) ||
                                 (selectedPlan?.id === 'drop_in' &&
                                     hasIntroClassLead === true)
                             }
                             activeOpacity={0.7}
                         >
                             <Text style={styles.primaryButtonText}>
-                                {hasActiveSubscription
-                                    ? 'ACTIVE MEMBERSHIP'
+                                {selectedCurrentPlan
+                                    ? 'CURRENT PLAN'
                                     : selectedPlan?.id === 'drop_in'
                                     ? hasIntroClassLead === true
                                         ? 'INTRO CLASS BOOKED'
                                         : 'BOOK INTRO CLASS'
-                                    : 'CONTINUE'}
+                                    : selectedPlan?.category === 'class_pack' && hasActiveMembership
+                                        ? 'ACTIVE MEMBERSHIP'
+                                    : hasActiveMembership
+                                        ? 'UPDATE MEMBERSHIP'
+                                        : 'CONTINUE'}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -635,7 +735,9 @@ export default function SubscribeScreen() {
                         {/* Order summary */}
                         <View style={styles.orderSummary}>
                             <Text style={styles.orderPlanName}>{selectedPlan.name}</Text>
-                            <Text style={styles.orderLabel}>One-time payment</Text>
+                            <Text style={styles.orderLabel}>
+                                {selectedPlan.category === 'membership' ? 'Recurring membership' : 'One-time payment'}
+                            </Text>
                             <Text style={styles.orderAmount}>₹{selectedPlanPrice.toLocaleString('en-IN')}</Text>
                         </View>
 
@@ -687,7 +789,7 @@ export default function SubscribeScreen() {
                                 </View>
                             ) : (
                                 <Text style={styles.primaryButtonText}>
-                                    PAY ₹{selectedPlan.price}
+                                    PAY ₹{selectedPlanPrice.toLocaleString('en-IN')}
                                 </Text>
                             )}
                         </TouchableOpacity>

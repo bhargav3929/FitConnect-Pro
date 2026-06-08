@@ -30,6 +30,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
 import { auth } from "@fitconnect/shared/firebase/config"
 import { callCancelSubscription } from "@fitconnect/shared/firebase/firestore"
+import { getPlanById } from "@fitconnect/shared/types/subscription"
 import { toast } from "sonner"
 import Link from "next/link"
 import { AnimatePresence, motion as m } from "framer-motion"
@@ -95,11 +96,13 @@ export default function ProfilePage() {
     const handleCancelSubscription = async () => {
         setIsCancelling(true)
         try {
-            await callCancelSubscription()
+            const result = await callCancelSubscription()
             await refreshSubscription()
             setShowCancelConfirm(false)
-            toast.success('Subscription cancelled', {
-                description: 'Your plan stays active until the current period ends.',
+            toast.success(result.mode === 'immediate' ? 'Plan cancelled' : 'Renewal cancelled', {
+                description: result.mode === 'immediate'
+                    ? 'Your plan has been cancelled.'
+                    : 'Your membership stays active until the current period ends.',
             })
         } catch (err: unknown) {
             toast.error('Error', { description: err instanceof Error ? err.message : 'Failed to cancel' })
@@ -129,6 +132,8 @@ export default function ProfilePage() {
     const sub = clientUser.subscription
     const hasPlan = sub.planId && sub.status === 'active'
     const isIntroPlan = sub.planId === 'drop_in'
+    const currentPlan = sub.planId ? getPlanById(sub.planId) : null
+    const isMembershipPlan = sub.planCategory === 'membership' || currentPlan?.category === 'membership'
     const isUnlimited = !isIntroPlan && sub.classesRemaining === null
     const displayedCredits = isIntroPlan ? sub.introCreditRemaining : sub.classesRemaining
     const planLabel = sub.planId?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Free'
@@ -250,18 +255,20 @@ export default function ProfilePage() {
                                         <ArrowRight className="w-3.5 h-3.5" />
                                     </Button>
                                 </Link>
-                                <button
-                                    onClick={() => setShowCancelConfirm(true)}
-                                    className="flex-1 h-11 rounded-xl border-2 border-terra-400 bg-terra-400/10 text-terra-400 font-black text-xs tracking-wider flex items-center justify-center gap-1.5 hover:bg-terra-400/20 transition-colors"
-                                >
-                                    <XCircle className="w-3.5 h-3.5" />
-                                    CANCEL PLAN
-                                </button>
+                                {isMembershipPlan && (
+                                    <button
+                                        onClick={() => setShowCancelConfirm(true)}
+                                        className="flex-1 h-11 rounded-xl border-2 border-terra-400 bg-terra-400/10 text-terra-400 font-black text-xs tracking-wider flex items-center justify-center gap-1.5 hover:bg-terra-400/20 transition-colors"
+                                    >
+                                        <XCircle className="w-3.5 h-3.5" />
+                                        CANCEL RENEWAL
+                                    </button>
+                                )}
                             </div>
 
                             {/* Cancel confirmation */}
                             <AnimatePresence>
-                                {showCancelConfirm && (
+                                {showCancelConfirm && isMembershipPlan && (
                                     <m.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
@@ -271,9 +278,13 @@ export default function ProfilePage() {
                                         <div className="flex items-start gap-2.5">
                                             <AlertTriangle className="w-4 h-4 text-terra-400 shrink-0 mt-0.5" />
                                             <div>
-                                                <p className="text-olive-600 font-bold text-xs">Cancel your plan?</p>
+                                                <p className="text-olive-600 font-bold text-xs">
+                                                    {isMembershipPlan ? 'Cancel renewal?' : 'Cancel your plan?'}
+                                                </p>
                                                 <p className="text-olive-400 text-xs mt-0.5 leading-relaxed">
-                                                    You&apos;ll keep access until {renewalDate}. No further charges.
+                                                    {isMembershipPlan
+                                                        ? `You'll keep access until ${renewalDate}. No further charges.`
+                                                        : 'Class packs do not auto-renew. Credits remain usable until the plan expires.'}
                                                 </p>
                                             </div>
                                         </div>
@@ -291,7 +302,7 @@ export default function ProfilePage() {
                                                 disabled={isCancelling}
                                                 className="flex-1 h-8 bg-terra-400 hover:bg-terra-300 text-peach-50 font-bold text-xs rounded-lg disabled:opacity-50"
                                             >
-                                                {isCancelling ? 'CANCELLING...' : 'YES, CANCEL'}
+                                                {isCancelling ? 'CANCELLING...' : isMembershipPlan ? 'YES, CANCEL RENEWAL' : 'YES, CANCEL'}
                                             </Button>
                                         </div>
                                     </m.div>

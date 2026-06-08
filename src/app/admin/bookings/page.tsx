@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import {
+    callCheckInBooking,
     callCancelBooking,
     getBookingStats,
     getBookingsPage,
@@ -55,6 +56,7 @@ export default function BookingsPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState("All Status")
     const [cancelingId, setCancelingId] = useState<string | null>(null)
+    const [markingNoShowId, setMarkingNoShowId] = useState<string | null>(null)
     const [requestedPage, setRequestedPage] = useState(1)
     const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
     const currentCursor = pageCursors[requestedPage - 1] || null
@@ -120,6 +122,24 @@ export default function BookingsPage() {
             toast.error(message)
         } finally {
             setCancelingId(null)
+        }
+    }
+
+    const handleMarkNoShow = async (bookingId: string) => {
+        setMarkingNoShowId(bookingId)
+        try {
+            await callCheckInBooking(bookingId, 'no-show')
+            setBookings(prev => prev.map(b =>
+                b.id === bookingId ? { ...b, status: 'no-show' as const } : b
+            ))
+            const stats = await getBookingStats()
+            setBookingStats(stats)
+            toast.success("Booking marked as no-show")
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to mark no-show"
+            toast.error(message)
+        } finally {
+            setMarkingNoShowId(null)
         }
     }
 
@@ -306,14 +326,16 @@ export default function BookingsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {paginatedBookings.map((booking, idx) => (
-                                    <motion.tr
-                                        key={booking.id}
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.35 + idx * 0.03 }}
-                                        className="border-b border-peach-400/8 hover:bg-peach-100/80 transition-colors duration-200 group"
-                                    >
+                                {paginatedBookings.map((booking, idx) => {
+                                    const isActionLoading = cancelingId === booking.id || markingNoShowId === booking.id
+                                    return (
+                                        <motion.tr
+                                            key={booking.id}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: 0.35 + idx * 0.03 }}
+                                            className="border-b border-peach-400/8 hover:bg-peach-100/80 transition-colors duration-200 group"
+                                        >
                                         <td className="p-4 pl-6">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="w-8 h-8 bg-peach-200/60 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-terra-400/10 transition-colors">
@@ -366,38 +388,60 @@ export default function BookingsPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="bg-peach-50/95 backdrop-blur-xl border-peach-400/15 shadow-xl shadow-black/5">
                                                     {booking.status === 'confirmed' && (
-                                                        <DropdownMenuItem
-                                                            className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer gap-2"
-                                                            onClick={() => handleCancelBooking(booking.id)}
-                                                            disabled={cancelingId === booking.id}
-                                                        >
-                                                            {cancelingId === booking.id ? (
-                                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                            ) : (
-                                                                <Trash2 className="w-4 h-4" />
-                                                            )}
-                                                            Cancel Booking
+                                                        <>
+                                                            <DropdownMenuItem
+                                                                className="text-yellow-700 focus:bg-yellow-500/10 focus:text-yellow-800 cursor-pointer gap-2"
+                                                                onClick={() => handleMarkNoShow(booking.id)}
+                                                                disabled={isActionLoading}
+                                                            >
+                                                                {markingNoShowId === booking.id ? (
+                                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                                ) : (
+                                                                    <Ban className="w-4 h-4" />
+                                                                )}
+                                                                Mark No Show
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer gap-2"
+                                                                onClick={() => handleCancelBooking(booking.id)}
+                                                                disabled={isActionLoading}
+                                                            >
+                                                                {cancelingId === booking.id ? (
+                                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                                ) : (
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                )}
+                                                                Cancel Booking
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                    {booking.status !== 'confirmed' && (
+                                                        <DropdownMenuItem disabled className="text-olive-300 gap-2">
+                                                            No actions available
                                                         </DropdownMenuItem>
                                                     )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </td>
-                                    </motion.tr>
-                                ))}
+                                        </motion.tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </div>
 
                     {/* Mobile Cards */}
                     <div className="lg:hidden divide-y divide-peach-400/10">
-                        {paginatedBookings.map((booking, idx) => (
-                            <motion.div
-                                key={booking.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 + idx * 0.05 }}
-                                className="p-4 hover:bg-peach-100/60 transition-colors"
-                            >
+                        {paginatedBookings.map((booking, idx) => {
+                            const isActionLoading = cancelingId === booking.id || markingNoShowId === booking.id
+                            return (
+                                <motion.div
+                                    key={booking.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 + idx * 0.05 }}
+                                    className="p-4 hover:bg-peach-100/60 transition-colors"
+                                >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex items-center gap-2.5">
                                         <div className="w-8 h-8 bg-peach-200/60 rounded-full flex items-center justify-center flex-shrink-0">
@@ -411,10 +455,54 @@ export default function BookingsPage() {
                                             <p className="text-xs text-olive-300 mt-0.5">Spot #{booking.spotNumber}</p>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 app-badge-text rounded-sm ${getStatusColor(booking.status)}`}>
-                                        {getStatusIcon(booking.status)}
-                                        {booking.status}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 app-badge-text rounded-sm ${getStatusColor(booking.status)}`}>
+                                            {getStatusIcon(booking.status)}
+                                            {booking.status}
+                                        </span>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-olive-600 hover:bg-peach-200/50 rounded-md transition-all">
+                                                    <MoreVertical className="w-4 h-4" />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="bg-peach-50/95 backdrop-blur-xl border-peach-400/15 shadow-xl shadow-black/5">
+                                                {booking.status === 'confirmed' && (
+                                                    <>
+                                                        <DropdownMenuItem
+                                                            className="text-yellow-700 focus:bg-yellow-500/10 focus:text-yellow-800 cursor-pointer gap-2"
+                                                            onClick={() => handleMarkNoShow(booking.id)}
+                                                            disabled={isActionLoading}
+                                                        >
+                                                            {markingNoShowId === booking.id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <Ban className="w-4 h-4" />
+                                                            )}
+                                                            Mark No Show
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer gap-2"
+                                                            onClick={() => handleCancelBooking(booking.id)}
+                                                            disabled={isActionLoading}
+                                                        >
+                                                            {cancelingId === booking.id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <Trash2 className="w-4 h-4" />
+                                                            )}
+                                                            Cancel Booking
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+                                                {booking.status !== 'confirmed' && (
+                                                    <DropdownMenuItem disabled className="text-olive-300 gap-2">
+                                                        No actions available
+                                                    </DropdownMenuItem>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 text-sm text-olive-300 ml-[42px]">
                                     <div className="flex items-center gap-2">
@@ -426,8 +514,9 @@ export default function BookingsPage() {
                                         {formatDateTime(booking.bookingDate)}
                                     </div>
                                 </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            )
+                        })}
                     </div>
 
                     {filteredBookings.length === 0 && (

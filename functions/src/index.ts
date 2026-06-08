@@ -7,6 +7,7 @@ export { sendBookingConfirmation } from './triggers/sendBookingConfirmation';
 
 // Scheduled jobs
 export { expireSubscriptions } from './scheduled/expireSubscriptions';
+export { markNoShows } from './scheduled/markNoShows';
 
 // HTTPS callable functions
 export { activateSubscription } from './api/activateSubscription';

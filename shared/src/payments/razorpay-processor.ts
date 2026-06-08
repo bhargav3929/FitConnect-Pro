@@ -13,6 +13,35 @@ export interface RazorpayVerifyPayload {
     razorpay_signature: string;
 }
 
+export type RazorpaySubscriptionStatus =
+    | 'created'
+    | 'authenticated'
+    | 'active'
+    | 'pending'
+    | 'halted'
+    | 'cancelled'
+    | 'completed'
+    | 'expired';
+
+export interface RazorpaySubscriptionEntity {
+    id: string;
+    status: RazorpaySubscriptionStatus;
+    plan_id: string;
+    short_url?: string;
+    current_start?: number | null;
+    current_end?: number | null;
+    charge_at?: number | null;
+    start_at?: number | null;
+    ended_at?: number | null;
+    total_count?: number;
+    paid_count?: number;
+    remaining_count?: number;
+    has_scheduled_changes?: boolean;
+    change_scheduled_at?: number | null;
+    schedule_change_at?: 'now' | 'cycle_end';
+    notes?: Record<string, string>;
+}
+
 /**
  * Verifies Razorpay payment signature.
  * Razorpay signs: HMAC_SHA256(orderId + "|" + paymentId, keySecret)
@@ -67,15 +96,53 @@ export async function createRazorpaySubscription(
     keyId: string,
     keySecret: string,
     notes?: Record<string, string>,
-): Promise<{ id: string; status: string }> {
+): Promise<RazorpaySubscriptionEntity> {
     const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
     const sub = await client.subscriptions.create({
         plan_id: razorpayPlanId,
         total_count: totalCount,
         customer_notify: 1,
         ...(notes ? { notes } : {}),
+    }) as unknown as RazorpaySubscriptionEntity;
+    return sub;
+}
+
+/**
+ * Updates an active/authenticated Razorpay subscription to a new plan.
+ * schedule_change_at='now' charges/refunds prorated differences immediately.
+ * schedule_change_at='cycle_end' applies the new plan after the current cycle.
+ */
+export async function updateRazorpaySubscription(
+    subscriptionId: string,
+    razorpayPlanId: string,
+    keyId: string,
+    keySecret: string,
+    options: {
+        remainingCount?: number;
+        scheduleChangeAt?: 'now' | 'cycle_end';
+        customerNotify?: boolean;
+    } = {},
+): Promise<RazorpaySubscriptionEntity> {
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+    const response = await fetch(`https://api.razorpay.com/v1/subscriptions/${subscriptionId}`, {
+        method: 'PATCH',
+        headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            plan_id: razorpayPlanId,
+            remaining_count: options.remainingCount ?? 24,
+            schedule_change_at: options.scheduleChangeAt ?? 'now',
+            customer_notify: options.customerNotify ?? true,
+        }),
     });
-    return { id: sub.id, status: sub.status };
+
+    const data = await response.json() as RazorpaySubscriptionEntity & { error?: { description?: string; reason?: string } };
+    if (!response.ok) {
+        throw new Error(data.error?.description || data.error?.reason || 'Failed to update Razorpay subscription');
+    }
+    return data;
 }
 
 /**
@@ -102,12 +169,12 @@ export async function fetchRazorpaySubscription(
     subscriptionId: string,
     keyId: string,
     keySecret: string,
-): Promise<{ id: string; status: string; short_url: string }> {
+): Promise<RazorpaySubscriptionEntity> {
     const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
     const result = await (client.subscriptions as unknown as {
-        fetch: (id: string) => Promise<{ id: string; status: string; short_url: string }>;
+        fetch: (id: string) => Promise<RazorpaySubscriptionEntity>;
     }).fetch(subscriptionId);
-    return { id: result.id, status: result.status, short_url: result.short_url };
+    return result;
 }
 
 /**

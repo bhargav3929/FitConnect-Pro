@@ -10,7 +10,6 @@ import {
     ActivityIndicator,
     Animated,
     Linking,
-    Platform,
     RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
-import { callDeleteAccount, callCancelSubscription } from '@fitconnect/shared/firebase/firestore';
+import { callCancelSubscription } from '@fitconnect/shared/firebase/firestore';
 import {
     updatePassword,
     EmailAuthProvider,
@@ -71,6 +70,7 @@ export default function ProfileScreen() {
     const plan = subscription?.planId ? getPlanById(subscription.planId) : null;
     const isActive = subscription?.status === 'active';
     const isIntroPlan = subscription?.planId === 'drop_in';
+    const isMembershipPlan = subscription?.planCategory === 'membership' || plan?.category === 'membership';
     const displayedCredits = isIntroPlan
         ? subscription?.introCreditRemaining ?? 0
         : subscription?.classesRemaining ?? 0;
@@ -95,8 +95,10 @@ export default function ProfileScreen() {
 
     const handleCancelSubscription = useCallback(() => {
         Alert.alert(
-            'Cancel your plan?',
-            `You'll keep access until ${expiryLabel}. No further charges.`,
+            isMembershipPlan ? 'Cancel renewal?' : 'Cancel your plan?',
+            isMembershipPlan
+                ? `You'll keep access until ${expiryLabel}. No further charges.`
+                : 'Class packs do not auto-renew. Credits remain usable until the plan expires.',
             [
                 { text: 'Keep Plan', style: 'cancel' },
                 {
@@ -105,9 +107,14 @@ export default function ProfileScreen() {
                     onPress: async () => {
                         setIsCancelling(true);
                         try {
-                            await callCancelSubscription();
+                            const result = await callCancelSubscription();
                             await refreshSubscription();
-                            Alert.alert('Cancelled', 'Your plan stays active until the current period ends.');
+                            Alert.alert(
+                                result.mode === 'immediate' ? 'Plan cancelled' : 'Renewal cancelled',
+                                result.mode === 'immediate'
+                                    ? 'Your plan has been cancelled.'
+                                    : 'Your membership stays active until the current period ends.',
+                            );
                         } catch {
                             Alert.alert('Error', 'Failed to cancel subscription. Please try again.');
                         } finally {
@@ -117,7 +124,7 @@ export default function ProfileScreen() {
                 },
             ],
         );
-    }, [expiryLabel, refreshSubscription]);
+    }, [expiryLabel, isMembershipPlan, refreshSubscription]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -197,67 +204,6 @@ export default function ProfileScreen() {
                 },
             },
         ]);
-    };
-
-    const handleDeleteAccount = () => {
-        Alert.alert(
-            'Delete Account',
-            'This permanently deletes your account, cancels all upcoming bookings, and erases your profile. This cannot be undone.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Continue',
-                    style: 'destructive',
-                    onPress: () => promptPasswordAndDelete(),
-                },
-            ],
-        );
-    };
-
-    const promptPasswordAndDelete = () => {
-        if (Platform.OS === 'ios') {
-            Alert.prompt(
-                'Confirm Password',
-                'Re-enter your password to permanently delete this account.',
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                        text: 'Delete Forever',
-                        style: 'destructive',
-                        onPress: (pw?: string) => performDelete(pw || ''),
-                    },
-                ],
-                'secure-text',
-            );
-        } else {
-            // Android: Alert.prompt is iOS-only. Fallback to a router push to a dedicated screen would go here.
-            Alert.alert(
-                'Delete Account',
-                'Account deletion on Android requires the dedicated Delete Account screen.',
-            );
-        }
-    };
-
-    const performDelete = async (password: string) => {
-        if (!password) {
-            Alert.alert('Error', 'Password is required.');
-            return;
-        }
-        const user = auth.currentUser;
-        if (!user || !user.email) {
-            Alert.alert('Error', 'Not signed in.');
-            return;
-        }
-        try {
-            const credential = EmailAuthProvider.credential(user.email, password);
-            await reauthenticateWithCredential(user, credential);
-            await callDeleteAccount();
-            await logoutClient();
-            router.replace('/login');
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Failed to delete account.';
-            Alert.alert('Error', message);
-        }
     };
 
     const openLegalLink = (url: string) => {
@@ -433,7 +379,7 @@ export default function ProfileScreen() {
                             <Text style={styles.upgradeBtnText}>UPGRADE</Text>
                             <Feather name="arrow-right" size={14} color={Colors.peach[50]} />
                         </TouchableOpacity>
-                        {isActive && (
+                        {isActive && isMembershipPlan && (
                             <TouchableOpacity
                                 style={styles.cancelBtn}
                                 onPress={handleCancelSubscription}
@@ -442,7 +388,7 @@ export default function ProfileScreen() {
                             >
                                 <Feather name="x-circle" size={14} color={Colors.terra[400]} />
                                 <Text style={styles.cancelBtnText}>
-                                    {isCancelling ? 'CANCELLING...' : 'CANCEL PLAN'}
+                                    {isCancelling ? 'CANCELLING...' : 'CANCEL RENEWAL'}
                                 </Text>
                             </TouchableOpacity>
                         )}
@@ -653,25 +599,6 @@ export default function ProfileScreen() {
                         <Text style={styles.rowSubtitle}>The fine print</Text>
                     </View>
                     <Feather name="external-link" size={18} color={Colors.olive[300]} />
-                </TouchableOpacity>
-
-                {/* ─── Danger Zone ───────────────────────────────── */}
-                <Text style={styles.sectionLabel}>DANGER ZONE</Text>
-                <TouchableOpacity
-                    style={styles.rowCard}
-                    onPress={handleDeleteAccount}
-                    activeOpacity={0.85}
-                >
-                    <View style={[styles.rowIconSquare, { backgroundColor: Alpha.error_10 }]}>
-                        <Feather name="trash-2" size={20} color={Colors.error} />
-                    </View>
-                    <View style={styles.rowTextCol}>
-                        <Text style={[styles.rowTitle, { color: Colors.error }]}>Delete Account</Text>
-                        <Text style={styles.rowSubtitle}>
-                            Permanently erase your profile and bookings
-                        </Text>
-                    </View>
-                    <Feather name="chevron-right" size={20} color={Colors.olive[300]} />
                 </TouchableOpacity>
 
                 {/* ─── Sign Out ──────────────────────────────────── */}
