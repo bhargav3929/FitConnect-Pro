@@ -20,7 +20,7 @@ import {
     getFacility,
 } from '@fitconnect/shared/firebase/firestore';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
-import type { ClassSession } from '@fitconnect/shared/types/class';
+import { isIntroClassType, type ClassSession } from '@fitconnect/shared/types/class';
 import type { Trainer } from '@fitconnect/shared/types/trainer';
 import type { GymCenter } from '@fitconnect/shared/types/gym';
 import CalendarStrip from '../../components/CalendarStrip';
@@ -117,6 +117,48 @@ function parseFacilities(raw: string | string[]): string[] {
 // ── Component ──
 type FilterKey = 'instructor' | 'classType';
 
+type BookingSubscription = {
+    planId?: unknown;
+    planType?: unknown;
+    status?: string;
+    endDate?: unknown;
+    classesRemaining?: unknown;
+    introCreditRemaining?: unknown;
+};
+
+function hasValidSubscription(sub: BookingSubscription | undefined): boolean {
+    if (!sub) return false;
+    if (!sub.planId && !sub.planType) return false;
+    if (sub.status !== 'active') return false;
+    const endDate = parseSubscriptionEndDate(sub.endDate);
+    if (!endDate || endDate < new Date()) return false;
+    const introCreditRemaining = typeof sub.introCreditRemaining === 'number' ? sub.introCreditRemaining : 0;
+    if (introCreditRemaining > 0) return true;
+    if (sub.classesRemaining !== null && (sub.classesRemaining as number) <= 0) return false;
+    return true;
+}
+
+function isIntroPlan(sub: BookingSubscription | undefined): boolean {
+    return sub?.planId === 'drop_in' || sub?.planType === 'drop_in';
+}
+
+function getClassBookingRestriction(sub: BookingSubscription | undefined, cls: ClassSession): string | null {
+    const introPlan = isIntroPlan(sub);
+    const introClass = isIntroClassType(cls.classType);
+    const introCreditRemaining = typeof sub?.introCreditRemaining === 'number' ? sub.introCreditRemaining : 0;
+
+    if (introPlan && !introClass) {
+        return 'A membership is required to book regular classes.';
+    }
+    if (introClass && introCreditRemaining <= 0) {
+        return 'An unused intro credit is required to book an Intro Class.';
+    }
+    if (!introClass && sub?.classesRemaining !== null && ((sub?.classesRemaining as number | undefined) ?? 0) <= 0) {
+        return 'No classes remaining on your membership.';
+    }
+    return null;
+}
+
 export default function ScheduleScreen() {
     const clientUser = useClientAuthStore((state) => state.clientUser);
     const [activeTab, setActiveTab] = useState<SectionTab>('schedule');
@@ -199,6 +241,14 @@ export default function ScheduleScreen() {
     const handleDateSelect = (date: Date) => setSelectedDate(date);
 
     const handleBook = (cls: ClassSession) => {
+        if (!hasValidSubscription(clientUser?.subscription)) {
+            Alert.alert(
+                'Plan Required',
+                'Please choose a plan before booking a class.',
+            );
+            return;
+        }
+
         if (isDateAfterSubscriptionEnd(selectedDate, subscriptionEndDate)) {
             Alert.alert(
                 'Plan Expires Before This Class',
@@ -206,6 +256,13 @@ export default function ScheduleScreen() {
             );
             return;
         }
+
+        const bookingRestriction = getClassBookingRestriction(clientUser?.subscription, cls);
+        if (bookingRestriction) {
+            Alert.alert('Class Not Available', bookingRestriction);
+            return;
+        }
+
         setSelectedClass(cls);
     };
 
@@ -278,6 +335,11 @@ export default function ScheduleScreen() {
                         classSession={item}
                         trainerName={getTrainerName(item.trainerId)}
                         onBook={handleBook}
+                        bookingRestriction={
+                            hasValidSubscription(clientUser?.subscription)
+                                ? getClassBookingRestriction(clientUser?.subscription, item)
+                                : undefined
+                        }
                     />
                 )}
                 style={styles.classListScroller}

@@ -1,12 +1,13 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import type { ClassSession } from '@fitconnect/shared/types/class';
+import { isIntroClassType, type ClassSession } from '@fitconnect/shared/types/class';
 import { Colors, Spacing, FontSize, BorderRadius, Alpha } from '../constants/theme';
 
 interface ClassCardProps {
     classSession: ClassSession;
     trainerName: string;
     onBook: (classSession: ClassSession) => void;
+    bookingRestriction?: string | null;
 }
 
 function getInitials(name: string): string {
@@ -18,18 +19,27 @@ function getInitials(name: string): string {
         .slice(0, 2);
 }
 
-export default function ClassCard({ classSession, trainerName, onBook }: ClassCardProps) {
+export default function ClassCard({ classSession, trainerName, onBook, bookingRestriction }: ClassCardProps) {
     const totalSpots = classSession.totalSpots || classSession.capacity || 12;
     const spotsLeft = totalSpots - classSession.bookedCount;
     const isFull = spotsLeft <= 0;
+    const isRestricted = Boolean(bookingRestriction);
     const isLow = spotsLeft > 0 && spotsLeft / totalSpots < 0.5;
 
-    const spotDotColor = isFull
+    const spotDotColor = isRestricted
+        ? Colors.muted
+        : isFull
         ? Colors.error
         : isLow
             ? Colors.warning
             : Colors.success;
-    const spotLabel = isFull
+    const spotLabel = isRestricted
+        ? isIntroClassType(classSession.classType)
+            ? 'Intro credit required'
+            : bookingRestriction?.includes('No classes')
+                ? 'No credits'
+            : 'Membership required'
+        : isFull
         ? 'Full'
         : isLow
             ? `${spotsLeft} spots - Few left`
@@ -37,7 +47,7 @@ export default function ClassCard({ classSession, trainerName, onBook }: ClassCa
 
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, isRestricted && styles.cardRestricted]}
             onPress={() => onBook(classSession)}
             activeOpacity={0.7}
         >
@@ -81,7 +91,7 @@ export default function ClassCard({ classSession, trainerName, onBook }: ClassCa
                     <Feather
                         name="chevron-right"
                         size={20}
-                        color={isFull ? Colors.muted : Colors.terra[400]}
+                        color={isFull || isRestricted ? Colors.muted : Colors.terra[400]}
                     />
                 </View>
             </View>
@@ -93,6 +103,7 @@ export default function ClassCard({ classSession, trainerName, onBook }: ClassCa
                     style={[
                         styles.spotLabel,
                         isFull && styles.spotLabelFull,
+                        isRestricted && styles.spotLabelRestricted,
                     ]}
                 >
                     {spotLabel}
@@ -111,6 +122,9 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
         borderColor: Alpha.peach400_20,
+    },
+    cardRestricted: {
+        opacity: 0.6,
     },
     topRow: {
         flexDirection: 'row',
@@ -203,5 +217,8 @@ const styles = StyleSheet.create({
     },
     spotLabelFull: {
         color: Colors.error,
+    },
+    spotLabelRestricted: {
+        color: Colors.olive[300],
     },
 });

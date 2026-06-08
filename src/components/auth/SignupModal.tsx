@@ -91,6 +91,7 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
                     endDate: null,
                     status: 'expired',
                     classesRemaining: 0,
+                    introCreditRemaining: 0,
                     maxClassesPerDay: 0,
                     weeklyClassLimit: 0,
                     advanceBookingDays: 0,

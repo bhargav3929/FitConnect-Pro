@@ -8,6 +8,13 @@ interface BookClassData {
     isGuest: boolean;
 }
 
+const INTRO_CLASS_TYPE = 'Intro Class';
+
+function isIntroClassType(classType: unknown): boolean {
+    return typeof classType === 'string'
+        && classType.trim().toLowerCase() === INTRO_CLASS_TYPE.toLowerCase();
+}
+
 function getMondayWeekWindow(date: Date) {
     const start = new Date(date);
     start.setHours(0, 0, 0, 0);
@@ -147,7 +154,34 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
                 );
             }
 
-            if (subscription.classesRemaining <= 0) {
+            const isIntroPlan = (subscription.planId || subscription.planType) === 'drop_in';
+            const isIntroClass = isIntroClassType(classData.classType);
+            const introCreditRemaining = typeof subscription.introCreditRemaining === 'number'
+                ? Math.max(0, subscription.introCreditRemaining)
+                : 0;
+
+            if (isIntroPlan && !isIntroClass) {
+                throw new functions.https.HttpsError(
+                    'failed-precondition',
+                    'A membership is required to book regular classes.'
+                );
+            }
+
+            if (isIntroClass && introCreditRemaining <= 0) {
+                throw new functions.https.HttpsError(
+                    'failed-precondition',
+                    'An unused intro credit is required to book an Intro Class.'
+                );
+            }
+
+            if (isIntroClass && isGuest) {
+                throw new functions.https.HttpsError(
+                    'invalid-argument',
+                    'Intro Class cannot be booked as a guest reservation.'
+                );
+            }
+
+            if (!isIntroClass && subscription.classesRemaining <= 0) {
                 throw new functions.https.HttpsError(
                     'resource-exhausted',
                     'No classes remaining on your subscription'
@@ -169,7 +203,9 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
                 return bookingDate >= classWeek.start && bookingDate <= classWeek.end;
             });
 
-            if (sameWeekConfirmed.length >= weeklyClassLimit) {
+            const sameWeekStandardConfirmed = sameWeekConfirmed.filter((bookingDoc) => bookingDoc.data().creditType !== 'intro_credit');
+
+            if (!isIntroClass && sameWeekStandardConfirmed.length >= weeklyClassLimit) {
                 throw new functions.https.HttpsError(
                     'resource-exhausted',
                     `You can only book ${weeklyClassLimit} class${weeklyClassLimit === 1 ? '' : 'es'} per week on your current plan`
@@ -206,6 +242,10 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
                 status: 'confirmed',
                 spotNumber,
                 isGuest,
+                creditType: isIntroClass ? 'intro_credit' : 'standard',
+                planIdAtBooking: subscription.planId || null,
+                usedGuestPass: false,
+                usedIntroCredit: isIntroClass,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -217,11 +257,17 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
                 updatedAt: now,
             });
 
-            // Decrement user's classesRemaining
-            transaction.update(userRef, {
-                'subscription.classesRemaining': FieldValue.increment(-1),
-                updatedAt: now,
-            });
+            if (isIntroClass) {
+                transaction.update(userRef, {
+                    'subscription.introCreditRemaining': FieldValue.increment(-1),
+                    updatedAt: now,
+                });
+            } else {
+                transaction.update(userRef, {
+                    'subscription.classesRemaining': FieldValue.increment(-1),
+                    updatedAt: now,
+                });
+            }
 
             return newBookingRef.id;
         });

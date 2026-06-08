@@ -63,7 +63,12 @@ export async function POST(req: NextRequest) {
         }
 
         const syncedPlan = await getSyncedPlanEntry(planId);
-        const isFoundingMember = userDoc.data()?.isFoundingMember === true;
+        const userData = userDoc.data();
+        const isFoundingMember = userData?.isFoundingMember === true;
+        const currentSub = userData?.subscription as Record<string, unknown> | undefined;
+        const currentIntroCredit = typeof currentSub?.introCreditRemaining === 'number'
+            ? Math.max(0, currentSub.introCreditRemaining)
+            : 0;
         const chargeAmount = getChargeAmount(plan, syncedPlan, isFoundingMember);
 
         // Process mock payment
@@ -112,7 +117,8 @@ export async function POST(req: NextRequest) {
             'subscription.startDate': now,
             'subscription.endDate': endDate,
             'subscription.status': 'active',
-            'subscription.classesRemaining': plan.credits,
+            'subscription.classesRemaining': plan.id === 'drop_in' ? 0 : plan.credits,
+            'subscription.introCreditRemaining': plan.id === 'drop_in' ? 1 : currentIntroCredit,
             'subscription.maxClassesPerDay': plan.maxClassesPerDay,
             'subscription.weeklyClassLimit': plan.weeklyClassLimit,
             'subscription.advanceBookingDays': plan.advanceBookingDays,

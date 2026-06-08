@@ -149,6 +149,7 @@ export default function IntroClassPage() {
                         await refreshSubscription();
                         refreshIntroClassLead();
                         setDone(true);
+                        router.replace('/user/schedule');
                     } catch (err) {
                         console.error(err);
                         setError('Payment verification failed. Please contact support if money was deducted.');
@@ -172,14 +173,13 @@ export default function IntroClassPage() {
                         Intro Class Booked
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        You&apos;ve already booked your intro class. Swetha will be in touch — we can&apos;t wait
-                        to see you on the reformer.
+                        You&apos;ve already paid for your intro class. Choose an available 30-minute Intro Class from the schedule.
                     </p>
                     <Button
-                        onClick={() => router.push('/')}
+                        onClick={() => router.push('/user/schedule')}
                         className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 px-8 rounded-xl"
                     >
-                        BACK HOME
+                        VIEW SCHEDULE
                     </Button>
                 </div>
             </main>
@@ -215,13 +215,13 @@ export default function IntroClassPage() {
                         You&apos;re booked.
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        Payment received. Swetha will reach out shortly to lock in your 30-minute intro session.
+                        Payment received. Choose an available 30-minute Intro Class from the schedule.
                     </p>
                     <Button
-                        onClick={() => router.push('/')}
+                        onClick={() => router.push('/user/schedule')}
                         className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 px-8 rounded-xl"
                     >
-                        BACK HOME
+                        VIEW SCHEDULE
                     </Button>
                 </div>
             </main>

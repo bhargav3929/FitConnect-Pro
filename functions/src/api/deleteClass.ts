@@ -65,12 +65,28 @@ export const deleteClass = functions.https.onCall(async (data: DeleteClassData, 
                     updatedAt: now,
                 });
 
-                // Restore classesRemaining for each user
                 const userRef = db.collection('users').doc(bookingData.userId);
-                transaction.update(userRef, {
-                    'subscription.classesRemaining': FieldValue.increment(1),
-                    updatedAt: now,
-                });
+                const creditType = bookingData.creditType || 'standard';
+                if (creditType === 'intro_credit') {
+                    transaction.update(userRef, {
+                        'subscription.introCreditRemaining': FieldValue.increment(1),
+                        updatedAt: now,
+                    });
+                } else if (creditType === 'guest_pass') {
+                    transaction.update(userRef, {
+                        'subscription.guestPassesRemaining': FieldValue.increment(1),
+                        updatedAt: now,
+                    });
+                } else if (creditType === 'unlimited') {
+                    transaction.update(userRef, {
+                        updatedAt: now,
+                    });
+                } else {
+                    transaction.update(userRef, {
+                        'subscription.classesRemaining': FieldValue.increment(1),
+                        updatedAt: now,
+                    });
+                }
             }
         });
 

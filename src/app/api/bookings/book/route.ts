@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getPlanById, LEGACY_PLAN_MAP } from '@fitconnect/shared/types/subscription';
+import { isIntroClassType } from '@fitconnect/shared/types/class';
 
 function getMondayWeekWindow(date: Date) {
     const start = new Date(date);
@@ -21,6 +22,11 @@ function getPlanWeeklyLimit(planId: unknown): number | undefined {
     if (typeof planId !== 'string') return undefined;
     const mappedPlanId = LEGACY_PLAN_MAP[planId] ?? planId;
     return getPlanById(mappedPlanId)?.weeklyClassLimit;
+}
+
+function getMappedPlanId(planId: unknown): string | undefined {
+    if (typeof planId !== 'string') return undefined;
+    return LEGACY_PLAN_MAP[planId] ?? planId;
 }
 
 function getPositiveNumber(value: unknown): number | undefined {
@@ -169,12 +175,47 @@ export async function POST(req: NextRequest) {
                 };
             }
 
+            const mappedPlanId = getMappedPlanId(subscription.planId || subscription.planType);
+            const isIntroPlan = mappedPlanId === 'drop_in';
+            const isIntroClass = isIntroClassType(classData.classType);
+            const introCreditRemaining = typeof subscription.introCreditRemaining === 'number'
+                ? Math.max(0, subscription.introCreditRemaining)
+                : 0;
+
+            if (isIntroPlan && !isIntroClass) {
+                throw {
+                    status: 400,
+                    error: 'A membership is required to book regular classes.',
+                    code: 'intro-plan-class-required',
+                };
+            }
+
+            if (isIntroClass && introCreditRemaining <= 0) {
+                throw {
+                    status: 400,
+                    error: 'An unused intro credit is required to book an Intro Class.',
+                    code: 'intro-class-plan-required',
+                };
+            }
+
+            if (isIntroClass && isGuest) {
+                throw {
+                    status: 400,
+                    error: 'Intro Class cannot be booked as a guest reservation.',
+                    code: 'invalid-argument',
+                };
+            }
+
             // Determine credit type
             const isUnlimited = subscription.classesRemaining === null;
-            let creditType: 'standard' | 'unlimited' | 'guest_pass' = 'standard';
+            let creditType: 'standard' | 'unlimited' | 'guest_pass' | 'intro_credit' = 'standard';
             let usedGuestPass = false;
+            let usedIntroCredit = false;
 
-            if (isGuest) {
+            if (isIntroClass) {
+                creditType = 'intro_credit';
+                usedIntroCredit = true;
+            } else if (isGuest) {
                 // Guest pass booking
                 const guestPasses = subscription.guestPassesRemaining ?? 0;
                 if (guestPasses <= 0) {
@@ -212,7 +253,11 @@ export async function POST(req: NextRequest) {
                 return bookingDate >= classDayStart && bookingDate <= classDayEnd;
             });
 
-            if (sameDayConfirmed.length >= maxPerDay) {
+            const sameDayStandardConfirmed = isIntroClass
+                ? sameDayConfirmed
+                : sameDayConfirmed.filter(d => d.data().creditType !== 'intro_credit');
+
+            if (!isIntroClass && sameDayStandardConfirmed.length >= maxPerDay) {
                 throw { status: 409, error: `You can only book ${maxPerDay} class per day on your current plan`, code: 'daily-limit-reached' };
             }
 
@@ -227,7 +272,11 @@ export async function POST(req: NextRequest) {
                 return bookingDate >= classWeek.start && bookingDate <= classWeek.end;
             });
 
-            if (sameWeekConfirmed.length >= weeklyClassLimit) {
+            const sameWeekStandardConfirmed = isIntroClass
+                ? sameWeekConfirmed
+                : sameWeekConfirmed.filter(d => d.data().creditType !== 'intro_credit');
+
+            if (!isIntroClass && sameWeekStandardConfirmed.length >= weeklyClassLimit) {
                 throw {
                     status: 409,
                     error: `You can only book ${weeklyClassLimit} class${weeklyClassLimit === 1 ? '' : 'es'} per week on your current plan`,
@@ -266,6 +315,7 @@ export async function POST(req: NextRequest) {
                 creditType,
                 planIdAtBooking: subscription.planId || null,
                 usedGuestPass,
+                usedIntroCredit,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -278,7 +328,12 @@ export async function POST(req: NextRequest) {
             });
 
             // ── Decrement appropriate credit ─────────────────────────
-            if (usedGuestPass) {
+            if (usedIntroCredit) {
+                transaction.update(userRef, {
+                    'subscription.introCreditRemaining': FieldValue.increment(-1),
+                    updatedAt: now,
+                });
+            } else if (usedGuestPass) {
                 transaction.update(userRef, {
                     'subscription.guestPassesRemaining': FieldValue.increment(-1),
                     updatedAt: now,

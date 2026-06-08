@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { isIntroClassType } from '@fitconnect/shared/types/class';
 
 // POST — createClass (admin only)
 export async function POST(req: NextRequest) {
@@ -60,16 +61,18 @@ export async function POST(req: NextRequest) {
         const classRef = adminDb.collection('classes').doc();
         const now = FieldValue.serverTimestamp();
         const spots = totalSpots || capacity;
+        const finalClassType = classType || 'Sol Flow';
+        const finalDuration = isIntroClassType(finalClassType) ? 30 : duration;
 
         const classDoc = {
             id: classRef.id,
             trainerId,
             date: Timestamp.fromDate(classDate),
             startTime,
-            duration,
+            duration: finalDuration,
             capacity,
             bookedCount: 0,
-            classType: classType || 'Sol Flow',
+            classType: finalClassType,
             difficultyLevel: difficultyLevel || 'intermediate',
             equipmentNeeded: equipmentNeeded || '',
             description: description || '',
@@ -163,7 +166,12 @@ export async function PUT(req: NextRequest) {
             updateData.date = Timestamp.fromDate(newDate);
         }
         if (updates.startTime !== undefined) updateData.startTime = updates.startTime;
-        if (updates.duration !== undefined) updateData.duration = updates.duration;
+        const nextClassType = updates.classType ?? classData.classType;
+        if (isIntroClassType(nextClassType)) {
+            updateData.duration = 30;
+        } else if (updates.duration !== undefined) {
+            updateData.duration = updates.duration;
+        }
         if (updates.capacity !== undefined) updateData.capacity = updates.capacity;
         if (updates.classType !== undefined) updateData.classType = updates.classType;
         if (updates.difficultyLevel !== undefined) updateData.difficultyLevel = updates.difficultyLevel;
@@ -250,10 +258,27 @@ export async function DELETE(req: NextRequest) {
                 });
 
                 const userRef = adminDb.collection('users').doc(bookingData.userId);
-                batch.update(userRef, {
-                    'subscription.classesRemaining': FieldValue.increment(1),
-                    updatedAt: now,
-                });
+                const creditType = bookingData.creditType || 'standard';
+                if (creditType === 'intro_credit') {
+                    batch.update(userRef, {
+                        'subscription.introCreditRemaining': FieldValue.increment(1),
+                        updatedAt: now,
+                    });
+                } else if (creditType === 'guest_pass') {
+                    batch.update(userRef, {
+                        'subscription.guestPassesRemaining': FieldValue.increment(1),
+                        updatedAt: now,
+                    });
+                } else if (creditType === 'unlimited') {
+                    batch.update(userRef, {
+                        updatedAt: now,
+                    });
+                } else {
+                    batch.update(userRef, {
+                        'subscription.classesRemaining': FieldValue.increment(1),
+                        updatedAt: now,
+                    });
+                }
             }
 
             await batch.commit();

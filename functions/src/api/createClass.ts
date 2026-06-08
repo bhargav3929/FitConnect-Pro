@@ -17,6 +17,13 @@ interface CreateClassData {
     intensityLevel?: 1 | 2 | 3;
 }
 
+const INTRO_CLASS_TYPE = 'Intro Class';
+
+function isIntroClassType(classType: unknown): boolean {
+    return typeof classType === 'string'
+        && classType.trim().toLowerCase() === INTRO_CLASS_TYPE.toLowerCase();
+}
+
 export const createClass = functions.https.onCall(async (data: CreateClassData, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
@@ -75,16 +82,18 @@ export const createClass = functions.https.onCall(async (data: CreateClassData, 
         const classRef = db.collection('classes').doc();
         const now = FieldValue.serverTimestamp();
         const spots = totalSpots || capacity;
+        const finalClassType = classType || 'Pilates';
+        const finalDuration = isIntroClassType(finalClassType) ? 30 : duration;
 
         const classDoc = {
             id: classRef.id,
             trainerId,
             date: Timestamp.fromDate(classDate),
             startTime,
-            duration,
+            duration: finalDuration,
             capacity,
             bookedCount: 0,
-            classType: classType || 'Pilates',
+            classType: finalClassType,
             difficultyLevel: difficultyLevel || 'intermediate',
             equipmentNeeded: equipmentNeeded || '',
             description: description || '',

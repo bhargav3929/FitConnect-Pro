@@ -46,6 +46,7 @@ export const activateSubscription = functions.https.onCall(async (data, context)
             'subscription.endDate': endDate,
             'subscription.status': 'active',
             'subscription.classesRemaining': duration, // Mock logic: 1 per day for duration
+            'subscription.introCreditRemaining': 0,
             'subscription.maxClassesPerDay': 1,
             'subscription.weeklyClassLimit': weeklyClassLimit,
             'subscription.advanceBookingDays': 14,

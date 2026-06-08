@@ -155,6 +155,7 @@ export default function IntroClassScreen() {
             await refreshSubscription();
             refreshIntroClassLead();
             setDone(true);
+            router.replace('/(tabs)/schedule');
         } catch (err) {
             console.error(err);
             setError(getPaymentErrorMessage(err));
@@ -170,15 +171,15 @@ export default function IntroClassScreen() {
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
                     <Text style={styles.successTitle}>Intro Class Booked</Text>
                     <Text style={styles.successBody}>
-                        You&apos;ve already booked your intro class. Swetha will be in touch — we
-                        can&apos;t wait to see you on the reformer.
+                        You&apos;ve already paid for your intro class. Choose an available
+                        30-minute Intro Class from the schedule.
                     </Text>
                     <TouchableOpacity
                         style={styles.primaryButton}
-                        onPress={() => router.replace('/(tabs)')}
+                        onPress={() => router.replace('/(tabs)/schedule')}
                         activeOpacity={0.85}
                     >
-                        <Text style={styles.primaryButtonText}>BACK HOME</Text>
+                        <Text style={styles.primaryButtonText}>VIEW SCHEDULE</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -214,15 +215,15 @@ export default function IntroClassScreen() {
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
                     <Text style={styles.successTitle}>You&apos;re in.</Text>
                     <Text style={styles.successBody}>
-                        Payment received. Swetha will reach out shortly to lock in your
-                        30-minute intro session.
+                        Payment received. Choose an available 30-minute Intro Class
+                        from the schedule.
                     </Text>
                     <TouchableOpacity
                         style={styles.primaryButton}
-                        onPress={() => router.replace('/(tabs)')}
+                        onPress={() => router.replace('/(tabs)/schedule')}
                         activeOpacity={0.85}
                     >
-                        <Text style={styles.primaryButtonText}>BACK HOME</Text>
+                        <Text style={styles.primaryButtonText}>VIEW SCHEDULE</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>

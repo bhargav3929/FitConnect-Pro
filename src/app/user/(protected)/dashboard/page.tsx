@@ -110,6 +110,10 @@ export default function UserDashboard() {
     }
 
     const streakPercentage = Math.min((clientUser.stats.currentStreak / 30) * 100, 100)
+    const isIntroPlan = clientUser.subscription?.planId === 'drop_in'
+    const classesLeft = isIntroPlan
+        ? clientUser.subscription.introCreditRemaining
+        : clientUser.subscription.classesRemaining
 
     return (
         <div className="space-y-6 pb-20">
@@ -174,10 +178,12 @@ export default function UserDashboard() {
                             <div className="flex items-center gap-2 mb-1">
                                 <Star className="w-3.5 h-3.5 text-terra-300" />
                                 <p className="app-stat-value">
-                                    {clientUser.subscription.classesRemaining === null ? '∞' : clientUser.subscription.classesRemaining}
+                                    {classesLeft === null ? '∞' : classesLeft}
                                 </p>
                             </div>
-                            <p className="app-stat-label normal-case font-bold tracking-normal">Classes Left</p>
+                            <p className="app-stat-label normal-case font-bold tracking-normal">
+                                {isIntroPlan ? 'Intro Credit Left' : 'Classes Left'}
+                            </p>
                         </div>
                     </div>
 

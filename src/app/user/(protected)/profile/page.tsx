@@ -128,7 +128,9 @@ export default function ProfilePage() {
     const initials = clientUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     const sub = clientUser.subscription
     const hasPlan = sub.planId && sub.status === 'active'
-    const isUnlimited = sub.classesRemaining === null
+    const isIntroPlan = sub.planId === 'drop_in'
+    const isUnlimited = !isIntroPlan && sub.classesRemaining === null
+    const displayedCredits = isIntroPlan ? sub.introCreditRemaining : sub.classesRemaining
     const planLabel = sub.planId?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Free'
     const daysLeft = sub.endDate ? Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
     const renewalDate = sub.endDate ? new Date(sub.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
@@ -187,10 +189,10 @@ export default function ProfilePage() {
                             <div className="flex items-center justify-center gap-1.5 mb-1">
                                 <Star className="w-3.5 h-3.5 text-terra-300" />
                                 <span className="text-xl font-black text-olive-600 leading-none">
-                                    {isUnlimited ? '∞' : sub.classesRemaining ?? 0}
+                                    {isUnlimited ? '∞' : displayedCredits ?? 0}
                                 </span>
                             </div>
-                            <p className="app-stat-label">Credits Left</p>
+                            <p className="app-stat-label">{isIntroPlan ? 'Intro Credit' : 'Credits Left'}</p>
                         </div>
                         <div className="flex-1 py-4 px-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -229,8 +231,8 @@ export default function ProfilePage() {
                             </div>
                             <div className="grid grid-cols-3 gap-3 pt-3 border-t border-peach-400/10">
                                 <div>
-                                    <p className="app-stat-label mb-1">Credits</p>
-                                    <p className="text-olive-600 font-black text-lg">{isUnlimited ? '∞' : sub.classesRemaining}</p>
+                                    <p className="app-stat-label mb-1">{isIntroPlan ? 'Intro Credit' : 'Credits'}</p>
+                                    <p className="text-olive-600 font-black text-lg">{isUnlimited ? '∞' : displayedCredits}</p>
                                 </div>
                                 <div>
                                     <p className="app-stat-label mb-1">Days Left</p>

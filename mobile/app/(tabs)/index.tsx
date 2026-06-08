@@ -165,13 +165,19 @@ function WelcomeBanner({
     name,
     totalClassesAttended,
     creditsRemaining,
+    introCreditRemaining,
     currentStreak,
+    isIntroPlan,
 }: {
     name: string;
     totalClassesAttended: number;
     creditsRemaining: number | null;
+    introCreditRemaining: number;
     currentStreak: number;
+    isIntroPlan: boolean;
 }) {
+    const displayedCredits = isIntroPlan ? introCreditRemaining : creditsRemaining;
+
     return (
         <View style={styles.welcomeBanner}>
             {/* Decorative circles */}
@@ -212,10 +218,10 @@ function WelcomeBanner({
                         <View style={styles.statValueRow}>
                             <Feather name="star" size={14} color={Colors.terra[400]} />
                             <Text style={styles.statValue}>
-                                {creditsRemaining === null ? '\u221E' : creditsRemaining}
+                                {displayedCredits === null ? '\u221E' : displayedCredits}
                             </Text>
                         </View>
-                        <Text style={styles.statLabel}>Classes Left</Text>
+                        <Text style={styles.statLabel}>{isIntroPlan ? 'Intro Credit Left' : 'Classes Left'}</Text>
                     </View>
                 </View>
             </View>
@@ -292,10 +298,13 @@ function SubscriptionCard({
         ? endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : '\u2014';
     const isAutoRenew = plan?.autoRenew ?? false;
+    const isIntroPlan = planId === 'drop_in';
+    const introCreditRemaining = subscription.introCreditRemaining ?? 0;
 
     // Progress bar calculation
-    const maxCredits = plan?.credits ?? (isUnlimited ? 1 : Math.max(classesRemaining ?? 1, 1));
-    const progressFraction = isUnlimited ? 1 : (classesRemaining ?? 0) / (maxCredits || 1);
+    const displayedCredits = isIntroPlan ? introCreditRemaining : classesRemaining;
+    const maxCredits = plan?.credits ?? (isUnlimited ? 1 : Math.max(displayedCredits ?? 1, 1));
+    const progressFraction = isUnlimited ? 1 : (displayedCredits ?? 0) / (maxCredits || 1);
 
     return (
         <View style={styles.subscriptionCard}>
@@ -313,9 +322,9 @@ function SubscriptionCard({
             {/* Credits display */}
             <View style={styles.creditsDisplay}>
                 <Text style={styles.creditsNumber}>
-                    {isUnlimited ? '\u221E' : classesRemaining ?? 0}
+                    {isIntroPlan ? introCreditRemaining : isUnlimited ? '\u221E' : classesRemaining ?? 0}
                 </Text>
-                <Text style={styles.creditsLabel}>credits remaining</Text>
+                <Text style={styles.creditsLabel}>{isIntroPlan ? 'intro credit remaining' : 'credits remaining'}</Text>
             </View>
 
             {/* Progress bar */}
@@ -452,40 +461,39 @@ function QuickActions({
 
 function FreeClassCTA({
     onFreeClass,
+    onSchedule,
     freeClassBooked,
 }: {
     onFreeClass: () => void;
+    onSchedule: () => void;
     freeClassBooked?: boolean;
 }) {
     return (
         <TouchableOpacity
-            style={[styles.freeClassCard, freeClassBooked && { opacity: 0.7 }]}
-            onPress={freeClassBooked ? undefined : onFreeClass}
-            disabled={freeClassBooked}
-            activeOpacity={freeClassBooked ? 1 : 0.85}
+            style={styles.freeClassCard}
+            onPress={freeClassBooked ? onSchedule : onFreeClass}
+            activeOpacity={0.85}
         >
             <View style={styles.freeClassIconCircle}>
                 <Feather
-                    name={freeClassBooked ? 'check-circle' : 'gift'}
+                    name={freeClassBooked ? 'calendar' : 'gift'}
                     size={20}
                     color={Colors.terra[400]}
                 />
             </View>
             <View style={styles.freeClassTextCol}>
                 <Text style={styles.freeClassTitle}>
-                    {freeClassBooked ? 'Intro Class Booked' : 'Book an Intro Class'}
+                    {freeClassBooked ? 'Choose Your Intro Class' : 'Book an Intro Class'}
                 </Text>
                 <Text style={styles.freeClassSubtitle}>
                     {freeClassBooked
-                        ? "You're all set. Swetha will be in touch shortly."
+                        ? 'Pick an available 30-minute Intro Class from the schedule.'
                         : 'First time? Try a 30-minute intro class.'}
                 </Text>
             </View>
-            {!freeClassBooked && (
-                <View style={styles.freeClassArrowCircle}>
-                    <Feather name="arrow-right" size={16} color={Colors.terra[400]} />
-                </View>
-            )}
+            <View style={styles.freeClassArrowCircle}>
+                <Feather name="arrow-right" size={16} color={Colors.terra[400]} />
+            </View>
         </TouchableOpacity>
     );
 }
@@ -548,6 +556,8 @@ export default function DashboardScreen() {
     const name = clientUser.name || 'there';
     const totalClassesAttended = clientUser.stats?.totalClassesAttended ?? 0;
     const creditsRemaining = clientUser.subscription?.classesRemaining ?? null;
+    const introCreditRemaining = clientUser.subscription?.introCreditRemaining ?? 0;
+    const isIntroPlan = clientUser.subscription?.planId === 'drop_in';
     const hasActiveSubscription = clientUser.subscription?.status === 'active' && !!clientUser.subscription?.planId;
     const showIntroClassCta = !hasActiveSubscription;
 
@@ -570,6 +580,7 @@ export default function DashboardScreen() {
                     <>
                         <FreeClassCTA
                             onFreeClass={navigateToIntroClass}
+                            onSchedule={navigateToSchedule}
                             freeClassBooked={hasIntroClassLead === true}
                         />
                         <View style={{ height: Spacing.md }} />
@@ -580,7 +591,9 @@ export default function DashboardScreen() {
                     name={name}
                     totalClassesAttended={totalClassesAttended}
                     creditsRemaining={creditsRemaining}
+                    introCreditRemaining={introCreditRemaining}
                     currentStreak={clientUser.stats?.currentStreak ?? 0}
+                    isIntroPlan={isIntroPlan}
                 />
 
                 {/* B. Subscription Status */}

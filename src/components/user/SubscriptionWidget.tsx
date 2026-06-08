@@ -12,7 +12,7 @@ interface SubscriptionWidgetProps {
 }
 
 export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
-    const { planId, status, classesRemaining, endDate } = subscription
+    const { planId, status, classesRemaining, introCreditRemaining, endDate } = subscription
     const [nowMs] = useState(() => Date.now())
 
     // No plan / expired / cancelled state
@@ -66,7 +66,8 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
     }
 
     // Active plan
-    const isUnlimited = classesRemaining === null
+    const isIntroPlan = planId === 'drop_in'
+    const isUnlimited = !isIntroPlan && classesRemaining === null
     const planLabel = planId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
     const endDateObj = (() => {
@@ -83,7 +84,8 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
     const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - nowMs) / (1000 * 60 * 60 * 24))) : 0
     const renewalDate = endDateObj ? endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
 
-    const credits = classesRemaining ?? 0
+    const displayedCredits = isIntroPlan ? introCreditRemaining : classesRemaining
+    const credits = displayedCredits ?? 0
     const maxCredits = isUnlimited ? 1 : Math.max(credits, 1)
     const creditFraction = isUnlimited ? 1 : credits / maxCredits
     const circumference = 2 * Math.PI * 22
@@ -114,7 +116,7 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-sm font-black text-olive-600 leading-none">
-                            {isUnlimited ? '∞' : classesRemaining ?? 0}
+                            {isUnlimited ? '∞' : displayedCredits ?? 0}
                         </span>
                     </div>
                 </div>
@@ -128,7 +130,9 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
                         <span className="text-[10px] text-olive-300 font-medium">Active</span>
                     </div>
                     <p className="text-olive-300 text-xs">
-                        {isUnlimited ? 'Unlimited classes' : `${classesRemaining} credit${(classesRemaining ?? 0) !== 1 ? 's' : ''} left`}
+                        {isUnlimited
+                            ? 'Unlimited classes'
+                            : `${displayedCredits} ${isIntroPlan ? 'intro ' : ''}credit${(displayedCredits ?? 0) !== 1 ? 's' : ''} left`}
                         {' · '}Renews {renewalDate}
                     </p>
                 </div>

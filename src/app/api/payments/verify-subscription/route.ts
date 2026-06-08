@@ -73,10 +73,13 @@ export async function POST(req: NextRequest) {
             const plan = getPlanById(paymentData.planId);
             if (!plan) throw { status: 400, error: 'Invalid plan on payment', code: 'failed-precondition' };
 
-            const currentSub = userDoc.data()!.subscription;
+            const currentSub = userDoc.data()!.subscription as Record<string, unknown> | undefined;
             if (isActiveUnexpiredSubscription(currentSub)) {
                 throw { status: 400, error: 'You already have an active membership.', code: 'subscription-already-active' };
             }
+            const currentIntroCredit = typeof currentSub?.introCreditRemaining === 'number'
+                ? Math.max(0, currentSub.introCreditRemaining)
+                : 0;
 
             const now = new Date();
             const endDate = new Date(now);
@@ -95,6 +98,7 @@ export async function POST(req: NextRequest) {
                 'subscription.endDate': endDate,
                 'subscription.status': 'active',
                 'subscription.classesRemaining': plan.credits,
+                'subscription.introCreditRemaining': currentIntroCredit,
                 'subscription.maxClassesPerDay': plan.maxClassesPerDay,
                 'subscription.weeklyClassLimit': plan.weeklyClassLimit,
                 'subscription.advanceBookingDays': plan.advanceBookingDays,

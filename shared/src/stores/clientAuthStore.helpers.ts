@@ -7,6 +7,7 @@ export const DEFAULT_SUBSCRIPTION: ClientUser['subscription'] = {
     endDate: null,
     status: 'expired',
     classesRemaining: 0,
+    introCreditRemaining: 0,
     maxClassesPerDay: 0,
     weeklyClassLimit: 0,
     advanceBookingDays: 0,
@@ -83,13 +84,16 @@ export function toSafeDate(val: unknown): Date | null {
 
 export function normalizeSubscription(raw: Record<string, unknown> | undefined): ClientUser['subscription'] {
     if (!raw) return { ...DEFAULT_SUBSCRIPTION }
+    const planId = (raw.planId as ClientUser['subscription']['planId']) ?? (raw.planType as ClientUser['subscription']['planId']) ?? null
+    const classesRemaining = raw.classesRemaining !== undefined ? (raw.classesRemaining as number | null) : 0
     return {
-        planId: (raw.planId as ClientUser['subscription']['planId']) ?? (raw.planType as ClientUser['subscription']['planId']) ?? null,
+        planId,
         planCategory: (raw.planCategory as ClientUser['subscription']['planCategory']) ?? null,
         startDate: toSafeDate(raw.startDate),
         endDate: toSafeDate(raw.endDate),
         status: (raw.status as ClientUser['subscription']['status']) ?? 'expired',
-        classesRemaining: raw.classesRemaining !== undefined ? (raw.classesRemaining as number | null) : 0,
+        classesRemaining,
+        introCreditRemaining: typeof raw.introCreditRemaining === 'number' ? raw.introCreditRemaining : 0,
         maxClassesPerDay: (raw.maxClassesPerDay as number) ?? 0,
         weeklyClassLimit: (raw.weeklyClassLimit as number) ?? 0,
         advanceBookingDays: (raw.advanceBookingDays as number) ?? 0,

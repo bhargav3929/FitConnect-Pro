@@ -19,7 +19,7 @@ import { SubscriptionPromptModal } from "@/components/user/SubscriptionPromptMod
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { subscribeToClassesByDate, getTrainers, getFacility, callBookClass } from "@fitconnect/shared/firebase/firestore"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
-import { ClassSession } from "@fitconnect/shared/types/class"
+import { ClassSession, isIntroClassType } from "@fitconnect/shared/types/class"
 import { Trainer } from "@fitconnect/shared/types/trainer"
 import { GymCenter } from "@fitconnect/shared/types/gym"
 import { toast } from "sonner"
@@ -44,9 +44,18 @@ const FALLBACK_FACILITY = {
 type FilterType = 'instructor' | 'classType'
 const CLASS_RENDER_BATCH = 10
 
-function hasValidSubscription(sub: { planId: unknown; status: string; endDate: unknown; classesRemaining: unknown } | undefined): boolean {
+type BookingSubscription = {
+    planId?: unknown
+    planType?: unknown
+    status?: string
+    endDate?: unknown
+    classesRemaining?: unknown
+    introCreditRemaining?: unknown
+}
+
+function hasValidSubscription(sub: BookingSubscription | undefined): boolean {
     if (!sub) return false
-    if (!sub.planId) return false
+    if (!sub.planId && !sub.planType) return false
     if (sub.status !== 'active') return false
     // Safe date parse — handles Date, Timestamp { seconds }, string
     let end: Date
@@ -58,9 +67,32 @@ function hasValidSubscription(sub: { planId: unknown; status: string; endDate: u
         end = raw ? new Date(raw as string) : new Date(0)
     }
     if (isNaN(end.getTime()) || end < new Date()) return false
+    const introCreditRemaining = typeof sub.introCreditRemaining === 'number' ? sub.introCreditRemaining : 0
+    if (introCreditRemaining > 0) return true
     // classesRemaining === null means unlimited
     if (sub.classesRemaining !== null && (sub.classesRemaining as number) <= 0) return false
     return true
+}
+
+function isIntroPlan(sub: BookingSubscription | undefined): boolean {
+    return sub?.planId === 'drop_in' || sub?.planType === 'drop_in'
+}
+
+function getClassBookingRestriction(sub: BookingSubscription | undefined, cls: ClassSession): string | null {
+    const introPlan = isIntroPlan(sub)
+    const introClass = isIntroClassType(cls.classType)
+    const introCreditRemaining = typeof sub?.introCreditRemaining === 'number' ? sub.introCreditRemaining : 0
+
+    if (introPlan && !introClass) {
+        return "A membership is required to book regular classes."
+    }
+    if (introClass && introCreditRemaining <= 0) {
+        return "An unused intro credit is required to book an Intro Class."
+    }
+    if (!introClass && sub?.classesRemaining !== null && ((sub?.classesRemaining as number | undefined) ?? 0) <= 0) {
+        return "No classes remaining on your membership."
+    }
+    return null
 }
 
 function parseSubscriptionEndDate(endDate: unknown): Date | null {
@@ -186,6 +218,14 @@ export default function SchedulePage() {
         if (isDateAfterSubscriptionEnd(selectedDate, subscriptionEndDate)) {
             toast.error("Plan expires before this class", {
                 description: "Please renew your plan to book classes after your subscription end date.",
+            })
+            return
+        }
+
+        const bookingRestriction = getClassBookingRestriction(clientUser?.subscription, cls)
+        if (bookingRestriction) {
+            toast.error("Class not available", {
+                description: bookingRestriction,
             })
             return
         }
@@ -440,6 +480,9 @@ export default function SchedulePage() {
                                         const spotsLeft = totalSpots - bookedCount
                                         const trainerName = getTrainerName(cls.trainerId)
                                         const trainerImage = getTrainerImage(cls.trainerId)
+                                        const bookingRestriction = hasValidSubscription(clientUser?.subscription)
+                                            ? getClassBookingRestriction(clientUser?.subscription, cls)
+                                            : null
 
                                         return (
                                             <motion.div
@@ -448,7 +491,7 @@ export default function SchedulePage() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: idx * 0.05 }}
                                                 onClick={() => handleBook(cls)}
-                                                className="bg-peach-50 border border-peach-400/20 p-4 active:scale-[0.98] transition-all cursor-pointer hover:border-terra-400/30 group"
+                                                className={`bg-peach-50 border border-peach-400/20 p-4 active:scale-[0.98] transition-all cursor-pointer hover:border-terra-400/30 group ${bookingRestriction ? 'opacity-60' : ''}`}
                                             >
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div className="flex gap-4">
@@ -467,7 +510,15 @@ export default function SchedulePage() {
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-end">
-                                                        {spotsLeft === 0 ? (
+                                                        {bookingRestriction ? (
+                                                            <span className="text-xs font-bold text-olive-300 uppercase tracking-wider text-right">
+                                                                {isIntroClassType(cls.classType)
+                                                                    ? 'Intro credit required'
+                                                                    : bookingRestriction.includes('No classes')
+                                                                        ? 'No credits'
+                                                                        : 'Membership required'}
+                                                            </span>
+                                                        ) : spotsLeft === 0 ? (
                                                             <span className="text-xs font-bold text-olive-300/40 uppercase tracking-wider">Full</span>
                                                         ) : (
                                                             <span className="w-8 h-8 rounded-full bg-terra-400/20 flex items-center justify-center text-terra-400">

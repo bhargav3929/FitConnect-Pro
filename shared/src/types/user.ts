@@ -18,6 +18,7 @@ export interface UserProfile {
         endDate: Date | null;
         status: 'active' | 'expired' | 'canceled';
         classesRemaining: number | null;      // null = unlimited
+        introCreditRemaining: number;
         maxClassesPerDay: number;
         weeklyClassLimit: number;
         advanceBookingDays: number;

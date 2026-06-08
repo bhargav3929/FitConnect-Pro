@@ -70,6 +70,10 @@ export default function ProfileScreen() {
     const stats = clientUser?.stats;
     const plan = subscription?.planId ? getPlanById(subscription.planId) : null;
     const isActive = subscription?.status === 'active';
+    const isIntroPlan = subscription?.planId === 'drop_in';
+    const displayedCredits = isIntroPlan
+        ? subscription?.introCreditRemaining ?? 0
+        : subscription?.classesRemaining ?? 0;
     const planBadgeLabel = isActive && plan ? plan.name : 'Free Plan';
 
     const endDateObj = (() => {
@@ -344,12 +348,12 @@ export default function ProfileScreen() {
                             <View style={styles.statIconRow}>
                                 <Feather name="star" size={16} color={Colors.terra[400]} />
                                 <Text style={styles.statValue}>
-                                    {subscription?.classesRemaining === null
+                                    {!isIntroPlan && subscription?.classesRemaining === null
                                         ? '\u221E'
-                                        : subscription?.classesRemaining ?? 0}
+                                        : displayedCredits}
                                 </Text>
                             </View>
-                            <Text style={styles.statLabel}>CREDITS LEFT</Text>
+                            <Text style={styles.statLabel}>{isIntroPlan ? 'INTRO CREDIT' : 'CREDITS LEFT'}</Text>
                         </View>
 
                         <View style={styles.statDivider} />
@@ -401,9 +405,9 @@ export default function ProfileScreen() {
                     {isActive && plan && (
                         <View style={styles.membershipStats}>
                             <View style={styles.membershipStat}>
-                                <Text style={styles.membershipStatLabel}>CREDITS</Text>
+                                <Text style={styles.membershipStatLabel}>{isIntroPlan ? 'INTRO' : 'CREDITS'}</Text>
                                 <Text style={styles.membershipStatValue}>
-                                    {subscription?.classesRemaining === null ? '∞' : subscription?.classesRemaining ?? 0}
+                                    {!isIntroPlan && subscription?.classesRemaining === null ? '∞' : displayedCredits}
                                 </Text>
                             </View>
                             <View style={styles.membershipStatDivider} />

@@ -19,6 +19,13 @@ interface UpdateClassData {
     status?: 'scheduled' | 'ongoing' | 'completed' | 'canceled';
 }
 
+const INTRO_CLASS_TYPE = 'Intro Class';
+
+function isIntroClassType(classType: unknown): boolean {
+    return typeof classType === 'string'
+        && classType.trim().toLowerCase() === INTRO_CLASS_TYPE.toLowerCase();
+}
+
 export const updateClass = functions.https.onCall(async (data: UpdateClassData, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
@@ -52,6 +59,7 @@ export const updateClass = functions.https.onCall(async (data: UpdateClassData, 
         if (!classDoc.exists) {
             throw new functions.https.HttpsError('not-found', 'Class not found');
         }
+        const classData = classDoc.data()!;
 
         // Build update object, only including provided fields
         const updateData: Record<string, unknown> = {
@@ -67,7 +75,12 @@ export const updateClass = functions.https.onCall(async (data: UpdateClassData, 
             updateData.date = Timestamp.fromDate(newDate);
         }
         if (updates.startTime !== undefined) updateData.startTime = updates.startTime;
-        if (updates.duration !== undefined) updateData.duration = updates.duration;
+        const nextClassType = updates.classType ?? classData.classType;
+        if (isIntroClassType(nextClassType)) {
+            updateData.duration = 30;
+        } else if (updates.duration !== undefined) {
+            updateData.duration = updates.duration;
+        }
         if (updates.capacity !== undefined) updateData.capacity = updates.capacity;
         if (updates.classType !== undefined) updateData.classType = updates.classType;
         if (updates.difficultyLevel !== undefined) updateData.difficultyLevel = updates.difficultyLevel;

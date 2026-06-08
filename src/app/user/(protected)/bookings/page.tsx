@@ -437,12 +437,12 @@ export default function BookingsPage() {
                         <Calendar className="w-8 h-8 text-olive-300/40" />
                     </div>
                     <h3 className="app-card-title">No bookings found</h3>
-                    <p className="text-olive-300 text-sm mb-6">
+                    <div className="text-olive-300 text-sm mb-6">
                         {activeTab === 'upcoming'
                             ? "You don't have any upcoming classes scheduled."
                             : "You haven't completed any classes yet."
                         }
-                    </p>
+                    </div>
                     {activeTab === 'upcoming' && (
                         <Link href="/user/schedule">
                             <Button className="font-bold rounded-xl px-8 bg-terra-400 text-peach-50 hover:bg-terra-300">

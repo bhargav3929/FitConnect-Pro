@@ -42,7 +42,7 @@ import {
     getTrainers,
     type FirestorePageCursor,
 } from "@fitconnect/shared/firebase/firestore"
-import { ClassSession } from "@fitconnect/shared/types/class"
+import { ClassSession, INTRO_CLASS_TYPE } from "@fitconnect/shared/types/class"
 import { Trainer } from "@fitconnect/shared/types/trainer"
 import { toast } from "sonner"
 
@@ -52,9 +52,10 @@ const LOCATIONS = ["Main Studio", "Reformer Studio", "Mat Studio", "Private Suit
 const PAGE_SIZE = 12
 
 const CLASS_TYPES = [
-    { name: "Sol Flow", description: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.", timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
-    { name: "Sol Cardio", description: "Fast-paced movement that gets your heart rate up.", timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
-    { name: "Sol Stretch", description: "Hit reset on your body, one stretch at a time.", timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+    { name: "Sol Flow", description: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+    { name: "Sol Cardio", description: "Fast-paced movement that gets your heart rate up.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+    { name: "Sol Stretch", description: "Hit reset on your body, one stretch at a time.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+    { name: INTRO_CLASS_TYPE, description: "A focused 30-minute first session for clients who have paid for the intro class.", duration: 30, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
 ] as const
 
 interface ClassFormData {
@@ -674,6 +675,7 @@ export default function ClassesPage() {
                                         ...prev,
                                         classType: e.target.value,
                                         description: selected?.description || prev.description,
+                                        duration: selected?.duration || prev.duration,
                                         startTime: selected?.timeSlots[0] || prev.startTime,
                                     }))
                                 }}
@@ -762,7 +764,7 @@ export default function ClassesPage() {
                                 <input
                                     type="number"
                                     value={formData.capacity}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, capacity: parseInt(e.target.value) || 12 }))}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, capacity: parseInt(e.target.value) || 10 }))}
                                     min={1}
                                     max={100}
                                     className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:outline-none transition-all text-sm"

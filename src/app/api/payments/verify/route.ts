@@ -100,8 +100,12 @@ export async function POST(req: NextRequest) {
                 throw { status: 400, error: 'Invalid plan on payment', code: 'failed-precondition' };
             }
 
+            const currentSub = userDoc.data()!.subscription as Record<string, unknown> | undefined;
+            const currentIntroCredit = typeof currentSub?.introCreditRemaining === 'number'
+                ? Math.max(0, currentSub.introCreditRemaining)
+                : 0;
+
             if (plan.category === 'membership') {
-                const currentSub = userDoc.data()!.subscription;
                 if (isActiveUnexpiredSubscription(currentSub)) {
                     throw { status: 400, error: 'You already have an active membership.', code: 'subscription-already-active' };
                 }
@@ -123,7 +127,8 @@ export async function POST(req: NextRequest) {
                 'subscription.startDate': now,
                 'subscription.endDate': endDate,
                 'subscription.status': 'active',
-                'subscription.classesRemaining': plan.credits,
+                'subscription.classesRemaining': plan.id === 'drop_in' ? 0 : plan.credits,
+                'subscription.introCreditRemaining': plan.id === 'drop_in' ? 1 : currentIntroCredit,
                 'subscription.maxClassesPerDay': plan.maxClassesPerDay,
                 'subscription.weeklyClassLimit': plan.weeklyClassLimit,
                 'subscription.advanceBookingDays': plan.advanceBookingDays,

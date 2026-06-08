@@ -91,6 +91,11 @@ export async function POST(req: NextRequest) {
                     'subscription.guestPassesRemaining': FieldValue.increment(1),
                     updatedAt: now,
                 });
+            } else if (creditType === 'intro_credit') {
+                transaction.update(userRef, {
+                    'subscription.introCreditRemaining': FieldValue.increment(1),
+                    updatedAt: now,
+                });
             } else if (creditType === 'unlimited') {
                 // Unlimited — no credits to restore, just update timestamp
                 transaction.update(userRef, {
