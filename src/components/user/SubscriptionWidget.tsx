@@ -12,7 +12,7 @@ interface SubscriptionWidgetProps {
 }
 
 export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
-    const { planId, status, classesRemaining, introCreditRemaining, endDate } = subscription
+    const { planId, status, classesRemaining, introCreditRemaining, endDate, cancelAtPeriodEnd } = subscription
     const [nowMs] = useState(() => Date.now())
 
     // No plan / expired / cancelled state
@@ -83,6 +83,7 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
 
     const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - nowMs) / (1000 * 60 * 60 * 24))) : 0
     const renewalDate = endDateObj ? endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
+    const renewalCanceled = cancelAtPeriodEnd === true
 
     const displayedCredits = isIntroPlan ? introCreditRemaining : classesRemaining
     const credits = displayedCredits ?? 0
@@ -127,13 +128,15 @@ export function SubscriptionWidget({ subscription }: SubscriptionWidgetProps) {
                         <span className="px-2 py-0.5 rounded bg-terra-400/10 text-terra-400 text-[10px] font-black uppercase tracking-wider">
                             {planLabel}
                         </span>
-                        <span className="text-[10px] text-olive-300 font-medium">Active</span>
+                        <span className={`text-[10px] font-medium ${renewalCanceled ? 'text-yellow-700' : 'text-olive-300'}`}>
+                            {renewalCanceled ? 'Renewal canceled' : 'Active'}
+                        </span>
                     </div>
                     <p className="text-olive-300 text-xs">
                         {isUnlimited
                             ? 'Unlimited classes'
                             : `${displayedCredits} ${isIntroPlan ? 'intro ' : ''}credit${(displayedCredits ?? 0) !== 1 ? 's' : ''} left`}
-                        {' · '}Renews {renewalDate}
+                        {' · '}{renewalCanceled ? 'Active until' : 'Renews'} {renewalDate}
                     </p>
                 </div>
 

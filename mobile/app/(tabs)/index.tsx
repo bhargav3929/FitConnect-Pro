@@ -238,7 +238,7 @@ function SubscriptionCard({
 }) {
     if (!subscription) return null;
 
-    const { planId, status, classesRemaining, endDate } = subscription;
+    const { planId, status, classesRemaining, endDate, cancelAtPeriodEnd } = subscription;
     const isActive = status === 'active' && planId;
     const isExpired = !!planId && status === 'expired';
 
@@ -297,7 +297,8 @@ function SubscriptionCard({
     const renewalDate = endDateObj
         ? endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : '\u2014';
-    const isAutoRenew = plan?.autoRenew ?? false;
+    const renewalCanceled = cancelAtPeriodEnd === true;
+    const isAutoRenew = (subscription.autoRenew ?? plan?.autoRenew ?? false) && !renewalCanceled;
     const isIntroPlan = planId === 'drop_in';
     const introCreditRemaining = subscription.introCreditRemaining ?? 0;
 
@@ -314,8 +315,10 @@ function SubscriptionCard({
                     <Feather name="credit-card" size={16} color={Colors.terra[400]} />
                 </View>
                 <Text style={styles.subPlanName}>{planName}</Text>
-                <View style={styles.activeBadge}>
-                    <Text style={styles.activeBadgeText}>Active</Text>
+                <View style={[styles.activeBadge, renewalCanceled && styles.renewalCanceledBadge]}>
+                    <Text style={[styles.activeBadgeText, renewalCanceled && styles.renewalCanceledBadgeText]}>
+                        {renewalCanceled ? 'Renewal Canceled' : 'Active'}
+                    </Text>
                 </View>
             </View>
 
@@ -339,7 +342,7 @@ function SubscriptionCard({
 
             {/* Renewal info */}
             <Text style={styles.renewalText}>
-                {isAutoRenew ? 'Renews' : 'Expires'} {renewalDate}
+                {renewalCanceled ? 'Active until' : isAutoRenew ? 'Renews' : 'Expires'} {renewalDate}
             </Text>
         </View>
     );
@@ -821,6 +824,12 @@ const styles = StyleSheet.create({
         fontSize: FontSize.xs,
         fontWeight: '600',
         color: Colors.terra[400],
+    },
+    renewalCanceledBadge: {
+        backgroundColor: Alpha.peach300_40,
+    },
+    renewalCanceledBadgeText: {
+        color: Colors.warning,
     },
     creditsDisplay: {
         marginBottom: Spacing.sm,

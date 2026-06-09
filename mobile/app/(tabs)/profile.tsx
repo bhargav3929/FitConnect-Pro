@@ -71,6 +71,7 @@ export default function ProfileScreen() {
     const isActive = subscription?.status === 'active';
     const isIntroPlan = subscription?.planId === 'drop_in';
     const isMembershipPlan = subscription?.planCategory === 'membership' || plan?.category === 'membership';
+    const renewalCanceled = subscription?.cancelAtPeriodEnd === true;
     const displayedCredits = isIntroPlan
         ? subscription?.introCreditRemaining ?? 0
         : subscription?.classesRemaining ?? 0;
@@ -336,13 +337,17 @@ export default function ProfileScreen() {
                             </Text>
                             <Text style={styles.rowSubtitle}>
                                 {isActive && plan
-                                    ? plan.category === 'membership' ? 'Membership' : 'Class Pack'
+                                    ? plan.category === 'membership'
+                                        ? renewalCanceled ? 'Renewal canceled' : 'Membership'
+                                        : 'Class Pack'
                                     : 'Choose a plan to start booking classes'}
                             </Text>
                         </View>
                         {isActive && (
-                            <View style={styles.activeBadge}>
-                                <Text style={styles.activeBadgeText}>ACTIVE</Text>
+                            <View style={[styles.activeBadge, renewalCanceled && styles.renewalCanceledBadge]}>
+                                <Text style={[styles.activeBadgeText, renewalCanceled && styles.renewalCanceledBadgeText]}>
+                                    {renewalCanceled ? 'RENEWAL CANCELED' : 'ACTIVE'}
+                                </Text>
                             </View>
                         )}
                     </View>
@@ -363,7 +368,9 @@ export default function ProfileScreen() {
                             </View>
                             <View style={styles.membershipStatDivider} />
                             <View style={styles.membershipStat}>
-                                <Text style={styles.membershipStatLabel}>EXPIRES</Text>
+                                <Text style={styles.membershipStatLabel}>
+                                    {isMembershipPlan ? renewalCanceled ? 'ACTIVE UNTIL' : 'RENEWS' : 'EXPIRES'}
+                                </Text>
                                 <Text style={[styles.membershipStatValue, { fontSize: FontSize.xs }]}>{expiryLabel}</Text>
                             </View>
                         </View>
@@ -880,6 +887,13 @@ const styles = StyleSheet.create({
         fontSize: 9,
         color: 'rgb(21,128,61)',
         letterSpacing: 0.8,
+    },
+    renewalCanceledBadge: {
+        backgroundColor: Alpha.peach300_40,
+        borderColor: Colors.warning,
+    },
+    renewalCanceledBadgeText: {
+        color: Colors.warning,
     },
     membershipActions: {
         flexDirection: 'row',

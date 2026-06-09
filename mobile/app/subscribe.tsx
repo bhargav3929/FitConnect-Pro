@@ -335,6 +335,7 @@ export default function SubscribeScreen() {
     const activePlanIsMembership = clientUser?.subscription?.planCategory === 'membership' || currentPlan?.category === 'membership';
     const hasActiveMembership = hasActiveSubscription && (clientUser?.subscription?.planCategory === 'membership' || currentPlan?.category === 'membership');
     const selectedCurrentPlan = hasActiveMembership && selectedPlan?.id === clientUser?.subscription?.planId;
+    const renewalCanceled = clientUser?.subscription?.cancelAtPeriodEnd === true;
 
     const handleCancelSubscription = useCallback(() => {
         Alert.alert(
@@ -592,13 +593,17 @@ export default function SubscribeScreen() {
                                         <Text style={styles.mgmtPlanName}>
                                             {clientUser.subscription.planId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                                         </Text>
-                                        <Text style={styles.mgmtSubtitle}>Active membership</Text>
+                                        <Text style={styles.mgmtSubtitle}>
+                                            {renewalCanceled ? 'Renewal canceled' : 'Active membership'}
+                                        </Text>
                                     </View>
-                                    <View style={styles.activeBadge}>
-                                        <Text style={styles.activeBadgeText}>ACTIVE</Text>
+                                    <View style={[styles.activeBadge, renewalCanceled && styles.renewalCanceledBadge]}>
+                                        <Text style={[styles.activeBadgeText, renewalCanceled && styles.renewalCanceledBadgeText]}>
+                                            {renewalCanceled ? 'RENEWAL CANCELED' : 'ACTIVE'}
+                                        </Text>
                                     </View>
                                 </View>
-                                {activePlanIsMembership && (
+                                {activePlanIsMembership && !renewalCanceled && (
                                     <TouchableOpacity
                                         style={styles.cancelBtn}
                                         onPress={handleCancelSubscription}
@@ -968,6 +973,13 @@ const styles = StyleSheet.create({
         fontSize: 9,
         color: 'rgb(21,128,61)',
         letterSpacing: 0.8,
+    },
+    renewalCanceledBadge: {
+        backgroundColor: Alpha.peach300_40,
+        borderColor: Colors.warning,
+    },
+    renewalCanceledBadgeText: {
+        color: Colors.warning,
     },
     cancelBtn: {
         flexDirection: 'row',

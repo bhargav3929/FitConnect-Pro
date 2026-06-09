@@ -79,6 +79,7 @@ export default function SubscribePage() {
     const currentPlan = clientUser?.subscription.planId ? getPlanById(clientUser.subscription.planId) : null
     const hasActiveMembership = hasActiveSubscription && (clientUser?.subscription.planCategory === 'membership' || currentPlan?.category === 'membership')
     const selectedCurrentPlan = hasActiveMembership && selectedPlanId === clientUser?.subscription.planId
+    const renewalCanceled = clientUser?.subscription.cancelAtPeriodEnd === true
 
     const handleContinueToCheckout = async () => {
         if (!selectedPlanId) return
@@ -335,10 +336,16 @@ export default function SubscribePage() {
                                         <p className="text-olive-600 font-bold text-sm leading-none">
                                             {clientUser.subscription.planId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                                         </p>
-                                        <p className="text-olive-300 text-xs mt-0.5">Active membership</p>
+                                        <p className="text-olive-300 text-xs mt-0.5">
+                                            {renewalCanceled ? 'Renewal canceled' : 'Active membership'}
+                                        </p>
                                     </div>
-                                    <span className="ml-auto px-2.5 py-1 rounded-full bg-green-500/10 text-green-700 text-[10px] font-black uppercase tracking-wider ring-1 ring-green-500/20">
-                                        Active
+                                    <span className={`ml-auto px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ring-1 ${
+                                        renewalCanceled
+                                            ? 'bg-yellow-500/10 text-yellow-700 ring-yellow-500/20'
+                                            : 'bg-green-500/10 text-green-700 ring-green-500/20'
+                                    }`}>
+                                        {renewalCanceled ? 'Renewal Canceled' : 'Active'}
                                     </span>
                                 </div>
 
@@ -367,7 +374,7 @@ export default function SubscribePage() {
                                         </Button>
                                     )}
 
-                                    {hasActiveMembership && (
+                                    {hasActiveMembership && !renewalCanceled && (
                                         <button
                                             onClick={() => setShowCancelConfirm(true)}
                                             className="flex-1 h-10 rounded-xl border-2 border-terra-400 bg-terra-400/10 text-terra-400 font-black text-xs flex items-center justify-center gap-1.5 hover:bg-terra-400/20 transition-colors"

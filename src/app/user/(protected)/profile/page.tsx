@@ -139,6 +139,7 @@ export default function ProfilePage() {
     const planLabel = sub.planId?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Free'
     const daysLeft = sub.endDate ? Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
     const renewalDate = sub.endDate ? new Date(sub.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+    const renewalCanceled = sub.cancelAtPeriodEnd === true
     const providerData = firebaseUser?.providerData ?? auth.currentUser?.providerData ?? []
     const hasPasswordProvider = providerData.some((provider) => provider.providerId === 'password')
     const hasGoogleProvider = providerData.some((provider) => provider.providerId === 'google.com')
@@ -227,11 +228,19 @@ export default function ProfilePage() {
                                     </div>
                                     <div>
                                         <p className="text-olive-600 font-bold text-sm">{planLabel}</p>
-                                        <p className="text-olive-300 text-xs">{sub.planCategory === 'membership' ? 'Auto-renewing' : 'Class pack'}</p>
+                                        <p className="text-olive-300 text-xs">
+                                            {isMembershipPlan
+                                                ? renewalCanceled ? 'Renewal canceled' : 'Auto-renewing'
+                                                : 'Class pack'}
+                                        </p>
                                     </div>
                                 </div>
-                                <span className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-700 app-badge-text ring-1 ring-green-500/20">
-                                    Active
+                                <span className={`px-2.5 py-1 rounded-full app-badge-text ring-1 ${
+                                    renewalCanceled
+                                        ? 'bg-yellow-500/10 text-yellow-700 ring-yellow-500/20'
+                                        : 'bg-green-500/10 text-green-700 ring-green-500/20'
+                                }`}>
+                                    {renewalCanceled ? 'Renewal Canceled' : 'Active'}
                                 </span>
                             </div>
                             <div className="grid grid-cols-3 gap-3 pt-3 border-t border-peach-400/10">
@@ -244,7 +253,9 @@ export default function ProfilePage() {
                                     <p className="text-olive-600 font-black text-lg">{daysLeft}</p>
                                 </div>
                                 <div>
-                                    <p className="app-stat-label mb-1">{sub.planCategory === 'membership' ? 'Renews' : 'Expires'}</p>
+                                    <p className="app-stat-label mb-1">
+                                        {isMembershipPlan ? renewalCanceled ? 'Active Until' : 'Renews' : 'Expires'}
+                                    </p>
                                     <p className="text-olive-600 font-bold text-xs">{renewalDate}</p>
                                 </div>
                             </div>
@@ -255,7 +266,7 @@ export default function ProfilePage() {
                                         <ArrowRight className="w-3.5 h-3.5" />
                                     </Button>
                                 </Link>
-                                {isMembershipPlan && (
+                                {isMembershipPlan && !renewalCanceled && (
                                     <button
                                         onClick={() => setShowCancelConfirm(true)}
                                         className="flex-1 h-11 rounded-xl border-2 border-terra-400 bg-terra-400/10 text-terra-400 font-black text-xs tracking-wider flex items-center justify-center gap-1.5 hover:bg-terra-400/20 transition-colors"
