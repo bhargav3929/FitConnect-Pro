@@ -29,7 +29,8 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ImageUpload } from "@/components/ui/image-upload"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import {
     callCreateTrainer,
@@ -333,6 +334,9 @@ export default function TrainersPage() {
                             <div className="flex items-start justify-between mb-5">
                                 <div className="flex items-center gap-4">
                                     <Avatar className="h-14 w-14 ring-2 ring-peach-400/10 group-hover:ring-terra-400/20 transition-all">
+                                        {trainer.profilePictureUrl && (
+                                            <AvatarImage src={trainer.profilePictureUrl} alt={trainer.name} className="object-cover" />
+                                        )}
                                         <AvatarFallback className="bg-peach-200/60 text-olive-600 font-bold text-lg">
                                             {trainer.name.split(' ').map(n => n[0]).join('')}
                                         </AvatarFallback>
@@ -590,17 +594,17 @@ export default function TrainersPage() {
                             />
                         </div>
 
-                        {/* Profile Picture URL */}
+                        {/* Profile Picture */}
                         <div>
                             <label className="block app-label mb-2">
-                                Profile Picture URL (optional)
+                                Profile Picture (optional)
                             </label>
-                            <input
-                                type="url"
+                            <ImageUpload
                                 value={formData.profilePictureUrl}
-                                onChange={(e) => setFormData(prev => ({ ...prev, profilePictureUrl: e.target.value }))}
-                                placeholder="https://..."
-                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
+                                onChange={(url) => setFormData(prev => ({ ...prev, profilePictureUrl: url }))}
+                                folder="trainers"
+                                id={editingTrainer?.id}
+                                fallback={formData.name.trim().charAt(0).toUpperCase() || undefined}
                             />
                         </div>
 

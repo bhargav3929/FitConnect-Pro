@@ -146,6 +146,38 @@ export async function getClassesByDate(date: Date): Promise<ClassSession[]> {
 }
 
 // ---------------------------------------------------------------------------
+// 1b. getAdminClassesInRange — All classes (any status) within a date range.
+//     Used by the admin calendar to populate a month grid + day agenda.
+//     Sorted by startTime client-side to avoid a composite index requirement.
+// ---------------------------------------------------------------------------
+
+export async function getAdminClassesInRange(rangeStart: Date, rangeEnd: Date): Promise<ClassSession[]> {
+    const start = new Date(rangeStart);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(rangeEnd);
+    end.setHours(23, 59, 59, 999);
+
+    const q = query(
+        collection(db, 'classes'),
+        where('date', '>=', Timestamp.fromDate(start)),
+        where('date', '<=', Timestamp.fromDate(end)),
+        orderBy('date'),
+    );
+
+    const snapshot = await getDocs(q);
+    const items = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return convertTimestamps({ ...data, id: doc.id }) as unknown as ClassSession;
+    });
+
+    return items.sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return (a.startTime || '').localeCompare(b.startTime || '');
+    });
+}
+
+// ---------------------------------------------------------------------------
 // 2. getClassById — Single class document (with optional real-time listener)
 // ---------------------------------------------------------------------------
 

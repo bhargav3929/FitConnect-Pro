@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { motion } from "framer-motion"
 import {
@@ -20,6 +20,7 @@ import {
     Eye,
     EyeOff,
     Loader2,
+    Camera,
     CheckCircle2,
     XCircle,
     AlertTriangle,
@@ -28,7 +29,9 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
-import { auth } from "@fitconnect/shared/firebase/config"
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { auth, db } from "@fitconnect/shared/firebase/config"
+import { uploadImageFile } from "@fitconnect/shared/firebase/storage"
 import { callCancelSubscription } from "@fitconnect/shared/firebase/firestore"
 import { getPlanById } from "@fitconnect/shared/types/subscription"
 import { toast } from "sonner"
@@ -47,6 +50,32 @@ export default function ProfilePage() {
     const [showCurrent, setShowCurrent] = useState(false)
     const [showNew, setShowNew] = useState(false)
     const [isChangingPassword, setIsChangingPassword] = useState(false)
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+    const avatarInputRef = useRef<HTMLInputElement>(null)
+
+    const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        e.target.value = '' // allow re-selecting the same file
+        if (!file) return
+
+        const uid = firebaseUser?.uid
+        if (!uid) {
+            toast.error('You must be signed in to update your photo')
+            return
+        }
+
+        setIsUploadingAvatar(true)
+        try {
+            const { url } = await uploadImageFile(file, `avatars/${uid}`)
+            await setDoc(doc(db, 'users', uid), { avatar: url, updatedAt: serverTimestamp() }, { merge: true })
+            await refreshSubscription()
+            toast.success('Profile photo updated')
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Failed to update photo')
+        } finally {
+            setIsUploadingAvatar(false)
+        }
+    }
 
     const handleLogout = async () => {
         await logoutClient()
@@ -162,12 +191,34 @@ export default function ProfilePage() {
 
                 <div className="relative z-10">
                     <div className="flex items-center gap-5 mb-6">
-                        <Avatar className="h-20 w-20 border-4 border-peach-50 shadow-lg">
-                            <AvatarImage src={clientUser.avatar} />
-                            <AvatarFallback className="bg-gradient-to-br from-terra-400 to-terra-300 text-peach-50 font-bold text-xl">
-                                {initials}
-                            </AvatarFallback>
-                        </Avatar>
+                        <div className="relative h-20 w-20 flex-shrink-0">
+                            <Avatar className="h-20 w-20 border-4 border-peach-50 shadow-lg">
+                                <AvatarImage src={clientUser.avatar} className="object-cover" />
+                                <AvatarFallback className="bg-gradient-to-br from-terra-400 to-terra-300 text-peach-50 font-bold text-xl">
+                                    {initials}
+                                </AvatarFallback>
+                            </Avatar>
+                            <button
+                                type="button"
+                                onClick={() => avatarInputRef.current?.click()}
+                                disabled={isUploadingAvatar}
+                                className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-terra-400 text-peach-50 flex items-center justify-center shadow-md ring-2 ring-peach-50 hover:bg-terra-300 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                                aria-label="Change profile photo"
+                            >
+                                {isUploadingAvatar ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    <Camera className="w-3.5 h-3.5" />
+                                )}
+                            </button>
+                            <input
+                                ref={avatarInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,image/gif"
+                                onChange={handleAvatarSelect}
+                                className="hidden"
+                            />
+                        </div>
                         <div className="flex-1 min-w-0">
                             <h1 className="app-hero-title truncate">{clientUser.name}</h1>
                             <p className="text-olive-300 text-sm flex items-center gap-1.5 mt-0.5 truncate">

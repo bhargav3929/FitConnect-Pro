@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Only allow image uploads under 5MB
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*')
+             && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Trainer profile photos
+    // - Read: public (shown on schedule, class cards, admin list)
+    // - Write/Delete: admins only, valid images only
+    match /trainers/{file=**} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+      allow delete: if isAdmin();
+    }
+
+    // User profile pictures (avatars)
+    // - Read: public (avatars are displayed throughout the app)
+    // - Write/Delete: the owner only, valid images only
+    match /avatars/{userId}/{file=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && isValidImage();
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Everything else is denied by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
