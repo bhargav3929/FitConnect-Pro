@@ -33,6 +33,7 @@ export interface RazorpaySubscriptionEntity {
     charge_at?: number | null;
     start_at?: number | null;
     ended_at?: number | null;
+    cancel_at_cycle_end?: boolean;
     total_count?: number;
     paid_count?: number;
     remaining_count?: number;

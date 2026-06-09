@@ -93,6 +93,15 @@ export async function POST(req: NextRequest) {
                 { status: 400 },
             );
         }
+        if (currentSub.cancelAtPeriodEnd === true) {
+            return NextResponse.json(
+                {
+                    error: 'Renewal is already canceled. Choose a new membership after the current paid period ends.',
+                    code: 'renewal-canceled',
+                },
+                { status: 409 },
+            );
+        }
 
         const currentPlanId = currentSub.planId as string | undefined;
         if (currentPlanId === targetPlan.id) {

@@ -70,13 +70,21 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const localStatus = getLocalStatus(rzpSub.status);
+        const rawLocalStatus = getLocalStatus(rzpSub.status);
         const currentIntroCredit = typeof subscription?.introCreditRemaining === 'number'
             ? Math.max(0, subscription.introCreditRemaining)
             : 0;
         const currentStart = fromUnixSeconds(rzpSub.current_start) ?? fromUnixSeconds(rzpSub.start_at);
         const currentEnd = fromUnixSeconds(rzpSub.current_end) ?? fromUnixSeconds(rzpSub.charge_at);
         const localEnd = toDate(subscription?.endDate);
+        const effectiveEnd = currentEnd ?? localEnd;
+        const isStillUsable = !!effectiveEnd && effectiveEnd > new Date();
+        const renewalCanceled = (
+            subscription?.cancelAtPeriodEnd === true ||
+            rzpSub.cancel_at_cycle_end === true ||
+            rzpSub.status === 'cancelled'
+        ) && isStillUsable;
+        const localStatus = rawLocalStatus === 'canceled' && isStillUsable ? 'active' : rawLocalStatus;
         const periodAdvanced = !!currentEnd && (!localEnd || currentEnd.getTime() > localEnd.getTime() + 60 * 1000);
 
         await userRef.update({
@@ -95,8 +103,8 @@ export async function POST(req: NextRequest) {
             'subscription.guestPassesRemaining': localStatus === 'active' && periodAdvanced
                 ? plan.guestPasses
                 : subscription?.guestPassesRemaining ?? plan.guestPasses,
-            'subscription.autoRenew': localStatus === 'active' && rzpSub.status !== 'completed',
-            'subscription.cancelAtPeriodEnd': rzpSub.status === 'cancelled' && !!currentEnd && currentEnd > new Date(),
+            'subscription.autoRenew': localStatus === 'active' && rzpSub.status !== 'completed' && !renewalCanceled,
+            'subscription.cancelAtPeriodEnd': renewalCanceled,
             'subscription.razorpaySubscriptionId': rzpSub.id,
             'subscription.razorpayPlanId': rzpSub.plan_id,
             'subscription.pendingPlanId': rzpSub.has_scheduled_changes ? subscription?.pendingPlanId ?? null : null,

@@ -149,6 +149,10 @@ async function applySubscriptionAccess(
             : 0;
         const existingClassesRemaining = currentSub?.classesRemaining as number | null | undefined;
         const existingGuestPasses = currentSub?.guestPassesRemaining as number | undefined;
+        const renewalCanceled = (
+            currentSub?.cancelAtPeriodEnd === true ||
+            sub.cancel_at_cycle_end === true
+        ) && accessWindow.endDate > new Date();
         const shouldCarryKickstarterCredits =
             options.source === 'subscription.activated' &&
             currentSub?.planId === 'kickstarter' &&
@@ -178,8 +182,8 @@ async function applySubscriptionAccess(
             'subscription.advanceBookingDays': plan.advanceBookingDays,
             'subscription.guestPassesRemaining': options.resetCredits ? plan.guestPasses : existingGuestPasses ?? plan.guestPasses,
             'subscription.lastPaymentId': paymentDocId ?? currentSub?.lastPaymentId ?? null,
-            'subscription.autoRenew': true,
-            'subscription.cancelAtPeriodEnd': false,
+            'subscription.autoRenew': !renewalCanceled,
+            'subscription.cancelAtPeriodEnd': renewalCanceled,
             'subscription.canceledAt': null,
             'subscription.razorpaySubscriptionId': sub.id,
             'subscription.razorpayPlanId': sub.plan_id,

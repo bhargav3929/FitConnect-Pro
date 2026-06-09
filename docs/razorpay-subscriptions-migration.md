@@ -160,19 +160,35 @@ Current plan is active membership:
 - Same plan: block and show `Current Plan`.
 - Higher or equal price plan: update existing Razorpay subscription immediately.
 - Lower price plan: schedule change at end of current billing cycle.
+- Renewal already canceled: block plan changes until the current paid period ends.
 
 Immediate upgrade:
 
 - Use Razorpay subscription update API.
 - Let Razorpay calculate extra charge or credit behavior.
+- Preserve unused credits from the current plan by adding the credit delta between the target plan and current plan.
 - Update Firestore after successful API response.
-- Webhook later reconciles the same state idempotently.
+- Webhook later reconciles the same state idempotently without overwriting the app-calculated credit balance.
+
+Example:
+
+- Current plan grants 24 credits.
+- User has 10 credits remaining.
+- Target plan grants 36 credits.
+- New balance becomes `10 + (36 - 24) = 22`.
 
 End-of-cycle switch:
 
 - Use Razorpay scheduled update at end of cycle.
 - Store pending change in Firestore.
 - Pending-change cancellation is future work.
+
+Canceled-renewal upgrade policy:
+
+- After a user cancels renewal, local state remains `status = active`, `autoRenew = false`, and `cancelAtPeriodEnd = true` until `endDate`.
+- Do not allow membership upgrades/downgrades while `cancelAtPeriodEnd = true`.
+- The user keeps access until `endDate`, then can choose a new membership normally.
+- Future work: add an explicit `Reactivate Renewal` / `Resume Membership` flow. Once reactivated in Razorpay and Firestore, upgrades can be enabled again.
 
 Razorpay docs say subscriptions can be updated for plan, quantity, start date, and total count, either immediately or at end of cycle. Immediate updates may create prorated charge/refund behavior. End-of-cycle updates avoid mid-cycle adjustment.
 
@@ -191,9 +207,10 @@ Membership behavior:
 
 Class pack behavior:
 
-- `drop_in` and `kickstarter` cancel immediately.
-- Remaining credits are removed.
-- `subscription.status = canceled`.
+- `drop_in` and `kickstarter` do not auto-renew.
+- Do not expose a member-facing cancel action for class packs.
+- Paid credits remain usable until the plan expires.
+- Backend cancellation rejects non-renewing plans instead of wiping paid credits.
 
 Immediate membership cancellation should be admin-only unless business explicitly wants member self-service immediate cancellation.
 
@@ -625,18 +642,23 @@ Manual migration is only worth it if there are already many active paid members.
 ### Active Membership Upgrade
 
 - 2x → 3x immediate upgrade.
+- Immediate upgrades carry remaining credits plus the target/current plan credit delta.
 - Same plan blocked.
 - 3x → 2x scheduled at cycle end.
 - Pending scheduled change is stored in Firestore.
 - Pending scheduled change cancellation is future work.
+- If renewal was canceled (`cancelAtPeriodEnd = true`), upgrade/downgrade is blocked until the current paid period ends.
+- Future work: implement `Reactivate Renewal` before allowing upgrades after cancellation.
 
 ### Cancellation
 
 - Membership: cancel at period end.
 - Membership: user retains access until end date.
+- Membership: UI shows `Renewal Canceled` and `Active Until`.
+- Membership: Sync and webhooks must preserve `cancelAtPeriodEnd = true` while the current paid period is still usable.
 - Membership: daily expiry job changes status after end date.
 - Membership: Razorpay cancellation webhook does not prematurely remove access.
-- Class pack: cancel immediately and remove remaining credits.
+- Class pack: no member-facing cancellation; credits remain usable until expiry.
 
 ### Emails
 
@@ -647,8 +669,9 @@ Manual migration is only worth it if there are already many active paid members.
 ## Risks
 
 - Razorpay subscription update behavior can differ by payment method and account settings.
-- Immediate upgrades can involve prorated charge or refund behavior that needs clear UX copy.
+- Immediate upgrades can involve prorated charge or refund behavior in Razorpay that needs clear UX copy.
 - Webhook retries require idempotency to avoid duplicate credits or emails.
+- Sync/webhooks must not clear `cancelAtPeriodEnd` for cycle-end cancellations while Razorpay still reports the subscription as active.
 - Existing one-time order code must remain for Intro Class.
 - If Razorpay billing emails are enabled and Sol emails are also enabled, customers may receive too many messages unless responsibilities are split.
 
@@ -656,8 +679,7 @@ Manual migration is only worth it if there are already many active paid members.
 
 - Should `kickstarter` remain one-time, or become recurring?
 - Should halted subscriptions immediately block booking, or allow grace period?
-- Should immediate upgrades preserve unused credits from the old plan?
-- Should downgrades always happen end-of-cycle?
+- Should we add a `Reactivate Renewal` flow for users who canceled renewal but later want to upgrade before `endDate`?
 - Which branded email provider should we use?
 - Should existing active members be manually migrated or allowed to expire naturally?
 

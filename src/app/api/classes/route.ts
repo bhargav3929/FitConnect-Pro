@@ -3,6 +3,39 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
 
+function getDayWindow(date: Date): { start: Date; end: Date } {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+}
+
+function toDate(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Timestamp) return value.toDate();
+    if (value instanceof Date) return value;
+    if (typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
+        return (value as { toDate: () => Date }).toDate();
+    }
+    const date = new Date(value as string | number);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+async function hasActiveClassAtSlot(classDate: Date, startTime: string, excludeClassId?: string): Promise<boolean> {
+    const { start, end } = getDayWindow(classDate);
+    const snapshot = await adminDb.collection('classes')
+        .where('date', '>=', Timestamp.fromDate(start))
+        .where('date', '<=', Timestamp.fromDate(end))
+        .get();
+
+    return snapshot.docs.some((doc) => {
+        if (doc.id === excludeClassId) return false;
+        const data = doc.data();
+        return data.startTime === startTime && data.status !== 'canceled';
+    });
+}
+
 // POST — createClass (admin only)
 export async function POST(req: NextRequest) {
     try {
@@ -56,6 +89,14 @@ export async function POST(req: NextRequest) {
         const trainerDoc = await adminDb.collection('trainers').doc(trainerId).get();
         if (!trainerDoc.exists) {
             return NextResponse.json({ error: 'Trainer not found', code: 'not-found' }, { status: 404 });
+        }
+
+        const hasConflict = await hasActiveClassAtSlot(classDate, startTime);
+        if (hasConflict) {
+            return NextResponse.json(
+                { error: 'A class is already scheduled for this date and time.', code: 'already-exists' },
+                { status: 409 },
+            );
         }
 
         const classRef = adminDb.collection('classes').doc();
@@ -156,6 +197,27 @@ export async function PUT(req: NextRequest) {
         const updateData: Record<string, unknown> = {
             updatedAt: FieldValue.serverTimestamp(),
         };
+
+        const nextDate = updates.date !== undefined
+            ? new Date(updates.date)
+            : toDate(classData.date);
+        const nextStartTime = updates.startTime !== undefined
+            ? updates.startTime
+            : classData.startTime;
+        const nextStatus = updates.status !== undefined ? updates.status : classData.status;
+
+        if (!nextDate || Number.isNaN(nextDate.getTime())) {
+            return NextResponse.json({ error: 'Invalid date format', code: 'invalid-argument' }, { status: 400 });
+        }
+        if (nextStatus !== 'canceled' && typeof nextStartTime === 'string') {
+            const hasConflict = await hasActiveClassAtSlot(nextDate, nextStartTime, classId);
+            if (hasConflict) {
+                return NextResponse.json(
+                    { error: 'A class is already scheduled for this date and time.', code: 'already-exists' },
+                    { status: 409 },
+                );
+            }
+        }
 
         if (updates.trainerId !== undefined) updateData.trainerId = updates.trainerId;
         if (updates.date !== undefined) {

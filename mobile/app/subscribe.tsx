@@ -419,8 +419,15 @@ export default function SubscribeScreen() {
             );
             return;
         }
+        if (hasActiveMembership && renewalCanceled) {
+            Alert.alert(
+                'Renewal Canceled',
+                'You can choose a new membership after the current paid period ends.',
+            );
+            return;
+        }
         setStep('checkout');
-    }, [selectedPlan, hasActiveSubscription, selectedCurrentPlan, hasActiveMembership, router]);
+    }, [selectedPlan, hasActiveSubscription, selectedCurrentPlan, hasActiveMembership, renewalCanceled, router]);
 
     // Process payment
     const handlePay = useCallback(async () => {
@@ -700,6 +707,7 @@ export default function SubscribeScreen() {
                                 styles.primaryButton,
                                 (!selectedPlan ||
                                     selectedCurrentPlan ||
+                                    (hasActiveMembership && renewalCanceled) ||
                                     (selectedPlan?.id === 'drop_in' && hasActiveSubscription) ||
                                     (selectedPlan?.category === 'class_pack' && hasActiveMembership) ||
                                     (selectedPlan?.id === 'drop_in' &&
@@ -710,6 +718,7 @@ export default function SubscribeScreen() {
                             disabled={
                                 !selectedPlan ||
                                 selectedCurrentPlan ||
+                                (hasActiveMembership && renewalCanceled) ||
                                 (selectedPlan?.id === 'drop_in' && hasActiveSubscription) ||
                                 (selectedPlan?.category === 'class_pack' && hasActiveMembership) ||
                                 (selectedPlan?.id === 'drop_in' &&
@@ -720,6 +729,8 @@ export default function SubscribeScreen() {
                             <Text style={styles.primaryButtonText}>
                                 {selectedCurrentPlan
                                     ? 'CURRENT PLAN'
+                                    : hasActiveMembership && renewalCanceled
+                                        ? 'RENEWAL CANCELED'
                                     : selectedPlan?.id === 'drop_in'
                                     ? hasIntroClassLead === true
                                         ? 'INTRO CLASS BOOKED'

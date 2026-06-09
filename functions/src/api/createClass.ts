@@ -24,6 +24,27 @@ function isIntroClassType(classType: unknown): boolean {
         && classType.trim().toLowerCase() === INTRO_CLASS_TYPE.toLowerCase();
 }
 
+function getDayWindow(date: Date): { start: Date; end: Date } {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+}
+
+async function hasActiveClassAtSlot(classDate: Date, startTime: string): Promise<boolean> {
+    const { start, end } = getDayWindow(classDate);
+    const snapshot = await db.collection('classes')
+        .where('date', '>=', Timestamp.fromDate(start))
+        .where('date', '<=', Timestamp.fromDate(end))
+        .get();
+
+    return snapshot.docs.some((doc) => {
+        const data = doc.data();
+        return data.startTime === startTime && data.status !== 'canceled';
+    });
+}
+
 export const createClass = functions.https.onCall(async (data: CreateClassData, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
@@ -76,6 +97,13 @@ export const createClass = functions.https.onCall(async (data: CreateClassData, 
     const trainerDoc = await db.collection('trainers').doc(trainerId).get();
     if (!trainerDoc.exists) {
         throw new functions.https.HttpsError('not-found', 'Trainer not found');
+    }
+
+    if (await hasActiveClassAtSlot(classDate, startTime)) {
+        throw new functions.https.HttpsError(
+            'already-exists',
+            'A class is already scheduled for this date and time',
+        );
     }
 
     try {

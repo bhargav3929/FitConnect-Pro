@@ -102,6 +102,12 @@ export default function SubscribePage() {
         }
 
         if (hasActiveMembership) {
+            if (renewalCanceled) {
+                toast.info('Renewal is canceled', {
+                    description: 'You can choose a new membership after the current paid period ends.',
+                })
+                return
+            }
             if (selectedCurrentPlan) {
                 toast.info('You are already on this plan.')
                 return
@@ -461,6 +467,7 @@ export default function SubscribePage() {
                                 !selectedPlanId ||
                                 isProcessing ||
                                 selectedCurrentPlan ||
+                                (hasActiveMembership && renewalCanceled) ||
                                 (selectedPlanId === 'drop_in' && hasActiveSubscription) ||
                                 (selectedPlan?.category === 'class_pack' && hasActiveMembership) ||
                                 (selectedPlanId === 'drop_in' && hasIntroClassLead === true)
@@ -471,6 +478,8 @@ export default function SubscribePage() {
                                 ? 'OPENING PAYMENT...'
                                 : selectedCurrentPlan
                                     ? 'CURRENT PLAN'
+                                : hasActiveMembership && renewalCanceled
+                                    ? 'RENEWAL CANCELED'
                                 : selectedPlanId === 'drop_in'
                                     ? (hasIntroClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS')
                                     : selectedPlan?.category === 'class_pack' && hasActiveMembership
