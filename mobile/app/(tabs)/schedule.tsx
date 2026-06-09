@@ -35,7 +35,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 // ── Static fallback facility data (matches web) ──
 const FALLBACK_FACILITY = {
     name: 'SOL Pilates Studio',
-    address: '250 West 54th Street, New York, NY 10019',
+    address: 'Kokapeta, Hyderabad, TG, 500075, India',
     rating: 4.9,
     reviewCount: 128,
     description:
@@ -54,7 +54,7 @@ const FALLBACK_FACILITY = {
         weekend: '07:00 - 18:00',
     },
     contact: {
-        phone: '(212) 555-0180',
+        phone: '+91 9642004005',
         email: 'solpilatesstudio.in@gmail.com',
     },
 };
@@ -280,7 +280,7 @@ export default function ScheduleScreen() {
     // ── Derived facility data ──
     // Guard against Firestore docs missing address subfields — fall back to static address.
     const formatFacilityAddress = (f: GymCenter | null): string => {
-        const stateAndZip = [f?.address?.state, f?.address?.zip].filter(Boolean).join(' ');
+        const stateAndZip = [f?.address?.state, f?.address?.zip].filter(Boolean).join(', ');
         const parts = [
             f?.address?.street,
             f?.address?.city,

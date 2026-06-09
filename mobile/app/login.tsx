@@ -530,7 +530,7 @@ export default function LoginScreen() {
                                         <Text
                                             style={styles.legalLink}
                                             onPress={() =>
-                                                Linking.openURL('https://fitconnectpro.app/terms')
+                                                Linking.openURL('https://www.solpilatesstudio.in/terms')
                                             }
                                         >
                                             Terms of Service
@@ -539,7 +539,7 @@ export default function LoginScreen() {
                                         <Text
                                             style={styles.legalLink}
                                             onPress={() =>
-                                                Linking.openURL('https://fitconnectpro.app/privacy')
+                                                Linking.openURL('https://www.solpilatesstudio.in/privacy')
                                             }
                                         >
                                             Privacy Policy

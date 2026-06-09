@@ -24,14 +24,22 @@ const COPY = {
         { label: "Contact", href: "/contact" },
     ],
     legalHeading: "LEGAL",
-    legalLinks: ["Privacy Policy", "Terms of Service", "Cookie Policy", "Accessibility"],
+    legalLinks: [
+        { label: "Privacy Policy", href: "/privacy" },
+        { label: "Terms of Service", href: "/terms" },
+        { label: "Contact", href: "/contact" },
+    ],
     newsletterHeading: "STAY CONNECTED",
     newsletterBody:
         "Be the first to know about classes, founding member spots and studio updates.",
     newsletterPlaceholder: "Enter your email",
     newsletterCta: "Subscribe",
     copyright: "SOL Pilates Studio. All rights reserved.",
-    bottomLinks: ["Privacy", "Terms", "Sitemap"],
+    bottomLinks: [
+        { label: "Privacy", href: "/privacy" },
+        { label: "Terms", href: "/terms" },
+        { label: "Contact", href: "/contact" },
+    ],
 };
 
 export function Footer() {
@@ -105,10 +113,10 @@ export function Footer() {
                             <h4 className="font-bold text-peach-200 mb-6 tracking-wide">{COPY.legalHeading}</h4>
                             <ul className="space-y-4">
                                 {COPY.legalLinks.map(item => (
-                                    <li key={item}>
-                                        <button type="button" className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5 text-left w-full">
-                                            {item}
-                                        </button>
+                                    <li key={item.label}>
+                                        <Link href={item.href} className="text-sm text-peach-400 hover:text-terra-300 transition-colors block hover:translate-x-1 duration-200 py-1.5">
+                                            {item.label}
+                                        </Link>
                                     </li>
                                 ))}
                             </ul>
@@ -142,9 +150,11 @@ export function Footer() {
                         &copy; {new Date().getFullYear()} {COPY.copyright}
                     </p>
                     <div className="flex gap-6">
-                        {COPY.bottomLinks.map((label, idx) => (
-                            <span key={label} className="flex items-center gap-6">
-                                <button type="button" className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">{label}</button>
+                        {COPY.bottomLinks.map((item, idx) => (
+                            <span key={item.label} className="flex items-center gap-6">
+                                <Link href={item.href} className="text-xs text-peach-400 hover:text-terra-300 transition-colors font-medium">
+                                    {item.label}
+                                </Link>
                                 {idx < COPY.bottomLinks.length - 1 && (
                                     <span className="text-warmDark-700">&bull;</span>
                                 )}

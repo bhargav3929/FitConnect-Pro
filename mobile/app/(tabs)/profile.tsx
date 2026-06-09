@@ -11,26 +11,26 @@ import {
     Animated,
     Linking,
     RefreshControl,
+    Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
-import { callCancelSubscription } from '@fitconnect/shared/firebase/firestore';
+import { callCancelSubscription, callDeleteAccount } from '@fitconnect/shared/firebase/firestore';
 import {
     updatePassword,
     EmailAuthProvider,
     reauthenticateWithCredential,
 } from 'firebase/auth';
 import { auth } from '@fitconnect/shared/firebase/config';
-
-// TODO: Replace with hosted legal URLs before App Store submission.
-const PRIVACY_POLICY_URL = 'https://fitconnectpro.app/privacy';
-const TERMS_OF_SERVICE_URL = 'https://fitconnectpro.app/terms';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
 import MilestoneCard from '../../components/MilestoneCard';
+
+const PRIVACY_POLICY_URL = 'https://www.solpilatesstudio.in/privacy';
+const TERMS_OF_SERVICE_URL = 'https://www.solpilatesstudio.in/terms';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -64,6 +64,9 @@ export default function ProfileScreen() {
     const [chevronRotation] = useState(new Animated.Value(0));
 
     const [isCancelling, setIsCancelling] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
     const subscription = clientUser?.subscription;
     const stats = clientUser?.stats;
@@ -95,6 +98,14 @@ export default function ProfileScreen() {
     const externalProviderLabel = hasGoogleProvider ? 'Google' : 'your sign-in provider';
 
     const handleCancelSubscription = useCallback(() => {
+        if (renewalCanceled) {
+            Alert.alert(
+                'Renewal Already Canceled',
+                `Your membership stays active until ${expiryLabel}.`,
+            );
+            return;
+        }
+
         Alert.alert(
             isMembershipPlan ? 'Cancel renewal?' : 'Cancel your plan?',
             isMembershipPlan
@@ -125,7 +136,7 @@ export default function ProfileScreen() {
                 },
             ],
         );
-    }, [expiryLabel, isMembershipPlan, refreshSubscription]);
+    }, [expiryLabel, isMembershipPlan, refreshSubscription, renewalCanceled]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -205,6 +216,46 @@ export default function ProfileScreen() {
                 },
             },
         ]);
+    };
+
+    const openDeleteAccount = () => {
+        setDeleteConfirmation('');
+        setDeleteModalVisible(true);
+    };
+
+    const closeDeleteAccount = () => {
+        if (isDeletingAccount) return;
+        setDeleteConfirmation('');
+        setDeleteModalVisible(false);
+    };
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmation.trim().toUpperCase() !== 'DELETE') {
+            Alert.alert('Confirmation required', 'Type DELETE to permanently delete your account.');
+            return;
+        }
+
+        setIsDeletingAccount(true);
+        try {
+            await callDeleteAccount();
+            try {
+                await logoutClient();
+            } catch {
+                // The Auth user may already be deleted server-side; route away either way.
+            }
+            setDeleteModalVisible(false);
+            setDeleteConfirmation('');
+            Alert.alert(
+                'Account Deleted',
+                'Your account has been permanently deleted.',
+                [{ text: 'OK', onPress: () => router.replace('/login') }],
+            );
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to delete account. Please try again.';
+            Alert.alert('Delete Account Failed', message);
+        } finally {
+            setIsDeletingAccount(false);
+        }
     };
 
     const openLegalLink = (url: string) => {
@@ -386,7 +437,7 @@ export default function ProfileScreen() {
                             <Text style={styles.upgradeBtnText}>UPGRADE</Text>
                             <Feather name="arrow-right" size={14} color={Colors.peach[50]} />
                         </TouchableOpacity>
-                        {isActive && isMembershipPlan && (
+                        {isActive && isMembershipPlan && !renewalCanceled && (
                             <TouchableOpacity
                                 style={styles.cancelBtn}
                                 onPress={handleCancelSubscription}
@@ -608,6 +659,26 @@ export default function ProfileScreen() {
                     <Feather name="external-link" size={18} color={Colors.olive[300]} />
                 </TouchableOpacity>
 
+                {/* ─── Account ───────────────────────────────────── */}
+                <Text style={styles.sectionLabel}>ACCOUNT</Text>
+                <TouchableOpacity
+                    style={[styles.rowCard, styles.dangerRowCard]}
+                    onPress={openDeleteAccount}
+                    disabled={isDeletingAccount}
+                    activeOpacity={0.85}
+                >
+                    <View style={styles.dangerIconSquare}>
+                        <Feather name="trash-2" size={20} color={Colors.error} />
+                    </View>
+                    <View style={styles.rowTextCol}>
+                        <Text style={styles.dangerRowTitle}>Delete Account</Text>
+                        <Text style={styles.rowSubtitle}>
+                            Permanently remove your account and cancel upcoming bookings
+                        </Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color={Colors.error} />
+                </TouchableOpacity>
+
                 {/* ─── Sign Out ──────────────────────────────────── */}
                 <TouchableOpacity
                     style={styles.signOutButton}
@@ -627,6 +698,64 @@ export default function ProfileScreen() {
                     SOL PILATES STUDIO {'\u00B7'} v1.0.0
                 </Text>
             </ScrollView>
+
+            <Modal
+                visible={deleteModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={closeDeleteAccount}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.deleteModalCard}>
+                        <View style={styles.deleteModalIcon}>
+                            <Feather name="alert-triangle" size={24} color={Colors.error} />
+                        </View>
+                        <Text style={styles.deleteModalTitle}>Delete Account?</Text>
+                        <Text style={styles.deleteModalBody}>
+                            This permanently deletes your SOL Pilates account, removes your profile,
+                            cancels upcoming confirmed bookings, and anonymizes booking history.
+                            This cannot be undone.
+                        </Text>
+                        <Text style={styles.deleteModalLabel}>TYPE DELETE TO CONFIRM</Text>
+                        <TextInput
+                            style={styles.deleteModalInput}
+                            value={deleteConfirmation}
+                            onChangeText={setDeleteConfirmation}
+                            placeholder="DELETE"
+                            placeholderTextColor={Colors.olive[300]}
+                            autoCapitalize="characters"
+                            autoCorrect={false}
+                            editable={!isDeletingAccount}
+                        />
+                        <View style={styles.deleteModalActions}>
+                            <TouchableOpacity
+                                style={styles.deleteModalCancel}
+                                onPress={closeDeleteAccount}
+                                disabled={isDeletingAccount}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.deleteModalCancelText}>Keep Account</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.deleteModalConfirm,
+                                    (deleteConfirmation.trim().toUpperCase() !== 'DELETE' || isDeletingAccount) &&
+                                        styles.buttonDisabled,
+                                ]}
+                                onPress={handleDeleteAccount}
+                                disabled={deleteConfirmation.trim().toUpperCase() !== 'DELETE' || isDeletingAccount}
+                                activeOpacity={0.85}
+                            >
+                                {isDeletingAccount ? (
+                                    <ActivityIndicator size="small" color={Colors.white} />
+                                ) : (
+                                    <Text style={styles.deleteModalConfirmText}>Delete</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -957,6 +1086,23 @@ const styles = StyleSheet.create({
         color: Colors.olive[400],
         marginTop: 2,
     },
+    dangerRowCard: {
+        borderWidth: 1,
+        borderColor: Alpha.error_25,
+    },
+    dangerIconSquare: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: `${Colors.error}12`,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dangerRowTitle: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.base,
+        color: Colors.error,
+    },
 
     // ── Quick action grid ─────────────────────────────────────
     quickRow: {
@@ -1056,6 +1202,94 @@ const styles = StyleSheet.create({
     },
     buttonDisabled: {
         opacity: 0.6,
+    },
+
+    // ── Delete account modal ───────────────────────────────────
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(11, 15, 25, 0.58)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: Spacing.lg,
+    },
+    deleteModalCard: {
+        width: '100%',
+        maxWidth: 420,
+        backgroundColor: Colors.peach[50],
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg,
+    },
+    deleteModalIcon: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: `${Colors.error}12`,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: Spacing.md,
+    },
+    deleteModalTitle: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize['2xl'],
+        color: Colors.olive[600],
+        marginBottom: Spacing.sm,
+    },
+    deleteModalBody: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        lineHeight: 21,
+        color: Colors.olive[400],
+        marginBottom: Spacing.lg,
+    },
+    deleteModalLabel: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize['2xs'],
+        color: Colors.olive[300],
+        letterSpacing: 1.2,
+        marginBottom: Spacing.sm,
+    },
+    deleteModalInput: {
+        backgroundColor: Colors.peach[100],
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        borderColor: Alpha.error_25,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.md - 2,
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.base,
+        color: Colors.olive[600],
+        letterSpacing: 1,
+        marginBottom: Spacing.lg,
+    },
+    deleteModalActions: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+    },
+    deleteModalCancel: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: BorderRadius.xl,
+        paddingVertical: Spacing.md - 2,
+        backgroundColor: Colors.peach[200],
+    },
+    deleteModalCancelText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.sm,
+        color: Colors.olive[500],
+    },
+    deleteModalConfirm: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: BorderRadius.xl,
+        paddingVertical: Spacing.md - 2,
+        backgroundColor: Colors.error,
+    },
+    deleteModalConfirmText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.sm,
+        color: Colors.white,
     },
 
     // ── Sign out ───────────────────────────────────────────────

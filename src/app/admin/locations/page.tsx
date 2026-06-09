@@ -33,6 +33,7 @@ export default function FacilitySettingsPage() {
     const cityRef = useRef<HTMLInputElement>(null)
     const stateRef = useRef<HTMLInputElement>(null)
     const zipRef = useRef<HTMLInputElement>(null)
+    const countryRef = useRef<HTMLInputElement>(null)
     const phoneRef = useRef<HTMLInputElement>(null)
     const emailRef = useRef<HTMLInputElement>(null)
     const facilitiesRef = useRef<HTMLTextAreaElement>(null)
@@ -74,7 +75,7 @@ export default function FacilitySettingsPage() {
                     city: cityRef.current?.value ?? facility.address.city,
                     state: stateRef.current?.value ?? facility.address.state,
                     zip: zipRef.current?.value ?? facility.address.zip,
-                    country: facility.address.country,
+                    country: countryRef.current?.value ?? facility.address.country,
                 },
                 contactInfo: {
                     phone: phoneRef.current?.value ?? facility.contactInfo.phone,
@@ -95,7 +96,12 @@ export default function FacilitySettingsPage() {
     }
 
     const fullAddress = facility
-        ? `${facility.address.street}, ${facility.address.city}, ${facility.address.state} ${facility.address.zip}`
+        ? [
+            facility.address.street,
+            facility.address.city,
+            [facility.address.state, facility.address.zip].filter(Boolean).join(" "),
+            facility.address.country,
+        ].filter(Boolean).join(", ")
         : ""
 
     // Parse facilities into zones array (may be string or array)
@@ -292,6 +298,16 @@ export default function FacilitySettingsPage() {
                                 className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
                             />
                         </div>
+                    </div>
+                    <div>
+                        <label className="block app-label mb-2.5">Country</label>
+                        <input
+                            ref={countryRef}
+                            type="text"
+                            defaultValue={facility.address.country}
+                            disabled={!isEditing}
+                            className={`w-full h-12 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all duration-300 ${!isEditing && 'opacity-60 cursor-not-allowed'}`}
+                        />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>

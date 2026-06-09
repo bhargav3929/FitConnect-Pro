@@ -26,7 +26,7 @@ import { toast } from "sonner"
 
 const FALLBACK_FACILITY = {
     name: "SOL Pilates Studio",
-    address: "250 West 54th Street, New York, NY 10019",
+    address: "Kokapet, Hyderabad, TG, 500075, IN",
     rating: 4.9,
     reviewCount: 128,
     description: "A sophisticated Pilates studio blending strength, mindfulness, and elegance. Five dedicated disciplines — Reformer, Mat, Private Sessions, Barre, and Prenatal — each designed to transform your body and mind.",
@@ -116,7 +116,7 @@ function isDateAfterSubscriptionEnd(date: Date, endDate: Date | null): boolean {
 
 function formatFacilityAddress(address?: GymCenter['address']): string {
     if (!address) return FALLBACK_FACILITY.address
-    const stateAndZip = [address.state, address.zip].filter(Boolean).join(' ')
+    const stateAndZip = [address.state, address.zip].filter(Boolean).join(', ')
     const parts = [
         address.street,
         address.city,
