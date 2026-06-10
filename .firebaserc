@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "fitness-booking-c8fb3",
+    "dev": "fitness-booking-c8fb3",
+    "prod": "fitness-booking-c8fb3"
+  }
+}
