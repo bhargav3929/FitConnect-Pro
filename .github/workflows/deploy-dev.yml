@@ -48,7 +48,7 @@ jobs:
       - name: Deploy rules, indexes & functions to dev
         run: |
           npx firebase-tools@latest deploy \
-            --only firestore:rules,firestore:indexes,functions \
+            --only functions \
             --project dev \
             --non-interactive \
             --force
