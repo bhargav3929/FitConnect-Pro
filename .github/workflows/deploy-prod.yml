@@ -1,8 +1,7 @@
 name: Deploy Prod
 
-# MANUAL production deploy. Run from the Actions tab ("Run workflow"),
-# type "deploy" to confirm. Deploys Firebase functions only.
-# Vercel production deploy is handled automatically via its GitHub integration on main.
+# MANUAL production gate. Run from the Actions tab ("Run workflow"),
+# type "deploy" to confirm. Vercel and Firebase are handled manually.
 
 on:
   workflow_dispatch:
@@ -11,10 +10,6 @@ on:
         description: 'Type "deploy" to confirm production release'
         required: true
         default: ''
-
-concurrency:
-  group: deploy-prod
-  cancel-in-progress: false
 
 jobs:
   verify-input:
@@ -31,38 +26,3 @@ jobs:
   gate:
     needs: verify-input
     uses: ./.github/workflows/ci.yml
-
-  deploy-firebase:
-    name: Deploy Firebase (prod)
-    needs: gate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Install functions dependencies
-        run: cd functions && npm ci
-
-      - name: Write service account credentials
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
-
-      - name: Deploy functions to prod
-        run: |
-          npx firebase-tools@latest deploy \
-            --only functions \
-            --project prod \
-            --non-interactive \
-            --force
