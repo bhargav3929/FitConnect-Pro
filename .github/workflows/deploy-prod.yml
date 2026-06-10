@@ -1,11 +1,8 @@
 name: Deploy Prod
 
-# MANUAL production deploy. Never triggered automatically. Run from the Actions
-# tab ("Run workflow"), type "deploy" to confirm. Gates run first; then the deploy
-# jobs wait on the `production` GitHub Environment, which is configured with
-# required reviewers — a human must approve before anything ships to prod.
-# Web -> Vercel (--prod), backend -> Firebase (rules + indexes + functions) on the
-# prod project alias.
+# MANUAL production deploy. Run from the Actions tab ("Run workflow"),
+# type "deploy" to confirm. Deploys Firebase functions only.
+# Vercel production deploy is handled automatically via its GitHub integration on main.
 
 on:
   workflow_dispatch:
@@ -39,7 +36,6 @@ jobs:
     name: Deploy Firebase (prod)
     needs: gate
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,36 +59,10 @@ jobs:
           echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
 
-      - name: Deploy rules, indexes & functions to prod
+      - name: Deploy functions to prod
         run: |
           npx firebase-tools@latest deploy \
             --only functions \
             --project prod \
             --non-interactive \
             --force
-
-  deploy-vercel:
-    name: Deploy Vercel (production)
-    needs: gate
-    runs-on: ubuntu-latest
-    environment: production
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-
-      - name: Pull Vercel env (production)
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build (prod)
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy to Vercel (production)
-        run: |
-          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "Deployed production build: $URL"

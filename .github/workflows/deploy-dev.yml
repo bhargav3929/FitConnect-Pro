@@ -1,9 +1,7 @@
 name: Deploy Dev
 
-# Automatic deploy to the DEV / staging environment on every push to `dev`.
-# Gates (typecheck + tests + build) run first via the reusable ci.yml; deploy
-# only happens if they pass. Web -> Vercel (preview/staging), backend -> Firebase
-# (rules + indexes + functions) against the dev project alias.
+# Automatic deploy of Firebase functions to dev on every push to `dev`.
+# Vercel deploys automatically via its GitHub integration.
 
 on:
   push:
@@ -45,43 +43,10 @@ jobs:
           echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
 
-      - name: Deploy rules, indexes & functions to dev
+      - name: Deploy functions to dev
         run: |
           npx firebase-tools@latest deploy \
             --only functions \
             --project dev \
             --non-interactive \
             --force
-
-  deploy-vercel:
-    name: Deploy Vercel (staging)
-    needs: gate
-    runs-on: ubuntu-latest
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-
-      - name: Pull Vercel env (preview)
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy to Vercel (preview/staging)
-        id: deploy
-        run: |
-          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "Deployed staging build: $URL"
-
-      - name: Alias to stable staging domain
-        if: ${{ vars.VERCEL_STAGING_ALIAS != '' }}
-        run: |
-          vercel alias set "${{ steps.deploy.outputs.url }}" "${{ vars.VERCEL_STAGING_ALIAS }}" \
-            --token=${{ secrets.VERCEL_TOKEN }}
