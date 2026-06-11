@@ -17,6 +17,7 @@ interface AdminAuthState {
     initAuth: () => () => void;
     loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     logoutAdmin: () => Promise<void>;
+    updateAdminName: (name: string) => void;
 }
 
 async function checkAdminClaim(user: FirebaseUser): Promise<boolean> {
@@ -95,5 +96,11 @@ export const useAdminAuthStore = create<AdminAuthState>()((set) => ({
             adminUser: null,
             firebaseUser: null,
         });
+    },
+
+    updateAdminName: (name: string) => {
+        set((state) => ({
+            adminUser: state.adminUser ? { ...state.adminUser, name } : null,
+        }));
     },
 }));
