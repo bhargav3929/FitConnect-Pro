@@ -19,6 +19,7 @@ import {
 import {
     Dialog,
     DialogContent,
+    DialogTitle,
 } from "@/components/ui/dialog"
 import {
     callCreateClass,
@@ -960,9 +961,13 @@ export default function ClassesPage() {
             {/* ═══════════ ADD / EDIT CLASS DIALOG ═══════════ */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="bg-peach-50 border-peach-400/20 max-w-xl p-0 rounded-[20px] overflow-hidden flex flex-col" style={{ maxHeight: "calc(100vh - 80px)" }}>
+                    {/* Visually hidden title satisfies Radix accessibility requirement */}
+                    <DialogTitle className="sr-only">
+                        {editingClass ? "Edit Class" : "Add New Class"}
+                    </DialogTitle>
                     {/* Fixed header */}
                     <div className="px-7 pt-[26px] pb-[22px] border-b border-peach-400/[0.13] flex-shrink-0">
-                        <h2 className="font-display text-[22px] font-semibold text-olive-600 mb-1 leading-tight tracking-[-0.01em]">
+                        <h2 className="font-display text-[22px] font-semibold text-olive-600 mb-1 leading-tight tracking-[-0.01em]" aria-hidden="true">
                             {editingClass ? "Edit Class" : "Add New Class"}
                         </h2>
                         <p className="text-[14px] text-olive-300 leading-snug">
