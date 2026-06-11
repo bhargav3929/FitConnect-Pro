@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -21,7 +21,7 @@ import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore";
 const STYLES = {
   section:
     "relative min-h-screen w-full flex items-center justify-center overflow-hidden",
-  videoWrap: "absolute inset-0 w-full h-full z-0",
+  videoWrap: "absolute inset-0 w-full h-full z-0 bg-warmDark-800",
   video: "absolute inset-0 w-full h-full object-cover",
   overlay: "absolute inset-0 bg-warmDark-800 z-[1]",
   container: "relative z-10 container mx-auto px-8 text-center",
@@ -65,7 +65,19 @@ export function HeroSection() {
 
   const heroRef = useRef<HTMLElement>(null);
   const videoInnerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoReady, setVideoReady] = useState(false);
   const prefersReduced = useReducedMotion();
+
+  // If video loads from cache before React attaches onLoadedData, readyState
+  // is already ≥ 2 on mount — catch that case here.
+  useEffect(() => {
+    if (videoRef.current && videoRef.current.readyState >= 2) {
+      setVideoReady(true);
+    }
+  }, []);
+
+  const handleVideoReady = useCallback(() => setVideoReady(true), []);
 
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -109,16 +121,19 @@ export function HeroSection() {
         }}
         className={STYLES.videoWrap}
       >
-        {/* GSAP parallax lives on the inner div */}
         <div ref={videoInnerRef} className="absolute inset-0">
           <video
+            ref={videoRef}
             autoPlay
             loop
             muted
             playsInline
-            poster={MEDIA.poster}
+            preload="auto"
+            onLoadedData={handleVideoReady}
             className={STYLES.video}
+            style={{ opacity: videoReady ? 1 : 0, transition: "opacity 0.6s ease-out" }}
           >
+            <source src="/videos/Background_option_1.webm" type="video/webm" />
             <source src={MEDIA.videoSrc} type="video/mp4" />
           </video>
         </div>
@@ -142,7 +157,7 @@ export function HeroSection() {
 
         {/* Headline — line-by-line mask reveal (y: 110% → 0%) */}
         <h1 className={STYLES.headline}>
-          <span className="block overflow-hidden">
+          <span className="block overflow-hidden pb-2">
             <motion.span
               className="block"
               initial={prefersReduced ? undefined : { y: "110%" }}
@@ -152,7 +167,7 @@ export function HeroSection() {
               {COPY.headlineLine1}
             </motion.span>
           </span>
-          <span className="block overflow-hidden">
+          <span className="block overflow-hidden pb-2">
             <motion.span
               className="block"
               initial={prefersReduced ? undefined : { y: "110%" }}
