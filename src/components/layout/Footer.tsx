@@ -46,8 +46,8 @@ export function Footer() {
     return (
         <Reveal variant="slideUp" as="footer" duration={0.8} className="bg-warmDark-800 text-peach-200 py-20 relative overflow-hidden">
             {/* Cinematic Watermark */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none select-none flex items-center justify-center opacity-[0.03]">
-                <span className="text-[15vw] md:text-[20vw] font-black uppercase tracking-normal text-peach-200 stroke-text leading-none whitespace-nowrap font-display">
+            <div className="hidden md:flex absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none select-none items-center justify-center opacity-[0.03]">
+                <span className="font-black uppercase text-peach-200 stroke-text leading-none whitespace-nowrap font-display" style={{ fontSize: "clamp(2rem, 13vw, 30rem)", letterSpacing: "-0.02em" }}>
                     {COPY.watermark}
                 </span>
             </div>
@@ -123,24 +123,7 @@ export function Footer() {
                         </div>
                     </div>
 
-                    {/* 3. Newsletter Section (Right) - Spans 3 columns */}
-                    <div className="lg:col-span-3 space-y-6">
-                        <h4 className="font-bold text-peach-200 tracking-wide">{COPY.newsletterHeading}</h4>
-                        <p className="text-sm text-peach-400">
-                            {COPY.newsletterBody}
-                        </p>
-                        <form className="relative group">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-peach-400 group-focus-within:text-terra-400 transition-colors" />
-                            <input
-                                type="email"
-                                placeholder={COPY.newsletterPlaceholder}
-                                className="w-full bg-peach-200/5 border border-peach-200/10 rounded-full py-4 pl-12 pr-4 text-sm text-peach-200 placeholder:text-peach-400 focus:outline-none focus:border-terra-400/40 focus:bg-peach-200/10 transition-all"
-                            />
-                            <button className="absolute right-1 top-1 bottom-1 bg-terra-400 text-peach-50 px-6 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-terra-300 transition-colors">
-                                {COPY.newsletterCta}
-                            </button>
-                        </form>
-                    </div>
+                    {/* 3. Newsletter Section (Right) - hidden until wired up */}
 
                 </div>
 

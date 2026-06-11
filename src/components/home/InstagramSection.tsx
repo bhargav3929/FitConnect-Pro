@@ -29,12 +29,10 @@ const COPY = {
 const THUMBS = [
   "/images/sol-pilates-mat-brown.jpeg",
   "/images/sol-pilates-mat-olive.jpeg",
-  "/images/service-intense-exercise.jpg",
   "/images/service-muscle-recovery.jpg",
   "/images/service-reset-restore.jpg",
   "/images/service-strength-sculpt.jpg",
   "/images/service-cardio-endurance.jpg",
-  "/images/trainer-weights.png",
 ];
 
 const E: [number, number, number, number] = [0.22, 1, 0.36, 1];
