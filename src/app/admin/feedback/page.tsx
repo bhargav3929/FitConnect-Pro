@@ -80,7 +80,9 @@ export default function AdminFeedbackPage() {
 
   const formatDate = (ts: Timestamp | null) => {
     if (!ts) return "—";
-    return new Date(ts.seconds * 1000).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+    const date = typeof ts.toDate === "function" ? ts.toDate() : new Date((ts as { seconds: number }).seconds * 1000);
+    if (isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
   };
 
   return (

@@ -145,14 +145,20 @@ export default function LeadsPage() {
                         >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                    <h3 className="app-card-title">{lead.name}</h3>
+                                    <h3 className="app-card-title">
+                                        {lead.name || <span className="text-olive-300 italic font-normal text-sm">No name provided</span>}
+                                    </h3>
                                     <div className="flex flex-wrap gap-x-5 gap-y-1 mt-1.5 text-sm text-olive-400">
-                                        <span className="inline-flex items-center gap-1.5">
-                                            <Mail className="w-3.5 h-3.5" /> {lead.email}
-                                        </span>
-                                        <span className="inline-flex items-center gap-1.5">
-                                            <Phone className="w-3.5 h-3.5" /> {lead.phone}
-                                        </span>
+                                        {lead.email && (
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <Mail className="w-3.5 h-3.5" /> {lead.email}
+                                            </span>
+                                        )}
+                                        {lead.phone && (
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <Phone className="w-3.5 h-3.5" /> {lead.phone}
+                                            </span>
+                                        )}
                                         {lead.createdAt && (
                                             <span className="inline-flex items-center gap-1.5">
                                                 <Calendar className="w-3.5 h-3.5" />
