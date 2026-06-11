@@ -16,7 +16,7 @@ const STYLES = {
     "mt-14 grid gap-5 px-6 md:container md:mx-auto md:mt-20 md:max-w-7xl md:grid-cols-3 md:px-8",
   card:
     "group relative overflow-hidden border border-olive-600/10 bg-peach-200",
-  imageWrap: "relative h-[24rem] overflow-hidden bg-peach-300 md:h-[31rem]",
+  imageWrap: "relative h-[18rem] overflow-hidden bg-peach-300 md:h-[22rem]",
   image: "object-cover",
   overlay: "absolute inset-0 bg-[linear-gradient(to_top,rgba(30,24,21,0.72)_0%,rgba(30,24,21,0.18)_48%,rgba(30,24,21,0.04)_100%)]",
   textWrap: "relative px-5 py-6 md:px-6 md:py-7",

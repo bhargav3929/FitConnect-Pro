@@ -202,7 +202,7 @@ export default function FacilityPage() {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 text-olive-300">
                                 <Phone className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm">(212) 555-0180</span>
+                                <span className="text-sm">+91 96420 04005</span>
                             </div>
                             <div className="flex items-center gap-3 text-olive-300">
                                 <Mail className="w-4 h-4 flex-shrink-0" />
@@ -210,7 +210,7 @@ export default function FacilityPage() {
                             </div>
                             <div className="flex items-start gap-3 text-olive-300">
                                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                                <span className="text-sm">250 West 54th Street<br />New York, NY 10019</span>
+                                <span className="text-sm">Kokapet, Hyderabad<br />Telangana 500075</span>
                             </div>
                         </div>
                     </motion.div>

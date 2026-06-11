@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Montserrat } from "next/font/google";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 import "./globals.css";
@@ -10,6 +10,12 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-sans",
+});
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
@@ -24,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn("min-h-screen font-sans antialiased", plusJakartaSans.variable)}>
+      <body className={cn("min-h-screen font-sans antialiased", plusJakartaSans.variable, montserrat.variable)}>
         {/* <SitePasswordGate> */}
           <LayoutContent>{children}</LayoutContent>
         {/* </SitePasswordGate> */}

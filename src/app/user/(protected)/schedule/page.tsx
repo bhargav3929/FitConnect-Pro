@@ -36,7 +36,7 @@ const FALLBACK_FACILITY = {
         weekend: "07:00 - 18:00"
     },
     contact: {
-        phone: "(212) 555-0180",
+        phone: "+91 96420 04005",
         email: "solpilatesstudio.in@gmail.com"
     },
 }

@@ -64,7 +64,7 @@ export default function AboutPage() {
       {/* SECTION 2 — Bio */}
       <section className="py-24 bg-peach-300">
         <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <Reveal variant="slideUp" className="text-center mb-10">
               <h2 className="text-4xl md:text-5xl font-black text-olive-600 tracking-tight mb-8 font-display">
                 YOUR BODY IS THE SUN
@@ -90,9 +90,9 @@ export default function AboutPage() {
       </section>
 
       {/* Founder Story */}
-      <section className="py-24 bg-peach-300">
+      <section className="py-24 bg-peach-200">
         <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto mb-24">
+          <div className="max-w-4xl mx-auto mb-24">
             <Reveal variant="slideUp" className="text-center mb-10">
               <div className="border border-terra-400/30 py-1 px-4 rounded-full text-xs font-semibold tracking-wide uppercase text-terra-400 bg-terra-400/10 mb-6 inline-block">
                 Meet Our Founder
