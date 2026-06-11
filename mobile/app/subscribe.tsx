@@ -11,7 +11,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import RazorpayCheckout from 'react-native-razorpay';
+// react-native-razorpay is a native module that does not exist in Expo Go.
+// Load it lazily inside the payment handler so the rest of the screen still
+// runs in Expo Go; the live checkout requires a native dev build.
+type RazorpayCheckoutModule = {
+    open: (options: Record<string, unknown>) => Promise<{
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+    }>;
+};
+function loadRazorpay(): RazorpayCheckoutModule {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('react-native-razorpay');
+    const checkout = (mod?.default ?? mod) as RazorpayCheckoutModule | undefined;
+    if (!checkout || typeof checkout.open !== 'function') {
+        throw new Error('Razorpay checkout requires a native dev build and is not available in Expo Go.');
+    }
+    return checkout;
+}
 import { PLAN_CATALOG, getPlanById } from '@fitconnect/shared/types/subscription';
 import type { PlanDefinition, PlanCategory } from '@fitconnect/shared/types/subscription';
 import {
@@ -459,6 +477,8 @@ export default function SubscribeScreen() {
                 setStep('success');
                 return;
             }
+
+            const RazorpayCheckout = loadRazorpay();
 
             const result = selectedPlan.category === 'membership'
                 ? await (async () => {
