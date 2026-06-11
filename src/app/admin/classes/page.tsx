@@ -251,8 +251,7 @@ function MultiDatePicker({
     ]
 
     return (
-        // width is always 100% of parent — nothing inside can push it wider
-        <div style={{ width: "100%", boxSizing: "border-box", overflow: "hidden" }} className="border border-peach-400/20 bg-peach-50">
+        <div className="border border-peach-400/20 bg-peach-50" style={{ width: "100%", maxWidth: "100%", overflow: "hidden", boxSizing: "border-box" }}>
 
             {/* quick-range buttons + weekday shortcuts */}
             <div className="px-2.5 pt-2.5 pb-2 space-y-2 border-b border-peach-400/12">
@@ -299,81 +298,72 @@ function MultiDatePicker({
                 </div>
             </div>
 
-            {/* weekday header — table layout so columns are always equal and sum to 100% */}
-            <div style={{ display: "table", width: "100%", tableLayout: "fixed" }} className="px-2">
+            {/* weekday header */}
+            <div className="grid grid-cols-7 px-2">
                 {WEEKDAYS.map((d) => (
-                    <div key={d} style={{ display: "table-cell" }}
-                        className="text-center text-[9px] font-bold uppercase tracking-wide text-olive-300/50 pb-1">
+                    <div key={d} className="text-center text-[9px] font-bold uppercase tracking-wide text-olive-300/50 pb-1">
                         {d[0]}
                     </div>
                 ))}
             </div>
 
-            {/* day grid — same table layout: 7 equal columns, always fills 100% */}
-            <div style={{ display: "table", width: "100%", tableLayout: "fixed", borderSpacing: "1px", borderCollapse: "separate" }} className="px-2 pb-2.5">
-                {Array.from({ length: 6 }, (_, row) => (
-                    <div key={row} style={{ display: "table-row" }}>
-                        {cells.slice(row * 7, row * 7 + 7).map((d, col) => {
-                            const k = toYmd(d)
-                            const inMonth = d.getMonth() === month.getMonth()
-                            const isPast = k < todayStr
-                            const isSel = selected.has(k)
-                            const hasClass = existingDays.has(k)
-                            return (
-                                <button
-                                    key={col}
-                                    type="button"
-                                    disabled={isPast}
-                                    onClick={() => toggle(d)}
-                                    style={{ display: "table-cell", verticalAlign: "middle", height: 32, textAlign: "center", position: "relative" }}
-                                    className={`text-[11px] transition-all duration-150
-                                        ${isSel
-                                            ? "bg-terra-400 text-peach-50 font-bold"
-                                            : isPast
-                                                ? "text-olive-300/25 cursor-not-allowed"
-                                                : inMonth
-                                                    ? "text-olive-600 hover:bg-peach-200/70 font-medium"
-                                                    : "text-olive-300/30 hover:bg-peach-100"}`}
-                                >
-                                    {d.getDate()}
-                                    {hasClass && !isSel && (
-                                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-olive-300/50" />
-                                    )}
-                                </button>
-                            )
-                        })}
-                    </div>
-                ))}
+            {/* day grid — grid-cols-7 always fills its container; container is overflow:hidden above */}
+            <div className="grid grid-cols-7 gap-px px-2 pb-2.5">
+                {cells.map((d, i) => {
+                    const k = toYmd(d)
+                    const inMonth = d.getMonth() === month.getMonth()
+                    const isPast = k < todayStr
+                    const isSel = selected.has(k)
+                    const hasClass = existingDays.has(k)
+                    return (
+                        <button key={i} type="button" disabled={isPast} onClick={() => toggle(d)}
+                            className={`relative h-8 flex items-center justify-center text-[11px] transition-all duration-150
+                                ${isSel
+                                    ? "bg-terra-400 text-peach-50 font-bold"
+                                    : isPast
+                                        ? "text-olive-300/25 cursor-not-allowed"
+                                        : inMonth
+                                            ? "text-olive-600 hover:bg-peach-200/70 font-medium"
+                                            : "text-olive-300/30 hover:bg-peach-100"}`}>
+                            {d.getDate()}
+                            {hasClass && !isSel && (
+                                <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-olive-300/50" />
+                            )}
+                        </button>
+                    )
+                })}
             </div>
 
-            {/* selected summary — fixed 40px height, chips scroll horizontally inside */}
-            <div style={{ height: 40, overflow: "hidden" }} className="border-t border-peach-400/15 flex items-center px-2.5 gap-2">
+            {/* selected summary — fixed 40px, chip scroll uses block overflow not flex */}
+            <div className="border-t border-peach-400/15" style={{ height: 40, display: "flex", alignItems: "center", padding: "0 10px", gap: 8, overflow: "hidden" }}>
                 {value.length === 0 ? (
                     <p className="text-[11px] text-olive-300 w-full text-center">
                         Tap days or use a quick range to choose when this class runs.
                     </p>
                 ) : (
                     <>
-                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-olive-500 whitespace-nowrap flex-shrink-0">
+                        <span style={{ flexShrink: 0, whiteSpace: "nowrap" }} className="text-[10px] font-bold uppercase tracking-[0.1em] text-olive-500">
                             {value.length} {value.length === 1 ? "day" : "days"}
                         </span>
-                        {/* scroll container: block-level, width constrained, chips in a single nowrap row */}
-                        <div style={{ flex: 1, minWidth: 0, overflowX: "auto", overflowY: "hidden" }}
-                            className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                            <div style={{ display: "flex", gap: 4, width: "max-content" }}>
-                                {value.map((k) => (
-                                    <span key={k} className="inline-flex items-center gap-0.5 pl-1.5 pr-0.5 py-0.5 bg-terra-400/10 text-terra-500 text-[10px] font-semibold whitespace-nowrap">
-                                        {fmtChip(k)}
-                                        <button
-                                            type="button"
-                                            onClick={() => onChange(value.filter((v) => v !== k))}
-                                            className="w-3.5 h-3.5 flex items-center justify-center hover:bg-terra-400/20"
-                                            aria-label={`Remove ${fmtChip(k)}`}
-                                        >
-                                            <X className="w-2.5 h-2.5" />
-                                        </button>
-                                    </span>
-                                ))}
+                        {/* outer: flex-1 with minWidth:0 hard-caps the available space */}
+                        <div style={{ flex: "1 1 0px", minWidth: 0, overflow: "hidden" }}>
+                            {/* inner: scrolls within that capped space, chips in a nowrap row */}
+                            <div style={{ overflowX: "auto", overflowY: "hidden" }}
+                                className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div style={{ display: "flex", gap: 4, width: "max-content" }}>
+                                    {value.map((k) => (
+                                        <span key={k} style={{ whiteSpace: "nowrap" }}
+                                            className="inline-flex items-center gap-0.5 pl-1.5 pr-0.5 py-0.5 bg-terra-400/10 text-terra-500 text-[10px] font-semibold">
+                                            {fmtChip(k)}
+                                            <button type="button"
+                                                onClick={() => onChange(value.filter((v) => v !== k))}
+                                                className="w-3.5 h-3.5 flex items-center justify-center hover:bg-terra-400/20"
+                                                aria-label={`Remove ${fmtChip(k)}`}>
+                                                <X className="w-2.5 h-2.5" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </>
