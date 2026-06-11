@@ -453,8 +453,8 @@ export default function LoginScreen() {
                                             returnKeyType="next"
                                             onSubmitEditing={() => signupEmailRef.current?.focus()}
                                             editable={!isLoading}
-                                            textContentType="name"
-                                            autoComplete="name"
+                                            textContentType="oneTimeCode"
+                                            autoComplete="off"
                                         />
                                     </InputRow>
 
@@ -473,8 +473,8 @@ export default function LoginScreen() {
                                             returnKeyType="next"
                                             onSubmitEditing={() => signupPasswordRef.current?.focus()}
                                             editable={!isLoading}
-                                            textContentType="emailAddress"
-                                            autoComplete="email"
+                                            textContentType="oneTimeCode"
+                                            autoComplete="off"
                                         />
                                     </InputRow>
 
@@ -491,8 +491,8 @@ export default function LoginScreen() {
                                             returnKeyType="next"
                                             onSubmitEditing={() => signupConfirmRef.current?.focus()}
                                             editable={!isLoading}
-                                            textContentType="newPassword"
-                                            autoComplete="new-password"
+                                            textContentType="oneTimeCode"
+                                            autoComplete="off"
                                         />
                                         <EyeToggle
                                             visible={showSignupPassword}
@@ -513,8 +513,8 @@ export default function LoginScreen() {
                                             returnKeyType="done"
                                             onSubmitEditing={handleSignup}
                                             editable={!isLoading}
-                                            textContentType="newPassword"
-                                            autoComplete="new-password"
+                                            textContentType="oneTimeCode"
+                                            autoComplete="off"
                                         />
                                     </InputRow>
 
@@ -698,7 +698,6 @@ const styles = StyleSheet.create({
         paddingTop: Spacing.sm,
         paddingBottom: Spacing.lg,
         justifyContent: 'flex-start',
-        minHeight: '100%',
     },
     scrollContentCompact: {
         paddingTop: Spacing.sm,

@@ -73,38 +73,38 @@ export default function MilestoneCard({ totalClassesAttended }: Props) {
 
             {/* Tier stepping stones */}
             <View style={styles.steppingStones}>
+                {/* Track behind all stones */}
+                <View style={styles.stoneTrack} />
+                <View style={[
+                    styles.stoneTrackFill,
+                    {
+                        width: `${(currentTierIdx / (TIERS.length - 1)) * 80}%`,
+                        backgroundColor: currentTier.color,
+                    },
+                ]} />
+
                 {TIERS.map((tier, idx) => {
                     const achieved = idx <= currentTierIdx;
                     const isCurrent = idx === currentTierIdx;
                     return (
                         <View key={tier.name} style={styles.tierStop}>
-                            {idx > 0 && (
+                            <View style={styles.stoneBacking}>
                                 <View
                                     style={[
-                                        styles.connector,
+                                        styles.stoneDot,
                                         {
-                                            backgroundColor: idx <= currentTierIdx
-                                                ? TIERS[idx - 1].color
-                                                : tierConnectorBg,
+                                            backgroundColor: achieved ? tier.bg : tierStoneBg,
+                                            borderColor: isCurrent ? tier.color : 'transparent',
+                                            borderWidth: isCurrent ? 2 : 0,
                                         },
                                     ]}
-                                />
-                            )}
-                            <View
-                                style={[
-                                    styles.stoneDot,
-                                    {
-                                        backgroundColor: achieved ? tier.bg : tierStoneBg,
-                                        borderColor: isCurrent ? tier.color : 'transparent',
-                                        borderWidth: isCurrent ? 2 : 0,
-                                    },
-                                ]}
-                            >
-                                <TierIcon
-                                    name={tier.iconName}
-                                    size={11}
-                                    color={achieved ? tier.color : tierIconMuted}
-                                />
+                                >
+                                    <TierIcon
+                                        name={tier.iconName}
+                                        size={11}
+                                        color={achieved ? tier.color : tierIconMuted}
+                                    />
+                                </View>
                             </View>
                             <Text
                                 style={[
@@ -198,19 +198,31 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: Spacing.xs,
+        position: 'relative',
+    },
+    stoneTrack: {
+        position: 'absolute',
+        left: '10%',
+        right: '10%',
+        top: 11,
+        height: 2,
+        backgroundColor: tierConnectorBg,
+    },
+    stoneTrackFill: {
+        position: 'absolute',
+        left: '10%',
+        top: 11,
+        height: 2,
     },
     tierStop: {
         flex: 1,
         alignItems: 'center',
         gap: 4,
-        position: 'relative',
     },
-    connector: {
-        position: 'absolute',
-        top: 11,
-        left: -50,
-        right: '50%',
-        height: 2,
+    stoneBacking: {
+        backgroundColor: Colors.peach[50],
+        borderRadius: 14,
+        padding: 2,
     },
     stoneDot: {
         width: 24,
@@ -218,7 +230,6 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1,
     },
     stoneLabel: {
         fontFamily: FontFamily.sansBold,

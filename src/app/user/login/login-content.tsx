@@ -156,8 +156,8 @@ export function UserLoginContent() {
                 <div className="relative z-10 flex flex-col justify-between p-16">
                     <div>
                         <Link href="/" className="inline-flex items-center gap-3 group">
-                            <ArrowLeft className="w-5 h-5 text-peach-400 group-hover:text-peach-200 transition-colors" />
-                            <Image src="/images/sol-logo-terra.png" alt="SOL Pilates Studio" width={400} height={400} className="h-16 w-auto" />
+                            <ArrowLeft className="w-7 h-7 text-peach-200 group-hover:text-white transition-colors" />
+                            <Image src="/images/sol-logo-terra.png" alt="SOL Pilates Studio" width={400} height={400} className="h-24 w-auto" />
                         </Link>
                     </div>
 
@@ -529,10 +529,7 @@ export function UserLoginContent() {
                     </AnimatePresence>
 
                     {/* Footer */}
-                    <div className="mt-8 pt-8 border-t border-peach-400/20 flex justify-between items-center">
-                        <p className="text-olive-300/60 text-xs tracking-wider">
-                            SECURE ACCESS
-                        </p>
+                    <div className="mt-8 pt-8 border-t border-peach-400/20 flex justify-end items-center">
                         <Link href="/subscription" className="text-terra-400 text-xs tracking-wider hover:text-terra-300 transition-colors font-bold">
                             View Plans →
                         </Link>
