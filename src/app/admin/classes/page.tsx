@@ -251,7 +251,7 @@ function MultiDatePicker({
     ]
 
     return (
-        <div className="border border-peach-400/20 bg-peach-50">
+        <div className="border border-peach-400/20 bg-peach-50 overflow-hidden w-full">
             {/* top control bar: quick ranges + weekday + month nav, all compact */}
             <div className="px-2.5 pt-2.5 pb-2 space-y-2 border-b border-peach-400/12">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -968,7 +968,7 @@ export default function ClassesPage() {
 
             {/* ═══════════ ADD / EDIT CLASS DIALOG ═══════════ */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="bg-peach-50 border-peach-400/20 max-w-xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="bg-peach-50 border-peach-400/20 max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
                     <DialogHeader>
                         <DialogTitle className="app-section-title">
                             {editingClass ? "Edit Class" : "Add New Class"}
