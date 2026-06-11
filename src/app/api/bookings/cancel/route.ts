@@ -60,6 +60,28 @@ export async function POST(req: NextRequest) {
             const classDoc = await transaction.get(classRef);
             const userRef = adminDb.collection('users').doc(bookingData.userId);
 
+            // 12-hour cancellation window (non-admins only)
+            if (!isAdmin && classDoc.exists) {
+                const cd = classDoc.data()!;
+                const rawDate = cd.date;
+                let classStart: Date;
+                if (rawDate && typeof rawDate === 'object' && 'seconds' in (rawDate as Record<string, unknown>)) {
+                    classStart = new Date((rawDate as { seconds: number }).seconds * 1000);
+                } else if (rawDate instanceof Date) {
+                    classStart = new Date(rawDate.getTime());
+                } else {
+                    classStart = new Date(rawDate as string);
+                }
+                const startTime = cd.startTime as string | undefined;
+                if (startTime && /^\d{2}:\d{2}$/.test(startTime)) {
+                    const [h, m] = startTime.split(':').map(Number);
+                    classStart.setHours(h, m, 0, 0);
+                }
+                if (classStart.getTime() - Date.now() < 12 * 60 * 60 * 1000) {
+                    throw { status: 400, error: 'Cancellations are only allowed up to 12 hours before the class starts', code: 'failed-precondition' };
+                }
+            }
+
             const now = FieldValue.serverTimestamp();
 
             // Update booking status
@@ -82,12 +104,11 @@ export async function POST(req: NextRequest) {
                 transaction.update(classRef, updateData);
             }
 
-            // ── Credit-type-aware restore ────────────────────────────
+            // Credit-type-aware restore
             const creditType = bookingData.creditType || 'standard';
             const usedGuestPass = bookingData.usedGuestPass === true;
 
             if (usedGuestPass || creditType === 'guest_pass') {
-                // Restore guest pass
                 transaction.update(userRef, {
                     'subscription.guestPassesRemaining': FieldValue.increment(1),
                     updatedAt: now,
@@ -98,12 +119,10 @@ export async function POST(req: NextRequest) {
                     updatedAt: now,
                 });
             } else if (creditType === 'unlimited') {
-                // Unlimited — no credits to restore, just update timestamp
                 transaction.update(userRef, {
                     updatedAt: now,
                 });
             } else {
-                // Standard credit — restore classesRemaining
                 transaction.update(userRef, {
                     'subscription.classesRemaining': FieldValue.increment(1),
                     updatedAt: now,

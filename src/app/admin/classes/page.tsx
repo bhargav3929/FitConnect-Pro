@@ -168,7 +168,7 @@ const defaultFormData: ClassFormData = {
     date: "",
     startTime: "08:00",
     duration: 50,
-    capacity: 12,
+    capacity: 10,
     classType: "Sol Flow",
     difficultyLevel: "intermediate",
     location: "Main Studio",
@@ -502,7 +502,7 @@ export default function ClassesPage() {
             date: toYmd(new Date(cls.date)),
             startTime: cls.startTime || "09:00",
             duration: cls.duration || 50,
-            capacity: cls.totalSpots || cls.capacity || 12,
+            capacity: cls.totalSpots || cls.capacity || 10,
             classType: cls.classType || "Sol Flow",
             difficultyLevel: cls.difficultyLevel || "intermediate",
             location: cls.location || "Main Studio",
@@ -1134,7 +1134,7 @@ export default function ClassesPage() {
                                     value={formData.capacity}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, capacity: parseInt(e.target.value) || 10 }))}
                                     min={1}
-                                    max={100}
+                                    max={10}
                                     className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:outline-none transition-all text-sm"
                                 />
                             </div>
