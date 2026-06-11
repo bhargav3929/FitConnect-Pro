@@ -347,18 +347,18 @@ function MultiDatePicker({
                 })}
             </div>
 
-            {/* selected summary — single scrolling row keeps height fixed */}
-            <div className="border-t border-peach-400/15 px-2.5 py-2">
+            {/* selected summary — fixed height so calendar never resizes */}
+            <div className="border-t border-peach-400/15 px-2.5 h-10 flex items-center overflow-hidden">
                 {value.length === 0 ? (
-                    <p className="text-[11px] text-olive-300 text-center py-0.5">
+                    <p className="text-[11px] text-olive-300 w-full text-center">
                         Tap days or use a quick range to choose when this class runs.
                     </p>
                 ) : (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full min-w-0">
                         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-olive-500 whitespace-nowrap flex-shrink-0">
                             {value.length} {value.length === 1 ? "day" : "days"}
                         </span>
-                        <div className="flex items-center gap-1 overflow-x-auto flex-1 pb-0.5">
+                        <div className="flex items-center gap-1 overflow-x-auto min-w-0 flex-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                             {value.map((k) => (
                                 <span key={k} className="inline-flex items-center gap-0.5 pl-1.5 pr-0.5 py-0.5 bg-terra-400/10 text-terra-500 text-[10px] font-semibold whitespace-nowrap flex-shrink-0">
                                     {fmtChip(k)}
