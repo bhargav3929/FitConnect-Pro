@@ -77,15 +77,23 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
     const planMap = new Map<string, { razorpayPlanId: string; amountPaise: number }>();
     const itemMap = new Map<string, { itemId: string; amountPaise: number }>();
 
+    // Build a set of pinned Razorpay plan IDs from PLAN_CATALOG so we always
+    // prefer those over any older plans that share the same fitconnect_plan_id note.
+    const pinnedPlanIds = new Set(
+        PLAN_CATALOG.filter((p) => p.razorpayPlanId).map((p) => p.razorpayPlanId as string),
+    );
+
     try {
         const razorpayPlans = await listRazorpayPlans(keyId, keySecret);
         for (const plan of razorpayPlans) {
-            if (plan.fitconnectPlanId) {
-                planMap.set(plan.fitconnectPlanId, {
-                    razorpayPlanId: plan.id,
-                    amountPaise: plan.amount,
-                });
-            }
+            if (!plan.fitconnectPlanId) continue;
+            const existing = planMap.get(plan.fitconnectPlanId);
+            // If we already have a pinned plan for this ID, skip non-pinned entries.
+            if (existing && pinnedPlanIds.has(existing.razorpayPlanId)) continue;
+            planMap.set(plan.fitconnectPlanId, {
+                razorpayPlanId: plan.id,
+                amountPaise: plan.amount,
+            });
         }
     } catch (error) {
         console.warn('[pricing] Razorpay Plans sync failed:', error);

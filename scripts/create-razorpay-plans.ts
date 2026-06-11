@@ -32,10 +32,10 @@ if (!KEY_ID || !KEY_SECRET) {
 const rzp = new Razorpay({ key_id: KEY_ID, key_secret: KEY_SECRET });
 
 const PLANS = [
-    { planId: 'twice_quarterly',  name: '2x Weekly · Quarterly', amountRupees: 36000, period: 'monthly' as const, interval: 3,  totalCount: 24 },
-    { planId: 'twice_6mo',        name: '2x Weekly · 6 Months',  amountRupees: 64000, period: 'monthly' as const, interval: 6,  totalCount: 12 },
-    { planId: 'thrice_quarterly', name: '3x Weekly · Quarterly', amountRupees: 54000, period: 'monthly' as const, interval: 3,  totalCount: 24 },
-    { planId: 'thrice_6mo',       name: '3x Weekly · 6 Months',  amountRupees: 96000, period: 'monthly' as const, interval: 6,  totalCount: 12 },
+    { planId: 'twice_quarterly',  name: '2x Weekly · Quarterly', amountRupees: 40800, period: 'monthly' as const, interval: 3,  totalCount: 24 },
+    { planId: 'twice_6mo',        name: '2x Weekly · 6 Months',  amountRupees: 72000, period: 'monthly' as const, interval: 6,  totalCount: 12 },
+    { planId: 'thrice_quarterly', name: '3x Weekly · Quarterly', amountRupees: 61200, period: 'monthly' as const, interval: 3,  totalCount: 24 },
+    { planId: 'thrice_6mo',       name: '3x Weekly · 6 Months',  amountRupees: 108000, period: 'monthly' as const, interval: 6,  totalCount: 12 },
 ];
 
 async function main() {
