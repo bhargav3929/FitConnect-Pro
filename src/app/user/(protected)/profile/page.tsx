@@ -24,6 +24,7 @@ import {
     CheckCircle2,
     XCircle,
     AlertTriangle,
+    Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
@@ -44,6 +45,8 @@ export default function ProfilePage() {
     const [showPasswordSection, setShowPasswordSection] = useState(false)
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
     const [isCancelling, setIsCancelling] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -119,6 +122,26 @@ export default function ProfilePage() {
             }
         } finally {
             setIsChangingPassword(false)
+        }
+    }
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true)
+        try {
+            const token = await auth.currentUser?.getIdToken()
+            if (!token) throw new Error('Not authenticated')
+            const res = await fetch('/api/account/delete', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Failed to delete account')
+            toast.success('Account deleted')
+            await logoutClient()
+            router.push('/')
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Failed to delete account')
+            setIsDeleting(false)
         }
     }
 
@@ -543,6 +566,67 @@ export default function ProfilePage() {
                         </div>
                         <ChevronRight className="w-4 h-4 text-olive-300/30 group-hover:text-olive-300/60" />
                     </button>
+                </div>
+            </motion.div>
+
+            {/* ═══════════ DANGER ZONE — DELETE ACCOUNT ═══════════ */}
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.22 }}
+            >
+                <p className="app-label px-1 mb-3">Danger Zone</p>
+                <div className="bg-peach-50 border border-red-500/15 rounded-2xl overflow-hidden">
+                    <button
+                        onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
+                        className="w-full flex items-center gap-4 p-4 hover:bg-red-500/5 transition-colors group active:bg-red-500/8"
+                    >
+                        <div className="w-9 h-9 rounded-xl bg-red-500/8 flex items-center justify-center flex-shrink-0">
+                            <Trash2 className="w-[18px] h-[18px] text-red-500/60" />
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                            <p className="text-red-600 font-semibold text-sm">Delete Account</p>
+                            <p className="text-olive-300 text-xs">Permanently remove your account and all data</p>
+                        </div>
+                        <ChevronRight className={`w-4 h-4 text-red-500/30 transition-transform ${showDeleteConfirm ? 'rotate-90' : ''}`} />
+                    </button>
+                    <AnimatePresence>
+                        {showDeleteConfirm && (
+                            <m.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden border-t border-red-500/10 px-4 py-3 space-y-3 bg-red-500/5"
+                            >
+                                <div className="flex items-start gap-2.5">
+                                    <AlertTriangle className="w-4 h-4 text-red-500/70 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-red-700 font-bold text-xs">This cannot be undone</p>
+                                        <p className="text-olive-400 text-xs mt-0.5 leading-relaxed">
+                                            Your account, bookings, and subscription will be permanently deleted. Active billing will be cancelled immediately.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        disabled={isDeleting}
+                                        className="flex-1 h-8 border-peach-400/30 text-olive-400 font-bold text-xs rounded-lg"
+                                    >
+                                        CANCEL
+                                    </Button>
+                                    <Button
+                                        onClick={handleDeleteAccount}
+                                        disabled={isDeleting}
+                                        className="flex-1 h-8 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-lg disabled:opacity-50"
+                                    >
+                                        {isDeleting ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />DELETING...</> : 'YES, DELETE'}
+                                    </Button>
+                                </div>
+                            </m.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </motion.div>
 
