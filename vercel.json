@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm run build --include-workspace-root",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "dev": true
+    }
+  }
+}
