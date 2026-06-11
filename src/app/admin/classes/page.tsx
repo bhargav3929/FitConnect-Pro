@@ -178,7 +178,7 @@ const defaultFormData: ClassFormData = {
 // ───────────────────────── multi-date picker (bulk scheduling) ─────────────────────────
 
 const fmtChip = (ymd: string) => {
-    const [y, m, d] = ymd.split("-").map(Number)
+    const [, m, d] = ymd.split("-").map(Number)
     return `${MONTHS[m - 1].slice(0, 3)} ${d}`
 }
 
@@ -251,26 +251,21 @@ function MultiDatePicker({
     ]
 
     return (
-        <div className="border border-peach-400/20 bg-peach-50 overflow-hidden w-full">
-            {/* top control bar: quick ranges + weekday + month nav, all compact */}
+        // width is always 100% of parent — nothing inside can push it wider
+        <div style={{ width: "100%", boxSizing: "border-box", overflow: "hidden" }} className="border border-peach-400/20 bg-peach-50">
+
+            {/* quick-range buttons + weekday shortcuts */}
             <div className="px-2.5 pt-2.5 pb-2 space-y-2 border-b border-peach-400/12">
                 <div className="flex flex-wrap items-center gap-1.5">
                     {QUICK.map((q) => (
-                        <button
-                            key={q.label}
-                            type="button"
-                            onClick={q.fn}
-                            className="px-2.5 py-1 bg-peach-100 border border-peach-400/20 text-[10px] font-bold uppercase tracking-[0.06em] text-olive-500 hover:border-terra-400/40 hover:text-terra-500 transition-all"
-                        >
+                        <button key={q.label} type="button" onClick={q.fn}
+                            className="px-2.5 py-1 bg-peach-100 border border-peach-400/20 text-[10px] font-bold uppercase tracking-[0.06em] text-olive-500 hover:border-terra-400/40 hover:text-terra-500 transition-all">
                             {q.label}
                         </button>
                     ))}
                     {value.length > 0 && (
-                        <button
-                            type="button"
-                            onClick={() => onChange([])}
-                            className="ml-auto text-[10px] font-bold uppercase tracking-[0.06em] text-olive-300 hover:text-red-500 transition-colors"
-                        >
+                        <button type="button" onClick={() => onChange([])}
+                            className="ml-auto text-[10px] font-bold uppercase tracking-[0.06em] text-olive-300 hover:text-red-500 transition-colors">
                             Clear
                         </button>
                     )}
@@ -278,13 +273,9 @@ function MultiDatePicker({
                 <div className="flex items-center gap-1">
                     <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-olive-300 mr-0.5">Every</span>
                     {WEEKDAYS.map((w, dow) => (
-                        <button
-                            key={w}
-                            type="button"
-                            onClick={() => addWeekdayInMonth(dow)}
+                        <button key={w} type="button" onClick={() => addWeekdayInMonth(dow)}
                             title={`Add every ${w} in ${MONTHS[month.getMonth()]}`}
-                            className="w-6 h-6 flex items-center justify-center text-[10px] font-bold text-olive-400 hover:bg-terra-400 hover:text-peach-50 transition-all"
-                        >
+                            className="w-6 h-6 flex items-center justify-center text-[10px] font-bold text-olive-400 hover:bg-terra-400 hover:text-peach-50 transition-all">
                             {w[0]}
                         </button>
                     ))}
@@ -297,83 +288,95 @@ function MultiDatePicker({
                     {MONTHS[month.getMonth()]} {month.getFullYear()}
                 </span>
                 <div className="flex items-center gap-0.5">
-                    <button type="button" onClick={() => onMonthChange(addMonths(month, -1))} className="w-6 h-6 flex items-center justify-center text-olive-400 hover:text-terra-400 hover:bg-peach-200/50 transition-all" aria-label="Previous month">
+                    <button type="button" onClick={() => onMonthChange(addMonths(month, -1))} aria-label="Previous month"
+                        className="w-6 h-6 flex items-center justify-center text-olive-400 hover:text-terra-400 hover:bg-peach-200/50 transition-all">
                         <ChevronLeft className="w-3 h-3" />
                     </button>
-                    <button type="button" onClick={() => onMonthChange(addMonths(month, 1))} className="w-6 h-6 flex items-center justify-center text-olive-400 hover:text-terra-400 hover:bg-peach-200/50 transition-all" aria-label="Next month">
+                    <button type="button" onClick={() => onMonthChange(addMonths(month, 1))} aria-label="Next month"
+                        className="w-6 h-6 flex items-center justify-center text-olive-400 hover:text-terra-400 hover:bg-peach-200/50 transition-all">
                         <ChevronRight className="w-3 h-3" />
                     </button>
                 </div>
             </div>
 
-            {/* weekday header */}
-            <div className="grid grid-cols-7 px-2">
+            {/* weekday header — table layout so columns are always equal and sum to 100% */}
+            <div style={{ display: "table", width: "100%", tableLayout: "fixed" }} className="px-2">
                 {WEEKDAYS.map((d) => (
-                    <div key={d} className="text-center text-[9px] font-bold uppercase tracking-wide text-olive-300/50 pb-1">
+                    <div key={d} style={{ display: "table-cell" }}
+                        className="text-center text-[9px] font-bold uppercase tracking-wide text-olive-300/50 pb-1">
                         {d[0]}
                     </div>
                 ))}
             </div>
 
-            {/* compact day grid */}
-            <div className="grid grid-cols-7 gap-px px-2 pb-2.5">
-                {cells.map((d, i) => {
-                    const k = toYmd(d)
-                    const inMonth = d.getMonth() === month.getMonth()
-                    const isPast = k < todayStr
-                    const isSel = selected.has(k)
-                    const hasClass = existingDays.has(k)
-                    return (
-                        <button
-                            key={i}
-                            type="button"
-                            disabled={isPast}
-                            onClick={() => toggle(d)}
-                            className={`relative h-8 flex items-center justify-center text-[11px] transition-all duration-150
-                                ${isSel
-                                    ? "bg-terra-400 text-peach-50 font-bold"
-                                    : isPast
-                                        ? "text-olive-300/25 cursor-not-allowed"
-                                        : inMonth
-                                            ? "text-olive-600 hover:bg-peach-200/70 font-medium"
-                                            : "text-olive-300/30 hover:bg-peach-100"}`}
-                        >
-                            {d.getDate()}
-                            {hasClass && !isSel && (
-                                <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-olive-300/50" />
-                            )}
-                        </button>
-                    )
-                })}
+            {/* day grid — same table layout: 7 equal columns, always fills 100% */}
+            <div style={{ display: "table", width: "100%", tableLayout: "fixed", borderSpacing: "1px", borderCollapse: "separate" }} className="px-2 pb-2.5">
+                {Array.from({ length: 6 }, (_, row) => (
+                    <div key={row} style={{ display: "table-row" }}>
+                        {cells.slice(row * 7, row * 7 + 7).map((d, col) => {
+                            const k = toYmd(d)
+                            const inMonth = d.getMonth() === month.getMonth()
+                            const isPast = k < todayStr
+                            const isSel = selected.has(k)
+                            const hasClass = existingDays.has(k)
+                            return (
+                                <button
+                                    key={col}
+                                    type="button"
+                                    disabled={isPast}
+                                    onClick={() => toggle(d)}
+                                    style={{ display: "table-cell", verticalAlign: "middle", height: 32, textAlign: "center", position: "relative" }}
+                                    className={`text-[11px] transition-all duration-150
+                                        ${isSel
+                                            ? "bg-terra-400 text-peach-50 font-bold"
+                                            : isPast
+                                                ? "text-olive-300/25 cursor-not-allowed"
+                                                : inMonth
+                                                    ? "text-olive-600 hover:bg-peach-200/70 font-medium"
+                                                    : "text-olive-300/30 hover:bg-peach-100"}`}
+                                >
+                                    {d.getDate()}
+                                    {hasClass && !isSel && (
+                                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-olive-300/50" />
+                                    )}
+                                </button>
+                            )
+                        })}
+                    </div>
+                ))}
             </div>
 
-            {/* selected summary — fixed height so calendar never resizes */}
-            <div className="border-t border-peach-400/15 px-2.5 h-10 flex items-center overflow-hidden">
+            {/* selected summary — fixed 40px height, chips scroll horizontally inside */}
+            <div style={{ height: 40, overflow: "hidden" }} className="border-t border-peach-400/15 flex items-center px-2.5 gap-2">
                 {value.length === 0 ? (
                     <p className="text-[11px] text-olive-300 w-full text-center">
                         Tap days or use a quick range to choose when this class runs.
                     </p>
                 ) : (
-                    <div className="flex items-center gap-2 w-full min-w-0">
+                    <>
                         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-olive-500 whitespace-nowrap flex-shrink-0">
                             {value.length} {value.length === 1 ? "day" : "days"}
                         </span>
-                        <div className="flex items-center gap-1 overflow-x-auto min-w-0 flex-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                            {value.map((k) => (
-                                <span key={k} className="inline-flex items-center gap-0.5 pl-1.5 pr-0.5 py-0.5 bg-terra-400/10 text-terra-500 text-[10px] font-semibold whitespace-nowrap flex-shrink-0">
-                                    {fmtChip(k)}
-                                    <button
-                                        type="button"
-                                        onClick={() => onChange(value.filter((v) => v !== k))}
-                                        className="w-3.5 h-3.5 flex items-center justify-center hover:bg-terra-400/20"
-                                        aria-label={`Remove ${fmtChip(k)}`}
-                                    >
-                                        <X className="w-2.5 h-2.5" />
-                                    </button>
-                                </span>
-                            ))}
+                        {/* scroll container: block-level, width constrained, chips in a single nowrap row */}
+                        <div style={{ flex: 1, minWidth: 0, overflowX: "auto", overflowY: "hidden" }}
+                            className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            <div style={{ display: "flex", gap: 4, width: "max-content" }}>
+                                {value.map((k) => (
+                                    <span key={k} className="inline-flex items-center gap-0.5 pl-1.5 pr-0.5 py-0.5 bg-terra-400/10 text-terra-500 text-[10px] font-semibold whitespace-nowrap">
+                                        {fmtChip(k)}
+                                        <button
+                                            type="button"
+                                            onClick={() => onChange(value.filter((v) => v !== k))}
+                                            className="w-3.5 h-3.5 flex items-center justify-center hover:bg-terra-400/20"
+                                            aria-label={`Remove ${fmtChip(k)}`}
+                                        >
+                                            <X className="w-2.5 h-2.5" />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    </>
                 )}
             </div>
         </div>
