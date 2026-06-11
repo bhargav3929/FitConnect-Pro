@@ -158,6 +158,8 @@ export default function SchedulePage() {
 
     const clientUser = useClientAuthStore(state => state.clientUser)
     const subscriptionEndDate = parseSubscriptionEndDate(clientUser?.subscription?.endDate)
+    const maxDate = new Date(); maxDate.setDate(maxDate.getDate() + 90)
+    const disabledAfterDate = subscriptionEndDate && subscriptionEndDate < maxDate ? subscriptionEndDate : null
     const facilityAddress = formatFacilityAddress(facility?.address)
 
     const formatDate = (date: Date) => {
@@ -377,7 +379,7 @@ export default function SchedulePage() {
                             <div className="mb-6">
                                 <CalendarStrip
                                     selectedDate={selectedDate}
-                                    disabledAfter={subscriptionEndDate}
+                                    disabledAfter={disabledAfterDate}
                                     onDateSelect={(date) => {
                                         setIsLoadingClasses(true)
                                         setSelectedDate(date)

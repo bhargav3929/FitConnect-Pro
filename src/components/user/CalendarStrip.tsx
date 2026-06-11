@@ -15,7 +15,7 @@ export function CalendarStrip({ selectedDate, onDateSelect, disabledAfter }: Cal
     const scrollRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        // Generate next 14 days
+        // Generate next 90 days
         const days = []
         const today = new Date()
         for (let i = 0; i < 90; i++) {
