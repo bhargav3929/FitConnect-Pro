@@ -182,7 +182,7 @@ export function InstagramSection(props: {
             </motion.div>
           </motion.div>
 
-          <div className="overflow-hidden">
+          <div className="overflow-hidden pb-2">
             <motion.h2
               initial={prefersReduced ? { opacity: 0 } : { y: "100%" }}
               whileInView={{ y: "0%", opacity: 1 }}

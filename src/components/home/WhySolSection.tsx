@@ -145,7 +145,7 @@ export function WhySolSection() {
           <Reveal variant="fadeIn" as="span" className={STYLES.eyebrow}>
             {COPY.eyebrow}
           </Reveal>
-          <div className="overflow-hidden mt-2">
+          <div className="overflow-hidden mt-2 pb-2">
             <motion.h2
               className={STYLES.headline}
               initial={prefersReduced ? undefined : { y: "100%" }}

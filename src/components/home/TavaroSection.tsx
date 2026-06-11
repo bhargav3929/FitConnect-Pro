@@ -105,7 +105,7 @@ export function TavaroSection() {
             {COPY.badge}
           </motion.span>
 
-          <div className="overflow-hidden mt-6">
+          <div className="overflow-hidden mt-6 pb-2">
             <motion.h2
               variants={{
                 hidden: { y: "100%" },

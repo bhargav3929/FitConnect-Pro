@@ -390,7 +390,7 @@ export function TestimonialsSection() {
           >
             {COPY.eyebrow}
           </motion.span>
-          <div className="overflow-hidden">
+          <div className="overflow-hidden pb-2">
             <motion.h2
               className={STYLES.headline}
               initial={prefersReduced ? undefined : { y: "100%" }}

@@ -149,7 +149,7 @@ export function ClassTypesSection() {
       {/* Section headline */}
       <div className={STYLES.headerWrap}>
         <span className={STYLES.eyebrow}>Class types</span>
-        <div className="overflow-hidden">
+        <div className="overflow-hidden pb-2">
           <motion.h2
             className={STYLES.headline}
             initial={{ y: "100%" }}

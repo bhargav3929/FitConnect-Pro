@@ -215,7 +215,7 @@ export function FoundingMembershipSection() {
             </motion.p>
 
             {/* Headline — line-mask */}
-            <div className="overflow-hidden mt-4">
+            <div className="overflow-hidden mt-4 pb-2">
               <motion.h2
                 initial={prefersReduced ? { opacity: 0 } : { y: "100%" }}
                 animate={isInView ? { y: "0%", opacity: 1 } : {}}
