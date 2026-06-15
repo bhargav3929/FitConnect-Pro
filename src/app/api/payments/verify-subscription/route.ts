@@ -4,6 +4,14 @@ import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { verifyPaymentSignature } from '@fitconnect/shared/payments/razorpay-processor';
 import { FieldValue } from 'firebase-admin/firestore';
 
+function getPaymentPricingVariant(paymentData: Record<string, unknown>): 'standard' | 'founding' {
+    return paymentData.metadata &&
+        typeof paymentData.metadata === 'object' &&
+        (paymentData.metadata as Record<string, unknown>).pricingVariant === 'founding'
+        ? 'founding'
+        : 'standard';
+}
+
 function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
     if (!subscription || subscription.status !== 'active') return false;
     if (!subscription.endDate) return true;
@@ -96,6 +104,7 @@ export async function POST(req: NextRequest) {
             const membershipCredits = typeof plan.credits === 'number'
                 ? plan.credits + carriedKickstarterCredits
                 : plan.credits;
+            const pricingVariant = getPaymentPricingVariant(paymentData);
 
             const now = new Date();
             const endDate = new Date(now);
@@ -124,11 +133,13 @@ export async function POST(req: NextRequest) {
                 'subscription.autoRenew': plan.autoRenew,
                 'subscription.razorpaySubscriptionId': razorpay_subscription_id,
                 'subscription.razorpayPlanId': paymentData.metadata?.razorpayPlanId ?? null,
+                'subscription.pricingVariant': pricingVariant,
                 'subscription.kickstarterCreditsCarriedForward': carriedKickstarterCredits > 0,
                 'subscription.carriedForwardCredits': carriedKickstarterCredits,
                 'subscription.pendingPlanId': null,
                 'subscription.pendingRazorpayPlanId': null,
                 'subscription.pendingPlanEffectiveAt': null,
+                'subscription.pendingPricingVariant': null,
                 updatedAt: FieldValue.serverTimestamp(),
             });
 

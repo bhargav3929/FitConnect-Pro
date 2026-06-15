@@ -3,7 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS, type PlanId } from '@fitconnect/shared/types/subscription';
 import { updateRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
-import { getSyncedPlanEntry } from '@/lib/razorpay/pricing';
+import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
 
 function toDate(value: unknown): Date | null {
     if (!value) return null;
@@ -85,7 +85,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User not found', code: 'not-found' }, { status: 404 });
         }
 
-        const currentSub = userDoc.data()?.subscription as Record<string, unknown> | undefined;
+        const userData = userDoc.data();
+        const currentSub = userData?.subscription as Record<string, unknown> | undefined;
         const currentPlan = currentSub?.planId ? getPlanById(currentSub.planId as string) : null;
         if (!currentSub || currentSub.status !== 'active' || (currentSub.planCategory !== 'membership' && currentPlan?.category !== 'membership')) {
             return NextResponse.json(
@@ -119,19 +120,31 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const isFoundingMember = userData?.isFoundingMember === true;
+        const foundingDiscountEligible = isFoundingMember && !!targetPlan.foundingPrice;
         const syncedTargetPlan = await getSyncedPlanEntry(targetPlan.id);
-        const razorpayPlanId = syncedTargetPlan?.razorpayPlanId ?? targetPlan.razorpayPlanId;
+        const standardRazorpayPlanId = syncedTargetPlan?.razorpayPlanId ?? targetPlan.razorpayPlanId;
+        const foundingRazorpayPlanId = syncedTargetPlan?.foundingRazorpayPlanId ?? null;
+        const razorpayPlanId = foundingDiscountEligible ? foundingRazorpayPlanId : standardRazorpayPlanId;
         if (!razorpayPlanId) {
             return NextResponse.json(
-                { error: `Plan '${targetPlan.id}' is not configured as a Razorpay subscription plan.`, code: 'plan-not-configured' },
+                {
+                    error: foundingDiscountEligible
+                        ? `Founding member plan '${targetPlan.id}' is not configured in Razorpay yet.`
+                        : `Plan '${targetPlan.id}' is not configured as a Razorpay subscription plan.`,
+                    code: foundingDiscountEligible ? 'founding-plan-not-configured' : 'plan-not-configured',
+                },
                 { status: 503 },
             );
         }
 
         const currentPlanForPricing = currentPlanId ? getPlanById(currentPlanId) : null;
         const syncedCurrentPlan = currentPlanForPricing ? await getSyncedPlanEntry(currentPlanForPricing.id) : null;
-        const currentPrice = syncedCurrentPlan?.price ?? currentPlanForPricing?.price ?? 0;
-        const targetPrice = syncedTargetPlan?.price ?? targetPlan.price;
+        const currentFoundingDiscountEligible = isFoundingMember && !!currentPlanForPricing?.foundingPrice;
+        const currentPrice = currentPlanForPricing
+            ? getChargeAmount(currentPlanForPricing, syncedCurrentPlan, currentFoundingDiscountEligible)
+            : 0;
+        const targetPrice = getChargeAmount(targetPlan, syncedTargetPlan, foundingDiscountEligible);
         const scheduleChangeAt: 'now' | 'cycle_end' = targetPrice >= currentPrice ? 'now' : 'cycle_end';
 
         const rzpSub = await updateRazorpaySubscription(
@@ -170,6 +183,10 @@ export async function POST(req: NextRequest) {
             fromPlanId: currentPlanId ?? null,
             toPlanId: targetPlan.id,
             razorpayPlanId,
+            standardRazorpayPlanId: standardRazorpayPlanId ?? null,
+            foundingRazorpayPlanId,
+            foundingMemberDiscountApplied: foundingDiscountEligible,
+            pricingVariant: foundingDiscountEligible ? 'founding' : 'standard',
             scheduleChangeAt,
             status: rzpSub.has_scheduled_changes ? 'scheduled' : 'applied',
             requestedAt: now,
@@ -187,6 +204,7 @@ export async function POST(req: NextRequest) {
                 'subscription.pendingPlanId': targetPlan.id,
                 'subscription.pendingRazorpayPlanId': razorpayPlanId,
                 'subscription.pendingPlanEffectiveAt': effectiveAt,
+                'subscription.pendingPricingVariant': foundingDiscountEligible ? 'founding' : 'standard',
                 'subscription.cancelAtPeriodEnd': false,
                 updatedAt: FieldValue.serverTimestamp(),
             });
@@ -207,9 +225,11 @@ export async function POST(req: NextRequest) {
                 'subscription.cancelAtPeriodEnd': false,
                 'subscription.razorpaySubscriptionId': razorpaySubscriptionId,
                 'subscription.razorpayPlanId': razorpayPlanId,
+                'subscription.pricingVariant': foundingDiscountEligible ? 'founding' : 'standard',
                 'subscription.pendingPlanId': null,
                 'subscription.pendingRazorpayPlanId': null,
                 'subscription.pendingPlanEffectiveAt': null,
+                'subscription.pendingPricingVariant': null,
                 updatedAt: FieldValue.serverTimestamp(),
             });
         }

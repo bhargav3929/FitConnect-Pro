@@ -230,6 +230,7 @@ Rules:
 - Allow if current subscription is inactive, expired, canceled, or `drop_in`.
 - Reject active membership unless caller is using `/api/subscriptions/update`.
 - Require mapped Razorpay Plan ID.
+- For eligible founding members, require and use the mapped founding Razorpay Plan variant.
 - Create Razorpay subscription with `customer_notify`.
 - Store pending payment record.
 
@@ -286,7 +287,8 @@ Rules:
 - Reject same-plan updates.
 - Require existing `razorpaySubscriptionId`.
 - Require target Razorpay Plan mapping.
-- Compare current and target synced prices.
+- For eligible founding members, require and use the target founding Razorpay Plan variant.
+- Compare current and target synced prices using the member's pricing variant.
 - Apply higher/equal price plans immediately with `schedule_change_at = now`.
 - Schedule lower price plans with `schedule_change_at = cycle_end`.
 - Store pending plan fields when Razorpay schedules the change.
@@ -532,15 +534,17 @@ Keep the existing pull-based pricing sync:
 
 - `/api/subscriptions/pricing`
 - `settings/razorpayPlans`
-- Match Razorpay Plans by `notes.fitconnect_plan_id`.
+- Match standard Razorpay Plans by `notes.fitconnect_plan_id`.
+- Match founding-member Razorpay Plans by both `notes.fitconnect_plan_id` and `notes.fitconnect_variant = founding`.
 
 Before subscription migration:
 
 - Ensure every recurring membership plan exists in Razorpay Plans.
 - Ensure every Razorpay Plan has `notes.fitconnect_plan_id`.
+- Ensure every recurring membership with a founding price has a separate Razorpay Plan with `notes.fitconnect_variant = founding`.
 - Ensure static fallback prices match Razorpay.
 
-Checkout should fail closed if a membership has no Razorpay Plan ID.
+Checkout should fail closed if a membership has no Razorpay Plan ID. Founding-member checkout should also fail closed if the matching founding Razorpay Plan is missing, so founding members are not charged the standard rate by accident.
 
 ## Migration Plan
 
@@ -548,7 +552,9 @@ Checkout should fail closed if a membership has no Razorpay Plan ID.
 
 - Confirm Razorpay Subscriptions is enabled on the account.
 - Create Razorpay Plans for all recurring memberships.
+- Create founding Razorpay Plans for all recurring memberships with a founding price using `npx tsx scripts/create-razorpay-founding-plans.ts`.
 - Add `fitconnect_plan_id` notes to every plan.
+- Add `fitconnect_variant=founding` notes to founding plan variants.
 - Test `/api/subscriptions/pricing` sync.
 - Configure webhook URL and secret.
 - Decide branded email provider.

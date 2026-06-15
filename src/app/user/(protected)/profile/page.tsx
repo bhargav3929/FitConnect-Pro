@@ -195,8 +195,16 @@ export default function ProfilePage() {
     const providerData = firebaseUser?.providerData ?? auth.currentUser?.providerData ?? []
     const hasPasswordProvider = providerData.some((provider) => provider.providerId === 'password')
     const hasGoogleProvider = providerData.some((provider) => provider.providerId === 'google.com')
+    const hasAppleProvider = providerData.some((provider) => provider.providerId === 'apple.com')
     const shouldShowPasswordChange = providerData.length === 0 || hasPasswordProvider
-    const externalProviderLabel = hasGoogleProvider ? 'Google' : 'your sign-in provider'
+    const externalProviderLabel =
+        hasAppleProvider && hasGoogleProvider
+            ? 'Apple or Google'
+            : hasAppleProvider
+                ? 'Apple'
+                : hasGoogleProvider
+                    ? 'Google'
+                    : 'your sign-in provider'
 
     const inputClasses = "w-full bg-peach-100 border border-peach-400/20 rounded-xl px-4 py-3 text-olive-600 text-sm font-medium placeholder:text-olive-300/50 focus:outline-none focus:ring-2 focus:ring-terra-400/30 focus:border-terra-400/40 transition-all"
 

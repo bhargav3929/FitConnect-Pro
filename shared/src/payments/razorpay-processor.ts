@@ -192,12 +192,15 @@ export async function listRazorpayPlans(
     name: string;
     period: string;
     interval: number;
+    createdAt?: number;
     fitconnectPlanId?: string;
+    fitconnectVariant?: string;
 }>> {
     const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
     const result = await (client.plans as unknown as {
         all: (opts?: Record<string, unknown>) => Promise<{ items: Array<{
             id: string;
+            created_at?: number;
             interval: number;
             period: string;
             item: { amount: number; currency: string; name: string };
@@ -212,7 +215,9 @@ export async function listRazorpayPlans(
         name: plan.item.name,
         period: plan.period,
         interval: plan.interval,
+        createdAt: plan.created_at,
         fitconnectPlanId: plan.notes?.fitconnect_plan_id,
+        fitconnectVariant: plan.notes?.fitconnect_variant,
     }));
 }
 

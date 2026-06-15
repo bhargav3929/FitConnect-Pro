@@ -21,6 +21,8 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import Constants from 'expo-constants';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import {
@@ -53,8 +55,10 @@ const BRAND = {
 export default function LoginScreen() {
     const router = useRouter();
     const params = useLocalSearchParams<{ tab?: string; returnTo?: string }>();
-    const { loginClient, signupClient, googleSignInWithIdToken } = useClientAuthStore();
+    const { loginClient, signupClient, googleSignInWithIdToken, appleSignInWithIdentityToken } = useClientAuthStore();
     const [googleLoading, setGoogleLoading] = useState(false);
+    const [appleLoading, setAppleLoading] = useState(false);
+    const [isAppleAvailable, setIsAppleAvailable] = useState(false);
     const { width, height } = useWindowDimensions();
     const isLandscape = width > height;
     const isCompact = height < 720 || isLandscape;
@@ -102,6 +106,32 @@ export default function LoginScreen() {
         }
     }, [response]);
 
+    useEffect(() => {
+        let mounted = true;
+        if (Platform.OS !== 'ios') return;
+        AppleAuthentication.isAvailableAsync()
+            .then((available) => {
+                if (mounted) setIsAppleAvailable(available);
+            })
+            .catch(() => {
+                if (mounted) setIsAppleAvailable(false);
+            });
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    const createRawNonce = () => {
+        const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+        const bytes = Crypto.getRandomBytes(32);
+        return Array.from(bytes, (byte) => charset[byte % charset.length]).join('');
+    };
+
+    const formatAppleName = (fullName: AppleAuthentication.AppleAuthenticationFullName | null) => {
+        if (!fullName) return null;
+        return [fullName.givenName, fullName.familyName].filter(Boolean).join(' ').trim() || null;
+    };
+
     const handleGoogleSignInWithToken = async (idToken: string) => {
         setGoogleLoading(true);
         const result = await googleSignInWithIdToken(idToken);
@@ -125,6 +155,54 @@ export default function LoginScreen() {
             await promptAsync();
         } catch {
             Alert.alert('Error', 'Failed to initiate Google sign-in');
+        }
+    };
+
+    const handleAppleSignIn = async () => {
+        if (Platform.OS !== 'ios' || !isAppleAvailable) {
+            Alert.alert('Unavailable', 'Sign in with Apple is not available on this device.');
+            return;
+        }
+
+        setAppleLoading(true);
+        try {
+            const rawNonce = createRawNonce();
+            const hashedNonce = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.SHA256,
+                rawNonce,
+            );
+            const credential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+                nonce: hashedNonce,
+            });
+
+            if (!credential.identityToken) {
+                Alert.alert('Sign-in Failed', 'Apple did not return an identity token.');
+                return;
+            }
+
+            const result = await appleSignInWithIdentityToken(
+                credential.identityToken,
+                rawNonce,
+                formatAppleName(credential.fullName),
+            );
+            if (result.success) {
+                router.replace(returnTo);
+            } else {
+                Alert.alert('Sign-in Failed', result.error || 'Something went wrong');
+            }
+        } catch (error: unknown) {
+            const code = typeof error === 'object' && error && 'code' in error
+                ? String((error as { code?: string }).code)
+                : '';
+            if (code !== 'ERR_REQUEST_CANCELED') {
+                Alert.alert('Error', 'Failed to initiate Apple sign-in');
+            }
+        } finally {
+            setAppleLoading(false);
         }
     };
 
@@ -237,7 +315,7 @@ export default function LoginScreen() {
     const signupPasswordRef = useRef<TextInput>(null);
     const signupConfirmRef = useRef<TextInput>(null);
 
-    const isLoading = loginLoading || signupLoading || googleLoading;
+    const isLoading = loginLoading || signupLoading || googleLoading || appleLoading;
 
     const handleLogin = async () => {
         if (!loginEmail || !loginPassword) {
@@ -374,6 +452,15 @@ export default function LoginScreen() {
                             onPress={handleGoogleSignIn}
                         />
 
+                        {isAppleAvailable && (
+                            <AppleSignInButton
+                                mode={activeTab}
+                                loading={appleLoading}
+                                disabled={isLoading}
+                                onPress={handleAppleSignIn}
+                            />
+                        )}
+
                         <DividerWithLabel label="or continue with email" />
 
                         <Animated.View
@@ -428,7 +515,7 @@ export default function LoginScreen() {
                                     <SubmitButton
                                         label={loginLoading ? 'Verifying...' : 'Sign in'}
                                         loading={loginLoading}
-                                        disabled={isLoading || googleLoading}
+                                        disabled={isLoading}
                                         onPress={handleLogin}
                                     />
 
@@ -521,7 +608,7 @@ export default function LoginScreen() {
                                     <SubmitButton
                                         label={signupLoading ? 'Creating account...' : 'Create account'}
                                         loading={signupLoading}
-                                        disabled={isLoading || googleLoading}
+                                        disabled={isLoading}
                                         onPress={handleSignup}
                                     />
 
@@ -653,6 +740,42 @@ function GoogleSignInButton({
                 {loading ? 'Signing in...' : 'Continue with Google'}
             </Text>
         </TouchableOpacity>
+    );
+}
+
+function AppleSignInButton({
+    mode,
+    loading,
+    disabled,
+    onPress,
+}: {
+    mode: AuthTab;
+    loading: boolean;
+    disabled: boolean;
+    onPress: () => void;
+}) {
+    return (
+        <View
+            pointerEvents={disabled || loading ? 'none' : 'auto'}
+            style={[styles.appleButtonWrap, disabled && styles.appleButtonDisabled]}
+        >
+            {loading && (
+                <View pointerEvents="none" style={styles.appleLoadingOverlay}>
+                    <ActivityIndicator size="small" color={BRAND.white} />
+                </View>
+            )}
+            <AppleAuthentication.AppleAuthenticationButton
+                buttonType={
+                    mode === 'signup'
+                        ? AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
+                        : AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+                }
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={BorderRadius.md}
+                style={styles.appleButton}
+                onPress={onPress}
+            />
+        </View>
     );
 }
 
@@ -957,5 +1080,25 @@ const styles = StyleSheet.create({
         fontFamily: FontFamily.sansBold,
         fontSize: FontSize.sm,
         color: BRAND.olive,
+    },
+    appleButtonWrap: {
+        height: 50,
+        marginTop: Spacing.sm,
+        borderRadius: BorderRadius.md,
+        overflow: 'hidden',
+    },
+    appleButtonDisabled: {
+        opacity: 0.6,
+    },
+    appleButton: {
+        width: '100%',
+        height: 50,
+    },
+    appleLoadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#00000066',
     },
 });

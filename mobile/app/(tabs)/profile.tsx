@@ -94,8 +94,16 @@ export default function ProfileScreen() {
     const providerData = firebaseUser?.providerData ?? auth.currentUser?.providerData ?? [];
     const hasPasswordProvider = providerData.some((provider) => provider.providerId === 'password');
     const hasGoogleProvider = providerData.some((provider) => provider.providerId === 'google.com');
+    const hasAppleProvider = providerData.some((provider) => provider.providerId === 'apple.com');
     const shouldShowPasswordChange = providerData.length === 0 || hasPasswordProvider;
-    const externalProviderLabel = hasGoogleProvider ? 'Google' : 'your sign-in provider';
+    const externalProviderLabel =
+        hasAppleProvider && hasGoogleProvider
+            ? 'Apple or Google'
+            : hasAppleProvider
+                ? 'Apple'
+                : hasGoogleProvider
+                    ? 'Google'
+                    : 'your sign-in provider';
 
     const handleCancelSubscription = useCallback(() => {
         if (renewalCanceled) {

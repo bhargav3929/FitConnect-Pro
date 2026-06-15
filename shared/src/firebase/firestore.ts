@@ -826,9 +826,12 @@ export async function callGetPricing(): Promise<{
         planId: string;
         name: string;
         price: number;
+        foundingPrice: number | null;
         razorpayPlanId: string | null;
+        foundingRazorpayPlanId: string | null;
         razorpayItemId: string | null;
         configured: boolean;
+        foundingConfigured: boolean;
         category: string;
         source: 'plans' | 'items' | 'static';
     }>;
@@ -844,9 +847,12 @@ export async function callGetPricing(): Promise<{
             planId: string;
             name: string;
             price: number;
+            foundingPrice: number | null;
             razorpayPlanId: string | null;
+            foundingRazorpayPlanId: string | null;
             razorpayItemId: string | null;
             configured: boolean;
+            foundingConfigured: boolean;
             category: string;
             source: 'plans' | 'items' | 'static';
         }>;

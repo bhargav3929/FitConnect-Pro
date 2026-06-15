@@ -14,6 +14,10 @@ vi.mock('firebase/auth', () => ({
     onAuthStateChanged: vi.fn(),
     signOut: vi.fn(),
     updateProfile: vi.fn(),
+    GoogleAuthProvider: vi.fn(),
+    OAuthProvider: vi.fn(),
+    signInWithPopup: vi.fn(),
+    signInWithCredential: vi.fn(),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -65,7 +69,7 @@ describe('Subscribe screen — plan catalog integration', () => {
         const twice = getPlanById('twice_quarterly');
         expect(twice).toBeDefined();
         expect(twice!.name).toBe('2x Weekly · Quarterly');
-        expect(twice!.price).toBe(36000);
+        expect(twice!.price).toBe(40800);
         expect(twice!.credits).toBe(24);
         expect(twice!.category).toBe('membership');
     });
@@ -112,7 +116,7 @@ describe('Subscribe screen — plan catalog integration', () => {
         const twice6mo = getPlanById('twice_6mo');
         expect(twice6mo).toBeDefined();
         expect(twice6mo!.credits).toBe(48);
-        expect(twice6mo!.price).toBe(64000);
+        expect(twice6mo!.price).toBe(72000);
         expect(twice6mo!.guestPasses).toBe(1);
         expect(twice6mo!.durationDays).toBe(180);
     });

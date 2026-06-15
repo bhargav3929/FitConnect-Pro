@@ -61,7 +61,7 @@ export function mapFirebaseError(code: string): string {
         case 'auth/unauthorized-domain':
             return 'This domain is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains.'
         case 'auth/operation-not-allowed':
-            return 'Google sign-in is not enabled. Enable it in Firebase Console → Authentication → Sign-in method.'
+            return 'This sign-in method is not enabled. Enable it in Firebase Console → Authentication → Sign-in method.'
         case 'auth/account-exists-with-different-credential':
             return 'An account already exists with this email using a different sign-in method.'
         default:

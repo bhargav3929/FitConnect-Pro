@@ -6,6 +6,7 @@ import {
     signOut,
     updateProfile,
     GoogleAuthProvider,
+    OAuthProvider,
     signInWithPopup,
     signInWithCredential,
     User as FirebaseUser,
@@ -32,6 +33,7 @@ interface ClientAuthState {
     signupClient: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
     googleSignIn: () => Promise<{ success: boolean; error?: string }>
     googleSignInWithIdToken: (idToken: string, accessToken?: string) => Promise<{ success: boolean; error?: string }>
+    appleSignInWithIdentityToken: (identityToken: string, rawNonce: string, name?: string | null) => Promise<{ success: boolean; error?: string }>
     logoutClient: () => Promise<void>
     refreshSubscription: () => Promise<void>
 }
@@ -57,17 +59,29 @@ type ClientAuthSetter = (
         | ((state: ClientAuthState) => Partial<ClientAuthState>),
 ) => void
 
-async function finalizeGoogleLogin(
+async function finalizeProviderLogin(
     user: FirebaseUser,
     set: ClientAuthSetter,
+    fallbackName?: string | null,
 ): Promise<{ success: boolean; error?: string }> {
     let profile = await fetchClientProfile(user.uid)
     if (!profile) {
         profile = await createClientProfile(
             user.uid,
             user.email || '',
-            user.displayName || 'Member',
+            user.displayName || fallbackName || 'Member',
         )
+    } else if (fallbackName && (!profile.name || profile.name === 'Member')) {
+        const nextName = user.displayName || fallbackName
+        try {
+            await setDoc(doc(db, 'users', user.uid), {
+                name: nextName,
+                updatedAt: serverTimestamp(),
+            }, { merge: true })
+            profile = { ...profile, name: nextName }
+        } catch {
+            profile = { ...profile, name: nextName }
+        }
     }
     set({ isAuthenticated: true, clientUser: profile, firebaseUser: user })
     return { success: true }
@@ -227,7 +241,7 @@ export const useClientAuthStore = create<ClientAuthState>()((set, get) => ({
         try {
             const provider = new GoogleAuthProvider()
             const result = await signInWithPopup(auth, provider)
-            return await finalizeGoogleLogin(result.user, set)
+            return await finalizeProviderLogin(result.user, set)
         } catch (err: unknown) {
             const code = (err as { code?: string }).code || ''
             return { success: false, error: mapFirebaseError(code) }
@@ -239,7 +253,24 @@ export const useClientAuthStore = create<ClientAuthState>()((set, get) => ({
         try {
             const credential = GoogleAuthProvider.credential(idToken, accessToken)
             const result = await signInWithCredential(auth, credential)
-            return await finalizeGoogleLogin(result.user, set)
+            return await finalizeProviderLogin(result.user, set)
+        } catch (err: unknown) {
+            const code = (err as { code?: string }).code || ''
+            return { success: false, error: mapFirebaseError(code) }
+        }
+    },
+
+    appleSignInWithIdentityToken: async (identityToken: string, rawNonce: string, name?: string | null) => {
+        if (!identityToken) return { success: false, error: 'Missing Apple identity token' }
+        if (!rawNonce) return { success: false, error: 'Missing Apple nonce' }
+        try {
+            const provider = new OAuthProvider('apple.com')
+            const credential = provider.credential({
+                idToken: identityToken,
+                rawNonce,
+            })
+            const result = await signInWithCredential(auth, credential)
+            return await finalizeProviderLogin(result.user, set, name)
         } catch (err: unknown) {
             const code = (err as { code?: string }).code || ''
             return { success: false, error: mapFirebaseError(code) }

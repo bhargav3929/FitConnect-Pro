@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS } from '@fitconnect/shared/types/subscription';
 import { createRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
-import { getSyncedPlanEntry } from '@/lib/razorpay/pricing';
+import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
 
 function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
     if (!subscription || subscription.status !== 'active') return false;
@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
 
         const syncedPlan = await getSyncedPlanEntry(planId);
         const razorpayPlanId = syncedPlan?.razorpayPlanId ?? plan.razorpayPlanId;
-        const chargeAmount = syncedPlan?.price ?? plan.price;
 
         if (!razorpayPlanId) {
             return NextResponse.json(
@@ -75,15 +74,36 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const isFoundingMember = userData?.isFoundingMember === true;
+        const foundingDiscountEligible = isFoundingMember && !!plan.foundingPrice;
+
+        if (foundingDiscountEligible && !syncedPlan?.foundingRazorpayPlanId) {
+            return NextResponse.json(
+                {
+                    error: `Founding member plan '${planId}' is not configured in Razorpay yet.`,
+                    code: 'founding-plan-not-configured',
+                },
+                { status: 503 },
+            );
+        }
+
+        const chargeAmount = getChargeAmount(plan, syncedPlan, isFoundingMember);
+        const subscriptionRazorpayPlanId = foundingDiscountEligible
+            ? syncedPlan!.foundingRazorpayPlanId!
+            : razorpayPlanId;
         const keyId = process.env.RAZORPAY_KEY_ID!;
         const keySecret = process.env.RAZORPAY_KEY_SECRET!;
 
         const rzpSub = await createRazorpaySubscription(
-            razorpayPlanId,
+            subscriptionRazorpayPlanId,
             plan.razorpayTotalCount ?? 24,
             keyId,
             keySecret,
-            { planId, userId },
+            {
+                planId,
+                userId,
+                pricingVariant: foundingDiscountEligible ? 'founding' : 'standard',
+            },
         );
 
         const paymentRef = adminDb.collection('payments').doc();
@@ -101,10 +121,15 @@ export async function POST(req: NextRequest) {
                 planCategory: plan.category,
                 credits: plan.credits,
                 durationDays: plan.durationDays,
-                listPrice: chargeAmount,
+                listPrice: syncedPlan?.price ?? plan.price,
+                chargeAmount,
                 pricingSource: syncedPlan?.source ?? 'static',
-                razorpayPlanId,
+                razorpayPlanId: subscriptionRazorpayPlanId,
+                standardRazorpayPlanId: razorpayPlanId,
+                foundingRazorpayPlanId: syncedPlan?.foundingRazorpayPlanId ?? null,
                 razorpayItemId: syncedPlan?.razorpayItemId ?? null,
+                foundingMemberDiscountApplied: foundingDiscountEligible,
+                pricingVariant: foundingDiscountEligible ? 'founding' : 'standard',
             },
             createdAt: new Date(),
             paidAt: null,

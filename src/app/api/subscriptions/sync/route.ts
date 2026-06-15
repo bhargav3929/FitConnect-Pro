@@ -3,7 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { fetchRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
-import { getPlanIdForRazorpayPlanId } from '@/lib/razorpay/pricing';
+import { getPlanIdForRazorpayPlanId, getPricingVariantForRazorpayPlanId } from '@/lib/razorpay/pricing';
 
 function fromUnixSeconds(value: unknown): Date | null {
     return typeof value === 'number' && value > 0 ? new Date(value * 1000) : null;
@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
         );
 
         const planId = await getPlanIdForRazorpayPlanId(rzpSub.plan_id);
+        const pricingVariant = await getPricingVariantForRazorpayPlanId(rzpSub.plan_id);
         const plan = planId ? getPlanById(planId) : null;
         if (!plan) {
             return NextResponse.json(
@@ -107,11 +108,13 @@ export async function POST(req: NextRequest) {
             'subscription.cancelAtPeriodEnd': renewalCanceled,
             'subscription.razorpaySubscriptionId': rzpSub.id,
             'subscription.razorpayPlanId': rzpSub.plan_id,
+            'subscription.pricingVariant': pricingVariant ?? subscription?.pricingVariant ?? 'standard',
             'subscription.pendingPlanId': rzpSub.has_scheduled_changes ? subscription?.pendingPlanId ?? null : null,
             'subscription.pendingRazorpayPlanId': rzpSub.has_scheduled_changes ? subscription?.pendingRazorpayPlanId ?? null : null,
             'subscription.pendingPlanEffectiveAt': rzpSub.has_scheduled_changes
                 ? fromUnixSeconds(rzpSub.change_scheduled_at) ?? subscription?.pendingPlanEffectiveAt ?? null
                 : null,
+            'subscription.pendingPricingVariant': rzpSub.has_scheduled_changes ? subscription?.pendingPricingVariant ?? null : null,
             'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });

@@ -3,14 +3,18 @@ import { PLAN_CATALOG, type PlanDefinition, type PlanId } from '@fitconnect/shar
 import { listRazorpayItems, listRazorpayPlans } from '@fitconnect/shared/payments/razorpay-processor';
 
 export type PricingSource = 'plans' | 'items' | 'static';
+export type PricingVariant = 'standard' | 'founding';
 
 export interface SyncedPlanEntry {
     planId: string;
     name: string;
     price: number;
+    foundingPrice: number | null;
     razorpayPlanId: string | null;
+    foundingRazorpayPlanId: string | null;
     razorpayItemId: string | null;
     configured: boolean;
+    foundingConfigured: boolean;
     category: string;
     source: PricingSource;
 }
@@ -28,9 +32,12 @@ function buildFallbackPlans(): SyncedPlanEntry[] {
         planId: plan.id,
         name: plan.name,
         price: plan.price,
+        foundingPrice: plan.foundingPrice ?? null,
         razorpayPlanId: null,
+        foundingRazorpayPlanId: null,
         razorpayItemId: null,
         configured: false,
+        foundingConfigured: false,
         category: plan.category,
         source: 'static',
     }));
@@ -74,26 +81,25 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
         return { plans: buildFallbackPlans(), lastSyncedAt: null, source: 'static' };
     }
 
-    const planMap = new Map<string, { razorpayPlanId: string; amountPaise: number }>();
+    type RazorpayPlanMatch = { razorpayPlanId: string; amountPaise: number; createdAt: number };
+    const planMap = new Map<string, RazorpayPlanMatch[]>();
+    const foundingPlanMap = new Map<string, RazorpayPlanMatch[]>();
     const itemMap = new Map<string, { itemId: string; amountPaise: number }>();
-
-    // Build a set of pinned Razorpay plan IDs from PLAN_CATALOG so we always
-    // prefer those over any older plans that share the same fitconnect_plan_id note.
-    const pinnedPlanIds = new Set(
-        PLAN_CATALOG.filter((p) => p.razorpayPlanId).map((p) => p.razorpayPlanId as string),
-    );
 
     try {
         const razorpayPlans = await listRazorpayPlans(keyId, keySecret);
         for (const plan of razorpayPlans) {
             if (!plan.fitconnectPlanId) continue;
-            const existing = planMap.get(plan.fitconnectPlanId);
-            // If we already have a pinned plan for this ID, skip non-pinned entries.
-            if (existing && pinnedPlanIds.has(existing.razorpayPlanId)) continue;
-            planMap.set(plan.fitconnectPlanId, {
+            const targetMap = plan.fitconnectVariant?.toLowerCase() === 'founding'
+                ? foundingPlanMap
+                : planMap;
+            const matches = targetMap.get(plan.fitconnectPlanId) ?? [];
+            matches.push({
                 razorpayPlanId: plan.id,
                 amountPaise: plan.amount,
+                createdAt: plan.createdAt ?? 0,
             });
+            targetMap.set(plan.fitconnectPlanId, matches);
         }
     } catch (error) {
         console.warn('[pricing] Razorpay Plans sync failed:', error);
@@ -113,8 +119,24 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
         console.warn('[pricing] Razorpay Items sync failed:', error);
     }
 
+    const selectStandardPlan = (matches: RazorpayPlanMatch[] | undefined): RazorpayPlanMatch | undefined => {
+        if (!matches?.length) return undefined;
+        return [...matches].sort((a, b) => b.createdAt - a.createdAt)[0];
+    };
+
+    const selectFoundingPlan = (
+        matches: RazorpayPlanMatch[] | undefined,
+        plan: PlanDefinition,
+    ): RazorpayPlanMatch | undefined => {
+        if (!matches?.length || !plan.foundingPrice) return undefined;
+        const expectedAmount = plan.foundingPrice * 100;
+        const sortedMatches = [...matches].sort((a, b) => b.createdAt - a.createdAt);
+        return sortedMatches.find((match) => match.amountPaise === expectedAmount) ?? sortedMatches[0];
+    };
+
     const plans: SyncedPlanEntry[] = PLAN_CATALOG.map((plan) => {
-        const planMatch = planMap.get(plan.id);
+        const planMatch = selectStandardPlan(planMap.get(plan.id));
+        const foundingPlanMatch = selectFoundingPlan(foundingPlanMap.get(plan.id), plan);
         const itemMatch = itemMap.get(plan.id);
 
         if (plan.category === 'membership' && planMatch) {
@@ -122,9 +144,12 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
                 planId: plan.id,
                 name: plan.name,
                 price: Math.round(planMatch.amountPaise / 100),
+                foundingPrice: foundingPlanMatch ? Math.round(foundingPlanMatch.amountPaise / 100) : plan.foundingPrice ?? null,
                 razorpayPlanId: planMatch.razorpayPlanId,
+                foundingRazorpayPlanId: foundingPlanMatch?.razorpayPlanId ?? null,
                 razorpayItemId: itemMatch?.itemId ?? null,
                 configured: true,
+                foundingConfigured: !!foundingPlanMatch,
                 category: plan.category,
                 source: 'plans',
             };
@@ -135,9 +160,12 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
                 planId: plan.id,
                 name: plan.name,
                 price: Math.round(itemMatch.amountPaise / 100),
+                foundingPrice: plan.foundingPrice ?? null,
                 razorpayPlanId: planMatch?.razorpayPlanId ?? null,
+                foundingRazorpayPlanId: foundingPlanMatch?.razorpayPlanId ?? null,
                 razorpayItemId: itemMatch.itemId,
                 configured: true,
+                foundingConfigured: !!foundingPlanMatch,
                 category: plan.category,
                 source: 'items',
             };
@@ -147,9 +175,12 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
             planId: plan.id,
             name: plan.name,
             price: plan.price,
+            foundingPrice: foundingPlanMatch ? Math.round(foundingPlanMatch.amountPaise / 100) : plan.foundingPrice ?? null,
             razorpayPlanId: plan.razorpayPlanId ?? null,
+            foundingRazorpayPlanId: foundingPlanMatch?.razorpayPlanId ?? null,
             razorpayItemId: null,
             configured: false,
+            foundingConfigured: !!foundingPlanMatch,
             category: plan.category,
             source: 'static',
         };
@@ -158,15 +189,18 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
     const lastSyncedAt = new Date().toISOString();
     const source = getSyncSource(plans);
     const planIdMap: Record<string, string> = {};
+    const foundingPlanIdMap: Record<string, string> = {};
     const itemIdMap: Record<string, string> = {};
 
     for (const plan of plans) {
         if (plan.razorpayPlanId) planIdMap[plan.planId] = plan.razorpayPlanId;
+        if (plan.foundingRazorpayPlanId) foundingPlanIdMap[plan.planId] = plan.foundingRazorpayPlanId;
         if (plan.razorpayItemId) itemIdMap[plan.planId] = plan.razorpayItemId;
     }
 
     await adminDb.collection('settings').doc('razorpayPlans').set({
         planIdMap,
+        foundingPlanIdMap,
         itemIdMap,
         plans,
         lastSyncedAt,
@@ -205,17 +239,36 @@ export async function getSyncedPlanEntry(planId: string): Promise<SyncedPlanEntr
 
 export async function getPlanIdForRazorpayPlanId(razorpayPlanId: string): Promise<PlanId | null> {
     const pricing = await getSyncedPricing();
-    const syncedMatch = pricing.plans.find((plan) => plan.razorpayPlanId === razorpayPlanId);
+    const syncedMatch = pricing.plans.find(
+        (plan) => plan.razorpayPlanId === razorpayPlanId || plan.foundingRazorpayPlanId === razorpayPlanId,
+    );
     if (syncedMatch) return syncedMatch.planId as PlanId;
 
     const staticMatch = PLAN_CATALOG.find((plan) => plan.razorpayPlanId === razorpayPlanId);
     return staticMatch?.id ?? null;
 }
 
+export async function getPricingVariantForRazorpayPlanId(razorpayPlanId: string): Promise<PricingVariant | null> {
+    const pricing = await getSyncedPricing();
+    const syncedMatch = pricing.plans.find(
+        (plan) => plan.razorpayPlanId === razorpayPlanId || plan.foundingRazorpayPlanId === razorpayPlanId,
+    );
+    if (!syncedMatch) {
+        const staticMatch = PLAN_CATALOG.find((plan) => plan.razorpayPlanId === razorpayPlanId);
+        return staticMatch ? 'standard' : null;
+    }
+
+    return syncedMatch.foundingRazorpayPlanId === razorpayPlanId ? 'founding' : 'standard';
+}
+
 export function getChargeAmount(plan: PlanDefinition, syncedPlan: SyncedPlanEntry | null, isFoundingMember: boolean): number {
     const basePrice = syncedPlan?.price ?? plan.price;
     if (!isFoundingMember || !plan.foundingPrice || plan.price <= 0) {
         return basePrice;
+    }
+
+    if (syncedPlan?.foundingPrice) {
+        return syncedPlan.foundingPrice;
     }
 
     return Math.round(basePrice * (plan.foundingPrice / plan.price));

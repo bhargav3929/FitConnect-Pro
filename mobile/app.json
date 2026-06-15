@@ -16,7 +16,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fitconnect.pro",
-      "buildNumber": "6",
+      "buildNumber": "7",
+      "usesAppleSignIn": true,
       "googleServicesFile": "./GoogleService-Info.plist",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
@@ -36,6 +37,7 @@
       },
       "infoPlist": {
         "CFBundleDisplayName": "SOL Pilates",
+        "CFBundleAllowMixedLocalizations": true,
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "SOL Pilates may need access to your photo library if you choose to upload or update a profile photo.",
         "LSApplicationQueriesSchemes": [
@@ -73,6 +75,7 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      "expo-apple-authentication",
       "expo-web-browser"
     ],
     "extra": {

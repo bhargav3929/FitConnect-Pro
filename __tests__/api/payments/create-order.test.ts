@@ -3,11 +3,12 @@ import { NextRequest } from 'next/server';
 
 // ── Mocks (hoisted so vi.mock factories can reference them) ──────────────────
 
-const { mockVerifyIdToken, mockUserGet, mockPaymentSet, mockOrderCreate } = vi.hoisted(() => ({
+const { mockVerifyIdToken, mockUserGet, mockPaymentSet, mockOrderCreate, mockGetSyncedPlanEntry } = vi.hoisted(() => ({
     mockVerifyIdToken: vi.fn(),
     mockUserGet: vi.fn(),
     mockPaymentSet: vi.fn(),
     mockOrderCreate: vi.fn(),
+    mockGetSyncedPlanEntry: vi.fn(),
 }));
 
 vi.mock('@/lib/firebase/admin', () => ({
@@ -27,6 +28,19 @@ vi.mock('razorpay', () => ({
     default: vi.fn().mockImplementation(() => ({
         orders: { create: mockOrderCreate },
     })),
+}));
+
+vi.mock('@/lib/razorpay/pricing', () => ({
+    getSyncedPlanEntry: mockGetSyncedPlanEntry,
+    getChargeAmount: (
+        plan: { price: number; foundingPrice?: number },
+        syncedPlan: { price: number } | null,
+        isFoundingMember: boolean,
+    ) => {
+        const basePrice = syncedPlan?.price ?? plan.price;
+        if (!isFoundingMember || !plan.foundingPrice || plan.price <= 0) return basePrice;
+        return Math.round(basePrice * (plan.foundingPrice / plan.price));
+    },
 }));
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -61,6 +75,7 @@ describe('POST /api/payments/create-order', () => {
         mockVerifyIdToken.mockResolvedValue({ uid: 'user_123' });
         mockUserGet.mockResolvedValue(userDoc());
         mockPaymentSet.mockResolvedValue(undefined);
+        mockGetSyncedPlanEntry.mockResolvedValue(null);
         mockOrderCreate.mockResolvedValue({
             id: 'order_razorpay_abc',
             amount: 500000,
@@ -116,9 +131,9 @@ describe('POST /api/payments/create-order', () => {
         const { POST } = await import('@/app/api/payments/create-order/route');
         const req = makeRequest({ planId: 'twice_quarterly' });
         await POST(req);
-        // twice_quarterly foundingPrice = 30600, so paise = 3060000
+        // twice_quarterly foundingPrice = 34680, so paise = 3468000
         expect(mockOrderCreate).toHaveBeenCalledWith(
-            expect.objectContaining({ amount: 3060000 }),
+            expect.objectContaining({ amount: 3468000 }),
         );
     });
 
@@ -126,9 +141,9 @@ describe('POST /api/payments/create-order', () => {
         const { POST } = await import('@/app/api/payments/create-order/route');
         const req = makeRequest({ planId: 'twice_quarterly' });
         await POST(req);
-        // twice_quarterly price = 36000, so paise = 3600000
+        // twice_quarterly price = 40800, so paise = 4080000
         expect(mockOrderCreate).toHaveBeenCalledWith(
-            expect.objectContaining({ amount: 3600000 }),
+            expect.objectContaining({ amount: 4080000 }),
         );
     });
 

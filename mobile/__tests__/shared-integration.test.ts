@@ -14,6 +14,10 @@ vi.mock('firebase/auth', () => ({
     onAuthStateChanged: vi.fn(),
     signOut: vi.fn(),
     updateProfile: vi.fn(),
+    GoogleAuthProvider: vi.fn(),
+    OAuthProvider: vi.fn(),
+    signInWithPopup: vi.fn(),
+    signInWithCredential: vi.fn(),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -44,7 +48,7 @@ describe('shared package integration from mobile', () => {
             '@fitconnect/shared/types/subscription'
         );
         expect(PLAN_CATALOG).toHaveLength(6);
-        expect(getPlanById('thrice_quarterly')?.price).toBe(54000);
+        expect(getPlanById('thrice_quarterly')?.price).toBe(61200);
         expect(VALID_PLAN_IDS).toContain('drop_in');
     });
 

@@ -3,7 +3,7 @@ import { FieldValue, type DocumentReference } from 'firebase-admin/firestore';
 import { adminDb } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { verifyWebhookSignature, type RazorpaySubscriptionEntity } from '@fitconnect/shared/payments/razorpay-processor';
-import { getPlanIdForRazorpayPlanId } from '@/lib/razorpay/pricing';
+import { getPlanIdForRazorpayPlanId, getPricingVariantForRazorpayPlanId } from '@/lib/razorpay/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,6 +130,7 @@ async function applySubscriptionAccess(
     }
 
     const planId = await getPlanIdForRazorpayPlanId(sub.plan_id);
+    const pricingVariant = await getPricingVariantForRazorpayPlanId(sub.plan_id);
     const plan = planId ? getPlanById(planId) : null;
     if (!plan) {
         console.warn(`[webhook] ${options.source}: no app plan mapped for razorpayPlanId=${sub.plan_id}`);
@@ -187,6 +188,7 @@ async function applySubscriptionAccess(
             'subscription.canceledAt': null,
             'subscription.razorpaySubscriptionId': sub.id,
             'subscription.razorpayPlanId': sub.plan_id,
+            'subscription.pricingVariant': pricingVariant ?? currentSub?.pricingVariant ?? 'standard',
             'subscription.kickstarterCreditsCarriedForward': currentSub?.kickstarterCreditsCarriedForward === true || carriedKickstarterCredits > 0,
             'subscription.carriedForwardCredits': carriedKickstarterCredits > 0 ? carriedKickstarterCredits : currentSub?.carriedForwardCredits ?? 0,
             'subscription.pendingPlanId': sub.has_scheduled_changes ? currentSub?.pendingPlanId ?? null : null,
@@ -194,6 +196,7 @@ async function applySubscriptionAccess(
             'subscription.pendingPlanEffectiveAt': sub.has_scheduled_changes
                 ? fromUnixSeconds(sub.change_scheduled_at) ?? currentSub?.pendingPlanEffectiveAt ?? null
                 : null,
+            'subscription.pendingPricingVariant': sub.has_scheduled_changes ? currentSub?.pendingPricingVariant ?? null : null,
             'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -277,11 +280,13 @@ async function handleSubscriptionUpdated(payload: Record<string, unknown>) {
         const userRef = await findUserRefForSubscription(sub.id);
         if (!userRef) return;
         const pendingPlanId = await getPlanIdForRazorpayPlanId(sub.plan_id);
+        const pendingPricingVariant = await getPricingVariantForRazorpayPlanId(sub.plan_id);
 
         await userRef.update({
             'subscription.pendingPlanId': pendingPlanId,
             'subscription.pendingRazorpayPlanId': sub.plan_id,
             'subscription.pendingPlanEffectiveAt': fromUnixSeconds(sub.change_scheduled_at),
+            'subscription.pendingPricingVariant': pendingPricingVariant,
             'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
