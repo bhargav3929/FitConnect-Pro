@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -132,6 +133,18 @@ export default function LoginScreen() {
         return [fullName.givenName, fullName.familyName].filter(Boolean).join(' ').trim() || null;
     };
 
+    const getAppleErrorDetails = (error: unknown) => {
+        const code = typeof error === 'object' && error && 'code' in error
+            ? String((error as { code?: string }).code)
+            : '';
+        const message = error instanceof Error
+            ? error.message
+            : typeof error === 'object' && error && 'message' in error
+                ? String((error as { message?: string }).message)
+                : '';
+        return { code, message };
+    };
+
     const handleGoogleSignInWithToken = async (idToken: string) => {
         setGoogleLoading(true);
         const result = await googleSignInWithIdToken(idToken);
@@ -195,11 +208,15 @@ export default function LoginScreen() {
                 Alert.alert('Sign-in Failed', result.error || 'Something went wrong');
             }
         } catch (error: unknown) {
-            const code = typeof error === 'object' && error && 'code' in error
-                ? String((error as { code?: string }).code)
-                : '';
-            if (code !== 'ERR_REQUEST_CANCELED') {
-                Alert.alert('Error', 'Failed to initiate Apple sign-in');
+            const { code, message } = getAppleErrorDetails(error);
+            console.warn('[AppleSignIn] Failed to initiate Apple sign-in', { code, message });
+            if (code !== 'ERR_REQUEST_CANCELED' && code !== 'ERR_CANCELED') {
+                Alert.alert(
+                    'Apple Sign-In Failed',
+                    message
+                        ? `${message}${code ? ` (${code})` : ''}`
+                        : 'Make sure this is a fresh iOS build with Sign in with Apple enabled and that the device is signed in to iCloud.',
+                );
             }
         } finally {
             setAppleLoading(false);
@@ -454,7 +471,6 @@ export default function LoginScreen() {
 
                         {isAppleAvailable && (
                             <AppleSignInButton
-                                mode={activeTab}
                                 loading={appleLoading}
                                 disabled={isLoading}
                                 onPress={handleAppleSignIn}
@@ -734,7 +750,7 @@ function GoogleSignInButton({
             activeOpacity={0.85}
         >
             <View style={styles.googleGlyph}>
-                <Text style={styles.googleGlyphText}>G</Text>
+                <GoogleGMark />
             </View>
             <Text style={styles.googleButtonText}>
                 {loading ? 'Signing in...' : 'Continue with Google'}
@@ -743,13 +759,34 @@ function GoogleSignInButton({
     );
 }
 
+function GoogleGMark() {
+    return (
+        <Svg width={18} height={18} viewBox="0 0 18 18" accessibilityLabel="Google">
+            <Path
+                fill="#4285F4"
+                d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.86 2.7-6.62z"
+            />
+            <Path
+                fill="#34A853"
+                d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.58-5.05-3.72H.96v2.34A9 9 0 0 0 9 18z"
+            />
+            <Path
+                fill="#FBBC05"
+                d="M3.95 10.7a5.4 5.4 0 0 1 0-3.4V4.96H.96a9 9 0 0 0 0 8.08l2.99-2.34z"
+            />
+            <Path
+                fill="#EA4335"
+                d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.42 0 9 0A9 9 0 0 0 .96 4.96L3.95 7.3C4.66 5.16 6.65 3.58 9 3.58z"
+            />
+        </Svg>
+    );
+}
+
 function AppleSignInButton({
-    mode,
     loading,
     disabled,
     onPress,
 }: {
-    mode: AuthTab;
     loading: boolean;
     disabled: boolean;
     onPress: () => void;
@@ -761,16 +798,12 @@ function AppleSignInButton({
         >
             {loading && (
                 <View pointerEvents="none" style={styles.appleLoadingOverlay}>
-                    <ActivityIndicator size="small" color={BRAND.white} />
+                    <ActivityIndicator size="small" color={BRAND.ink} />
                 </View>
             )}
             <AppleAuthentication.AppleAuthenticationButton
-                buttonType={
-                    mode === 'signup'
-                        ? AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
-                        : AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
-                }
-                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
                 cornerRadius={BorderRadius.md}
                 style={styles.appleButton}
                 onPress={onPress}
@@ -1050,8 +1083,6 @@ const styles = StyleSheet.create({
     googleButton: {
         height: 50,
         backgroundColor: BRAND.white,
-        borderWidth: 1,
-        borderColor: '#D4B49466',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -1062,43 +1093,46 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     googleGlyph: {
-        width: 24,
-        height: 24,
-        borderRadius: BorderRadius.full,
-        backgroundColor: BRAND.paper,
-        borderWidth: 1,
-        borderColor: '#D4B49466',
+        width: 18,
+        height: 18,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    googleGlyphText: {
-        fontFamily: FontFamily.sansExtra,
-        fontSize: FontSize.sm,
-        color: BRAND.coralDark,
-    },
     googleButtonText: {
-        fontFamily: FontFamily.sansBold,
-        fontSize: FontSize.sm,
-        color: BRAND.olive,
+        fontFamily: Platform.select({
+            ios: 'System',
+            android: 'Roboto',
+            default: FontFamily.sansMedium,
+        }),
+        fontWeight: '500',
     },
     appleButtonWrap: {
         height: 50,
         marginTop: Spacing.sm,
+        backgroundColor: BRAND.white,
         borderRadius: BorderRadius.md,
         overflow: 'hidden',
+        justifyContent: 'center',
     },
     appleButtonDisabled: {
         opacity: 0.6,
     },
     appleButton: {
         width: '100%',
-        height: 50,
+        height: 40,
+        fontFamily: Platform.select({
+            ios: 'System',
+            android: 'Roboto',
+            default: FontFamily.sansMedium,
+        }),
+        fontWeight: '500',
+        fontSize: FontSize.sm,
     },
     appleLoadingOverlay: {
         ...StyleSheet.absoluteFillObject,
         zIndex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#00000066',
+        backgroundColor: '#FFFFFFAA',
     },
 });
