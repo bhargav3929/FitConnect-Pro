@@ -15,6 +15,8 @@ import {
     CalendarDays,
     Sparkles,
     X,
+    UserPlus,
+    Search,
 } from "lucide-react"
 import {
     Dialog,
@@ -25,12 +27,15 @@ import {
     callCreateClass,
     callDeleteClass,
     callUpdateClass,
+    callAdminEnrollMember,
     getClassStats,
     getAdminClassesInRange,
     getTrainers,
+    getAllMembers,
 } from "@fitconnect/shared/firebase/firestore"
 import { ClassSession, INTRO_CLASS_TYPE } from "@fitconnect/shared/types/class"
 import { Trainer } from "@fitconnect/shared/types/trainer"
+import { UserProfile } from "@fitconnect/shared/types/user"
 import { toast } from "sonner"
 
 // ───────────────────────── constants ─────────────────────────
@@ -178,6 +183,8 @@ const fmtChip = (ymd: string) => {
     return `${MONTHS[m - 1].slice(0, 3)} ${d}`
 }
 
+const DOW_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+
 function MultiDatePicker({
     value,
     onChange,
@@ -202,6 +209,11 @@ function MultiDatePicker({
         })
     }, [month])
 
+    // ── Date-range fill state (Outlook-style) ──
+    const [rangeFrom, setRangeFrom] = useState("")
+    const [rangeTo, setRangeTo] = useState("")
+    const [rangeDows, setRangeDows] = useState<Set<number>>(new Set())
+
     const commit = (set: Set<string>) => onChange(Array.from(set).sort())
 
     const toggle = (d: Date) => {
@@ -213,69 +225,93 @@ function MultiDatePicker({
         commit(next)
     }
 
-    const addNextDays = (n: number) => {
-        const base = new Date()
-        base.setHours(0, 0, 0, 0)
-        const next = new Set(selected)
-        for (let i = 0; i < n; i++) {
-            const d = new Date(base)
-            d.setDate(base.getDate() + i)
-            next.add(toYmd(d))
-        }
-        commit(next)
-        onMonthChange(startOfMonth(base))
-    }
 
-    const addWeekdayInMonth = (dow: number) => {
+
+    const applyDateRange = () => {
+        if (!rangeFrom || !rangeTo) return toast.error("Select both a start and end date")
+        const from = new Date(rangeFrom + "T00:00:00")
+        const to = new Date(rangeTo + "T00:00:00")
+        if (from > to) return toast.error("Start date must be before end date")
         const next = new Set(selected)
-        const first = startOfMonth(month)
-        const cursor = new Date(first)
-        while (cursor.getMonth() === month.getMonth()) {
-            if (cursor.getDay() === dow) {
-                const k = toYmd(cursor)
-                if (k >= todayStr) next.add(k)
+        const cursor = new Date(from)
+        while (cursor <= to) {
+            const k = toYmd(cursor)
+            const dow = cursor.getDay()
+            if (k >= todayStr && (rangeDows.size === 0 || rangeDows.has(dow))) {
+                next.add(k)
             }
             cursor.setDate(cursor.getDate() + 1)
         }
         commit(next)
+        onMonthChange(startOfMonth(from))
     }
-
-    const QUICK = [
-        { label: "Next 7 days", fn: () => addNextDays(7) },
-        { label: "Next 14 days", fn: () => addNextDays(14) },
-        { label: "Next 30 days", fn: () => addNextDays(30) },
-    ]
 
     return (
         <div className="w-full" style={{ width: "100%", maxWidth: "100%", overflow: "hidden", boxSizing: "border-box" as "border-box" }}>
 
-            {/* quick-range buttons + weekday shortcuts */}
-            <div className="px-2.5 pt-2.5 pb-2 space-y-2 border-b border-peach-400/12">
-                <div className="flex flex-wrap items-center gap-1.5">
-                    {QUICK.map((q) => (
-                        <button key={q.label} type="button" onClick={q.fn}
-                            className="px-3 py-1 bg-peach-200/50 rounded-full border border-peach-400/20 text-[10px] font-semibold uppercase tracking-[0.06em] text-olive-500 hover:bg-terra-400/10 hover:border-terra-400/40 hover:text-terra-500 transition-all">
-                            {q.label}
-                        </button>
-                    ))}
-                    {value.length > 0 && (
-                        <button type="button" onClick={() => onChange([])}
-                            className="ml-auto text-[10px] font-bold uppercase tracking-[0.06em] text-olive-300 hover:text-red-500 transition-colors">
-                            Clear
-                        </button>
-                    )}
+            {/* ── Date-range fill (Outlook-style) ── */}
+            <div className="px-2.5 pt-2.5 pb-2 border-b border-peach-400/12 space-y-2">
+                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-olive-300">Fill by date range</p>
+                <div className="flex items-center gap-2">
+                    <input
+                        type="date"
+                        value={rangeFrom}
+                        min={todayStr}
+                        onChange={(e) => setRangeFrom(e.target.value)}
+                        className="flex-1 h-8 px-2 bg-peach-200/30 border border-peach-400/15 text-olive-600 text-[11px] focus:border-terra-400/50 focus:outline-none rounded-[6px]"
+                    />
+                    <span className="text-olive-300 text-[10px] font-bold flex-shrink-0">to</span>
+                    <input
+                        type="date"
+                        value={rangeTo}
+                        min={rangeFrom || todayStr}
+                        onChange={(e) => setRangeTo(e.target.value)}
+                        className="flex-1 h-8 px-2 bg-peach-200/30 border border-peach-400/15 text-olive-600 text-[11px] focus:border-terra-400/50 focus:outline-none rounded-[6px]"
+                    />
                 </div>
-                <div className="flex items-center gap-1">
-                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-olive-300 mr-0.5">Every</span>
-                    {WEEKDAYS.map((w, dow) => (
-                        <button key={w} type="button" onClick={() => addWeekdayInMonth(dow)}
-                            title={`Add every ${w} in ${MONTHS[month.getMonth()]}`}
-                            className="w-6 h-6 flex items-center justify-center text-[10px] font-bold text-olive-400 hover:bg-terra-400 hover:text-peach-50 transition-all">
-                            {w[0]}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-olive-300 flex-shrink-0">Days</span>
+                    <div className="flex items-center gap-0.5 flex-1">
+                        {DOW_SHORT.map((label, dow) => (
+                            <button
+                                key={dow}
+                                type="button"
+                                onClick={() => {
+                                    const next = new Set(rangeDows)
+                                    if (next.has(dow)) next.delete(dow)
+                                    else next.add(dow)
+                                    setRangeDows(next)
+                                }}
+                                className={`w-7 h-7 text-[10px] font-bold rounded-full transition-all ${
+                                    rangeDows.has(dow)
+                                        ? "bg-terra-400 text-peach-50"
+                                        : "text-olive-400 hover:bg-peach-200/70 hover:text-olive-600"
+                                }`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={applyDateRange}
+                        disabled={!rangeFrom || !rangeTo}
+                        className="ml-1 px-3 h-7 bg-terra-400/10 text-terra-500 text-[10px] font-bold uppercase tracking-[0.06em] rounded-full hover:bg-terra-400/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                    >
+                        Fill
+                    </button>
                 </div>
             </div>
+
+            {/* clear button */}
+            {value.length > 0 && (
+                <div className="px-2.5 pt-2 flex justify-end border-b border-peach-400/12 pb-2">
+                    <button type="button" onClick={() => onChange([])}
+                        className="text-[10px] font-bold uppercase tracking-[0.06em] text-olive-300 hover:text-red-500 transition-colors">
+                        Clear
+                    </button>
+                </div>
+            )}
 
             {/* month nav */}
             <div className="flex items-center justify-between px-2.5 py-1.5">
@@ -399,6 +435,21 @@ export default function ClassesPage() {
     const [pickerMonth, setPickerMonth] = useState<Date>(() => startOfMonth(new Date()))
     const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null)
 
+    // Bulk edit — apply changes to all future matching classes
+    const [applyToSeries, setApplyToSeries] = useState(false)
+    const [seriesClasses, setSeriesClasses] = useState<ClassSession[]>([])
+
+    // Enroll member
+    const [enrollOpen, setEnrollOpen] = useState(false)
+    const [enrollClass, setEnrollClass] = useState<ClassSession | null>(null)
+    const [enrollSearch, setEnrollSearch] = useState("")
+    const [allMembers, setAllMembers] = useState<UserProfile[]>([])
+    const [membersLoaded, setMembersLoaded] = useState(false)
+    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
+    const [enrollInSeries, setEnrollInSeries] = useState(false)
+    const [enrollSeries, setEnrollSeries] = useState<ClassSession[]>([])
+    const [isEnrolling, setIsEnrolling] = useState(false)
+
     const agendaScrollRef = useRef<HTMLDivElement>(null)
 
     // ── data loading ──
@@ -489,6 +540,8 @@ export default function ClassesPage() {
     const openEditDialog = (cls: ClassSession) => {
         setEditingClass(cls)
         setScheduleMode("single") // editing is always single-day
+        setApplyToSeries(false)
+        setSeriesClasses([])
         setFormData({
             trainerId: cls.trainerId || "",
             date: toYmd(new Date(cls.date)),
@@ -501,6 +554,22 @@ export default function ClassesPage() {
             description: cls.description || "",
         })
         setDialogOpen(true)
+        // Load future classes with same type+trainer+time for "apply to series"
+        const todayYmd = toYmd(new Date())
+        const future = new Date()
+        future.setFullYear(future.getFullYear() + 1)
+        getAdminClassesInRange(new Date(), future).then((all) => {
+            const matching = all.filter(
+                (c) =>
+                    c.id !== cls.id &&
+                    c.classType === cls.classType &&
+                    c.trainerId === cls.trainerId &&
+                    c.startTime === cls.startTime &&
+                    c.status !== "canceled" &&
+                    toYmd(new Date(c.date)) >= todayYmd
+            )
+            setSeriesClasses(matching)
+        }).catch(() => {})
     }
 
     const handleDelete = async (classId: string) => {
@@ -576,7 +645,22 @@ export default function ClassesPage() {
         try {
             if (editingClass) {
                 await callUpdateClass({ classId: editingClass.id, date: formData.date, ...basePayload() })
-                toast.success("Class updated")
+                // Apply to series — update all future matching classes (same fields, their own dates)
+                if (applyToSeries && seriesClasses.length > 0) {
+                    const seriesPayload = basePayload()
+                    let seriesOk = 0
+                    for (let i = 0; i < seriesClasses.length; i++) {
+                        setBulkProgress({ done: i, total: seriesClasses.length })
+                        try {
+                            await callUpdateClass({ classId: seriesClasses[i].id, ...seriesPayload })
+                            seriesOk++
+                        } catch { /* skip conflicts */ }
+                    }
+                    setBulkProgress(null)
+                    toast.success(`Class updated`, { description: `Applied to ${seriesOk} future classes in this series` })
+                } else {
+                    toast.success("Class updated")
+                }
             } else {
                 await callCreateClass({ ...basePayload(), date: formData.date })
                 toast.success("Class created")
@@ -588,8 +672,86 @@ export default function ClassesPage() {
             toast.error(err instanceof Error ? err.message : "Failed to save class")
         } finally {
             setIsSaving(false)
+            setBulkProgress(null)
         }
     }
+
+    const openEnrollDialog = async (cls: ClassSession) => {
+        setEnrollClass(cls)
+        setEnrollSearch("")
+        setSelectedMemberId(null)
+        setEnrollInSeries(false)
+        setEnrollSeries([])
+        setEnrollOpen(true)
+        // Load members once
+        if (!membersLoaded) {
+            try {
+                const members = await getAllMembers()
+                setAllMembers(members)
+                setMembersLoaded(true)
+            } catch { toast.error("Could not load members") }
+        }
+        // Load series classes for this slot
+        const todayYmd = toYmd(new Date())
+        const future = new Date()
+        future.setFullYear(future.getFullYear() + 1)
+        getAdminClassesInRange(new Date(), future).then((all) => {
+            const matching = all.filter(
+                (c) =>
+                    c.id !== cls.id &&
+                    c.classType === cls.classType &&
+                    c.trainerId === cls.trainerId &&
+                    c.startTime === cls.startTime &&
+                    c.status !== "canceled" &&
+                    toYmd(new Date(c.date)) >= todayYmd
+            )
+            setEnrollSeries(matching)
+        }).catch(() => {})
+    }
+
+    const handleEnroll = async () => {
+        if (!enrollClass || !selectedMemberId) return
+        setIsEnrolling(true)
+        try {
+            const targets = [enrollClass, ...(enrollInSeries ? enrollSeries : [])]
+            let ok = 0
+            const skipped: string[] = []
+            for (let i = 0; i < targets.length; i++) {
+                try {
+                    await callAdminEnrollMember(targets[i].id, selectedMemberId)
+                    ok++
+                } catch (err: unknown) {
+                    skipped.push(fmtChip(toYmd(new Date(targets[i].date))))
+                }
+            }
+            const member = allMembers.find(m => m.uid === selectedMemberId)
+            const name = member?.displayName || member?.name || "Member"
+            if (ok > 0) {
+                toast.success(`${name} enrolled in ${ok} ${ok === 1 ? "class" : "classes"}`, {
+                    description: skipped.length ? `Skipped ${skipped.length}: ${skipped.join(", ")}` : undefined,
+                })
+                setEnrollOpen(false)
+                await refresh()
+            } else {
+                toast.error("Could not enroll — member may already be booked or classes are full")
+            }
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : "Failed to enroll")
+        } finally {
+            setIsEnrolling(false)
+        }
+    }
+
+    const filteredMembers = useMemo(() => {
+        const q = enrollSearch.trim().toLowerCase()
+        if (!q) return allMembers.slice(0, 8)
+        return allMembers
+            .filter(m =>
+                (m.displayName || m.name || "").toLowerCase().includes(q) ||
+                (m.email || "").toLowerCase().includes(q)
+            )
+            .slice(0, 8)
+    }, [allMembers, enrollSearch])
 
     const getTrainerName = (id: string) => trainers.find((t) => t.id === id)?.name || "Unassigned"
 
@@ -909,23 +1071,39 @@ export default function ClassesPage() {
                                                             )}
                                                         </div>
 
-                                                        {/* hover quick-delete */}
-                                                        <span
-                                                            role="button"
-                                                            tabIndex={0}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                handleDelete(p.cls.id)
-                                                            }}
-                                                            className="absolute top-1 right-1 w-6 h-6 hidden group-hover:flex items-center justify-center bg-peach-50/90 text-olive-300 hover:text-red-500 transition-colors"
-                                                            aria-label="Delete class"
-                                                        >
-                                                            {deletingId === p.cls.id ? (
-                                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                            ) : (
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            )}
-                                                        </span>
+                                                        {/* hover quick-actions */}
+                                                        <div className="absolute bottom-1.5 right-1.5 hidden group-hover:flex items-center gap-1">
+                                                            <span
+                                                                role="button"
+                                                                tabIndex={0}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    openEnrollDialog(p.cls)
+                                                                }}
+                                                                className="flex items-center gap-1 px-2 py-1 bg-terra-400 text-peach-50 text-[10px] font-bold uppercase tracking-[0.08em] hover:bg-terra-300 transition-colors"
+                                                                aria-label="Enroll member"
+                                                            >
+                                                                <UserPlus className="w-3 h-3" />
+                                                                Enroll
+                                                            </span>
+                                                            <span
+                                                                role="button"
+                                                                tabIndex={0}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    handleDelete(p.cls.id)
+                                                                }}
+                                                                className="flex items-center gap-1 px-2 py-1 bg-red-500 text-white text-[10px] font-bold uppercase tracking-[0.08em] hover:bg-red-600 transition-colors"
+                                                                aria-label="Delete class"
+                                                            >
+                                                                {deletingId === p.cls.id ? (
+                                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                                ) : (
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                )}
+                                                                Delete
+                                                            </span>
+                                                        </div>
                                                     </button>
                                                 </div>
                                             )
@@ -1186,6 +1364,26 @@ export default function ClassesPage() {
                             />
                         </div>
 
+                        {/* Apply to series — only shown when editing an existing class that has a series */}
+                        {editingClass && seriesClasses.length > 0 && (
+                            <label className="flex items-start gap-3 p-3.5 bg-peach-200/30 border border-peach-400/15 rounded-[10px] cursor-pointer hover:border-terra-400/30 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={applyToSeries}
+                                    onChange={(e) => setApplyToSeries(e.target.checked)}
+                                    className="mt-0.5 w-4 h-4 accent-terra-400 flex-shrink-0 cursor-pointer"
+                                />
+                                <div>
+                                    <p className="text-[13px] font-semibold text-olive-600 leading-tight">
+                                        Apply to {seriesClasses.length} future {editingClass.classType} {seriesClasses.length === 1 ? "class" : "classes"}
+                                    </p>
+                                    <p className="text-[11px] text-olive-400 mt-0.5">
+                                        Same time ({editingClass.startTime}) · Updates trainer, capacity &amp; location for all
+                                    </p>
+                                </div>
+                            </label>
+                        )}
+
                     </div>
 
                     {/* Fixed footer */}
@@ -1205,6 +1403,116 @@ export default function ClassesPage() {
                         >
                             {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                             {submitLabel}
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ═══════════ ENROLL MEMBER DIALOG ═══════════ */}
+            <Dialog open={enrollOpen} onOpenChange={setEnrollOpen}>
+                <DialogContent className="bg-peach-50 border-peach-400/20 max-w-md p-0 rounded-[20px] overflow-hidden flex flex-col" style={{ maxHeight: "calc(100vh - 80px)" }}>
+                    <DialogTitle className="sr-only">Enroll Member</DialogTitle>
+                    {/* Header */}
+                    <div className="px-7 pt-[26px] pb-[18px] border-b border-peach-400/[0.13] flex-shrink-0">
+                        <h2 className="font-display text-[20px] font-semibold text-olive-600 mb-0.5 leading-tight">Enroll Member</h2>
+                        {enrollClass && (
+                            <p className="text-[13px] text-olive-400">
+                                {enrollClass.classType} · {fmtClock(timeToMinutes(enrollClass.startTime))} · {MONTHS[new Date(enrollClass.date).getMonth()]} {new Date(enrollClass.date).getDate()}
+                            </p>
+                        )}
+                    </div>
+                    {/* Body */}
+                    <div className="flex-1 overflow-y-auto px-7 py-5 space-y-4">
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300 pointer-events-none" />
+                            <input
+                                type="text"
+                                value={enrollSearch}
+                                onChange={(e) => { setEnrollSearch(e.target.value); setSelectedMemberId(null) }}
+                                placeholder="Search by name or email…"
+                                className="w-full h-11 pl-10 pr-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/50 focus:border-terra-400/50 focus:outline-none transition-all text-sm rounded-[10px]"
+                            />
+                        </div>
+                        {/* Member list */}
+                        <div className="space-y-1.5">
+                            {!membersLoaded ? (
+                                <div className="flex items-center justify-center py-8 text-olive-300">
+                                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                    <span className="text-sm">Loading members…</span>
+                                </div>
+                            ) : filteredMembers.length === 0 ? (
+                                <p className="text-center text-sm text-olive-300 py-6">No members found</p>
+                            ) : filteredMembers.map((m) => {
+                                const isSelected = selectedMemberId === m.uid
+                                const name = m.displayName || m.name || m.email || m.uid
+                                return (
+                                    <button
+                                        key={m.uid}
+                                        type="button"
+                                        onClick={() => setSelectedMemberId(isSelected ? null : m.uid)}
+                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-all rounded-[10px] border ${
+                                            isSelected
+                                                ? "bg-terra-400/10 border-terra-400/30 text-olive-600"
+                                                : "bg-peach-100/40 border-peach-400/10 text-olive-500 hover:border-peach-400/30"
+                                        }`}
+                                    >
+                                        <div className="w-7 h-7 rounded-full bg-terra-400/15 flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-terra-500">
+                                            {(name[0] || "?").toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[13px] font-semibold truncate">{name}</p>
+                                            {m.email && <p className="text-[11px] text-olive-300 truncate">{m.email}</p>}
+                                        </div>
+                                        {isSelected && (
+                                            <CheckCircle2 className="w-4 h-4 text-terra-400 flex-shrink-0 ml-auto" />
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                        {/* Enroll in series toggle */}
+                        {enrollSeries.length > 0 && selectedMemberId && (
+                            <label className="flex items-start gap-3 p-3.5 bg-peach-200/30 border border-peach-400/15 rounded-[10px] cursor-pointer hover:border-terra-400/30 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={enrollInSeries}
+                                    onChange={(e) => setEnrollInSeries(e.target.checked)}
+                                    className="mt-0.5 w-4 h-4 accent-terra-400 flex-shrink-0 cursor-pointer"
+                                />
+                                <div>
+                                    <p className="text-[13px] font-semibold text-olive-600 leading-tight">
+                                        Also enroll in {enrollSeries.length} upcoming {enrollClass?.classType} {enrollSeries.length === 1 ? "class" : "classes"}
+                                    </p>
+                                    <p className="text-[11px] text-olive-400 mt-0.5">
+                                        Same time slot · {fmtChip(toYmd(new Date(enrollSeries[0].date)))} – {fmtChip(toYmd(new Date(enrollSeries[enrollSeries.length - 1].date)))}
+                                    </p>
+                                </div>
+                            </label>
+                        )}
+                    </div>
+                    {/* Footer */}
+                    <div className="px-7 pt-[14px] pb-[22px] border-t border-peach-400/[0.13] flex items-center justify-end gap-2 flex-shrink-0 bg-peach-50">
+                        <button
+                            type="button"
+                            onClick={() => setEnrollOpen(false)}
+                            className="h-10 px-[18px] text-olive-400 text-[14px] font-medium rounded-full hover:bg-peach-200/55 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleEnroll}
+                            disabled={!selectedMemberId || isEnrolling}
+                            className="h-10 px-5 bg-terra-400 text-peach-50 text-[14px] font-medium rounded-full hover:bg-terra-300 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isEnrolling && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                            {isEnrolling
+                                ? "Enrolling…"
+                                : selectedMemberId
+                                    ? `Enroll ${allMembers.find(m => m.uid === selectedMemberId)?.displayName || allMembers.find(m => m.uid === selectedMemberId)?.name || "Member"} in ${enrollInSeries ? enrollSeries.length + 1 : 1} ${(enrollInSeries ? enrollSeries.length + 1 : 1) === 1 ? "class" : "classes"}`
+                                    : "Select a member"
+                            }
                         </button>
                     </div>
                 </DialogContent>

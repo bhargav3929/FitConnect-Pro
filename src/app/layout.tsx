@@ -34,7 +34,7 @@ export default function RootLayout({
         {/* <SitePasswordGate> */}
           <LayoutContent>{children}</LayoutContent>
         {/* </SitePasswordGate> */}
-        {/* <Toaster richColors position="top-right" closeButton /> */}
+        <Toaster richColors position="top-right" closeButton />
       </body>
     </html>
   );
