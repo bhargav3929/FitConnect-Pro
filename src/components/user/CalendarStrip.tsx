@@ -15,10 +15,10 @@ export function CalendarStrip({ selectedDate, onDateSelect, disabledAfter }: Cal
     const scrollRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        // Generate next 90 days
+        // Generate next 180 days
         const days = []
         const today = new Date()
-        for (let i = 0; i < 90; i++) {
+        for (let i = 0; i < 180; i++) {
             const date = new Date(today)
             date.setDate(today.getDate() + i)
             days.push(date)
@@ -68,24 +68,20 @@ export function CalendarStrip({ selectedDate, onDateSelect, disabledAfter }: Cal
                         return (
                             <button
                                 key={i}
-                                onClick={() => {
-                                    if (!isDisabled) onDateSelect(date)
-                                }}
-                                disabled={isDisabled}
-                                aria-disabled={isDisabled}
+                                onClick={() => onDateSelect(date)}
                                 className={`
                                     flex flex-col items-center justify-center min-w-[56px] min-h-[72px] py-3 px-1 rounded-2xl transition-all snap-center active:scale-95
-                                    ${isDisabled
-                                        ? 'cursor-not-allowed bg-peach-100/40 text-olive-200 opacity-45'
-                                        : isSelected
+                                    ${isSelected
                                         ? 'bg-terra-400 text-peach-50 shadow-lg shadow-terra-400/20'
-                                        : isToday
-                                            ? 'bg-peach-200/60 text-olive-600'
-                                            : 'bg-transparent text-olive-400 hover:bg-peach-200/40'
+                                        : isDisabled
+                                            ? 'bg-peach-100/30 text-olive-300/50 opacity-60 hover:opacity-80'
+                                            : isToday
+                                                ? 'bg-peach-200/60 text-olive-600'
+                                                : 'bg-transparent text-olive-400 hover:bg-peach-200/40'
                                     }
                                 `}
                             >
-                                <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDisabled ? 'text-olive-200' : isSelected ? 'text-peach-50/70' : 'text-olive-300'}`}>
+                                <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-peach-50/70' : isDisabled ? 'text-olive-300/40' : 'text-olive-300'}`}>
                                     {isToday && isSelected ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}
                                 </span>
                                 <span className="text-xl font-black leading-none">
