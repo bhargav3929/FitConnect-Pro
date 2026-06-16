@@ -12,9 +12,11 @@ import {
     Linking,
     RefreshControl,
     Modal,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
@@ -41,6 +43,11 @@ function getInitials(name: string | undefined): string {
     const parts = name.trim().split(/\s+/);
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     return parts[0][0].toUpperCase();
+}
+
+function isAppleAuthCanceled(error: unknown): boolean {
+    const code = (error as { code?: string } | null)?.code;
+    return code === 'ERR_REQUEST_CANCELED' || code === 'ERR_REQUEST_CANCELLED' || code === 'ERR_CANCELED';
 }
 
 // ---------------------------------------------------------------------------
@@ -237,6 +244,30 @@ export default function ProfileScreen() {
         setDeleteModalVisible(false);
     };
 
+    const getAppleAuthorizationCodeForDeletion = async (): Promise<string | undefined> => {
+        if (!hasAppleProvider) return undefined;
+        if (Platform.OS !== 'ios') {
+            throw new Error('Apple confirmation is required on an iOS device before deleting this account.');
+        }
+
+        const credential = await AppleAuthentication.signInAsync({
+            requestedScopes: [],
+        });
+        const appleProviderUid = providerData.find(
+            (provider) => provider.providerId === 'apple.com',
+        )?.uid;
+
+        if (appleProviderUid && credential.user && credential.user !== appleProviderUid) {
+            throw new Error('Please confirm with the Apple ID linked to this account.');
+        }
+
+        if (!credential.authorizationCode) {
+            throw new Error('Apple did not return an authorization code. Please try again.');
+        }
+
+        return credential.authorizationCode;
+    };
+
     const handleDeleteAccount = async () => {
         if (deleteConfirmation.trim().toUpperCase() !== 'DELETE') {
             Alert.alert('Confirmation required', 'Type DELETE to permanently delete your account.');
@@ -245,7 +276,8 @@ export default function ProfileScreen() {
 
         setIsDeletingAccount(true);
         try {
-            await callDeleteAccount();
+            const appleAuthorizationCode = await getAppleAuthorizationCodeForDeletion();
+            await callDeleteAccount({ appleAuthorizationCode });
             try {
                 await logoutClient();
             } catch {
@@ -259,6 +291,10 @@ export default function ProfileScreen() {
                 [{ text: 'OK', onPress: () => router.replace('/login') }],
             );
         } catch (error: unknown) {
+            if (isAppleAuthCanceled(error)) {
+                Alert.alert('Apple confirmation cancelled', 'Your account was not deleted.');
+                return;
+            }
             const message = error instanceof Error ? error.message : 'Failed to delete account. Please try again.';
             Alert.alert('Delete Account Failed', message);
         } finally {

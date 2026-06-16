@@ -585,9 +585,12 @@ export async function callCancelBooking(
 // Cancels upcoming bookings, anonymizes booking history, deletes profile + auth user.
 // ---------------------------------------------------------------------------
 
-export async function callDeleteAccount(): Promise<{ success: boolean }> {
+export async function callDeleteAccount(options?: {
+    appleAuthorizationCode?: string;
+}): Promise<{ success: boolean }> {
     return apiFetch<{ success: boolean }>('/api/account/delete', {
         method: 'POST',
+        body: options,
     });
 }
 
