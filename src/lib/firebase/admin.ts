@@ -5,9 +5,10 @@ import { getAuth } from 'firebase-admin/auth';
 if (!getApps().length) {
     let serviceAccount: Record<string, string> | undefined;
     try {
-        serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-            ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-            : undefined;
+        const raw = process.env.FIREBASE_SERVICE_ACCOUNT || '';
+        // .env.local may store private key newlines as literal backslash+newline; normalize to \n
+        const cleaned = raw.replace(/\\\n/g, '\\n');
+        serviceAccount = cleaned ? JSON.parse(cleaned) : undefined;
     } catch {
         serviceAccount = undefined;
     }
