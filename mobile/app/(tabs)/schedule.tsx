@@ -306,7 +306,7 @@ export default function ScheduleScreen() {
             <CalendarStrip
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
-                daysCount={14}
+                daysCount={180}
                 disabledAfter={subscriptionEndDate}
             />
 

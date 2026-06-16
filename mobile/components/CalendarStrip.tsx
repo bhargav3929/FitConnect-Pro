@@ -111,13 +111,10 @@ export default function CalendarStrip({
                                     styles.dayItem,
                                     isToday && !isSelected && styles.dayItemToday,
                                     isSelected && styles.dayItemSelected,
-                                    isDisabled && styles.dayItemDisabled,
+                                    isDisabled && !isSelected && styles.dayItemDisabled,
                                 ]}
-                                onPress={() => {
-                                    if (!isDisabled) onDateSelect(day);
-                                }}
-                                disabled={isDisabled}
-                                activeOpacity={isDisabled ? 1 : 0.7}
+                                onPress={() => onDateSelect(day)}
+                                activeOpacity={0.7}
                             >
                                 <Text
                                     style={[
