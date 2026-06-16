@@ -321,7 +321,10 @@ export async function DELETE(req: NextRequest) {
 
                 const userRef = adminDb.collection('users').doc(bookingData.userId);
                 const creditType = bookingData.creditType || 'standard';
-                if (creditType === 'intro_credit') {
+                if (creditType === 'admin_override') {
+                    // Admin-enrolled booking — no credit to restore
+                    batch.update(userRef, { updatedAt: now });
+                } else if (creditType === 'intro_credit') {
                     batch.update(userRef, {
                         'subscription.introCreditRemaining': FieldValue.increment(1),
                         updatedAt: now,

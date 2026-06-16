@@ -655,6 +655,20 @@ export async function callDeleteClass(
 }
 
 // ---------------------------------------------------------------------------
+// 16a. callAdminEnrollMember — Admin enrolls a member into a class
+// ---------------------------------------------------------------------------
+
+export async function callAdminEnrollMember(
+    classId: string,
+    userId: string,
+): Promise<{ success: boolean; bookingId: string }> {
+    return apiFetch<{ success: boolean; bookingId: string }>('/api/admin/enroll', {
+        method: 'POST',
+        body: { classId, userId },
+    });
+}
+
+// ---------------------------------------------------------------------------
 // 16. callSetAdminRole — API route wrapper
 // ---------------------------------------------------------------------------
 
