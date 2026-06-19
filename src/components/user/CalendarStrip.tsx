@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { SCHEDULE_LOOKAHEAD_DAYS } from "@fitconnect/shared/constants/schedule"
 
 interface CalendarStripProps {
     selectedDate: Date
@@ -15,10 +16,10 @@ export function CalendarStrip({ selectedDate, onDateSelect, disabledAfter }: Cal
     const scrollRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        // Generate next 180 days
+        // Generate the shared schedule browsing window.
         const days = []
         const today = new Date()
-        for (let i = 0; i < 180; i++) {
+        for (let i = 0; i < SCHEDULE_LOOKAHEAD_DAYS; i++) {
             const date = new Date(today)
             date.setDate(today.getDate() + i)
             days.push(date)

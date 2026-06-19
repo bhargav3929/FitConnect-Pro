@@ -9,6 +9,7 @@ import {
     NativeSyntheticEvent,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { SCHEDULE_LOOKAHEAD_DAYS } from '@fitconnect/shared/constants/schedule';
 import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha } from '../constants/theme';
 import { generateDays, formatDayName, isSameDay } from './calendarUtils';
 
@@ -27,7 +28,7 @@ const SCROLL_PAGE_ITEMS = 4;
 export default function CalendarStrip({
     selectedDate,
     onDateSelect,
-    daysCount = 14,
+    daysCount = SCHEDULE_LOOKAHEAD_DAYS,
     disabledAfter,
 }: CalendarStripProps) {
     const scrollRef = useRef<ScrollView>(null);

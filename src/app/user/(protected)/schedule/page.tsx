@@ -20,6 +20,7 @@ import { SubscriptionPromptModal } from "@/components/user/SubscriptionPromptMod
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { subscribeToClassesByDate, getTrainers, getFacility, callBookClass } from "@fitconnect/shared/firebase/firestore"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
+import { SCHEDULE_LOOKAHEAD_DAYS } from "@fitconnect/shared/constants/schedule"
 import { ClassSession, isIntroClassType } from "@fitconnect/shared/types/class"
 import { Trainer } from "@fitconnect/shared/types/trainer"
 import { GymCenter } from "@fitconnect/shared/types/gym"
@@ -160,7 +161,7 @@ export default function SchedulePage() {
     const router = useRouter()
     const clientUser = useClientAuthStore(state => state.clientUser)
     const subscriptionEndDate = parseSubscriptionEndDate(clientUser?.subscription?.endDate)
-    const maxDate = new Date(); maxDate.setDate(maxDate.getDate() + 90)
+    const maxDate = new Date(); maxDate.setDate(maxDate.getDate() + SCHEDULE_LOOKAHEAD_DAYS)
     const disabledAfterDate = subscriptionEndDate && subscriptionEndDate < maxDate ? subscriptionEndDate : null
     const facilityAddress = formatFacilityAddress(facility?.address)
 
