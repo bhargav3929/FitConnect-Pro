@@ -25,14 +25,15 @@ import {
     XCircle,
     AlertTriangle,
     Trash2,
+    MapPin,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { doc, updateDoc } from "firebase/firestore"
 import { auth, db } from "@fitconnect/shared/firebase/config"
-import { uploadImageFile } from "@fitconnect/shared/firebase/storage"
+
 import { callCancelSubscription } from "@fitconnect/shared/firebase/firestore"
 import { getPlanById } from "@fitconnect/shared/types/subscription"
 import { toast } from "sonner"
@@ -54,26 +55,59 @@ export default function ProfilePage() {
     const [showNew, setShowNew] = useState(false)
     const [isChangingPassword, setIsChangingPassword] = useState(false)
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+    const [avatarCacheBust, setAvatarCacheBust] = useState('')
+    const [showPersonalDetails, setShowPersonalDetails] = useState(false)
+    const [isSavingPersonalDetails, setIsSavingPersonalDetails] = useState(false)
+    const [addrLine1, setAddrLine1] = useState('')
+    const [addrLine2, setAddrLine2] = useState('')
+    const [addrCity, setAddrCity] = useState('')
+    const [addrState, setAddrState] = useState('')
+    const [addrPincode, setAddrPincode] = useState('')
+    const [ecName, setEcName] = useState('')
+    const [ecPhone, setEcPhone] = useState('')
+    const [ecRelationship, setEcRelationship] = useState('')
     const avatarInputRef = useRef<HTMLInputElement>(null)
 
     const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        e.target.value = '' // allow re-selecting the same file
+        e.target.value = ''
         if (!file) return
 
-        const uid = firebaseUser?.uid
-        if (!uid) {
+        if (!firebaseUser) {
             toast.error('You must be signed in to update your photo')
             return
         }
 
+        console.log('[avatar] step 1: getting ID token')
         setIsUploadingAvatar(true)
         try {
-            const { url } = await uploadImageFile(file, `avatars/${uid}`)
-            await setDoc(doc(db, 'users', uid), { avatar: url, updatedAt: serverTimestamp() }, { merge: true })
+            const t0 = Date.now()
+            const idToken = await firebaseUser.getIdToken()
+            console.log(`[avatar] step 1 done in ${Date.now()-t0}ms`)
+
+            console.log('[avatar] step 2: posting to /api/account/upload-avatar, file size:', file.size)
+            const t1 = Date.now()
+            const formData = new FormData()
+            formData.append('avatar', file)
+            const res = await fetch('/api/account/upload-avatar', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${idToken}` },
+                body: formData,
+            })
+            console.log(`[avatar] step 2 done in ${Date.now()-t1}ms, status:`, res.status)
+
+            if (!res.ok) {
+                const body = await res.text()
+                console.log('[avatar] error body:', body)
+                throw new Error(`Upload failed: ${res.status}`)
+            }
+            const json = await res.json()
+            console.log('[avatar] success, url:', json.url)
+            setAvatarCacheBust(`?t=${Date.now()}`)
             await refreshSubscription()
             toast.success('Profile photo updated')
         } catch (err: unknown) {
+            console.log('[avatar] CAUGHT ERROR:', err)
             toast.error(err instanceof Error ? err.message : 'Failed to update photo')
         } finally {
             setIsUploadingAvatar(false)
@@ -163,6 +197,37 @@ export default function ProfilePage() {
         }
     }
 
+    const openPersonalDetails = () => {
+        setAddrLine1(clientUser?.address?.line1 ?? '')
+        setAddrLine2(clientUser?.address?.line2 ?? '')
+        setAddrCity(clientUser?.address?.city ?? '')
+        setAddrState(clientUser?.address?.state ?? '')
+        setAddrPincode(clientUser?.address?.pincode ?? '')
+        setEcName(clientUser?.emergencyContact?.name ?? '')
+        setEcPhone(clientUser?.emergencyContact?.phone ?? '')
+        setEcRelationship(clientUser?.emergencyContact?.relationship ?? '')
+        setShowPersonalDetails(true)
+    }
+
+    const handleSavePersonalDetails = async () => {
+        const uid = (firebaseUser ?? auth.currentUser)?.uid
+        if (!uid) return
+        setIsSavingPersonalDetails(true)
+        try {
+            await updateDoc(doc(db, 'users', uid), {
+                address: { line1: addrLine1, line2: addrLine2, city: addrCity, state: addrState, pincode: addrPincode },
+                emergencyContact: { name: ecName, phone: ecPhone, relationship: ecRelationship },
+            })
+            await refreshSubscription()
+            setShowPersonalDetails(false)
+            toast.success('Personal details saved')
+        } catch {
+            toast.error('Failed to save personal details')
+        } finally {
+            setIsSavingPersonalDetails(false)
+        }
+    }
+
     if (!clientUser) {
         return (
             <div className="max-w-2xl mx-auto space-y-6 pb-24">
@@ -224,7 +289,7 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-5 mb-6">
                         <div className="relative h-20 w-20 flex-shrink-0">
                             <Avatar className="h-20 w-20 border-4 border-peach-50 shadow-lg">
-                                <AvatarImage src={clientUser.avatar} className="object-cover" />
+                                <AvatarImage src={clientUser.avatar ? `${clientUser.avatar}${avatarCacheBust}` : undefined} className="object-cover" />
                                 <AvatarFallback className="bg-gradient-to-br from-terra-400 to-terra-300 text-peach-50 font-bold text-xl">
                                     {initials}
                                 </AvatarFallback>
@@ -446,6 +511,86 @@ export default function ProfilePage() {
                         <p className="app-body text-xs mt-0.5">View history</p>
                     </div>
                 </Link>
+            </motion.div>
+
+            {/* ═══════════ PERSONAL DETAILS ═══════════ */}
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.13 }}
+            >
+                <div className="flex items-center justify-between px-1 mb-3">
+                    <p className="app-label">Personal Details</p>
+                    <button
+                        onClick={openPersonalDetails}
+                        className="text-xs font-bold text-terra-400 tracking-wider hover:text-terra-500 transition-colors"
+                    >
+                        {showPersonalDetails ? 'Cancel' : 'Edit'}
+                    </button>
+                </div>
+                <div className="bg-peach-50 border border-peach-400/15 rounded-2xl p-4 space-y-4">
+                    {/* Address */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <MapPin className="w-4 h-4 text-terra-400" />
+                            <p className="text-xs font-bold text-olive-400 tracking-widest uppercase">Address</p>
+                        </div>
+                        {showPersonalDetails ? (
+                            <div className="space-y-2">
+                                <input className={inputClasses} placeholder="Address Line 1" value={addrLine1} onChange={e => setAddrLine1(e.target.value)} />
+                                <input className={inputClasses} placeholder="Address Line 2 (optional)" value={addrLine2} onChange={e => setAddrLine2(e.target.value)} />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <input className={inputClasses} placeholder="City" value={addrCity} onChange={e => setAddrCity(e.target.value)} />
+                                    <input className={inputClasses} placeholder="State" value={addrState} onChange={e => setAddrState(e.target.value)} />
+                                </div>
+                                <input className={inputClasses} placeholder="Pin Code" value={addrPincode} onChange={e => setAddrPincode(e.target.value)} />
+                            </div>
+                        ) : clientUser.address?.line1 ? (
+                            <div className="space-y-0.5 pl-1">
+                                <p className="text-sm text-olive-600">{clientUser.address.line1}</p>
+                                {clientUser.address.line2 && <p className="text-sm text-olive-600">{clientUser.address.line2}</p>}
+                                <p className="text-sm text-olive-600">{[clientUser.address.city, clientUser.address.state, clientUser.address.pincode].filter(Boolean).join(', ')}</p>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-olive-300 pl-1">No address added</p>
+                        )}
+                    </div>
+
+                    <div className="border-t border-peach-400/15" />
+
+                    {/* Emergency Contact */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Lock className="w-4 h-4 text-terra-400" />
+                            <p className="text-xs font-bold text-olive-400 tracking-widest uppercase">Emergency Contact</p>
+                        </div>
+                        {showPersonalDetails ? (
+                            <div className="space-y-2">
+                                <input className={inputClasses} placeholder="Name" value={ecName} onChange={e => setEcName(e.target.value)} />
+                                <input className={inputClasses} placeholder="Phone Number" value={ecPhone} onChange={e => setEcPhone(e.target.value)} />
+                                <input className={inputClasses} placeholder="Relationship (e.g. Spouse, Parent, Friend)" value={ecRelationship} onChange={e => setEcRelationship(e.target.value)} />
+                            </div>
+                        ) : clientUser.emergencyContact?.name ? (
+                            <div className="space-y-0.5 pl-1">
+                                <p className="text-sm text-olive-600">{clientUser.emergencyContact.name}</p>
+                                <p className="text-sm text-olive-600">{clientUser.emergencyContact.phone}</p>
+                                <p className="text-sm text-olive-400">{clientUser.emergencyContact.relationship}</p>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-olive-300 pl-1">No emergency contact added</p>
+                        )}
+                    </div>
+
+                    {showPersonalDetails && (
+                        <Button
+                            onClick={handleSavePersonalDetails}
+                            disabled={isSavingPersonalDetails}
+                            className="w-full h-11 bg-terra-400 hover:bg-terra-500 text-white font-black text-xs tracking-widest rounded-xl"
+                        >
+                            {isSavingPersonalDetails ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                        </Button>
+                    )}
+                </div>
             </motion.div>
 
             {/* ═══════════ SECURITY — CHANGE PASSWORD ═══════════ */}

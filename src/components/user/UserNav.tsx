@@ -56,8 +56,10 @@ export function UserNav() {
                 {/* User card */}
                 <div className="mx-5 mb-6 p-4 rounded-2xl bg-peach-200/5 border border-peach-200/8">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-terra-400 to-terra-300 flex items-center justify-center text-peach-50 text-sm font-bold flex-shrink-0">
-                            {initials}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-terra-400 to-terra-300 flex items-center justify-center text-peach-50 text-sm font-bold flex-shrink-0 overflow-hidden">
+                            {clientUser?.avatar ? (
+                                <img src={clientUser.avatar} alt={firstName} className="w-full h-full object-cover" />
+                            ) : initials}
                         </div>
                         <div className="min-w-0">
                             <p className="text-peach-200 font-bold text-sm truncate">{firstName}</p>
@@ -188,8 +190,10 @@ export function UserNav() {
                         className="h-20 w-auto -my-4"
                     />
                     <Link href="/user/profile" className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-terra-400 to-terra-300 flex items-center justify-center text-peach-50 text-xs font-bold shadow-sm">
-                            {initials}
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-terra-400 to-terra-300 flex items-center justify-center text-peach-50 text-xs font-bold shadow-sm overflow-hidden">
+                            {clientUser?.avatar ? (
+                                <img src={clientUser.avatar} alt={firstName} className="w-full h-full object-cover" />
+                            ) : initials}
                         </div>
                     </Link>
                 </div>

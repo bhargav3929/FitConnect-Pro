@@ -187,6 +187,19 @@ export default function UserDashboard() {
                         </div>
                     </div>
 
+                    {/* Intro credit CTA */}
+                    {isIntroPlan && classesLeft !== null && classesLeft > 0 && (
+                        <Link href="/user/schedule" className="block mt-5">
+                            <div className="flex items-center justify-between bg-terra-400 rounded-xl px-4 py-3 group hover:bg-terra-300 transition-colors">
+                                <div className="flex items-center gap-2">
+                                    <Star className="w-4 h-4 text-peach-50" fill="currentColor" />
+                                    <p className="text-peach-50 text-sm font-black">Book your intro class</p>
+                                </div>
+                                <ArrowRight className="w-4 h-4 text-peach-50/70 group-hover:translate-x-0.5 transition-transform" />
+                            </div>
+                        </Link>
+                    )}
+
                     {/* ═══════════ MILESTONE TIER ═══════════ */}
                     {(() => {
                         const { currentTier, currentTierIdx, nextTier, progress } = getMilestone(clientUser.stats.totalClassesAttended)

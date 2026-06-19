@@ -13,6 +13,7 @@ import {
     Animated,
     Easing,
     Linking,
+    Modal,
     useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,6 +26,8 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import Constants from 'expo-constants';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@fitconnect/shared/firebase/config';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import {
     Spacing,
@@ -315,6 +318,34 @@ export default function LoginScreen() {
         [activeTab, formOpacity, formTranslateY],
     );
 
+    const [forgotPasswordVisible, setForgotPasswordVisible] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
+    const [forgotSuccess, setForgotSuccess] = useState(false);
+
+    const handleForgotPassword = async () => {
+        if (!forgotEmail.trim()) {
+            Alert.alert('Error', 'Please enter your email address.');
+            return;
+        }
+        setForgotLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, forgotEmail.trim());
+            setForgotSuccess(true);
+        } catch {
+            Alert.alert('Error', 'Failed to send reset email. Please check the address and try again.');
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+
+    const closeForgotPassword = () => {
+        setForgotPasswordVisible(false);
+        setForgotEmail('');
+        setForgotSuccess(false);
+        setForgotLoading(false);
+    };
+
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -528,6 +559,19 @@ export default function LoginScreen() {
                                         />
                                     </InputRow>
 
+                                    <TouchableOpacity
+                                        style={styles.forgotPasswordButton}
+                                        onPress={() => {
+                                            setForgotEmail(loginEmail);
+                                            setForgotSuccess(false);
+                                            setForgotPasswordVisible(true);
+                                        }}
+                                        activeOpacity={0.7}
+                                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    >
+                                        <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+                                    </TouchableOpacity>
+
                                     <SubmitButton
                                         label={loginLoading ? 'Verifying...' : 'Sign in'}
                                         loading={loginLoading}
@@ -655,6 +699,78 @@ export default function LoginScreen() {
                     </Animated.View>
                 </ScrollView>
             </KeyboardAvoidingView>
+            <Modal
+                visible={forgotPasswordVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={closeForgotPassword}
+            >
+                <View style={styles.forgotOverlay}>
+                    <View style={styles.forgotCard}>
+                        <View style={styles.forgotHeader}>
+                            <Text style={styles.forgotTitle}>Reset Password</Text>
+                            <TouchableOpacity
+                                onPress={closeForgotPassword}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <Feather name="x" size={20} color={BRAND.olive} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {forgotSuccess ? (
+                            <View style={styles.forgotSuccessContainer}>
+                                <View style={styles.forgotSuccessIcon}>
+                                    <Feather name="check-circle" size={28} color={BRAND.coral} />
+                                </View>
+                                <Text style={styles.forgotSuccessText}>
+                                    Check your inbox for a reset link. If you don't see it, check your spam folder.
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.forgotDoneButton}
+                                    onPress={closeForgotPassword}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={styles.forgotDoneButtonText}>Done</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <>
+                                <Text style={styles.forgotSubtitle}>
+                                    Enter your email and we'll send you a link to reset your password.
+                                </Text>
+                                <View style={styles.forgotInputRow}>
+                                    <Feather name="mail" size={18} color={BRAND.oliveMuted} style={styles.forgotInputIcon} />
+                                    <TextInput
+                                        style={styles.forgotInput}
+                                        placeholder="you@example.com"
+                                        placeholderTextColor={BRAND.oliveMuted}
+                                        value={forgotEmail}
+                                        onChangeText={setForgotEmail}
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        editable={!forgotLoading}
+                                        textContentType="emailAddress"
+                                        autoComplete="email"
+                                    />
+                                </View>
+                                <TouchableOpacity
+                                    style={[styles.forgotSubmitButton, forgotLoading && styles.forgotSubmitDisabled]}
+                                    onPress={handleForgotPassword}
+                                    disabled={forgotLoading}
+                                    activeOpacity={0.85}
+                                >
+                                    {forgotLoading ? (
+                                        <ActivityIndicator size="small" color={BRAND.white} />
+                                    ) : (
+                                        <Text style={styles.forgotSubmitText}>Send Reset Link</Text>
+                                    )}
+                                </TouchableOpacity>
+                            </>
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -1077,6 +1193,113 @@ const styles = StyleSheet.create({
     legalLink: {
         fontFamily: FontFamily.sansBold,
         color: BRAND.coralDark,
+    },
+    forgotPasswordButton: {
+        alignSelf: 'flex-end',
+        marginTop: -Spacing.xs,
+    },
+    forgotPasswordText: {
+        fontFamily: FontFamily.sansMedium,
+        fontSize: FontSize.xs,
+        color: BRAND.coralDark,
+    },
+    forgotOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(11, 15, 25, 0.58)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: Spacing.md,
+    },
+    forgotCard: {
+        width: '100%',
+        maxWidth: 420,
+        backgroundColor: BRAND.paper,
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.lg,
+        borderWidth: 1,
+        borderColor: BRAND.border + '55',
+    },
+    forgotHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.md,
+    },
+    forgotTitle: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.lg,
+        color: BRAND.olive,
+    },
+    forgotSubtitle: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        color: BRAND.oliveMuted,
+        lineHeight: 20,
+        marginBottom: Spacing.md,
+    },
+    forgotInputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: BRAND.white,
+        borderWidth: 1,
+        borderColor: BRAND.border + '55',
+        height: 50,
+        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.md,
+        marginBottom: Spacing.md,
+    },
+    forgotInputIcon: {
+        marginRight: Spacing.sm,
+    },
+    forgotInput: {
+        flex: 1,
+        height: '100%',
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        color: BRAND.olive,
+        paddingVertical: 0,
+    },
+    forgotSubmitButton: {
+        height: 50,
+        backgroundColor: BRAND.coral,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: BorderRadius.md,
+    },
+    forgotSubmitDisabled: {
+        opacity: 0.6,
+    },
+    forgotSubmitText: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.sm,
+        color: BRAND.white,
+    },
+    forgotSuccessContainer: {
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+    },
+    forgotSuccessIcon: {
+        marginBottom: Spacing.md,
+    },
+    forgotSuccessText: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.base,
+        color: BRAND.olive,
+        textAlign: 'center',
+        marginBottom: Spacing.lg,
+    },
+    forgotDoneButton: {
+        height: 50,
+        paddingHorizontal: Spacing.xl,
+        backgroundColor: BRAND.coral,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: BorderRadius.md,
+    },
+    forgotDoneButtonText: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.sm,
+        color: BRAND.white,
     },
 
     // Google Sign-In button

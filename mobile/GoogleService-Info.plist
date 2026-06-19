@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CLIENT_ID</key>
+    <string>stub-local-dev</string>
+    <key>REVERSED_CLIENT_ID</key>
+    <string>stub-local-dev</string>
+    <key>API_KEY</key>
+    <string>stub-local-dev</string>
+    <key>GCM_SENDER_ID</key>
+    <string>stub-local-dev</string>
+    <key>BUNDLE_ID</key>
+    <string>com.fitconnect.pro</string>
+    <key>GOOGLE_APP_ID</key>
+    <string>1:stub:ios:stub</string>
+</dict>
+</plist>

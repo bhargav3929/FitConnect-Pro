@@ -13,6 +13,7 @@ import {
     Calendar,
 } from "lucide-react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { CalendarStrip } from "@/components/user/CalendarStrip"
 import { SpotSelectionModal } from "@/components/user/SpotSelectionModal"
 import { SubscriptionPromptModal } from "@/components/user/SubscriptionPromptModal"
@@ -156,6 +157,7 @@ export default function SchedulePage() {
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(true)
     const [visibleClassCount, setVisibleClassCount] = useState(CLASS_RENDER_BATCH)
 
+    const router = useRouter()
     const clientUser = useClientAuthStore(state => state.clientUser)
     const subscriptionEndDate = parseSubscriptionEndDate(clientUser?.subscription?.endDate)
     const maxDate = new Date(); maxDate.setDate(maxDate.getDate() + 90)
@@ -166,6 +168,15 @@ export default function SchedulePage() {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         return `${date.getDate()} ${months[date.getMonth()]}`
     }
+
+    // Reset to today when user navigates back to this page
+    useEffect(() => {
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') setSelectedDate(new Date())
+        }
+        document.addEventListener('visibilitychange', handleVisibility)
+        return () => document.removeEventListener('visibilitychange', handleVisibility)
+    }, [])
 
     useEffect(() => {
         const unsub = subscribeToClassesByDate(
@@ -224,10 +235,21 @@ export default function SchedulePage() {
             return
         }
 
+        // Intro class with credits → navigate to intro-class page
+        if (isIntroClassType(cls.classType)) {
+            const introCreditRemaining = typeof clientUser?.subscription?.introCreditRemaining === 'number'
+                ? clientUser.subscription.introCreditRemaining : 0
+            if (introCreditRemaining > 0) {
+                router.push(`/intro-class?classId=${cls.id}`)
+                return
+            }
+        }
+
         const bookingRestriction = getClassBookingRestriction(clientUser?.subscription, cls)
         if (bookingRestriction) {
             toast.error("Class not available", {
                 description: bookingRestriction,
+                action: { label: 'View Plans', onClick: () => router.push('/user/subscribe') },
             })
             return
         }
@@ -294,14 +316,19 @@ export default function SchedulePage() {
         return acc
     }, [])
 
-    // Apply filters to classes
+    const introCreditRemaining = typeof clientUser?.subscription?.introCreditRemaining === 'number'
+        ? clientUser.subscription.introCreditRemaining : 0
+
+    // Apply filters to classes — intro classes are always shown in their own section
     const filteredClasses = classes.filter(cls => {
+        if (isIntroClassType(cls.classType)) return false // handled separately
         if (selectedFilterValues.classType && cls.classType !== selectedFilterValues.classType) return false
         if (selectedFilterValues.instructor) {
             if (cls.trainerId !== selectedFilterValues.instructor) return false
         }
         return true
     })
+    const introClasses = classes.filter(cls => isIntroClassType(cls.classType))
     const visibleClasses = filteredClasses.slice(0, visibleClassCount)
 
     const getTrainerName = (trainerId: string) => {
@@ -443,6 +470,85 @@ export default function SchedulePage() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* ── Intro Classes Section ── */}
+                            {!isLoadingClasses && introClasses.length > 0 && (
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs font-black text-olive-400 tracking-widest uppercase">Intro Class</p>
+                                        {introCreditRemaining > 0 && (
+                                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-terra-400/10 text-terra-400 ring-1 ring-terra-400/20">
+                                                {introCreditRemaining} credit{introCreditRemaining !== 1 ? 's' : ''} available
+                                            </span>
+                                        )}
+                                    </div>
+                                    {introClasses.map((cls, idx) => {
+                                        const totalSpots = cls.totalSpots || cls.capacity || 12
+                                        const bookedCount = cls.bookedCount || 0
+                                        const spotsLeft = totalSpots - bookedCount
+                                        const trainerName = getTrainerName(cls.trainerId)
+                                        const trainerImage = getTrainerImage(cls.trainerId)
+                                        const canBook = introCreditRemaining > 0 && spotsLeft > 0
+
+                                        return (
+                                            <motion.div
+                                                key={cls.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                onClick={() => handleBook(cls)}
+                                                className="bg-terra-400/8 border border-terra-400/25 p-4 active:scale-[0.98] transition-all cursor-pointer hover:border-terra-400/50 group"
+                                            >
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex gap-4">
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="text-lg font-black text-olive-600 leading-none">{cls.startTime}</span>
+                                                            <span className="app-stat-label normal-case tracking-normal mt-1">{cls.duration} min</span>
+                                                        </div>
+                                                        <div className="w-px h-10 bg-terra-400/20" />
+                                                        <div>
+                                                            <h3 className="app-card-title group-hover:text-terra-400 transition-colors">
+                                                                {cls.classType}
+                                                            </h3>
+                                                            <p className="text-olive-300 text-xs mt-0.5">In-Studio · 1 intro credit</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end">
+                                                        {!canBook ? (
+                                                            <span className="text-xs font-bold text-olive-300 uppercase tracking-wider text-right">
+                                                                {spotsLeft === 0 ? 'Full' : 'No credit'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="w-8 h-8 rounded-full bg-terra-400/20 flex items-center justify-center text-terra-400">
+                                                                <ChevronLeft className="w-4 h-4 rotate-180" />
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-between pt-3 border-t border-terra-400/15">
+                                                    <div className="flex items-center gap-2">
+                                                        <Avatar className="w-6 h-6 border border-peach-400/20">
+                                                            <AvatarImage src={trainerImage} />
+                                                            <AvatarFallback className="text-[8px] bg-peach-200/50 text-olive-400">{trainerName.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="text-xs text-olive-400 font-medium">{trainerName}</span>
+                                                    </div>
+                                                    {spotsLeft < 3 && spotsLeft > 0 && (
+                                                        <span className="app-badge-text text-terra-400">Only {spotsLeft} spots left</span>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )
+                                    })}
+                                    {filteredClasses.length > 0 && (
+                                        <div className="flex items-center gap-3 py-2">
+                                            <div className="flex-1 h-px bg-peach-400/20" />
+                                            <p className="text-[10px] font-bold text-olive-300/50 tracking-widest uppercase">All Classes</p>
+                                            <div className="flex-1 h-px bg-peach-400/20" />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Loading Skeletons */}
                             {isLoadingClasses && (

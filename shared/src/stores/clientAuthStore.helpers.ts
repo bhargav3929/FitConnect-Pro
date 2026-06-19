@@ -121,6 +121,8 @@ export function normalizeSubscription(raw: Record<string, unknown> | undefined):
 }
 
 export function buildClientUser(uid: string, data: Record<string, unknown>): ClientUser {
+    const addr = data.address as Record<string, unknown> | undefined;
+    const ec = data.emergencyContact as Record<string, unknown> | undefined;
     return {
         id: (data.id as string) || uid,
         name: (data.name as string) || 'Member',
@@ -133,6 +135,19 @@ export function buildClientUser(uid: string, data: Record<string, unknown>): Cli
             currentStreak: (data.stats as Record<string, unknown>)?.currentStreak as number ?? 0,
             longestStreak: (data.stats as Record<string, unknown>)?.longestStreak as number ?? 0,
         },
+        profilePictureUrl: data.profilePictureUrl as string | undefined,
+        address: addr ? {
+            line1: (addr.line1 as string) || '',
+            line2: addr.line2 as string | undefined,
+            city: (addr.city as string) || '',
+            state: (addr.state as string) || '',
+            pincode: (addr.pincode as string) || '',
+        } : undefined,
+        emergencyContact: ec ? {
+            name: (ec.name as string) || '',
+            phone: (ec.phone as string) || '',
+            relationship: (ec.relationship as string) || '',
+        } : undefined,
     }
 }
 

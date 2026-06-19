@@ -36,6 +36,18 @@ export interface UserProfile {
         kickstarterCreditsCarriedForward?: boolean;
         carriedForwardCredits?: number;
     };
+    address?: {
+        line1: string;
+        line2?: string;
+        city: string;
+        state: string;
+        pincode: string;
+    };
+    emergencyContact?: {
+        name: string;
+        phone: string;
+        relationship: string;
+    };
     stats: {
         totalClassesAttended: number;
         currentStreak: number;

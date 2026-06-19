@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
     Search,
     Mail,
@@ -10,8 +10,12 @@ import {
     Users,
     CreditCard,
     UserPlus,
+    X,
+    MapPin,
+    Phone,
+    ChevronRight,
 } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { getAllMembers } from "@fitconnect/shared/firebase/firestore"
 import { UserProfile } from "@fitconnect/shared/types/user"
@@ -35,6 +39,7 @@ export default function MembersPage() {
     const [planFilter, setPlanFilter] = useState("All Plans")
     const [statusFilter, setStatusFilter] = useState("All Status")
     const [page, setPage] = useState(1)
+    const [selectedMember, setSelectedMember] = useState<UserProfile | null>(null)
 
     useEffect(() => {
         let cancelled = false
@@ -57,13 +62,15 @@ export default function MembersPage() {
     }, [])
 
     const filteredMembers = members.filter(member => {
-        const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            member.email.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesPlan = planFilter === "All Plans" || member.subscription.planId === planFilter
+        const name = member.name ?? ''
+        const email = member.email ?? ''
+        const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            email.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesPlan = planFilter === "All Plans" || member.subscription?.planId === planFilter
         const matchesStatus =
             statusFilter === "All Status" ||
-            (statusFilter === "No Plan" && !member.subscription.planId) ||
-            member.subscription.status === statusFilter
+            (statusFilter === "No Plan" && !member.subscription?.planId) ||
+            member.subscription?.status === statusFilter
         return matchesSearch && matchesPlan && matchesStatus
     })
     const totalMembers = members.length
@@ -79,14 +86,14 @@ export default function MembersPage() {
         setPage(1)
     }, [searchQuery, planFilter, statusFilter])
 
-    const activeCount = members.filter(m => m.subscription.status === 'active').length
-    const totalCredits = members.reduce((sum, m) => sum + (m.subscription.classesRemaining ?? 0), 0)
+    const activeCount = members.filter(m => m.subscription?.status === 'active').length
+    const totalCredits = members.reduce((sum, m) => sum + (m.subscription?.classesRemaining ?? 0), 0)
 
     const getDisplayStatus = (member: UserProfile) => {
-        if (!member.subscription.planId && member.subscription.status === 'expired') {
+        if (!member.subscription?.planId && member.subscription?.status === 'expired') {
             return 'No Plan'
         }
-        return member.subscription.status
+        return member.subscription?.status
     }
 
     const getStatusColor = (status: string) => {
@@ -99,10 +106,19 @@ export default function MembersPage() {
         }
     }
 
-    const formatDate = (date: Date | string | null) => {
+    const formatDate = (date: unknown) => {
         if (!date) return '--'
-        const d = typeof date === 'string' ? new Date(date) : date
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        let d: Date
+        if (typeof date === 'string') {
+            d = new Date(date)
+        } else if (date instanceof Date) {
+            d = date
+        } else if (typeof (date as { toDate?: () => Date }).toDate === 'function') {
+            d = (date as { toDate: () => Date }).toDate()
+        } else {
+            return '--'
+        }
+        return isNaN(d.getTime()) ? '--' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     }
 
     return (
@@ -261,17 +277,19 @@ export default function MembersPage() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.35 + idx * 0.03 }}
-                                        className="border-b border-peach-400/8 hover:bg-peach-100/80 transition-colors duration-200 group"
+                                        className="border-b border-peach-400/8 hover:bg-peach-100/80 transition-colors duration-200 group cursor-pointer"
+                                        onClick={() => setSelectedMember(member)}
                                     >
                                         <td className="p-4 pl-6">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-10 w-10 ring-2 ring-peach-400/10 group-hover:ring-terra-400/20 transition-all">
+                                                    <AvatarImage src={member.profilePictureUrl} className="object-cover" />
                                                     <AvatarFallback className="bg-peach-200/60 text-olive-600 font-bold text-sm">
-                                                        {member.name.split(' ').map(n => n[0]).join('')}
+                                                        {(member.name ?? '?').split(' ').map(n => n[0]).join('')}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className="font-bold text-olive-600 text-sm">{member.name}</p>
+                                                    <p className="font-bold text-olive-600 text-sm">{member.name ?? 'Unknown'}</p>
                                                     <p className="text-xs text-olive-300 mt-0.5">{member.email}</p>
                                                 </div>
                                             </div>
@@ -292,7 +310,7 @@ export default function MembersPage() {
                                         </td>
                                         <td className="p-4">
                                             <span className="text-olive-600 font-black text-lg tracking-normal">
-                                                {member.subscription.classesRemaining === null ? '∞' : member.subscription.classesRemaining}
+                                                {member.subscription?.classesRemaining === null ? '∞' : (member.subscription?.classesRemaining ?? '--')}
                                             </span>
                                         </td>
                                         <td className="p-4">
@@ -302,13 +320,9 @@ export default function MembersPage() {
                                             </div>
                                         </td>
                                         <td className="p-4 pr-6 text-right">
-                                            <a
-                                                href={`mailto:${member.email}`}
-                                                className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-terra-400 hover:bg-peach-200/50 rounded-md transition-all"
-                                                title="Send email"
-                                            >
-                                                <Mail className="w-4 h-4" />
-                                            </a>
+                                            <span className="inline-flex px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] uppercase text-terra-400 border border-terra-400/30 group-hover:bg-terra-400 group-hover:text-white transition-all duration-200">
+                                                Details
+                                            </span>
                                         </td>
                                     </motion.tr>
                                 ))}
@@ -324,18 +338,20 @@ export default function MembersPage() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 + idx * 0.05 }}
-                                className="p-4 hover:bg-peach-100/60 transition-colors relative"
+                                className="p-4 hover:bg-peach-100/60 transition-colors relative cursor-pointer"
+                                onClick={() => setSelectedMember(member)}
                             >
                                 <div className="absolute left-0 top-4 bottom-4 w-[3px] bg-transparent group-hover:bg-terra-400/30 transition-colors rounded-r" />
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-10 w-10 ring-2 ring-peach-400/10">
+                                            <AvatarImage src={member.profilePictureUrl} className="object-cover" />
                                             <AvatarFallback className="bg-peach-200/60 text-olive-600 font-bold text-sm">
-                                                {member.name.split(' ').map(n => n[0]).join('')}
+                                                {(member.name ?? '?').split(' ').map(n => n[0]).join('')}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-bold text-olive-600 text-sm">{member.name}</p>
+                                            <p className="font-bold text-olive-600 text-sm">{member.name ?? 'Unknown'}</p>
                                             <p className="text-xs text-olive-300 mt-0.5">{member.email}</p>
                                         </div>
                                     </div>
@@ -343,10 +359,10 @@ export default function MembersPage() {
                                         {getDisplayStatus(member)}
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2 text-sm ml-[52px]">
+                                <div className="grid grid-cols-3 gap-2 text-sm ml-[52px] mb-3">
                                     <div>
                                         <p className="app-stat-label mb-0.5">Plan</p>
-                                        <p className="text-olive-400 font-medium capitalize">{member.subscription.planId?.replace(/_/g, ' ') || 'None'}</p>
+                                        <p className="text-olive-400 font-medium capitalize">{member.subscription?.planId?.replace(/_/g, ' ') || 'None'}</p>
                                     </div>
                                     <div>
                                         <p className="app-stat-label mb-0.5">Classes</p>
@@ -354,8 +370,13 @@ export default function MembersPage() {
                                     </div>
                                     <div>
                                         <p className="app-stat-label mb-0.5">Credits</p>
-                                        <p className="text-olive-600 font-black">{member.subscription.classesRemaining === null ? '∞' : member.subscription.classesRemaining}</p>
+                                        <p className="text-olive-600 font-black">{member.subscription?.classesRemaining === null ? '∞' : (member.subscription?.classesRemaining ?? '--')}</p>
                                     </div>
+                                </div>
+                                <div className="ml-[52px]">
+                                    <span className="inline-flex px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] uppercase text-terra-400 border border-terra-400/30">
+                                        Details
+                                    </span>
                                 </div>
                             </motion.div>
                         ))}
@@ -398,6 +419,160 @@ export default function MembersPage() {
                     </span>
                 </motion.div>
             )}
+
+            {/* Member Detail Drawer */}
+            <AnimatePresence>
+                {selectedMember && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-olive-900/40 z-40"
+                            onClick={() => setSelectedMember(null)}
+                        />
+                        {/* Drawer */}
+                        <motion.div
+                            initial={{ x: "100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "100%" }}
+                            transition={{ type: "spring", damping: 28, stiffness: 280 }}
+                            className="fixed right-0 top-0 h-full w-full max-w-md bg-peach-50 border-l border-peach-400/20 z-50 overflow-y-auto flex flex-col"
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-6 border-b border-peach-400/15 sticky top-0 bg-peach-50 z-10">
+                                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-olive-300">Member Profile</p>
+                                <button
+                                    onClick={() => setSelectedMember(null)}
+                                    className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-terra-400 hover:bg-peach-200/50 transition-all"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                {/* Identity */}
+                                <div className="flex items-center gap-4">
+                                    <Avatar className="h-14 w-14 ring-2 ring-peach-400/15">
+                                        <AvatarImage src={selectedMember.profilePictureUrl} className="object-cover" />
+                                        <AvatarFallback className="bg-peach-200/60 text-olive-600 font-black text-lg">
+                                            {(selectedMember.name ?? '?').split(' ').map(n => n[0]).join('')}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-black text-olive-700 text-lg leading-tight">{selectedMember.name}</p>
+                                        <p className="text-sm text-olive-300 mt-0.5">{selectedMember.email}</p>
+                                        {selectedMember.isFoundingMember && (
+                                            <span className="inline-flex mt-1.5 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/20">
+                                                Founding Member
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Subscription */}
+                                <div className="bg-peach-100/60 border border-peach-400/15 p-4 space-y-3">
+                                    <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-olive-300">Subscription</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <p className="app-stat-label mb-0.5">Plan</p>
+                                            <p className="text-olive-600 font-semibold text-sm capitalize">{selectedMember.subscription.planId?.replace(/_/g, ' ') || 'None'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="app-stat-label mb-0.5">Status</p>
+                                            <span className={`inline-flex px-2 py-0.5 app-badge-text rounded-sm ${getStatusColor(getDisplayStatus(selectedMember))}`}>
+                                                {getDisplayStatus(selectedMember)}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="app-stat-label mb-0.5">Credits</p>
+                                            <p className="text-olive-600 font-black text-xl">
+                                                {selectedMember.subscription?.classesRemaining === null ? '∞' : (selectedMember.subscription?.classesRemaining ?? '--')}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="app-stat-label mb-0.5">Intro Credits</p>
+                                            <p className="text-olive-600 font-black text-xl">{selectedMember.subscription?.introCreditRemaining ?? '--'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="app-stat-label mb-0.5">Joined</p>
+                                            <div className="flex items-center gap-1.5 text-olive-400">
+                                                <Calendar className="w-3 h-3" />
+                                                <span className="text-sm">{formatDate(selectedMember.createdAt)}</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="app-stat-label mb-0.5">Classes Attended</p>
+                                            <div className="flex items-center gap-1.5 text-olive-400">
+                                                <Activity className="w-3 h-3" />
+                                                <span className="text-sm font-semibold">{selectedMember.stats.totalClassesAttended}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {selectedMember.subscription?.endDate && (
+                                        <div className="pt-2 border-t border-peach-400/15">
+                                            <p className="app-stat-label mb-0.5">Plan Expires</p>
+                                            <p className="text-sm text-olive-400">{formatDate(selectedMember.subscription?.endDate)}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Address */}
+                                <div className="bg-peach-100/60 border border-peach-400/15 p-4">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <MapPin className="w-3.5 h-3.5 text-terra-400" />
+                                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-olive-300">Address</p>
+                                    </div>
+                                    {selectedMember.address ? (
+                                        <div className="space-y-0.5 text-sm text-olive-500">
+                                            <p>{selectedMember.address.line1}</p>
+                                            {selectedMember.address.line2 && <p>{selectedMember.address.line2}</p>}
+                                            <p>{selectedMember.address.city}, {selectedMember.address.state} – {selectedMember.address.pincode}</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-olive-300 italic">No address added</p>
+                                    )}
+                                </div>
+
+                                {/* Emergency Contact */}
+                                <div className="bg-peach-100/60 border border-peach-400/15 p-4">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Phone className="w-3.5 h-3.5 text-terra-400" />
+                                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-olive-300">Emergency Contact</p>
+                                    </div>
+                                    {selectedMember.emergencyContact ? (
+                                        <div className="space-y-1 text-sm">
+                                            <p className="font-semibold text-olive-600">{selectedMember.emergencyContact.name}</p>
+                                            <p className="text-olive-400">{selectedMember.emergencyContact.relationship}</p>
+                                            <a
+                                                href={`tel:${selectedMember.emergencyContact.phone}`}
+                                                className="flex items-center gap-1.5 text-terra-400 hover:text-terra-500 transition-colors mt-1"
+                                            >
+                                                <Phone className="w-3 h-3" />
+                                                {selectedMember.emergencyContact.phone}
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-olive-300 italic">No emergency contact added</p>
+                                    )}
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex gap-3 pt-2">
+                                    <a
+                                        href={`mailto:${selectedMember.email}`}
+                                        className="flex-1 flex items-center justify-center gap-2 h-11 bg-terra-400 hover:bg-terra-500 text-white text-sm font-bold tracking-wide transition-colors"
+                                    >
+                                        <Mail className="w-4 h-4" />
+                                        Send Email
+                                    </a>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

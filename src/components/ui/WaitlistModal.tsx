@@ -14,6 +14,7 @@ interface WaitlistModalProps {
 
 export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
     const [name, setName] = useState("")
+    const [phone, setPhone] = useState("")
     const [email, setEmail] = useState("")
     const [loading, setLoading] = useState(false)
     const [done, setDone] = useState(false)
@@ -21,6 +22,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
 
     const reset = () => {
         setName("")
+        setPhone("")
         setEmail("")
         setLoading(false)
         setDone(false)
@@ -34,8 +36,12 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!name.trim() || !email.trim()) {
+        if (!name.trim() || !phone.trim() || !email.trim()) {
             setError("Please fill in all fields.")
+            return
+        }
+        if (!/^\d{10,}$/.test(phone.replace(/[\s\-+]/g, ""))) {
+            setError("Please enter a valid contact number (at least 10 digits).")
             return
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -47,6 +53,7 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
         try {
             await addDoc(collection(db, "waitlist"), {
                 name: name.trim(),
+                phone: phone.trim(),
                 email: email.toLowerCase().trim(),
                 emailLower: email.toLowerCase().trim(),
                 status: "new",
@@ -113,6 +120,18 @@ export function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Your name"
+                                        className="w-full bg-warmDark-700 border border-peach-200/10 text-peach-100 placeholder-peach-400/30 px-4 py-3 text-sm focus:outline-none focus:border-terra-400/60 transition-colors"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold tracking-[0.2em] uppercase text-peach-400">
+                                        Contact Number
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="+91 98765 43210"
                                         className="w-full bg-warmDark-700 border border-peach-200/10 text-peach-100 placeholder-peach-400/30 px-4 py-3 text-sm focus:outline-none focus:border-terra-400/60 transition-colors"
                                     />
                                 </div>

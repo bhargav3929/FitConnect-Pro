@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, User, Eye, EyeOff, ArrowLeft, Mail, Lock, UserPlus } from "lucide-react"
+import { Loader2, User, Eye, EyeOff, ArrowLeft, Mail, Lock, UserPlus, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -23,6 +23,8 @@ import { Input } from "@/components/ui/input"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { toast } from "sonner"
 import { COLORS, withAlpha } from "@fitconnect/shared/theme"
+import { sendPasswordResetEmail } from "firebase/auth"
+import { auth } from "@fitconnect/shared/firebase/config"
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address"),
@@ -46,6 +48,10 @@ export function UserLoginContent() {
     const [isLoading, setIsLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [forgotOpen, setForgotOpen] = useState(false)
+    const [forgotEmail, setForgotEmail] = useState("")
+    const [forgotLoading, setForgotLoading] = useState(false)
+    const [forgotSent, setForgotSent] = useState(false)
     const router = useRouter()
     const searchParams = useSearchParams()
     const [activeTab, setActiveTab] = useState<'login' | 'signup'>(
@@ -126,6 +132,20 @@ export function UserLoginContent() {
             })
         }
         setIsGoogleLoading(false)
+    }
+
+    async function handleForgotPassword() {
+        if (!forgotEmail.trim()) return
+        setForgotLoading(true)
+        try {
+            await sendPasswordResetEmail(auth, forgotEmail.trim())
+            setForgotSent(true)
+        } catch {
+            toast.error("Could not send reset email", {
+                description: "Check the email address and try again.",
+            })
+        }
+        setForgotLoading(false)
     }
 
     if (authLoading || isAuthenticated) {
@@ -317,6 +337,20 @@ export function UserLoginContent() {
                                                 </FormItem>
                                             )}
                                         />
+
+                                        <div className="flex justify-end -mt-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setForgotEmail(loginForm.getValues("email"))
+                                                    setForgotSent(false)
+                                                    setForgotOpen(true)
+                                                }}
+                                                className="text-xs text-terra-400 hover:text-terra-300 transition-colors font-medium tracking-wide"
+                                            >
+                                                Forgot password?
+                                            </button>
+                                        </div>
 
                                         <Button
                                             type="submit"
@@ -536,6 +570,80 @@ export function UserLoginContent() {
                     </div>
                 </motion.div>
             </div>
+
+            {/* Forgot Password Modal */}
+            <AnimatePresence>
+                {forgotOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-olive-900/50 z-50"
+                            onClick={() => setForgotOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                            transition={{ duration: 0.18 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
+                        >
+                            <div className="w-full max-w-sm bg-peach-100 border border-peach-400/20 p-8 pointer-events-auto">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="font-black text-olive-700 text-lg tracking-normal">Reset Password</h3>
+                                    <button onClick={() => setForgotOpen(false)} className="text-olive-300 hover:text-olive-600 transition-colors">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {forgotSent ? (
+                                    <div className="text-center py-4">
+                                        <div className="w-12 h-12 bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                                            <Mail className="w-6 h-6 text-green-600" />
+                                        </div>
+                                        <p className="font-bold text-olive-600 mb-2">Check your inbox</p>
+                                        <p className="text-sm text-olive-400">A reset link was sent to <span className="font-semibold text-olive-600">{forgotEmail}</span>. If you don't see it, check your spam folder.</p>
+                                        <button
+                                            onClick={() => setForgotOpen(false)}
+                                            className="mt-6 w-full h-12 bg-terra-400 text-peach-50 font-black text-xs tracking-wider hover:bg-terra-300 transition-colors"
+                                        >
+                                            DONE
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-sm text-olive-400 mb-6">Enter your email and we'll send you a link to reset your password.</p>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="text-[10px] font-bold tracking-[0.2em] uppercase text-olive-400 block mb-2">Email</label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300/60" />
+                                                    <input
+                                                        type="email"
+                                                        value={forgotEmail}
+                                                        onChange={(e) => setForgotEmail(e.target.value)}
+                                                        onKeyDown={(e) => e.key === "Enter" && handleForgotPassword()}
+                                                        placeholder="you@example.com"
+                                                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/30 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400 focus:outline-none transition-colors"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={handleForgotPassword}
+                                                disabled={forgotLoading || !forgotEmail.trim()}
+                                                className="w-full h-12 bg-terra-400 text-peach-50 font-black text-xs tracking-wider hover:bg-terra-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                {forgotLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "SEND RESET LINK"}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

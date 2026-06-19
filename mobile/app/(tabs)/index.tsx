@@ -599,6 +599,19 @@ export default function DashboardScreen() {
                     isIntroPlan={isIntroPlan}
                 />
 
+                {/* Intro credit CTA */}
+                {isIntroPlan && introCreditRemaining > 0 && (
+                    <TouchableOpacity
+                        onPress={navigateToSchedule}
+                        activeOpacity={0.85}
+                        style={styles.introCtaButton}
+                    >
+                        <Feather name="star" size={16} color={Colors.peach[50]} />
+                        <Text style={styles.introCtaText}>Book your intro class</Text>
+                        <Feather name="arrow-right" size={16} color={Colors.peach[50]} />
+                    </TouchableOpacity>
+                )}
+
                 {/* B. Subscription Status */}
                 <SubscriptionCard
                     subscription={clientUser.subscription}
@@ -909,6 +922,23 @@ const styles = StyleSheet.create({
         fontSize: FontSize.xs,
         color: Colors.peach[50],
         letterSpacing: 0.5,
+    },
+    introCtaButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: Colors.terra[400],
+        borderRadius: BorderRadius.xl,
+        paddingVertical: Spacing.sm + 2,
+        paddingHorizontal: Spacing.md,
+        marginTop: Spacing.md,
+        gap: Spacing.sm,
+    },
+    introCtaText: {
+        flex: 1,
+        color: Colors.peach[50],
+        fontSize: FontSize.sm,
+        fontFamily: FontFamily.sansExtra,
     },
     noPlanCardWrap: {
         borderRadius: BorderRadius['2xl'],

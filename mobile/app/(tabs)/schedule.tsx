@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import {
     View,
     Text,
@@ -160,6 +160,7 @@ function getClassBookingRestriction(sub: BookingSubscription | undefined, cls: C
 }
 
 export default function ScheduleScreen() {
+    const router = useRouter();
     const clientUser = useClientAuthStore((state) => state.clientUser);
     const [activeTab, setActiveTab] = useState<SectionTab>('schedule');
     const [classes, setClasses] = useState<ClassSession[]>([]);
@@ -182,6 +183,9 @@ export default function ScheduleScreen() {
     useFocusEffect(
         useCallback(() => {
             setActiveTab('schedule');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            setSelectedDate(today);
         }, []),
     );
 
@@ -244,7 +248,11 @@ export default function ScheduleScreen() {
         if (!hasValidSubscription(clientUser?.subscription)) {
             Alert.alert(
                 'Plan Required',
-                'Please choose a plan before booking a class.',
+                'A membership is required to book regular classes.',
+                [
+                    { text: 'Not Now', style: 'cancel' },
+                    { text: 'View Plans', onPress: () => router.push('/subscribe' as any) },
+                ]
             );
             return;
         }
@@ -259,7 +267,29 @@ export default function ScheduleScreen() {
 
         const bookingRestriction = getClassBookingRestriction(clientUser?.subscription, cls);
         if (bookingRestriction) {
-            Alert.alert('Class Not Available', bookingRestriction);
+            const isIntro = isIntroClassType(cls.classType);
+            const introCreditRemaining = typeof clientUser?.subscription?.introCreditRemaining === 'number'
+                ? clientUser.subscription.introCreditRemaining
+                : 0;
+
+            if (isIntro && introCreditRemaining > 0) {
+                router.push('/intro-class' as any);
+                return;
+            }
+
+            const isUpgradeNeeded = bookingRestriction.includes('membership') || bookingRestriction.includes('Intro');
+            Alert.alert(
+                isUpgradeNeeded ? 'Upgrade Required' : 'Class Not Available',
+                isUpgradeNeeded
+                    ? 'A membership is required to book this class.'
+                    : bookingRestriction,
+                isUpgradeNeeded
+                    ? [
+                        { text: 'Not Now', style: 'cancel' },
+                        { text: 'View Plans', onPress: () => router.push('/subscribe' as any) },
+                      ]
+                    : [{ text: 'OK' }]
+            );
             return;
         }
 
@@ -299,6 +329,12 @@ export default function ScheduleScreen() {
     const facilityPhone = facility?.contactInfo?.phone || FALLBACK_FACILITY.contact.phone;
     const facilityEmail = facility?.contactInfo?.email || FALLBACK_FACILITY.contact.email;
 
+    // ── Derived intro / regular split ──
+    const introCreditRemaining = typeof clientUser?.subscription?.introCreditRemaining === 'number'
+        ? clientUser.subscription.introCreditRemaining : 0;
+    const introClasses = loadingClasses ? [] : classes.filter(c => isIntroClassType(c.classType));
+    const regularClasses = loadingClasses ? [] : classes.filter(c => !isIntroClassType(c.classType));
+
     // ── Tab Renderers ──
     const renderScheduleTab = () => (
         <View style={styles.schedulePane}>
@@ -324,11 +360,45 @@ export default function ScheduleScreen() {
                 )}
             </View>
 
-            {/* TODO: Add filter chips */}
+            {/* Intro Classes Section */}
+            {!loadingClasses && introClasses.length > 0 && (
+                <View style={styles.introSection}>
+                    <View style={styles.introSectionHeader}>
+                        <Text style={styles.introSectionLabel}>INTRO CLASS</Text>
+                        {introCreditRemaining > 0 && (
+                            <View style={styles.introCreditPill}>
+                                <Text style={styles.introCreditPillText}>
+                                    {introCreditRemaining} credit{introCreditRemaining !== 1 ? 's' : ''} available
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                    {introClasses.map(item => (
+                        <ClassCard
+                            key={item.id}
+                            classSession={item}
+                            trainerName={getTrainerName(item.trainerId)}
+                            onBook={handleBook}
+                            bookingRestriction={
+                                hasValidSubscription(clientUser?.subscription)
+                                    ? getClassBookingRestriction(clientUser?.subscription, item)
+                                    : undefined
+                            }
+                        />
+                    ))}
+                    {regularClasses.length > 0 && (
+                        <View style={styles.introSectionDivider}>
+                            <View style={styles.introDividerLine} />
+                            <Text style={styles.introDividerText}>ALL CLASSES</Text>
+                            <View style={styles.introDividerLine} />
+                        </View>
+                    )}
+                </View>
+            )}
 
             {/* Class list */}
             <FlatList
-                data={loadingClasses ? [] : classes}
+                data={loadingClasses ? [] : regularClasses}
                 keyExtractor={(cls) => cls.id}
                 renderItem={({ item }) => (
                     <ClassCard
@@ -678,6 +748,54 @@ const styles = StyleSheet.create({
     // ── Schedule Tab ──
     schedulePane: {
         flex: 1,
+    },
+    introSection: {
+        paddingTop: Spacing.sm,
+    },
+    introSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+    },
+    introSectionLabel: {
+        fontSize: 10,
+        fontFamily: FontFamily.sansExtra,
+        color: Colors.olive[400],
+        letterSpacing: 1.5,
+    },
+    introCreditPill: {
+        backgroundColor: `${Colors.terra[400]}18`,
+        borderWidth: 1,
+        borderColor: `${Colors.terra[400]}30`,
+        borderRadius: BorderRadius.full,
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 3,
+    },
+    introCreditPillText: {
+        fontSize: 10,
+        fontFamily: FontFamily.sansExtra,
+        color: Colors.terra[400],
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+    },
+    introSectionDivider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        marginVertical: Spacing.md,
+    },
+    introDividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: `${Colors.peach[400]}30`,
+    },
+    introDividerText: {
+        fontSize: 9,
+        fontFamily: FontFamily.sansExtra,
+        color: `${Colors.olive[300]}80`,
+        letterSpacing: 1.5,
     },
     dateHeaderRow: {
         flexDirection: 'row',

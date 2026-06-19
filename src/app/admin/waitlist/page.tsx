@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { collection, doc, getDocs, orderBy, query, updateDoc, Timestamp } from "firebase/firestore"
 import { db } from "@fitconnect/shared/firebase/config"
 import { toast } from "sonner"
-import { Mail, Calendar } from "lucide-react"
+import { Mail, Calendar, Phone } from "lucide-react"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 
 type WaitlistStatus = "new" | "contacted" | "converted" | "archived"
@@ -12,6 +12,7 @@ type WaitlistStatus = "new" | "contacted" | "converted" | "archived"
 type WaitlistEntry = {
     id: string
     name: string
+    phone?: string
     email: string
     status: WaitlistStatus
     createdAt?: Timestamp | Date
@@ -161,6 +162,12 @@ export default function WaitlistPage() {
                                             <Mail className="w-3.5 h-3.5" />
                                             {entry.email}
                                         </span>
+                                        {entry.phone && (
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <Phone className="w-3.5 h-3.5" />
+                                                {entry.phone}
+                                            </span>
+                                        )}
                                         {entry.createdAt && (
                                             <span className="inline-flex items-center gap-1.5">
                                                 <Calendar className="w-3.5 h-3.5" />

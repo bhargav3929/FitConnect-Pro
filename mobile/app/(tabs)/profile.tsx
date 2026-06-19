@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import {
     View,
     Text,
+    Image,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
@@ -17,6 +18,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
@@ -26,7 +29,9 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential,
 } from 'firebase/auth';
-import { auth } from '@fitconnect/shared/firebase/config';
+import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '@fitconnect/shared/firebase/config';
+import { getApiBaseUrl } from '@fitconnect/shared/firebase/api-config';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
 import MilestoneCard from '../../components/MilestoneCard';
@@ -58,6 +63,20 @@ export default function ProfileScreen() {
     const { clientUser, firebaseUser, logoutClient, refreshSubscription } = useClientAuthStore();
     const router = useRouter();
     const [refreshing, setRefreshing] = useState(false);
+
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
+
+    const [personalDetailsEdit, setPersonalDetailsEdit] = useState(false);
+    const [personalDetailsSaving, setPersonalDetailsSaving] = useState(false);
+    const [addrLine1, setAddrLine1] = useState(clientUser?.address?.line1 ?? '');
+    const [addrLine2, setAddrLine2] = useState(clientUser?.address?.line2 ?? '');
+    const [addrCity, setAddrCity] = useState(clientUser?.address?.city ?? '');
+    const [addrState, setAddrState] = useState(clientUser?.address?.state ?? '');
+    const [addrPincode, setAddrPincode] = useState(clientUser?.address?.pincode ?? '');
+    const [ecName, setEcName] = useState(clientUser?.emergencyContact?.name ?? '');
+    const [ecPhone, setEcPhone] = useState(clientUser?.emergencyContact?.phone ?? '');
+    const [ecRelationship, setEcRelationship] = useState(clientUser?.emergencyContact?.relationship ?? '');
 
     // Password section state
     const [securityExpanded, setSecurityExpanded] = useState(false);
@@ -111,6 +130,144 @@ export default function ProfileScreen() {
                 : hasGoogleProvider
                     ? 'Google'
                     : 'your sign-in provider';
+
+    const handleAvatarPress = () => {
+        Alert.alert('Profile Photo', undefined, [
+            {
+                text: 'Take Photo',
+                onPress: async () => {
+                    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                    if (status !== 'granted') {
+                        Alert.alert('Permission required', 'Camera access is needed to take a photo.');
+                        return;
+                    }
+                    const result = await ImagePicker.launchCameraAsync({
+                        mediaTypes: ['images'],
+                        allowsEditing: true,
+                        aspect: [1, 1],
+                        quality: 0.7,
+                    });
+                    if (!result.canceled && result.assets[0]) {
+                        const asset = result.assets[0];
+                        if (asset.fileSize && asset.fileSize > 10 * 1024 * 1024) {
+                            Alert.alert('File Too Large', 'Please choose a photo under 10MB.');
+                            return;
+                        }
+                        uploadAvatar(asset.uri);
+                    }
+                },
+            },
+            {
+                text: 'Choose from Library',
+                onPress: async () => {
+                    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                    if (status !== 'granted') {
+                        Alert.alert('Permission required', 'Photo library access is needed.');
+                        return;
+                    }
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ['images'],
+                        allowsEditing: true,
+                        aspect: [1, 1],
+                        quality: 0.7,
+                    });
+                    if (!result.canceled && result.assets[0]) {
+                        const asset = result.assets[0];
+                        if (asset.fileSize && asset.fileSize > 10 * 1024 * 1024) {
+                            Alert.alert('File Too Large', 'Please choose a photo under 10MB.');
+                            return;
+                        }
+                        uploadAvatar(asset.uri);
+                    }
+                },
+            },
+            { text: 'Cancel', style: 'cancel' },
+        ]);
+    };
+
+    const uploadAvatar = async (uri: string) => {
+        const user = firebaseUser ?? auth.currentUser;
+        if (!user) { console.log('[avatar] no firebaseUser or auth.currentUser, aborting'); return; }
+        setAvatarUploading(true);
+        setLocalAvatarUri(uri);
+        try {
+            console.log('[avatar] step 1: resizing image from', uri);
+            const t0 = Date.now();
+            const manipulated = await ImageManipulator.manipulateAsync(
+                uri,
+                [{ resize: { width: 400, height: 400 } }],
+                { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
+            );
+            console.log(`[avatar] step 1 done in ${Date.now()-t0}ms, resized uri:`, manipulated.uri);
+
+            console.log('[avatar] step 2: getting Firebase ID token');
+            const t1 = Date.now();
+            const idToken = await user.getIdToken();
+            console.log(`[avatar] step 2 done in ${Date.now()-t1}ms, token length:`, idToken.length);
+
+            const apiUrl = `${getApiBaseUrl()}/api/account/upload-avatar`;
+            console.log('[avatar] step 3: posting to', apiUrl);
+            const formData = new FormData();
+            formData.append('avatar', {
+                uri: manipulated.uri,
+                name: 'avatar.jpg',
+                type: 'image/jpeg',
+            } as unknown as Blob);
+
+            const t2 = Date.now();
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${idToken}` },
+                body: formData,
+            });
+            console.log(`[avatar] step 3 done in ${Date.now()-t2}ms, status:`, res.status);
+
+            if (!res.ok) {
+                const body = await res.text();
+                console.log('[avatar] upload error body:', body);
+                throw new Error(`Upload failed: ${res.status}`);
+            }
+            const json = await res.json();
+            console.log('[avatar] step 4: upload success, url:', json.url);
+            await refreshSubscription();
+        } catch (e) {
+            console.log('[avatar] CAUGHT ERROR:', e);
+            Alert.alert('Upload Failed', 'Could not upload profile photo. Please try again.');
+            setLocalAvatarUri(null);
+        } finally {
+            setAvatarUploading(false);
+        }
+    };
+
+    const handleSavePersonalDetails = async () => {
+        const uid = (firebaseUser ?? auth.currentUser)?.uid;
+        if (!uid) return;
+        setPersonalDetailsSaving(true);
+        try {
+            const firestore = getFirestore();
+            await updateDoc(doc(firestore, 'users', uid), {
+                address: {
+                    line1: addrLine1.trim(),
+                    line2: addrLine2.trim(),
+                    city: addrCity.trim(),
+                    state: addrState.trim(),
+                    pincode: addrPincode.trim(),
+                },
+                emergencyContact: {
+                    name: ecName.trim(),
+                    phone: ecPhone.trim(),
+                    relationship: ecRelationship.trim(),
+                },
+            });
+            await refreshSubscription();
+            Alert.alert('Saved', 'Details saved');
+            setPersonalDetailsEdit(false);
+        } catch {
+            Alert.alert('Error', 'Failed to save details. Please try again.');
+        } finally {
+            setPersonalDetailsSaving(false);
+        }
+    };
 
     const handleCancelSubscription = useCallback(() => {
         if (renewalCanceled) {
@@ -349,13 +506,29 @@ export default function ProfileScreen() {
                     <View style={styles.heroDecorSmall} />
 
                     <View style={styles.heroTopRow}>
-                        <View style={styles.avatarRing}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                    {getInitials(clientUser?.name)}
-                                </Text>
+                        <TouchableOpacity onPress={handleAvatarPress} activeOpacity={0.85} disabled={avatarUploading}>
+                            <View style={styles.avatarRing}>
+                                {(localAvatarUri || clientUser?.profilePictureUrl) ? (
+                                    <Image
+                                        source={{ uri: localAvatarUri || clientUser?.profilePictureUrl }}
+                                        style={styles.avatarImage}
+                                    />
+                                ) : (
+                                    <View style={styles.avatar}>
+                                        <Text style={styles.avatarText}>
+                                            {getInitials(clientUser?.name)}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
-                        </View>
+                            <View style={styles.avatarEditBadge}>
+                                {avatarUploading ? (
+                                    <ActivityIndicator size="small" color={Colors.white} />
+                                ) : (
+                                    <Feather name="camera" size={14} color={Colors.white} />
+                                )}
+                            </View>
+                        </TouchableOpacity>
 
                         <View style={styles.heroInfoCol}>
                             <Text style={styles.heroName} numberOfLines={1}>
@@ -522,6 +695,153 @@ export default function ProfileScreen() {
                         <Text style={styles.quickTitle}>My Bookings</Text>
                         <Text style={styles.quickSubtitle}>View history</Text>
                     </TouchableOpacity>
+                </View>
+
+                {/* ─── Personal Details ──────────────────────────── */}
+                <View style={styles.personalDetailsHeader}>
+                    <Text style={styles.personalDetailsSectionLabel}>PERSONAL DETAILS</Text>
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (!personalDetailsEdit) {
+                                setAddrLine1(clientUser?.address?.line1 ?? '');
+                                setAddrLine2(clientUser?.address?.line2 ?? '');
+                                setAddrCity(clientUser?.address?.city ?? '');
+                                setAddrState(clientUser?.address?.state ?? '');
+                                setAddrPincode(clientUser?.address?.pincode ?? '');
+                                setEcName(clientUser?.emergencyContact?.name ?? '');
+                                setEcPhone(clientUser?.emergencyContact?.phone ?? '');
+                                setEcRelationship(clientUser?.emergencyContact?.relationship ?? '');
+                            }
+                            setPersonalDetailsEdit(!personalDetailsEdit);
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                        <Text style={styles.personalDetailsEditButton}>
+                            {personalDetailsEdit ? 'Cancel' : 'Edit'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.personalDetailsCard}>
+                    <View style={styles.personalDetailsSubheader}>
+                        <Feather name="map-pin" size={16} color={Colors.terra[400]} />
+                        <Text style={styles.personalDetailsSubtitle}>Address</Text>
+                    </View>
+                    {personalDetailsEdit ? (
+                        <View style={styles.personalDetailsFields}>
+                            <TextInput
+                                style={styles.personalDetailsInput}
+                                placeholder="Address Line 1"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={addrLine1}
+                                onChangeText={setAddrLine1}
+                            />
+                            <TextInput
+                                style={styles.personalDetailsInput}
+                                placeholder="Address Line 2 (optional)"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={addrLine2}
+                                onChangeText={setAddrLine2}
+                            />
+                            <TextInput
+                                style={styles.personalDetailsInput}
+                                placeholder="City"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={addrCity}
+                                onChangeText={setAddrCity}
+                            />
+                            <TextInput
+                                style={styles.personalDetailsInput}
+                                placeholder="State"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={addrState}
+                                onChangeText={setAddrState}
+                            />
+                            <TextInput
+                                style={styles.personalDetailsInput}
+                                placeholder="Pin Code"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={addrPincode}
+                                onChangeText={setAddrPincode}
+                                keyboardType="numeric"
+                            />
+                        </View>
+                    ) : (
+                        <View style={styles.personalDetailsDisplay}>
+                            {clientUser?.address?.line1 ? (
+                                <>
+                                    <Text style={styles.personalDetailsValue}>{clientUser.address.line1}</Text>
+                                    {clientUser.address.line2 ? (
+                                        <Text style={styles.personalDetailsValue}>{clientUser.address.line2}</Text>
+                                    ) : null}
+                                    <Text style={styles.personalDetailsValue}>
+                                        {[clientUser.address.city, clientUser.address.state, clientUser.address.pincode].filter(Boolean).join(', ')}
+                                    </Text>
+                                </>
+                            ) : (
+                                <Text style={styles.personalDetailsEmpty}>No address added</Text>
+                            )}
+                        </View>
+                    )}
+
+                    <View style={styles.personalDetailsDivider} />
+
+                    <View style={styles.personalDetailsSubheader}>
+                        <Feather name="phone" size={16} color={Colors.terra[400]} />
+                        <Text style={styles.personalDetailsSubtitle}>Emergency Contact</Text>
+                    </View>
+                    {personalDetailsEdit ? (
+                        <View style={styles.personalDetailsFields}>
+                            <TextInput
+                                style={styles.personalDetailsInput}
+                                placeholder="Name"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={ecName}
+                                onChangeText={setEcName}
+                            />
+                            <TextInput
+                                style={styles.personalDetailsInput}
+                                placeholder="Phone Number"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={ecPhone}
+                                onChangeText={setEcPhone}
+                                keyboardType="phone-pad"
+                            />
+                            <TextInput
+                                style={styles.personalDetailsInput}
+                                placeholder="Relationship (e.g. Spouse, Parent, Friend)"
+                                placeholderTextColor={Colors.olive[300]}
+                                value={ecRelationship}
+                                onChangeText={setEcRelationship}
+                            />
+                        </View>
+                    ) : (
+                        <View style={styles.personalDetailsDisplay}>
+                            {clientUser?.emergencyContact?.name ? (
+                                <>
+                                    <Text style={styles.personalDetailsValue}>{clientUser.emergencyContact.name}</Text>
+                                    <Text style={styles.personalDetailsValue}>{clientUser.emergencyContact.phone}</Text>
+                                    <Text style={styles.personalDetailsValue}>{clientUser.emergencyContact.relationship}</Text>
+                                </>
+                            ) : (
+                                <Text style={styles.personalDetailsEmpty}>No emergency contact added</Text>
+                            )}
+                        </View>
+                    )}
+
+                    {personalDetailsEdit && (
+                        <TouchableOpacity
+                            style={[styles.personalDetailsSaveButton, personalDetailsSaving && styles.buttonDisabled]}
+                            onPress={handleSavePersonalDetails}
+                            disabled={personalDetailsSaving}
+                            activeOpacity={0.85}
+                        >
+                            {personalDetailsSaving ? (
+                                <ActivityIndicator size="small" color={Colors.white} />
+                            ) : (
+                                <Text style={styles.personalDetailsSaveText}>Save</Text>
+                            )}
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* ─── Security ──────────────────────────────────── */}
@@ -913,6 +1233,24 @@ const styles = StyleSheet.create({
         fontFamily: FontFamily.sansExtra,
         fontSize: FontSize['3xl'],
         color: Colors.white,
+    },
+    avatarImage: {
+        width: 88,
+        height: 88,
+        borderRadius: 44,
+    },
+    avatarEditBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: Colors.terra[400],
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: Colors.peach[300],
     },
     heroInfoCol: {
         flex: 1,
@@ -1334,6 +1672,91 @@ const styles = StyleSheet.create({
         fontFamily: FontFamily.sansExtra,
         fontSize: FontSize.sm,
         color: Colors.white,
+    },
+
+    // ── Personal details ──────────────────────────────────────
+    personalDetailsHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: Spacing.xl,
+        marginBottom: Spacing.sm,
+        paddingHorizontal: Spacing.xs,
+    },
+    personalDetailsEditButton: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize.xs,
+        color: Colors.terra[400],
+        letterSpacing: 0.5,
+    },
+    personalDetailsSectionLabel: {
+        fontFamily: FontFamily.sansBold,
+        fontSize: FontSize['2xs'],
+        color: Colors.olive[300],
+        letterSpacing: 2,
+    },
+    personalDetailsCard: {
+        backgroundColor: Colors.peach[50],
+        borderRadius: BorderRadius['2xl'],
+        padding: Spacing.md,
+    },
+    personalDetailsSubheader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        marginBottom: Spacing.sm,
+    },
+    personalDetailsSubtitle: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.sm,
+        color: Colors.olive[600],
+    },
+    personalDetailsDivider: {
+        height: 1,
+        backgroundColor: `${Colors.peach[400]}26`,
+        marginVertical: Spacing.md,
+    },
+    personalDetailsFields: {
+        gap: Spacing.sm,
+        marginBottom: Spacing.sm,
+    },
+    personalDetailsInput: {
+        backgroundColor: Colors.peach[100],
+        borderRadius: BorderRadius.xl,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.md - 2,
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.base,
+        color: Colors.olive[600],
+    },
+    personalDetailsDisplay: {
+        gap: 4,
+        marginBottom: Spacing.sm,
+    },
+    personalDetailsValue: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        color: Colors.olive[500],
+        lineHeight: 20,
+    },
+    personalDetailsEmpty: {
+        fontFamily: FontFamily.sans,
+        fontSize: FontSize.sm,
+        color: Colors.olive[300],
+        fontStyle: 'italic',
+    },
+    personalDetailsSaveButton: {
+        backgroundColor: Colors.terra[400],
+        borderRadius: BorderRadius.xl,
+        paddingVertical: Spacing.md - 4,
+        alignItems: 'center',
+        marginTop: Spacing.md,
+    },
+    personalDetailsSaveText: {
+        fontFamily: FontFamily.sansExtra,
+        fontSize: FontSize.sm,
+        color: Colors.white,
+        letterSpacing: 1,
     },
 
     // ── Sign out ───────────────────────────────────────────────

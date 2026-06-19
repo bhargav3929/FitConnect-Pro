@@ -63,3 +63,4 @@ mobile/ios/
 shared/dist/
 .expo/
 .env*
+shared/node_modules/
