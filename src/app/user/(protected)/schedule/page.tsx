@@ -156,6 +156,7 @@ export default function SchedulePage() {
     const [facility, setFacility] = useState<GymCenter | null>(null)
     const [isLoadingClasses, setIsLoadingClasses] = useState(true)
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(true)
+    const [isLoadingFacility, setIsLoadingFacility] = useState(true)
     const [visibleClassCount, setVisibleClassCount] = useState(CLASS_RENDER_BATCH)
 
     const router = useRouter()
@@ -163,7 +164,7 @@ export default function SchedulePage() {
     const subscriptionEndDate = parseSubscriptionEndDate(clientUser?.subscription?.endDate)
     const maxDate = new Date(); maxDate.setDate(maxDate.getDate() + SCHEDULE_LOOKAHEAD_DAYS)
     const disabledAfterDate = subscriptionEndDate && subscriptionEndDate < maxDate ? subscriptionEndDate : null
-    const facilityAddress = formatFacilityAddress(facility?.address)
+    const facilityAddress = isLoadingFacility ? null : formatFacilityAddress(facility?.address)
 
     const formatDate = (date: Date) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -211,11 +212,14 @@ export default function SchedulePage() {
 
     useEffect(() => {
         async function loadFacility() {
+            setIsLoadingFacility(true)
             try {
                 const result = await getFacility()
                 setFacility(result)
             } catch {
                 setFacility(null)
+            } finally {
+                setIsLoadingFacility(false)
             }
         }
         loadFacility()
@@ -366,7 +370,11 @@ export default function SchedulePage() {
                     </h1>
                     <p className="app-page-subtitle flex items-center gap-2">
                         <MapPin className="w-3 h-3 text-terra-400" />
-                        {facilityAddress}
+                        {facilityAddress ? (
+                            facilityAddress
+                        ) : (
+                            <span className="inline-block h-4 w-64 max-w-[70vw] rounded bg-peach-300/50 animate-pulse" />
+                        )}
                     </p>
                 </motion.div>
             </div>

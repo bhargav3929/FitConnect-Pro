@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description: "How SOL Pilates Studio collects, uses, and protects information for class booking and membership services.",
 };
 
-const UPDATED_AT = "June 9, 2026";
+const UPDATED_AT = "June 20, 2026";
 
 const sections = [
   {
     title: "Information We Collect",
     body: [
-      "When you create an account, book a class, join the waitlist, purchase a membership, or contact us, we may collect your name, email address, phone number, account identifier, booking history, membership details, payment status, and messages you send to us.",
-      "We may collect basic app usage, diagnostics, and crash information to keep the website and mobile app reliable. If you choose to sign in with Google, we receive the account information needed to create and manage your SOL Pilates account.",
+      "When you create an account, book a class, join the waitlist, purchase a membership, update your profile, or contact us, we may collect your name, email address, phone number, physical address, emergency contact details, profile photo, account identifier, booking history, membership details, payment status, and messages you send to us.",
+      "We may collect basic app usage, diagnostics, and crash information to keep the website and mobile app reliable. If you choose to sign in with Apple or Google, we receive the account information needed to create and manage your SOL Pilates account.",
     ],
   },
   {
@@ -39,7 +39,7 @@ const sections = [
   {
     title: "Photos And Device Permissions",
     body: [
-      "If the mobile app asks for photo library access, it is only so you can choose to upload or update a profile photo. We do not access your photos unless you grant permission through your device settings.",
+      "If the mobile app asks for camera or photo library access, it is only so you can choose to take, upload, or update a profile photo. We do not access your camera or photos unless you grant permission through your device settings.",
     ],
   },
   {
@@ -51,7 +51,7 @@ const sections = [
   {
     title: "Your Choices",
     body: [
-      "You can update certain account details in the app. You can also contact us to request account deletion, data correction, or help with privacy questions. Some records may be retained when required for legal, security, tax, payment, or dispute-resolution purposes.",
+      "You can update certain account details in the app. You can also initiate account deletion from the app or contact us to request data correction or help with privacy questions. Some records may be retained when required for legal, security, tax, payment, or dispute-resolution purposes.",
     ],
   },
   {

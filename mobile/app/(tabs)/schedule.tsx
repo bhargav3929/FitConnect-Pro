@@ -168,6 +168,7 @@ export default function ScheduleScreen() {
     const [facility, setFacility] = useState<GymCenter | null>(null);
     const [loadingClasses, setLoadingClasses] = useState(true);
     const [loadingTrainers, setLoadingTrainers] = useState(true);
+    const [loadingFacility, setLoadingFacility] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [refreshTick, setRefreshTick] = useState(0);
     const [selectedDate, setSelectedDate] = useState(() => {
@@ -212,11 +213,14 @@ export default function ScheduleScreen() {
     }, []);
 
     const loadFacility = useCallback(async () => {
+        setLoadingFacility(true);
         try {
             const data = await getFacility();
             if (data) setFacility(data);
         } catch {
-            // use fallback
+            setFacility(null);
+        } finally {
+            setLoadingFacility(false);
         }
     }, []);
 
@@ -321,7 +325,7 @@ export default function ScheduleScreen() {
         );
         return parts.length > 0 ? parts.join(', ') : FALLBACK_FACILITY.address;
     };
-    const facilityAddress = formatFacilityAddress(facility);
+    const facilityAddress = loadingFacility ? null : formatFacilityAddress(facility);
     const facilityDescription = FALLBACK_FACILITY.description;
     // Amenities are curated copy — always render the full list (matches web),
     // not whatever partial subset Firestore happens to have.
@@ -557,7 +561,11 @@ export default function ScheduleScreen() {
                     {/* Address */}
                     <View style={styles.addressRow}>
                         <Feather name="map-pin" size={12} color={Colors.terra[400]} />
-                        <Text style={styles.addressText}>{facilityAddress}</Text>
+                        {facilityAddress ? (
+                            <Text style={styles.addressText}>{facilityAddress}</Text>
+                        ) : (
+                            <View style={styles.addressSkeleton} />
+                        )}
                     </View>
                 </View>
 
@@ -707,6 +715,12 @@ const styles = StyleSheet.create({
         fontFamily: FontFamily.sans,
         fontSize: FontSize.sm,
         color: Colors.olive[400],
+    },
+    addressSkeleton: {
+        width: Math.min(SCREEN_WIDTH - Spacing.lg * 2 - 28, 260),
+        height: 14,
+        borderRadius: BorderRadius.full,
+        backgroundColor: Alpha.olive400_08,
     },
 
     // ── Section Tabs ──
