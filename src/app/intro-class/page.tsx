@@ -105,11 +105,11 @@ export default function IntroClassPage() {
             return;
         }
         if (hasIntroClassLead === true) {
-            setError('You have already booked your intro class.');
+            setError('You have already booked your demo class.');
             return;
         }
         if (hasActiveSubscription) {
-            setError('Intro class is only available before your first active plan.');
+            setError('Demo class is only available before your first active plan.');
             return;
         }
 
@@ -128,7 +128,7 @@ export default function IntroClassPage() {
                 currency: order.currency,
                 order_id: order.orderId,
                 name: 'Sol Pilates',
-                description: 'Intro Class',
+                description: 'Demo Class',
                 prefill: {
                     email: form.email || firebaseUser?.email || undefined,
                     name: form.name || firebaseUser?.displayName || undefined,
@@ -173,10 +173,10 @@ export default function IntroClassPage() {
             <main className="min-h-screen bg-peach-50 flex items-center justify-center p-6">
                 <div className="max-w-lg text-center space-y-6">
                     <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
-                        Intro Class Booked
+                        Demo Class Booked
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        You&apos;ve already paid for your intro class. Choose an available 30-minute Intro Class from the schedule.
+                        You&apos;ve already paid for your demo class. Choose an available 30-minute Demo Class from the schedule.
                     </p>
                     <Button
                         onClick={() => router.push('/user/schedule')}
@@ -197,7 +197,7 @@ export default function IntroClassPage() {
                         Active Plan Found
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        Intro class is for new clients before their first active plan. You can book regular classes from the schedule.
+                        Demo class is for new clients before their first active plan. You can book regular classes from the schedule.
                     </p>
                     <Button
                         onClick={() => router.push('/user/schedule')}
@@ -218,7 +218,7 @@ export default function IntroClassPage() {
                         You&apos;re booked.
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        Payment received. Choose an available 30-minute Intro Class from the schedule.
+                        Payment received. Choose an available 30-minute Demo Class from the schedule.
                     </p>
                     <Button
                         onClick={() => router.push('/user/schedule')}
@@ -236,7 +236,7 @@ export default function IntroClassPage() {
             <div className="max-w-xl mx-auto space-y-8">
                 <header className="space-y-3">
                     <h1 className="text-4xl md:text-5xl font-black text-olive-600 uppercase tracking-normal">
-                        Intro Class
+                        Demo Class
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
                         30 minutes, no commitment. Tell us a little about yourself, then complete the ₹{price.toLocaleString('en-IN')} payment to book.

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 
 // ============================================================
-//  INTRO CLASS POPUP — edit this block to change anything visual
+//  DEMO CLASS POPUP — edit this block to change anything visual
 // ============================================================
 const STYLES = {
   backdrop: "fixed inset-0 z-[80] bg-warmDark-800/60 backdrop-blur-sm",
@@ -26,9 +26,9 @@ const STYLES = {
 };
 
 const COPY = {
-  headline: "Start with an intro class.",
-  body: "Contrology-based Pilates inside Tavaro Resorts. Try an intro session — no commitment.",
-  primaryCta: { label: "Book Your Intro Class", href: "/intro-class" },
+  headline: "Start with a demo class.",
+  body: "Contrology-based Pilates inside Tavaro Resorts. Try a demo session — no commitment.",
+  primaryCta: { label: "Book Your Demo Class", href: "/intro-class" },
   secondaryLabel: "Maybe later",
 };
 

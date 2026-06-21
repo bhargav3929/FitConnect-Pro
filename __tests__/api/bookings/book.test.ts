@@ -166,7 +166,7 @@ describe('POST /api/bookings/book', () => {
         );
     });
 
-    it('blocks an intro plan from booking a normal class', async () => {
+    it('blocks a demo plan from booking a normal class', async () => {
         mockTransactionGet.mockImplementation(async (ref: { kind?: string }) => {
             if (ref === classRef) return classDoc({ classType: 'Reformer Pilates' });
             if (ref === userRef) {
@@ -187,9 +187,9 @@ describe('POST /api/bookings/book', () => {
         expect((await res.json()).code).toBe('intro-plan-class-required');
     });
 
-    it('books an Intro Class with intro credit and decrements introCreditRemaining', async () => {
+    it('books a Demo Class with demo credit and decrements introCreditRemaining', async () => {
         mockTransactionGet.mockImplementation(async (ref: { kind?: string }) => {
-            if (ref === classRef) return classDoc({ classType: 'Intro Class' });
+            if (ref === classRef) return classDoc({ classType: 'Demo Class' });
             if (ref === userRef) {
                 return userDoc({
                     planId: 'drop_in',

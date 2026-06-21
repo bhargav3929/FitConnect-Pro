@@ -13,6 +13,7 @@ type WaitlistEntry = {
     id: string
     name: string
     phone?: string
+    contactNumber?: string
     email: string
     status: WaitlistStatus
     createdAt?: Timestamp | Date
@@ -55,10 +56,18 @@ export default function WaitlistPage() {
         getDocs(query(collection(db, "waitlist"), orderBy("createdAt", "desc")))
             .then((snapshot) => {
                 if (cancelled) return
-                setEntries(snapshot.docs.map((docSnap) => ({
-                    id: docSnap.id,
-                    ...docSnap.data(),
-                })) as WaitlistEntry[])
+                setEntries(snapshot.docs.map((docSnap) => {
+                    const data = docSnap.data()
+                    return {
+                        id: docSnap.id,
+                        ...data,
+                        phone: typeof data.phone === "string"
+                            ? data.phone
+                            : typeof data.contactNumber === "string"
+                                ? data.contactNumber
+                                : "",
+                    }
+                }) as WaitlistEntry[])
             })
             .catch(() => {
                 if (!cancelled) toast.error("Failed to load waitlist")
@@ -155,19 +164,29 @@ export default function WaitlistPage() {
                             className="rounded-2xl border border-peach-400/30 bg-peach-50 p-6"
                         >
                             <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
+                                <div className="min-w-0 flex-1">
                                     <h3 className="app-card-title">{entry.name}</h3>
-                                    <div className="flex flex-wrap gap-x-5 gap-y-1 mt-1.5 text-sm text-olive-400">
-                                        <span className="inline-flex items-center gap-1.5">
-                                            <Mail className="w-3.5 h-3.5" />
-                                            {entry.email}
-                                        </span>
-                                        {entry.phone && (
-                                            <span className="inline-flex items-center gap-1.5">
-                                                <Phone className="w-3.5 h-3.5" />
-                                                {entry.phone}
-                                            </span>
-                                        )}
+                                    <div className="grid gap-3 mt-4 sm:grid-cols-3">
+                                        <div className="rounded-xl bg-peach-100/70 border border-peach-400/20 px-4 py-3 min-w-0">
+                                            <p className="app-label mb-1">Name</p>
+                                            <p className="text-sm font-semibold text-olive-600 truncate">{entry.name}</p>
+                                        </div>
+                                        <div className="rounded-xl bg-peach-100/70 border border-peach-400/20 px-4 py-3 min-w-0">
+                                            <p className="app-label mb-1">Contact Number</p>
+                                            <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-olive-600 truncate">
+                                                <Phone className="w-3.5 h-3.5 shrink-0" />
+                                                <span className="truncate">{entry.phone || "—"}</span>
+                                            </p>
+                                        </div>
+                                        <div className="rounded-xl bg-peach-100/70 border border-peach-400/20 px-4 py-3 min-w-0">
+                                            <p className="app-label mb-1">Email</p>
+                                            <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-olive-600 truncate">
+                                                <Mail className="w-3.5 h-3.5 shrink-0" />
+                                                <span className="truncate">{entry.email}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-sm text-olive-400">
                                         {entry.createdAt && (
                                             <span className="inline-flex items-center gap-1.5">
                                                 <Calendar className="w-3.5 h-3.5" />

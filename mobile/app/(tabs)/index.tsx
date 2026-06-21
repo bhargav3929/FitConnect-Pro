@@ -221,7 +221,7 @@ function WelcomeBanner({
                                 {displayedCredits === null ? '\u221E' : displayedCredits}
                             </Text>
                         </View>
-                        <Text style={styles.statLabel}>{isIntroPlan ? 'Intro Credit Left' : 'Classes Left'}</Text>
+                        <Text style={styles.statLabel}>{isIntroPlan ? 'Demo Credit Left' : 'Classes Left'}</Text>
                     </View>
                 </View>
             </View>
@@ -327,7 +327,7 @@ function SubscriptionCard({
                 <Text style={styles.creditsNumber}>
                     {isIntroPlan ? introCreditRemaining : isUnlimited ? '\u221E' : classesRemaining ?? 0}
                 </Text>
-                <Text style={styles.creditsLabel}>{isIntroPlan ? 'intro credit remaining' : 'credits remaining'}</Text>
+                <Text style={styles.creditsLabel}>{isIntroPlan ? 'demo credit remaining' : 'credits remaining'}</Text>
             </View>
 
             {/* Progress bar */}
@@ -486,12 +486,12 @@ function FreeClassCTA({
             </View>
             <View style={styles.freeClassTextCol}>
                 <Text style={styles.freeClassTitle}>
-                    {freeClassBooked ? 'Choose Your Intro Class' : 'Book an Intro Class'}
+                    {freeClassBooked ? 'Choose Your Demo Class' : 'Book a Demo Class'}
                 </Text>
                 <Text style={styles.freeClassSubtitle}>
                     {freeClassBooked
-                        ? 'Pick an available 30-minute Intro Class from the schedule.'
-                        : 'First time? Try a 30-minute intro class.'}
+                        ? 'Pick an available 30-minute Demo Class from the schedule.'
+                        : 'First time? Try a 30-minute demo class.'}
                 </Text>
             </View>
             <View style={styles.freeClassArrowCircle}>
@@ -607,7 +607,7 @@ export default function DashboardScreen() {
                         style={styles.introCtaButton}
                     >
                         <Feather name="star" size={16} color={Colors.peach[50]} />
-                        <Text style={styles.introCtaText}>Book your intro class</Text>
+                        <Text style={styles.introCtaText}>Book your demo class</Text>
                         <Feather name="arrow-right" size={16} color={Colors.peach[50]} />
                     </TouchableOpacity>
                 )}

@@ -132,11 +132,11 @@ export default function IntroClassScreen() {
             return;
         }
         if (hasIntroClassLead === true) {
-            setError('You have already booked your intro class.');
+            setError('You have already booked your demo class.');
             return;
         }
         if (hasActiveSubscription) {
-            setError('Intro class is only available before your first active plan.');
+            setError('Demo class is only available before your first active plan.');
             return;
         }
 
@@ -155,7 +155,7 @@ export default function IntroClassScreen() {
                 currency: order.currency,
                 order_id: order.orderId,
                 name: 'Sol Pilates',
-                description: 'Intro Class',
+                description: 'Demo Class',
                 prefill: {
                     email: form.email || firebaseUser?.email || undefined,
                     name: form.name || firebaseUser?.displayName || undefined,
@@ -188,10 +188,10 @@ export default function IntroClassScreen() {
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <View style={styles.successWrap}>
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
-                    <Text style={styles.successTitle}>Intro Class Booked</Text>
+                    <Text style={styles.successTitle}>Demo Class Booked</Text>
                     <Text style={styles.successBody}>
-                        You&apos;ve already paid for your intro class. Choose an available
-                        30-minute Intro Class from the schedule.
+                        You&apos;ve already paid for your demo class. Choose an available
+                        30-minute Demo Class from the schedule.
                     </Text>
                     <TouchableOpacity
                         style={styles.primaryButton}
@@ -212,7 +212,7 @@ export default function IntroClassScreen() {
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
                     <Text style={styles.successTitle}>Active Plan Found</Text>
                     <Text style={styles.successBody}>
-                        Intro class is for new clients before their first active plan. You can
+                        Demo class is for new clients before their first active plan. You can
                         book regular classes from the schedule.
                     </Text>
                     <TouchableOpacity
@@ -234,7 +234,7 @@ export default function IntroClassScreen() {
                     <Feather name="check-circle" size={64} color={Colors.terra[400]} />
                     <Text style={styles.successTitle}>You&apos;re in.</Text>
                     <Text style={styles.successBody}>
-                        Payment received. Choose an available 30-minute Intro Class
+                        Payment received. Choose an available 30-minute Demo Class
                         from the schedule.
                     </Text>
                     <TouchableOpacity
@@ -268,7 +268,7 @@ export default function IntroClassScreen() {
                         >
                             <Feather name="arrow-left" size={22} color={Colors.olive[600]} />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle}>Intro Class</Text>
+                        <Text style={styles.headerTitle}>Demo Class</Text>
                     </View>
 
                     <Text style={styles.intro}>

@@ -89,7 +89,7 @@ function getClassBookingRestriction(sub: BookingSubscription | undefined, cls: C
         return "A membership is required to book regular classes."
     }
     if (introClass && introCreditRemaining <= 0) {
-        return "An unused intro credit is required to book an Intro Class."
+        return "An unused demo credit is required to book a Demo Class."
     }
     if (!introClass && sub?.classesRemaining !== null && ((sub?.classesRemaining as number | undefined) ?? 0) <= 0) {
         return "No classes remaining on your membership."
@@ -236,7 +236,7 @@ export default function SchedulePage() {
             return
         }
 
-        // Intro class with credits → navigate to intro-class page
+        // Demo class with credits → navigate to intro-class page
         if (isIntroClassType(cls.classType)) {
             const introCreditRemaining = typeof clientUser?.subscription?.introCreditRemaining === 'number'
                 ? clientUser.subscription.introCreditRemaining : 0
@@ -320,7 +320,7 @@ export default function SchedulePage() {
     const introCreditRemaining = typeof clientUser?.subscription?.introCreditRemaining === 'number'
         ? clientUser.subscription.introCreditRemaining : 0
 
-    // Apply filters to classes — intro classes are always shown in their own section
+    // Apply filters to classes — demo classes are always shown in their own section
     const filteredClasses = classes.filter(cls => {
         if (isIntroClassType(cls.classType)) return false // handled separately
         if (selectedFilterValues.classType && cls.classType !== selectedFilterValues.classType) return false
@@ -472,11 +472,11 @@ export default function SchedulePage() {
                                 )}
                             </div>
 
-                            {/* ── Intro Classes Section ── */}
+                            {/* ── Demo Classes Section ── */}
                             {!isLoadingClasses && introClasses.length > 0 && (
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-xs font-black text-olive-400 tracking-widest uppercase">Intro Class</p>
+                                        <p className="text-xs font-black text-olive-400 tracking-widest uppercase">Demo Class</p>
                                         {introCreditRemaining > 0 && (
                                             <span className="px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-terra-400/10 text-terra-400 ring-1 ring-terra-400/20">
                                                 {introCreditRemaining} credit{introCreditRemaining !== 1 ? 's' : ''} available
@@ -511,7 +511,7 @@ export default function SchedulePage() {
                                                             <h3 className="app-card-title group-hover:text-terra-400 transition-colors">
                                                                 {cls.classType}
                                                             </h3>
-                                                            <p className="text-olive-300 text-xs mt-0.5">In-Studio · 1 intro credit</p>
+                                                            <p className="text-olive-300 text-xs mt-0.5">In-Studio · 1 demo credit</p>
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-end">

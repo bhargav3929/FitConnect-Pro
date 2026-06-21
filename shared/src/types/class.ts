@@ -23,7 +23,7 @@ export interface ClassSession {
     intensityLevel?: 1 | 2 | 3; // fire emoji count
 }
 
-export const INTRO_CLASS_TYPE = 'Intro Class' as const;
+export const INTRO_CLASS_TYPE = 'Demo Class' as const;
 
 export const CLASS_TYPES = ['Sol Flow', 'Sol Cardio', 'Sol Stretch', INTRO_CLASS_TYPE] as const;
 export type ClassTypeName = (typeof CLASS_TYPES)[number];
@@ -32,14 +32,15 @@ export const CLASS_TYPE_DESCRIPTIONS: Record<ClassTypeName, string> = {
     'Sol Flow': 'Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.',
     'Sol Cardio': 'Fast-paced movement that gets your heart rate up.',
     'Sol Stretch': 'Hit reset on your body, one stretch at a time.',
-    'Intro Class': 'A focused 30-minute first session for new clients who have booked the intro class.',
+    'Demo Class': 'A focused 30-minute first session for new clients who have booked the demo class.',
 };
 
 export const CLASS_SCHEDULE_TIMES = ['08:00', '09:00', '10:00', '17:00', '18:00', '19:00'] as const;
 
 export function isIntroClassType(classType: unknown): boolean {
-    return typeof classType === 'string'
-        && classType.trim().toLowerCase() === INTRO_CLASS_TYPE.toLowerCase();
+    if (typeof classType !== 'string') return false;
+    const normalized = classType.trim().toLowerCase();
+    return normalized === INTRO_CLASS_TYPE.toLowerCase();
 }
 
 export interface SpotSelection {

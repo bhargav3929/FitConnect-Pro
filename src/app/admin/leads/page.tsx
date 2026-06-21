@@ -107,7 +107,7 @@ export default function LeadsPage() {
         <div className="p-6 lg:p-10 space-y-8">
             <header className="space-y-2">
                 <h1 className="app-page-title">
-                    Intro Class Leads
+                    Demo Class Leads
                 </h1>
                 <p className="app-body">
                     Submissions from the public intro-class signup form.

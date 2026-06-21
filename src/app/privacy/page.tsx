@@ -19,7 +19,7 @@ const sections = [
   {
     title: "How We Use Information",
     body: [
-      "We use your information to create and manage your account, process intro class and membership purchases, reserve classes, manage check-ins and cancellations, provide support, send important service messages, and improve the booking experience.",
+      "We use your information to create and manage your account, process demo class and membership purchases, reserve classes, manage check-ins and cancellations, provide support, send important service messages, and improve the booking experience.",
       "We do not sell your personal information. We do not use your information for cross-app advertising tracking.",
     ],
   },

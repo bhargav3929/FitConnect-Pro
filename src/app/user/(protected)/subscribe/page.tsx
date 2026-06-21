@@ -85,7 +85,7 @@ export default function SubscribePage() {
         if (!selectedPlanId) return
         if (selectedPlanId === 'drop_in' && hasActiveSubscription) {
             toast.error('Active membership found', {
-                description: 'Intro class is only available before your first active plan.',
+                description: 'Demo class is only available before your first active plan.',
             })
             return
         }
@@ -481,7 +481,7 @@ export default function SubscribePage() {
                                 : hasActiveMembership && renewalCanceled
                                     ? 'RENEWAL CANCELED'
                                 : selectedPlanId === 'drop_in'
-                                    ? (hasIntroClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS')
+                                    ? (hasIntroClassLead === true ? 'DEMO CLASS BOOKED' : 'BOOK DEMO CLASS')
                                     : selectedPlan?.category === 'class_pack' && hasActiveMembership
                                         ? 'ACTIVE MEMBERSHIP'
                                     : hasActiveMembership

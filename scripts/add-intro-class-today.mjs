@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Adds one "Intro Class" to today's schedule at 11:00 AM.
+// Adds one "Demo Class" to today's schedule at 11:00 AM.
 // Usage:
 //   node scripts/add-intro-class-today.mjs            # dry-run
 //   node scripts/add-intro-class-today.mjs --execute  # writes to Firestore
@@ -41,13 +41,13 @@ const db = getFirestore();
 // Build today's 11:00 AM timestamp
 const now = new Date();
 const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 0, 0);
-const end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 30, 0);
 
-const docId = `cls-intro-today-1100`;
+const docId = `cls-demo-today-1100`;
 
 const data = {
-    title: 'Intro Class',
-    classType: 'Intro Class',
+    title: 'Demo Class',
+    classType: 'Demo Class',
     description: 'Your first step into the SOL method. A welcoming, low-intensity session designed for new members.',
     startTime: '11:00',
     startTimestamp: Timestamp.fromDate(start),
@@ -61,7 +61,7 @@ const data = {
     location: 'Yoga Studio',
     trainerId: null,
     trainerName: 'SOL Team',
-    durationMinutes: 60,
+    durationMinutes: 30,
     requiresIntroPack: true,
 };
 

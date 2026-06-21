@@ -38,7 +38,7 @@ describe('PLAN_CATALOG', () => {
         expect(new Set(ids).size).toBe(ids.length);
     });
 
-    it('drop_in has intro session pricing', () => {
+    it('drop_in has demo session pricing', () => {
         expect(getPlanById('drop_in')?.price).toBe(1000);
         expect(getPlanById('drop_in')?.weeklyClassLimit).toBe(1);
     });

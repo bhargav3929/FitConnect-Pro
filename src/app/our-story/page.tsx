@@ -155,7 +155,7 @@ export default function AboutPage() {
                   href="/intro-class"
                   className="inline-flex items-center gap-3 px-8 py-4 bg-terra-400 text-peach-50 font-black text-xs tracking-widest uppercase hover:bg-terra-300 transition-all shadow-glow"
                 >
-                  Book your intro class
+                  Book your demo class
                 </Link>
               </motion.div>
             </Reveal>

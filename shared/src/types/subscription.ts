@@ -40,10 +40,10 @@ export interface PlanDefinition {
 }
 
 export const PLAN_CATALOG: PlanDefinition[] = [
-    // ── Intro Class ───────────────────────────────────────────────
+    // ── Demo Class ────────────────────────────────────────────────
     {
         id: 'drop_in',
-        name: 'Intro Class',
+        name: 'Demo Class',
         category: 'class_pack',
         price: 1000,
         credits: 1,
@@ -53,19 +53,19 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         advanceBookingDays: 7,
         guestPasses: 0,
         autoRenew: false,
-        tagline: 'Try a 30-minute intro class with no commitment.',
+        tagline: 'Try a 30-minute demo class with no commitment.',
         features: [
-            '1 intro 30-minute session',
+            '1 demo 30-minute session',
             'SolMare coupon',
             'No commitment',
             'New clients only',
         ],
     },
 
-    // ── Kickstarter (intro) ──────────────────────────────────────
+    // ── 2-week intro program ─────────────────────────────────────
     {
         id: 'kickstarter',
-        name: 'Sol Kickstarter',
+        name: 'Sol Intro Program',
         category: 'class_pack',
         price: 5000,
         credits: 4,
@@ -76,7 +76,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         guestPasses: 0,
         autoRenew: false,
         requiresConsultation: true,
-        tagline: "New to Pilates or just new to us? Before your first class, you'll have a private 30-min session with Swetha. Then 4 group classes over 2 weeks — enough to feel the difference.",
+        tagline: "New to Pilates or just new to us? Start with a private 30-minute session with Swetha, then continue with 4 group classes over 2 weeks — enough to feel the difference.",
         features: [
             'Private 30-min consult with Swetha',
             '4 group classes over 2 weeks',

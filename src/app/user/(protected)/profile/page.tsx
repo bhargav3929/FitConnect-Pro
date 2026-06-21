@@ -345,7 +345,7 @@ export default function ProfilePage() {
                                     {isUnlimited ? '∞' : displayedCredits ?? 0}
                                 </span>
                             </div>
-                            <p className="app-stat-label">{isIntroPlan ? 'Intro Credit' : 'Credits Left'}</p>
+                            <p className="app-stat-label">{isIntroPlan ? 'Demo Credit' : 'Credits Left'}</p>
                         </div>
                         <div className="flex-1 py-4 px-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                             </div>
                             <div className="grid grid-cols-3 gap-3 pt-3 border-t border-peach-400/10">
                                 <div>
-                                    <p className="app-stat-label mb-1">{isIntroPlan ? 'Intro Credit' : 'Credits'}</p>
+                                    <p className="app-stat-label mb-1">{isIntroPlan ? 'Demo Credit' : 'Credits'}</p>
                                     <p className="text-olive-600 font-black text-lg">{isUnlimited ? '∞' : displayedCredits}</p>
                                 </div>
                                 <div>

@@ -47,7 +47,7 @@ const CLASS_TYPES = [
     { name: "Sol Flow", description: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
     { name: "Sol Cardio", description: "Fast-paced movement that gets your heart rate up.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
     { name: "Sol Stretch", description: "Hit reset on your body, one stretch at a time.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
-    { name: INTRO_CLASS_TYPE, description: "A focused 30-minute first session for clients who have paid for the intro class.", duration: 30, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+    { name: INTRO_CLASS_TYPE, description: "A focused 30-minute first session for clients who have paid for the demo class.", duration: 30, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
 ] as const
 
 // Each class type gets a distinct, earthy accent that harmonises with the SOL palette.

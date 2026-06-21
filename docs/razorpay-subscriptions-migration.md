@@ -7,8 +7,8 @@ Implemented in app code.
 Current implementation:
 
 - Web and mobile membership checkout use Razorpay Subscriptions.
-- Intro Class remains a one-time Razorpay Order.
-- Active Intro members can start a membership subscription.
+- Demo Class remains a one-time Razorpay Order.
+- Active demo members can start a membership subscription.
 - Active Razorpay membership members update the existing subscription instead of creating a duplicate checkout.
 - Higher/equal price plan changes apply immediately through Razorpay subscription update.
 - Lower price plan changes are scheduled for cycle end.
@@ -20,13 +20,13 @@ Current implementation:
 - Move recurring membership billing from one-time Razorpay Orders to Razorpay Subscriptions.
 - Keep Sol Pilates plan selection, upgrade, cancel, and membership management inside our own web and mobile UI.
 - Use Razorpay as the billing source of truth for recurring charges, retries, invoices, cancellations, and subscription lifecycle events.
-- Keep Intro Class as a one-time paid onboarding purchase.
+- Keep Demo Class as a one-time paid onboarding purchase.
 - Support branded Sol Pilates customer emails where Razorpay emails are not enough.
-- Preserve booking rules such as weekly caps, class credits, subscription validity, and Intro Class-only restrictions.
+- Preserve booking rules such as weekly caps, class credits, subscription validity, and Demo Class-only restrictions.
 
 ## Non-Goals
 
-- Do not move Intro Class to Razorpay Subscriptions.
+- Do not move Demo Class to Razorpay Subscriptions.
 - Do not build full proration accounting ourselves if Razorpay can own subscription updates.
 - Do not use Razorpay-hosted plan selection as the primary user experience.
 - Do not migrate every existing member to Razorpay Subscriptions on day one unless business volume requires it.
@@ -43,7 +43,7 @@ Membership checkout now uses Razorpay Subscriptions:
 
 One-time checkout still uses Razorpay Orders:
 
-- Intro Class and non-recurring packs call `callCreatePaymentOrder()`.
+- Demo Class and non-recurring packs call `callCreatePaymentOrder()`.
 - `/api/payments/verify` verifies one-time order payments.
 
 Email status today:
@@ -54,9 +54,9 @@ Email status today:
 
 ## Recommended Product Model
 
-### Intro Class
+### Demo Class
 
-Keep Intro Class as a one-time Razorpay Order.
+Keep Demo Class as a one-time Razorpay Order.
 
 Reasoning:
 
@@ -114,7 +114,7 @@ No active membership:
 - App verifies payment through `/api/payments/verify-subscription`.
 - Firestore subscription becomes active.
 
-### Intro to Membership
+### Demo Class to Membership
 
 Current plan is `drop_in`:
 
@@ -122,18 +122,18 @@ Current plan is `drop_in`:
 - Create a new Razorpay subscription.
 - On successful activation, replace the local `drop_in` plan with the membership.
 - Preserve unused `introCreditRemaining`.
-- Membership credits and intro credits remain separate buckets.
+- Membership credits and demo credits remain separate buckets.
 
-Intro credit policy:
+Demo credit policy:
 
-- Paying for Intro Class grants `introCreditRemaining = 1`.
-- Intro Class payment should not add to normal `classesRemaining`.
-- Booking an `Intro Class` consumes `introCreditRemaining`.
+- Paying for Demo Class grants `introCreditRemaining = 1`.
+- Demo Class payment should not add to normal `classesRemaining`.
+- Booking a `Demo Class` consumes `introCreditRemaining`.
 - Booking a normal class consumes membership `classesRemaining`.
-- `introCreditRemaining` is the only source of truth for intro credits; do not infer intro credits from `classesRemaining`.
-- If a member upgrades before using Intro Class, keep `introCreditRemaining = 1`.
-- If the intro credit is already used, keep `introCreditRemaining = 0`.
-- Canceling an Intro Class booking restores `introCreditRemaining`.
+- `introCreditRemaining` is the only source of truth for demo credits; do not infer demo credits from `classesRemaining`.
+- If a member upgrades before using Demo Class, keep `introCreditRemaining = 1`.
+- If the demo credit is already used, keep `introCreditRemaining = 0`.
+- Canceling a Demo Class booking restores `introCreditRemaining`.
 
 ### Kickstarter to Membership
 
@@ -463,7 +463,7 @@ Use our own email provider for product and studio experience emails:
 - Upgrade confirmed
 - Scheduled plan switch confirmed
 - Cancel-at-period-end confirmed
-- Intro Class paid, choose a session
+- Demo Class paid, choose a session
 - Booking confirmation
 - Class reminder
 - Class canceled
@@ -566,12 +566,12 @@ Checkout should fail closed if a membership has no Razorpay Plan ID. Founding-me
 - Add client wrappers:
   - `callCreateRazorpaySubscription`
   - `callVerifyRazorpaySubscription`
-- Keep Orders for Intro Class and one-time packs.
+- Keep Orders for Demo Class and one-time packs.
 
 ### Phase 2: Web UI
 
 - Wire web subscribe page membership checkout to Razorpay subscription path.
-- Keep Intro Class using order path.
+- Keep Demo Class using order path.
 - Show current subscription management card.
 - Show subscription-specific success and failure states.
 
@@ -627,15 +627,15 @@ Manual migration is only worth it if there are already many active paid members.
 - Webhook renewal resets credits.
 - Payment failure logs failure.
 
-### Intro Upgrade
+### Demo Class Upgrade
 
 - `drop_in` active → membership allowed.
-- Membership replaces intro plan.
+- Membership replaces demo plan.
 - Unused `introCreditRemaining` is preserved.
-- Intro Class booking consumes only `introCreditRemaining`.
+- Demo Class booking consumes only `introCreditRemaining`.
 - Normal class booking consumes only membership `classesRemaining`.
 - Normal classes become bookable.
-- Intro-only plan restrictions no longer apply to normal classes after membership activation.
+- Demo-only plan restrictions no longer apply to normal classes after membership activation.
 
 ### Kickstarter Upgrade
 
@@ -678,7 +678,7 @@ Manual migration is only worth it if there are already many active paid members.
 - Immediate upgrades can involve prorated charge or refund behavior in Razorpay that needs clear UX copy.
 - Webhook retries require idempotency to avoid duplicate credits or emails.
 - Sync/webhooks must not clear `cancelAtPeriodEnd` for cycle-end cancellations while Razorpay still reports the subscription as active.
-- Existing one-time order code must remain for Intro Class.
+- Existing one-time order code must remain for Demo Class.
 - If Razorpay billing emails are enabled and Sol emails are also enabled, customers may receive too many messages unless responsibilities are split.
 
 ## Open Decisions

@@ -492,7 +492,7 @@ export default function MembersPage() {
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="app-stat-label mb-0.5">Intro Credits</p>
+                                            <p className="app-stat-label mb-0.5">Demo Credits</p>
                                             <p className="text-olive-600 font-black text-xl">{selectedMember.subscription?.introCreditRemaining ?? '--'}</p>
                                         </div>
                                         <div>

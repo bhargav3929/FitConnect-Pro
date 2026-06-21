@@ -227,7 +227,7 @@ function PlanCard({
                     {plan.id === 'drop_in'
                         ? '/session'
                         : plan.category === 'membership'
-                            ? '/month'
+                            ? ''
                             : '/pack'}
                 </Text>
             </View>
@@ -418,7 +418,7 @@ export default function SubscribeScreen() {
         if (selectedPlan.id === 'drop_in' && hasActiveSubscription) {
             Alert.alert(
                 'Active Membership',
-                'Intro class is only available before your first active plan.',
+                'Demo class is only available before your first active plan.',
             );
             return;
         }
@@ -753,8 +753,8 @@ export default function SubscribeScreen() {
                                         ? 'RENEWAL CANCELED'
                                     : selectedPlan?.id === 'drop_in'
                                     ? hasIntroClassLead === true
-                                        ? 'INTRO CLASS BOOKED'
-                                        : 'BOOK INTRO CLASS'
+                                        ? 'DEMO CLASS BOOKED'
+                                        : 'BOOK DEMO CLASS'
                                     : selectedPlan?.category === 'class_pack' && hasActiveMembership
                                         ? 'ACTIVE MEMBERSHIP'
                                     : hasActiveMembership

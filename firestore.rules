@@ -99,8 +99,9 @@ service cloud.firestore {
     // - Create: anyone (no auth required)
     // - Read/Update/Delete: admin only
     match /waitlist/{entryId} {
-      allow create: if request.resource.data.keys().hasAll(['name', 'email'])
+      allow create: if request.resource.data.keys().hasAll(['name', 'phone', 'email'])
                     && request.resource.data.name is string
+                    && request.resource.data.phone is string
                     && request.resource.data.email is string;
       allow read, update, delete: if isAdmin();
     }

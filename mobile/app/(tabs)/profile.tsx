@@ -568,7 +568,7 @@ export default function ProfileScreen() {
                                         : displayedCredits}
                                 </Text>
                             </View>
-                            <Text style={styles.statLabel}>{isIntroPlan ? 'INTRO CREDIT' : 'CREDITS LEFT'}</Text>
+                            <Text style={styles.statLabel}>{isIntroPlan ? 'DEMO CREDIT' : 'CREDITS LEFT'}</Text>
                         </View>
 
                         <View style={styles.statDivider} />

@@ -19,11 +19,12 @@ interface UpdateClassData {
     status?: 'scheduled' | 'ongoing' | 'completed' | 'canceled';
 }
 
-const INTRO_CLASS_TYPE = 'Intro Class';
+const INTRO_CLASS_TYPE = 'Demo Class';
 
 function isIntroClassType(classType: unknown): boolean {
-    return typeof classType === 'string'
-        && classType.trim().toLowerCase() === INTRO_CLASS_TYPE.toLowerCase();
+    if (typeof classType !== 'string') return false;
+    const normalized = classType.trim().toLowerCase();
+    return normalized === INTRO_CLASS_TYPE.toLowerCase();
 }
 
 function getDayWindow(date: Date): { start: Date; end: Date } {

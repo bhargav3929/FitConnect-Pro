@@ -43,7 +43,7 @@ const COPY = {
   headlineLine1: "Strong body.",
   headlineLine2: "Pain-free life.",
   body: "Contrology-based Pilates in a resort studio designed to make you feel as good as it looks.",
-  primaryCta: { label: "Claim Your Intro Class", href: "/intro-class" },
+  primaryCta: { label: "Claim Your Demo Class", href: "/intro-class" },
   secondaryCta: { label: "Get Started" },
 };
 

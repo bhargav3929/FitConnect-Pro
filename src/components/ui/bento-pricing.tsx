@@ -363,7 +363,7 @@ export function BentoPricing() {
                 <IntroCard
                     plan={dropIn}
                     onSelect={handleSelect}
-                    cta={hasIntroClassLead === true ? 'INTRO CLASS BOOKED' : 'BOOK INTRO CLASS'}
+                    cta={hasIntroClassLead === true ? 'DEMO CLASS BOOKED' : 'BOOK DEMO CLASS'}
                     ctaDisabled={hasIntroClassLead === true}
                     displayPrice={priceOverrides[dropIn.id]}
                 />

@@ -125,7 +125,7 @@ const STATES = {
         lastSyncedAt: Timestamp.fromDate(now),
     },
 
-    // Drop-in / intro class (1 credit)
+    // Drop-in / demo class (1 credit)
     drop_in: {
         planId: 'drop_in',
         planCategory: 'class_pack',

@@ -182,7 +182,7 @@ export default function UserDashboard() {
                                 </p>
                             </div>
                             <p className="app-stat-label normal-case font-bold tracking-normal">
-                                {isIntroPlan ? 'Intro Credit Left' : 'Classes Left'}
+                                {isIntroPlan ? 'Demo Credit Left' : 'Classes Left'}
                             </p>
                         </div>
                     </div>
@@ -193,7 +193,7 @@ export default function UserDashboard() {
                             <div className="flex items-center justify-between bg-terra-400 rounded-xl px-4 py-3 group hover:bg-terra-300 transition-colors">
                                 <div className="flex items-center gap-2">
                                     <Star className="w-4 h-4 text-peach-50" fill="currentColor" />
-                                    <p className="text-peach-50 text-sm font-black">Book your intro class</p>
+                                    <p className="text-peach-50 text-sm font-black">Book your demo class</p>
                                 </div>
                                 <ArrowRight className="w-4 h-4 text-peach-50/70 group-hover:translate-x-0.5 transition-transform" />
                             </div>

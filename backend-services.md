@@ -88,7 +88,7 @@ firestore/
 │   ├── totalSpots: number
 │   ├── bookedCount: number
 │   ├── bookedSpots: number[] (e.g. [1, 3, 5])
-│   ├── classType: string ("Sol Flow" | "Sol Cardio" | "Sol Stretch" | "Intro Class")
+│   ├── classType: string ("Sol Flow" | "Sol Cardio" | "Sol Stretch" | "Demo Class")
 │   ├── difficultyLevel: "beginner" | "intermediate" | "advanced"
 │   ├── status: "scheduled" | "ongoing" | "completed" | "canceled"
 │   ├── location: string
@@ -262,8 +262,8 @@ All routes are under `src/app/api/`. Each route file exports HTTP method handler
    h. Validate user has active subscription
    i. Auto-expire check: if endDate < now → set status = "expired", reject
    j. Validate class date ≤ subscription endDate
-   k. Intro plan → can only book Intro Class type
-   l. Intro class → requires introCreditRemaining > 0
+   k. Demo plan → can only book Demo Class type
+   l. Demo class → requires introCreditRemaining > 0
    m. Guest booking → requires guestPassesRemaining > 0
    n. Determine creditType: standard | unlimited | guest_pass | intro_credit
    o. Check daily limit (maxClassesPerDay, default 1)
@@ -312,7 +312,7 @@ All routes are under `src/app/api/`. Each route file exports HTTP method handler
 2. Validate: trainerId, date (ISO), startTime (HH:MM), duration, capacity
 3. Verify trainer exists in Firestore
 4. Check for time conflict (no other active class at same date+time)
-5. If classType = "Intro Class" → force duration = 30 min
+5. If classType = "Demo Class" → force duration = 30 min
 6. Create class document with status = "scheduled"
 7. Return { success: true, classId }
 ```
@@ -343,7 +343,7 @@ All routes are under `src/app/api/`. Each route file exports HTTP method handler
 | `/api/payments/create-intent` | POST | `src/app/api/payments/create-intent/route.ts` | User | Mock payment intent (dev) |
 | `/api/payments/confirm` | POST | `src/app/api/payments/confirm/route.ts` | User | Confirm mock payment (dev) |
 
-#### One-Time Payment Flow (Class Packs / Intro Class)
+#### One-Time Payment Flow (Class Packs / Demo Class)
 
 ```
 CLIENT                          API                           RAZORPAY
@@ -819,8 +819,8 @@ Located in `shared/src/`.
 
 | Plan ID | Name | Category | Price (INR) | Credits | Duration | Weekly Limit | Auto-Renew |
 |---------|------|----------|-------------|---------|----------|-------------|------------|
-| `drop_in` | Intro Class | class_pack | ₹1,000 | 1 intro | 30 days | 1 | No |
-| `kickstarter` | Sol Kickstarter | class_pack | ₹5,000 | 4 | 14 days | 2 | No |
+| `drop_in` | Demo Class | class_pack | ₹1,000 | 1 demo | 30 days | 1 | No |
+| `kickstarter` | Sol Intro Program | class_pack | ₹5,000 | 4 | 14 days | 2 | No |
 | `twice_quarterly` | 2x Weekly · Quarterly | membership | ₹36,000 | 24 | 90 days | 2 | Yes |
 | `twice_6mo` | 2x Weekly · 6 Months | membership | ₹64,000 | 48 | 180 days | 2 | Yes |
 | `thrice_quarterly` | 3x Weekly · Quarterly | membership | ₹54,000 | 36 | 90 days | 3 | Yes |
@@ -916,7 +916,7 @@ SchedulePage.handleBook()
     ├─ Check subscription validity (client-side)
     │   ├─ No active subscription → show SubscriptionPromptModal
     │   ├─ Subscription expired → toast error
-    │   ├─ Intro plan + non-intro class → toast error
+    │   ├─ Demo plan + non-demo class → toast error
     │   ├─ No credits left → toast error
     │   └─ Date after subscription end → toast error
     │

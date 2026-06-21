@@ -8,11 +8,12 @@ interface BookClassData {
     isGuest: boolean;
 }
 
-const INTRO_CLASS_TYPE = 'Intro Class';
+const INTRO_CLASS_TYPE = 'Demo Class';
 
 function isIntroClassType(classType: unknown): boolean {
-    return typeof classType === 'string'
-        && classType.trim().toLowerCase() === INTRO_CLASS_TYPE.toLowerCase();
+    if (typeof classType !== 'string') return false;
+    const normalized = classType.trim().toLowerCase();
+    return normalized === INTRO_CLASS_TYPE.toLowerCase();
 }
 
 function getMondayWeekWindow(date: Date) {
@@ -170,14 +171,14 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
             if (isIntroClass && introCreditRemaining <= 0) {
                 throw new functions.https.HttpsError(
                     'failed-precondition',
-                    'An unused intro credit is required to book an Intro Class.'
+                    'An unused demo credit is required to book a Demo Class.'
                 );
             }
 
             if (isIntroClass && isGuest) {
                 throw new functions.https.HttpsError(
                     'invalid-argument',
-                    'Intro Class cannot be booked as a guest reservation.'
+                    'Demo Class cannot be booked as a guest reservation.'
                 );
             }
 

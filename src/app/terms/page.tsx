@@ -12,7 +12,7 @@ const sections = [
   {
     title: "Using SOL Pilates Services",
     body: [
-      "These Terms apply when you use the SOL Pilates Studio website, mobile app, class booking features, membership services, intro class flow, and related studio services.",
+      "These Terms apply when you use the SOL Pilates Studio website, mobile app, class booking features, membership services, demo class flow, and related studio services.",
       "By creating an account, booking a class, purchasing a plan, or using our services, you agree to these Terms and our Privacy Policy.",
     ],
   },
@@ -33,7 +33,7 @@ const sections = [
   {
     title: "Plans, Credits, And Payments",
     body: [
-      "Intro classes, class packs, and memberships may include limits such as credits, weekly booking caps, validity periods, guest passes, or plan-specific restrictions. These limits are shown in the app or website and may vary by plan.",
+      "Demo classes, class packs, and memberships may include limits such as credits, weekly booking caps, validity periods, guest passes, or plan-specific restrictions. These limits are shown in the app or website and may vary by plan.",
       "Payments are processed by Razorpay or its payment partners. Physical Pilates classes and studio services are consumed outside the app. Prices, taxes, discounts, and payment methods may change where permitted by law.",
     ],
   },

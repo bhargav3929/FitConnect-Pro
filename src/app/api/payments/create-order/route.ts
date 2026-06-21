@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
         if (plan.id === 'drop_in') {
             if (isActiveUnexpiredSubscription(userData?.subscription)) {
                 return NextResponse.json(
-                    { error: 'Intro class is only available before your first active plan.', code: 'already-exists' },
+                    { error: 'Demo class is only available before your first active plan.', code: 'already-exists' },
                     { status: 409 },
                 );
             }
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
                 .get();
             if (!existingLead.empty) {
                 return NextResponse.json(
-                    { error: 'Intro class has already been booked.', code: 'already-exists' },
+                    { error: 'Demo class has already been booked.', code: 'already-exists' },
                     { status: 409 },
                 );
             }

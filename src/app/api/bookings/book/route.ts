@@ -193,7 +193,7 @@ export async function POST(req: NextRequest) {
             if (isIntroClass && introCreditRemaining <= 0) {
                 throw {
                     status: 400,
-                    error: 'An unused intro credit is required to book an Intro Class.',
+                    error: 'An unused demo credit is required to book a Demo Class.',
                     code: 'intro-class-plan-required',
                 };
             }
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
             if (isIntroClass && isGuest) {
                 throw {
                     status: 400,
-                    error: 'Intro Class cannot be booked as a guest reservation.',
+                    error: 'Demo Class cannot be booked as a guest reservation.',
                     code: 'invalid-argument',
                 };
             }

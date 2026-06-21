@@ -151,7 +151,7 @@ function getClassBookingRestriction(sub: BookingSubscription | undefined, cls: C
         return 'A membership is required to book regular classes.';
     }
     if (introClass && introCreditRemaining <= 0) {
-        return 'An unused intro credit is required to book an Intro Class.';
+        return 'An unused demo credit is required to book a Demo Class.';
     }
     if (!introClass && sub?.classesRemaining !== null && ((sub?.classesRemaining as number | undefined) ?? 0) <= 0) {
         return 'No classes remaining on your membership.';
@@ -359,11 +359,11 @@ export default function ScheduleScreen() {
                 )}
             </View>
 
-            {/* Intro Classes Section */}
+            {/* Demo Classes Section */}
             {!loadingClasses && introClasses.length > 0 && (
                 <View style={styles.introSection}>
                     <View style={styles.introSectionHeader}>
-                        <Text style={styles.introSectionLabel}>INTRO CLASS</Text>
+                        <Text style={styles.introSectionLabel}>DEMO CLASS</Text>
                         {introCreditRemaining > 0 && (
                             <View style={styles.introCreditPill}>
                                 <Text style={styles.introCreditPillText}>

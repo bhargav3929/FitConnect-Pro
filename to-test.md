@@ -12,8 +12,8 @@ Before testing, set up these scenarios to cover all code paths:
 
 | Account | Subscription State | Purpose |
 |---------|-------------------|---------|
-| **User A** | No subscription at all | Test: no-plan CTA, subscription prompt, intro class flow |
-| **User B** | `drop_in` plan (1 intro credit) | Test: intro class booking, cannot book regular classes |
+| **User A** | No subscription at all | Test: no-plan CTA, subscription prompt, demo class flow |
+| **User B** | `drop_in` plan (1 demo credit) | Test: demo class booking, cannot book regular classes |
 | **User C** | `kickstarter` class pack (active) | Test: class pack credits, weekly limits |
 | **User D** | `twice_quarterly` membership (active, auto-renew) | Test: membership booking, upgrade/downgrade, cancel |
 | **User E** | `thrice_quarterly` membership (active, renewal canceled) | Test: renewal-canceled badge, still usable until end date |
@@ -32,7 +32,7 @@ Before testing, set up these scenarios to cover all code paths:
 4. [Class Schedule & Booking (Web + Mobile)](#4-class-schedule--booking-web--mobile)
 5. [User Bookings Management (Web + Mobile)](#5-user-bookings-management-web--mobile)
 6. [Subscription & Payments (Web + Mobile)](#6-subscription--payments-web--mobile)
-7. [Intro Class Flow (Web + Mobile)](#7-intro-class-flow-web--mobile)
+7. [Demo Class Flow (Web + Mobile)](#7-demo-class-flow-web--mobile)
 8. [User Profile (Web + Mobile)](#8-user-profile-web--mobile)
 9. [Admin Dashboard](#9-admin-dashboard)
 10. [Admin — Class Management](#10-admin--class-management)
@@ -78,7 +78,7 @@ Before testing, set up these scenarios to cover all code paths:
 | 1.18 | Facilities page (`/facilities`) renders correctly | [ ] | [ ] | | |
 | 1.19 | Shop page (`/shop`) renders correctly | [ ] | [ ] | | |
 | 1.20 | Feedback page (`/feedback`) renders correctly | [ ] | [ ] | | |
-| 1.21 | Intro Class page (`/intro-class`) renders correctly | [ ] | [ ] | | |
+| 1.21 | Demo Class page (`/intro-class`) renders correctly | [ ] | [ ] | | |
 | 1.22 | Subscription page (`/subscription`) renders correctly | [ ] | [ ] | | |
 | 1.23 | All pages responsive (no horizontal overflow on mobile) | [ ] | [ ] | | |
 | 1.24 | Page transitions are smooth with Framer Motion | [ ] | [ ] | | |
@@ -131,7 +131,7 @@ Before testing, set up these scenarios to cover all code paths:
 | 3.4 | Streak ring progress bar animates correctly | [ ] | [ ] | | |
 | 3.5 | Total Classes Attended stat correct | [ ] | [ ] | | |
 | 3.6 | Classes Left stat correct (shows ∞ for unlimited) | [ ] | [ ] | | |
-| 3.7 | Intro Credit Left shown for intro plan users | [ ] | [ ] | | |
+| 3.7 | Demo Credit Left shown for demo plan users | [ ] | [ ] | | |
 | 3.8 | Milestone tier displayed correctly (Bronze/Silver/Gold/Platinum/Diamond) | [ ] | [ ] | | |
 | 3.9 | Milestone progress bar animates | [ ] | [ ] | | |
 | 3.10 | Subscription Widget shows correct plan, status, and credits | [ ] | [ ] | | |
@@ -145,8 +145,8 @@ Before testing, set up these scenarios to cover all code paths:
 | 3.18 | Quick Actions: "My Bookings" card navigates to bookings | [ ] | [ ] | | |
 | 3.19 | Loading skeleton shown while data loads | [ ] | [ ] | | |
 | 3.20 | No console errors on dashboard | [ ] | [ ] | | |
-| **Intro Class CTA (Web)** | | | | | |
-| 3.21 | "Book an Intro Class" CTA shown when no active subscription | [ ] | [ ] | | |
+| **Demo Class CTA (Web)** | | | | | |
+| 3.21 | "Book a Demo Class" CTA shown when no active subscription | [ ] | [ ] | | |
 | 3.22 | CTA navigates to `/intro-class` for new users | [ ] | [ ] | | |
 | 3.23 | CTA navigates to schedule if intro lead already exists | [ ] | [ ] | | |
 | **Mobile** | | | | | |
@@ -156,7 +156,7 @@ Before testing, set up these scenarios to cover all code paths:
 | 3.24 | Mobile upcoming session card renders | — | [ ] | | |
 | 3.25 | Mobile quick actions cards render | — | [ ] | | |
 | 3.26 | Mobile pull-to-refresh works | — | [ ] | | |
-| 3.27 | Mobile intro class CTA shown when no active subscription | — | [ ] | | |
+| 3.27 | Mobile demo class CTA shown when no active subscription | — | [ ] | | |
 | 3.28 | Mobile TabHeader renders with logo | — | [ ] | | |
 
 ---
@@ -195,8 +195,8 @@ Before testing, set up these scenarios to cover all code paths:
 | 4.27 | Booking rejected when no credits remaining | [x] | [x] | PASS | API: classesRemaining <= 0 → "No classes remaining" |
 | 4.28 | Booking rejected when daily limit reached | [x] | [x] | PASS | API: sameDayConfirmed.length >= maxPerDay (default: 1) |
 | 4.29 | Booking rejected when weekly limit reached | [x] | [x] | PASS | API: sameWeekConfirmed.length >= weeklyClassLimit |
-| 4.30 | Intro class booking requires intro credit | [x] | [x] | PASS | API: isIntroClass && introCreditRemaining <= 0 rejected |
-| 4.31 | Intro plan user cannot book regular classes | [x] | [x] | PASS | API: isIntroPlan && !isIntroClass rejected with explicit message |
+| 4.30 | Demo class booking requires demo credit | [x] | [x] | PASS | API: isIntroClass && introCreditRemaining <= 0 rejected |
+| 4.31 | Demo plan user cannot book regular classes | [x] | [x] | PASS | API: isIntroPlan && !isIntroClass rejected with explicit message |
 | 4.32 | Booking rejected for past dates | [x] | [x] | PASS | API: classEndOfDay < new Date() → "Cannot book a class in the past" |
 | 4.33 | Duplicate booking rejected (same user, same class) | [x] | [x] | PASS | API: queries existing confirmed booking for user+class |
 | **Trainers Tab** | | | | | |
@@ -256,7 +256,7 @@ Before testing, set up these scenarios to cover all code paths:
 | 6.3 | Pricing pulled from live Razorpay data (fallback to static) | [ ] | [ ] | | |
 | 6.4 | Founding member discount applied if user is founding member | [ ] | [ ] | | |
 | 6.5 | Active membership blocks purchasing new membership | [ ] | [ ] | | |
-| 6.6 | Intro class (drop_in) only available before first active plan | [ ] | [ ] | | |
+| 6.6 | Demo class (drop_in) only available before first active plan | [ ] | [ ] | | |
 | 6.7 | Starter packs only available before active membership | [ ] | [ ] | | |
 | **One-Time Payment (Class Packs)** | | | | | |
 | 6.8 | Clicking "Buy" opens Razorpay checkout (create-order) | [ ] | [ ] | | |
@@ -292,25 +292,25 @@ Before testing, set up these scenarios to cover all code paths:
 
 ---
 
-## 7. Intro Class Flow (Web + Mobile)
+## 7. Demo Class Flow (Web + Mobile)
 
 | # | Test Case | Desktop | Mobile | Status | Notes |
 |---|-----------|---------|--------|--------|-------|
-| 7.1 | Intro class page (`/intro-class`) renders form | ✅ | — | PASS | Page loads; shows "ACTIVE PLAN FOUND" for users with active subscription |
+| 7.1 | Demo class page (`/intro-class`) renders form | ✅ | — | PASS | Page loads; shows "ACTIVE PLAN FOUND" for users with active subscription |
 | 7.2 | Form fields: name, email, phone, goals, concerns | ⚠️ | — | SKIP | Only visible for users without active subscription (not testable with admin account) |
 | 7.3 | Form validation (required fields) | ⚠️ | — | SKIP | Form not shown with active subscription |
 | 7.4 | Submit triggers payment flow (create-order for drop_in) | ⚠️ | — | SKIP | Payment flow (subscription section — skipped) |
-| 7.5 | Razorpay checkout opens for intro class payment | ⚠️ | — | SKIP | Payment flow (subscription section — skipped) |
+| 7.5 | Razorpay checkout opens for demo class payment | ⚠️ | — | SKIP | Payment flow (subscription section — skipped) |
 | 7.6 | Successful payment activates drop_in subscription | ⚠️ | — | SKIP | Payment flow (subscription section — skipped) |
-| 7.7 | Intro class lead saved to `introClassLeads` collection | ⚠️ | — | SKIP | Requires full payment flow |
-| 7.8 | User gets 1 intro credit (introCreditRemaining=1) | ⚠️ | — | SKIP | Requires full payment flow |
-| 7.9 | After payment, user can book Intro Class from schedule | ⚠️ | — | SKIP | Requires full payment flow |
-| 7.10 | Intro class blocked for users with existing active subscription | ✅ | — | PASS | Shows "ACTIVE PLAN FOUND" with VIEW SCHEDULE CTA — correctly blocks form |
-| 7.11 | Intro class blocked if already booked once | ⚠️ | — | SKIP | Requires a user who already completed intro class |
+| 7.7 | Demo class lead saved to `introClassLeads` collection | ⚠️ | — | SKIP | Requires full payment flow |
+| 7.8 | User gets 1 demo credit (introCreditRemaining=1) | ⚠️ | — | SKIP | Requires full payment flow |
+| 7.9 | After payment, user can book Demo Class from schedule | ⚠️ | — | SKIP | Requires full payment flow |
+| 7.10 | Demo class blocked for users with existing active subscription | ✅ | — | PASS | Shows "ACTIVE PLAN FOUND" with VIEW SCHEDULE CTA — correctly blocks form |
+| 7.11 | Demo class blocked if already booked once | ⚠️ | — | SKIP | Requires a user who already completed demo class |
 | **Mobile** | | | | | |
 | 7.12 | Mobile intro-class screen renders form | — | [ ] | | |
-| 7.13 | Mobile intro class payment flow works (native build) | — | [ ] | | |
-| 7.14 | Mobile intro class lead hook (`useIntroClassLead`) checks status | — | [ ] | | |
+| 7.13 | Mobile demo class payment flow works (native build) | — | [ ] | | |
+| 7.14 | Mobile demo class lead hook (`useIntroClassLead`) checks status | — | [ ] | | |
 
 ---
 
@@ -380,8 +380,8 @@ Before testing, set up these scenarios to cover all code paths:
 | 10.14 | Quick-delete (trash icon on hover) works | ✅ | — | PASS | Trash icon appears on hover, triggers delete |
 | **Create Class** | | | | | |
 | 10.15 | "Add Class" button opens create dialog | ✅ | — | PASS | Dialog opens via JS click (CSS uppercase text workaround) |
-| 10.16 | Class Type dropdown with 4 types (Sol Flow, Sol Cardio, Sol Stretch, Intro Class) | ✅ | — | PASS | All 4 types present + Reformer Pilates |
-| 10.17 | Selecting Intro Class auto-sets duration to 30 min | ⚠️ | — | SKIP | Not manually verified in dialog |
+| 10.16 | Class Type dropdown with 4 types (Sol Flow, Sol Cardio, Sol Stretch, Demo Class) | ✅ | — | PASS | All 4 types present + Reformer Pilates |
+| 10.17 | Selecting Demo Class auto-sets duration to 30 min | ⚠️ | — | SKIP | Not manually verified in dialog |
 | 10.18 | Trainer dropdown populated from Firestore | ✅ | — | PASS | "Shweta" appears in trainer dropdown |
 | 10.19 | Single day / Multiple days mode toggle works | ✅ | — | PASS | Toggle switches between modes |
 | 10.20 | Date picker works in single mode | ✅ | — | PASS | Date picker renders and selects |
@@ -533,7 +533,7 @@ Before testing, set up these scenarios to cover all code paths:
 
 | # | Test Case | Desktop | Mobile | Status | Notes |
 |---|-----------|---------|--------|--------|-------|
-| 18.1 | Leads page loads with intro class leads | ✅ | — | PASS | 3 leads shown with ALL/NEW/CONTACTED/CONVERTED/ARCHIVED tabs |
+| 18.1 | Leads page loads with demo class leads | ✅ | — | PASS | 3 leads shown with ALL/NEW/CONTACTED/CONVERTED/ARCHIVED tabs |
 | 18.2 | Lead cards show: name, email, phone, goals, status | ⚠️ | — | PARTIAL | **BUG: First lead card missing name/email/phone — only shows date** (data may be incomplete in Firestore) |
 | 18.3 | Leads pulled from `introClassLeads` collection | ✅ | — | PASS | Data matches Firestore collection |
 | 18.4 | Waitlist page loads with waitlist entries | ✅ | — | PASS | 1 entry (Dinesh, CONVERTED) with stats cards |
@@ -730,7 +730,7 @@ Before testing, set up these scenarios to cover all code paths:
 | 4. Schedule & Booking | 43 | **38** | **0** | **5 (mobile responsive only)** |
 | 5. User Bookings | 23 | | | |
 | 6. Subscriptions & Payments | 34 | | | |
-| 7. Intro Class Flow | 14 | | | |
+| 7. Demo Class Flow | 14 | | | |
 | 8. User Profile | 13 | | | |
 | 9. Admin Dashboard | 16 | | | |
 | 10. Admin Classes | 37 | | | |
