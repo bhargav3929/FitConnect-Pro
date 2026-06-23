@@ -53,10 +53,12 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Subscription signature uses subscription_id in place of order_id — same HMAC algorithm
+        // Razorpay signs subscription payments as HMAC(payment_id|subscription_id) — the
+        // REVERSE of one-time orders (order_id|payment_id). verifyPaymentSignature builds
+        // `${first}|${second}`, so razorpay_payment_id must come first here.
         const isValid = verifyPaymentSignature(
-            razorpay_subscription_id,
             razorpay_payment_id,
+            razorpay_subscription_id,
             razorpay_signature,
             process.env.RAZORPAY_KEY_SECRET!,
         );

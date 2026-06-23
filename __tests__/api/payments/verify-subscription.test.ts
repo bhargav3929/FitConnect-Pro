@@ -32,8 +32,11 @@ vi.mock('@/lib/firebase/admin', () => ({
 
 const KEY_SECRET = 'placeholder_secret';
 
+// Razorpay signs subscription payments as HMAC(payment_id|subscription_id) — the reverse of
+// one-time orders (order_id|payment_id). Build the signature exactly as Razorpay does so this
+// test fails if the route ever reverts to the wrong concatenation order.
 function makeSignature(subscriptionId: string, paymentId: string): string {
-    return crypto.createHmac('sha256', KEY_SECRET).update(`${subscriptionId}|${paymentId}`).digest('hex');
+    return crypto.createHmac('sha256', KEY_SECRET).update(`${paymentId}|${subscriptionId}`).digest('hex');
 }
 
 function makeRequest(body: unknown): NextRequest {
