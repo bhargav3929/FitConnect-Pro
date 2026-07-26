@@ -66,8 +66,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B0F19"
       },
-      "package": "com.fitconnect.pro",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.fitconnect.pro"
     },
     "web": {
       "favicon": "./assets/favicon.png",
