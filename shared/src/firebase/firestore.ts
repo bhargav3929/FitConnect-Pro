@@ -1364,6 +1364,122 @@ export async function callCheckInBooking(
 }
 
 // ---------------------------------------------------------------------------
+// 32. getClassesByIds — Fetch several classes at once into an id -> class map.
+// Used wherever a list of bookings needs to show which class each one is for.
+// ---------------------------------------------------------------------------
+
+export async function getClassesByIds(
+    classIds: string[],
+): Promise<Map<string, ClassSession>> {
+    const unique = Array.from(new Set(classIds.filter(Boolean)));
+    if (unique.length === 0) return new Map();
+
+    const entries = await Promise.all(
+        unique.map(async (id) => {
+            const snap = await getDoc(doc(db, 'classes', id));
+            if (!snap.exists()) return null;
+            const cls = convertTimestamps({
+                ...snap.data(),
+                id: snap.id,
+            }) as unknown as ClassSession;
+            return [id, cls] as const;
+        }),
+    );
+
+    return new Map(
+        entries.filter((entry): entry is NonNullable<typeof entry> => entry !== null),
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 33. getBookingsByUserIds — Bookings for a set of users, newest class first.
+// Firestore caps `in` filters at 30 values, so the ids are queried in chunks
+// and merged. Admin-only in practice: the rules let admins read all bookings.
+// ---------------------------------------------------------------------------
+
+const IN_FILTER_CHUNK_SIZE = 30;
+
+export async function getBookingsByUserIds(
+    userIds: string[],
+    options: { status?: Booking['status'] } = {},
+): Promise<Booking[]> {
+    const unique = Array.from(new Set(userIds.filter(Boolean)));
+    if (unique.length === 0) return [];
+
+    const chunks: string[][] = [];
+    for (let i = 0; i < unique.length; i += IN_FILTER_CHUNK_SIZE) {
+        chunks.push(unique.slice(i, i + IN_FILTER_CHUNK_SIZE));
+    }
+
+    const results = await Promise.all(
+        chunks.map(async (chunk) => {
+            const q = query(
+                collection(db, 'bookings'),
+                where('userId', 'in', chunk),
+                ...(options.status ? [where('status', '==', options.status)] : []),
+                orderBy('classDate', 'desc'),
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map((d) => mapDocWithId<Booking>(d));
+        }),
+    );
+
+    return results
+        .flat()
+        .sort((a, b) => toDate(b.classDate).getTime() - toDate(a.classDate).getTime());
+}
+
+// ---------------------------------------------------------------------------
+// 33b. getEarliestBookingsPerUser — Each user's first few bookings.
+// One bounded query per user rather than one `in` query for the batch: an `in`
+// query cannot limit per user, so a single converted member with hundreds of
+// bookings would otherwise dominate (and pay for) the whole read.
+// Ascending order because a lead's demo class is always their first booking —
+// the drop-in plan cannot book anything else.
+// ---------------------------------------------------------------------------
+
+export async function getEarliestBookingsPerUser(
+    userIds: string[],
+    perUser: number,
+): Promise<Map<string, Booking[]>> {
+    const unique = Array.from(new Set(userIds.filter(Boolean)));
+    if (unique.length === 0) return new Map();
+
+    const entries = await Promise.all(
+        unique.map(async (userId) => {
+            const snapshot = await getDocs(
+                query(
+                    collection(db, 'bookings'),
+                    where('userId', '==', userId),
+                    orderBy('classDate', 'asc'),
+                    // One extra so the caller can tell "exactly perUser" from "more"
+                    limitTo(perUser + 1),
+                ),
+            );
+            return [userId, snapshot.docs.map((d) => mapDocWithId<Booking>(d))] as const;
+        }),
+    );
+
+    return new Map(entries);
+}
+
+// ---------------------------------------------------------------------------
+// 34. getBookingsByClassId — Every booking for one class (admin lookup by id).
+// No orderBy so this needs only the automatic single-field index; the caller
+// gets them sorted by spot number instead.
+// ---------------------------------------------------------------------------
+
+export async function getBookingsByClassId(classId: string): Promise<Booking[]> {
+    if (!classId) return [];
+    const snapshot = await getDocs(
+        query(collection(db, 'bookings'), where('classId', '==', classId)),
+    );
+    return snapshot.docs
+        .map((d) => mapDocWithId<Booking>(d))
+        .sort((a, b) => (a.spotNumber ?? 0) - (b.spotNumber ?? 0));
+}
+
+// ---------------------------------------------------------------------------
 // Re-export SpotSelection for convenience
 // ---------------------------------------------------------------------------
 

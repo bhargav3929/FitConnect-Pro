@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
     subscribeToCheckinClasses,
     subscribeToBookingsByClass,
@@ -8,7 +8,7 @@ import {
 } from "@fitconnect/shared/firebase/firestore";
 import { ClassSession } from "@fitconnect/shared/types/class";
 import { Booking } from "@fitconnect/shared/types/booking";
-import { CheckCircle, X, Users, UserCheck, RefreshCw } from "lucide-react";
+import { CheckCircle, X, Users, UserCheck, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -18,6 +18,34 @@ function fmtTime(t: string) {
     const period = h >= 12 ? "PM" : "AM";
     const hour = h % 12 || 12;
     return `${hour}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
+/** `<input type="date">` value for a Date, in local time (never UTC-shifted). */
+function toDateInputValue(d: Date): string {
+    const month = `${d.getMonth() + 1}`.padStart(2, "0");
+    const day = `${d.getDate()}`.padStart(2, "0");
+    return `${d.getFullYear()}-${month}-${day}`;
+}
+
+/** Parse a `yyyy-mm-dd` input value as local midnight, not UTC midnight. */
+function fromDateInputValue(value: string): Date | null {
+    const [year, month, day] = value.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+}
+
+function addDays(d: Date, days: number): Date {
+    const next = new Date(d);
+    next.setDate(next.getDate() + days);
+    return next;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+    return (
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate()
+    );
 }
 
 function isClassNow(cls: ClassSession): boolean {
@@ -33,13 +61,23 @@ function isClassNow(cls: ClassSession): boolean {
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function CheckInPage() {
-    const today = useRef(new Date()).current;
-    const [classes, setClasses] = useState<ClassSession[]>([]);
-    const [selectedClass, setSelectedClass] = useState<ClassSession | null>(null);
-    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [today] = useState(() => new Date());
+    const [selectedDate, setSelectedDate] = useState<Date>(today);
+    const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
-    const [classesLoading, setClassesLoading] = useState(true);
     const [now, setNow] = useState(new Date());
+
+    // Both subscriptions stamp their results with the key they were opened for.
+    // Rendering off that stamp means a date or class switch shows an empty,
+    // loading panel without an effect having to reset state first.
+    const [classSnapshot, setClassSnapshot] = useState<{
+        dateKey: string;
+        classes: ClassSession[];
+    } | null>(null);
+    const [bookingSnapshot, setBookingSnapshot] = useState<{
+        classId: string;
+        bookings: Booking[];
+    } | null>(null);
 
     // Clock tick — updates every 30s to keep the "NOW" badge accurate
     useEffect(() => {
@@ -47,42 +85,48 @@ export default function CheckInPage() {
         return () => clearInterval(id);
     }, []);
 
-    // Subscribe to today's classes (includes scheduled + ongoing)
+    // Subscribe to the selected day's classes (includes scheduled + ongoing).
+    // Keyed on the date string so a same-day re-render does not resubscribe.
+    const selectedDateKey = toDateInputValue(selectedDate);
     useEffect(() => {
-        setClassesLoading(true);
-        const unsub = subscribeToCheckinClasses(today, (cls) => {
-            setClasses(cls);
-            setClassesLoading(false);
-            // Auto-select: prefer the class happening NOW, else the first one
-            setSelectedClass((prev) => {
-                if (prev) {
-                    // Keep selection if it still exists in the updated list
-                    const still = cls.find((c) => c.id === prev.id);
-                    return still ?? cls[0] ?? null;
-                }
-                return cls.find(isClassNow) ?? cls[0] ?? null;
-            });
+        const date = fromDateInputValue(selectedDateKey);
+        if (!date) return;
+
+        const unsub = subscribeToCheckinClasses(date, (cls) => {
+            setClassSnapshot({ dateKey: selectedDateKey, classes: cls });
         });
         return unsub;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [selectedDateKey]);
+
+    const classesLoading = classSnapshot?.dateKey !== selectedDateKey;
+    const classes = classesLoading ? [] : classSnapshot.classes;
+
+    // Selection is derived, not stored: an explicit pick wins, otherwise fall
+    // back to the class running now, otherwise the first of the day. A pick
+    // from another day simply stops matching and the fallback takes over.
+    const selectedClass =
+        classes.find((c) => c.id === selectedClassId) ??
+        classes.find(isClassNow) ??
+        classes[0] ??
+        null;
 
     // Subscribe to bookings for the selected class
     const classId = selectedClass?.id;
     useEffect(() => {
-        if (!classId) {
-            setBookings([]);
-            return;
-        }
+        if (!classId) return;
         const unsub = subscribeToBookingsByClass(classId, (bkgs) => {
-            setBookings(
-                bkgs
+            setBookingSnapshot({
+                classId,
+                bookings: bkgs
                     .filter((b) => b.status !== "canceled")
                     .sort((a, b) => a.spotNumber - b.spotNumber),
-            );
+            });
         });
         return unsub;
     }, [classId]);
+
+    const bookings =
+        classId && bookingSnapshot?.classId === classId ? bookingSnapshot.bookings : [];
 
     const handleAction = async (
         bookingId: string,
@@ -104,11 +148,29 @@ export default function CheckInPage() {
     const noShow = bookings.filter((b) => b.status === "no-show").length;
     const pending = bookings.filter((b) => b.status === "confirmed").length;
 
-    const todayLabel = today.toLocaleDateString("en-IN", {
+    const isToday = isSameDay(selectedDate, today);
+    const startOfToday = new Date(today);
+    startOfToday.setHours(0, 0, 0, 0);
+    const startOfSelected = new Date(selectedDate);
+    startOfSelected.setHours(0, 0, 0, 0);
+    // Admins bypass the check-in time window server-side, so hide the actions on
+    // days that have not happened yet rather than let them record attendance early.
+    const isFutureDay = startOfSelected > startOfToday;
+
+    const dateLabel = selectedDate.toLocaleDateString("en-IN", {
         weekday: "long",
         day: "numeric",
         month: "long",
     });
+    const eyebrowLabel = isToday
+        ? "Today"
+        : isSameDay(selectedDate, addDays(today, 1))
+          ? "Tomorrow"
+          : isSameDay(selectedDate, addDays(today, -1))
+            ? "Yesterday"
+            : isFutureDay
+              ? "Upcoming"
+              : "Past class";
 
     const clockLabel = now.toLocaleTimeString("en-IN", {
         hour: "2-digit",
@@ -121,12 +183,51 @@ export default function CheckInPage() {
             <aside className="w-56 lg:w-64 flex-shrink-0 border-r border-peach-400/20 bg-peach-50 flex flex-col overflow-y-auto">
                 <div className="p-4 border-b border-peach-400/20">
                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-terra-400">
-                        Today
+                        {eyebrowLabel}
                     </p>
                     <p className="text-sm font-bold text-olive-600 mt-0.5 leading-snug">
-                        {todayLabel}
+                        {dateLabel}
                     </p>
-                    <p className="text-xs text-olive-400 mt-1">{clockLabel}</p>
+                    <p className="text-xs text-olive-400 mt-1">
+                        {isToday ? clockLabel : "Roster view"}
+                    </p>
+
+                    {/* Day navigation */}
+                    <div className="flex items-center gap-1 mt-3">
+                        <button
+                            onClick={() => setSelectedDate((d) => addDays(d, -1))}
+                            aria-label="Previous day"
+                            className="w-7 h-7 flex-shrink-0 flex items-center justify-center border border-peach-400/30 text-olive-400 hover:text-olive-600 hover:border-olive-400/50 transition-colors"
+                        >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <input
+                            type="date"
+                            value={toDateInputValue(selectedDate)}
+                            onChange={(e) => {
+                                const next = fromDateInputValue(e.target.value);
+                                if (next) setSelectedDate(next);
+                            }}
+                            aria-label="Roster date"
+                            className="flex-1 min-w-0 h-7 px-2 text-xs font-medium bg-peach-100 border border-peach-400/30 text-olive-600 focus:border-terra-400/60 focus:outline-none cursor-pointer"
+                        />
+                        <button
+                            onClick={() => setSelectedDate((d) => addDays(d, 1))}
+                            aria-label="Next day"
+                            className="w-7 h-7 flex-shrink-0 flex items-center justify-center border border-peach-400/30 text-olive-400 hover:text-olive-600 hover:border-olive-400/50 transition-colors"
+                        >
+                            <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+
+                    {!isToday && (
+                        <button
+                            onClick={() => setSelectedDate(new Date())}
+                            className="mt-2 text-[10px] font-bold uppercase tracking-[0.15em] text-terra-400 hover:text-terra-300 transition-colors"
+                        >
+                            Jump to today
+                        </button>
+                    )}
                 </div>
 
                 {classesLoading ? (
@@ -141,7 +242,7 @@ export default function CheckInPage() {
                 ) : classes.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center p-6 text-center">
                         <p className="text-olive-300 text-sm">
-                            No classes scheduled today
+                            No classes scheduled on this day
                         </p>
                     </div>
                 ) : (
@@ -152,7 +253,7 @@ export default function CheckInPage() {
                             return (
                                 <button
                                     key={cls.id}
-                                    onClick={() => setSelectedClass(cls)}
+                                    onClick={() => setSelectedClassId(cls.id)}
                                     className={`w-full text-left p-3 rounded-lg transition-all relative ${
                                         isSelected
                                             ? "bg-terra-400 shadow-lg shadow-terra-400/20"
@@ -230,6 +331,7 @@ export default function CheckInPage() {
                                     )}
                                 </h2>
                                 <p className="text-xs text-olive-400 mt-1">
+                                    {!isToday && <>{dateLabel} · </>}
                                     {selectedClass.location || "Main Studio"} ·{" "}
                                     {selectedClass.duration} min
                                 </p>
@@ -325,7 +427,13 @@ export default function CheckInPage() {
                                                 </div>
 
                                                 {/* Actions — pending: primary buttons; settled: status badge + undo */}
-                                                {isPending && (
+                                                {isPending && isFutureDay && (
+                                                    <span className="flex-shrink-0 text-xs font-bold uppercase tracking-wider text-olive-300 border border-peach-400/30 px-3 py-1.5">
+                                                        Booked
+                                                    </span>
+                                                )}
+
+                                                {isPending && !isFutureDay && (
                                                     <div className="flex items-center gap-2 flex-shrink-0">
                                                         <button
                                                             onClick={() =>

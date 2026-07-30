@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import {
     Search,
@@ -29,19 +30,48 @@ import {
     callCancelBooking,
     getBookingStats,
     getBookingsPage,
+    getAllMembers,
+    getBookingsByUserIds,
+    getBookingsByClassId,
+    getClassesByIds,
     type FirestorePageCursor,
 } from "@fitconnect/shared/firebase/firestore"
 import { Booking } from "@fitconnect/shared/types/booking"
+import { ClassSession } from "@fitconnect/shared/types/class"
+import { UserProfile } from "@fitconnect/shared/types/user"
 import { toast } from "sonner"
 
 const STATUS_FILTERS = ["All Status", "confirmed", "attended", "canceled", "no-show"]
 const PAGE_SIZE = 12
+const SEARCH_DEBOUNCE_MS = 300
+/** Cap on how many matching members a single search will resolve bookings for. */
+const MAX_SEARCH_MEMBERS = 300
+
+const EMPTY_BOOKINGS: Booking[] = []
 
 function getBookingUserLabel(booking: Booking) {
     return booking.userName?.trim() || booking.userId
 }
 
-export default function BookingsPage() {
+function fmtTime(t?: string) {
+    if (!t) return ""
+    const [h, m] = t.split(":").map(Number)
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return t
+    const period = h >= 12 ? "PM" : "AM"
+    const hour = h % 12 || 12
+    return `${hour}:${m.toString().padStart(2, "0")} ${period}`
+}
+
+function matchesMember(member: UserProfile, term: string) {
+    return (
+        member.name?.toLowerCase().includes(term) ||
+        member.displayName?.toLowerCase().includes(term) ||
+        member.email?.toLowerCase().includes(term) ||
+        member.uid?.toLowerCase().includes(term)
+    )
+}
+
+function BookingsPageContent() {
     const [bookings, setBookings] = useState<Booking[]>([])
     const [totalBookings, setTotalBookings] = useState(0)
     const [bookingStats, setBookingStats] = useState({
@@ -53,13 +83,38 @@ export default function BookingsPage() {
         todayBookings: 0,
     })
     const [isLoading, setIsLoading] = useState(true)
-    const [searchQuery, setSearchQuery] = useState("")
+    // `?q=` lets other admin screens (leads) deep-link straight into a search
+    const initialQuery = useSearchParams().get("q") ?? ""
+    const [searchQuery, setSearchQuery] = useState(initialQuery)
+    const [searchTerm, setSearchTerm] = useState(initialQuery)
+    // Stamped with the term and status it was produced for, so a stale result
+    // set is never rendered against a newer query.
+    const [searchSnapshot, setSearchSnapshot] = useState<{
+        term: string
+        status: string
+        results: Booking[]
+        truncated: boolean
+    } | null>(null)
+    const [classMap, setClassMap] = useState<Map<string, ClassSession>>(new Map())
     const [statusFilter, setStatusFilter] = useState("All Status")
     const [cancelingId, setCancelingId] = useState<string | null>(null)
     const [markingNoShowId, setMarkingNoShowId] = useState<string | null>(null)
     const [requestedPage, setRequestedPage] = useState(1)
     const [pageCursors, setPageCursors] = useState<FirestorePageCursor[]>([null])
     const currentCursor = pageCursors[requestedPage - 1] || null
+
+    // The member directory backs name/email search. Firestore has no substring
+    // search, so matching happens here; loaded once and reused across keystrokes.
+    const membersRef = useRef<UserProfile[] | null>(null)
+
+    const trimmedSearch = searchTerm.trim()
+    const isSearchMode = trimmedSearch.length > 0
+
+    // Debounce the search box so each keystroke does not fire a round of queries
+    useEffect(() => {
+        const id = setTimeout(() => setSearchTerm(searchQuery), SEARCH_DEBOUNCE_MS)
+        return () => clearTimeout(id)
+    }, [searchQuery])
 
     useEffect(() => {
         let cancelled = false
@@ -77,7 +132,9 @@ export default function BookingsPage() {
         }
     }, [])
 
+    // Browse mode — server-paginated listing
     useEffect(() => {
+        if (isSearchMode) return
         let cancelled = false
 
         getBookingsPage({
@@ -105,7 +162,75 @@ export default function BookingsPage() {
         return () => {
             cancelled = true
         }
-    }, [requestedPage, currentCursor, statusFilter])
+    }, [requestedPage, currentCursor, statusFilter, isSearchMode])
+
+    // Search mode — resolve the term against members (name/email/uid) and against
+    // a literal class id, then query the whole bookings collection for the matches.
+    useEffect(() => {
+        if (!isSearchMode) return
+
+        let cancelled = false
+        const term = trimmedSearch.toLowerCase()
+        const status = statusFilter === "All Status"
+            ? undefined
+            : statusFilter as Booking['status']
+
+        ;(async () => {
+            try {
+                if (!membersRef.current) {
+                    membersRef.current = await getAllMembers()
+                }
+                if (cancelled) return
+
+                const matched = membersRef.current.filter((m) => matchesMember(m, term))
+                const truncated = matched.length > MAX_SEARCH_MEMBERS
+                const userIds = matched.slice(0, MAX_SEARCH_MEMBERS).map((m) => m.uid)
+
+                const [byUser, byClass] = await Promise.all([
+                    getBookingsByUserIds(userIds, { status }),
+                    // The raw term may itself be a class id pasted from elsewhere
+                    getBookingsByClassId(trimmedSearch),
+                ])
+                if (cancelled) return
+
+                const merged = new Map<string, Booking>()
+                for (const booking of byUser) merged.set(booking.id, booking)
+                for (const booking of byClass) {
+                    if (!status || booking.status === status) merged.set(booking.id, booking)
+                }
+
+                setSearchSnapshot({
+                    term: trimmedSearch,
+                    status: statusFilter,
+                    results: Array.from(merged.values()).sort(
+                        (a, b) => new Date(b.classDate).getTime() - new Date(a.classDate).getTime(),
+                    ),
+                    truncated,
+                })
+            } catch {
+                if (cancelled) return
+                toast.error("Search failed")
+                setSearchSnapshot({
+                    term: trimmedSearch,
+                    status: statusFilter,
+                    results: [],
+                    truncated: false,
+                })
+            }
+        })()
+
+        return () => {
+            cancelled = true
+        }
+    }, [trimmedSearch, isSearchMode, statusFilter])
+
+    const searchReady =
+        isSearchMode &&
+        searchSnapshot?.term === trimmedSearch &&
+        searchSnapshot?.status === statusFilter
+    const searchResults = searchReady ? searchSnapshot.results : EMPTY_BOOKINGS
+    const searchTruncated = searchReady ? searchSnapshot.truncated : false
+    const isSearchLoading = isSearchMode && !searchReady
 
     const handleCancelBooking = async (bookingId: string) => {
         setCancelingId(bookingId)
@@ -143,18 +268,46 @@ export default function BookingsPage() {
         }
     }
 
-    const filteredBookings = bookings.filter(booking => {
-        const query = searchQuery.toLowerCase()
-        const userLabel = getBookingUserLabel(booking).toLowerCase()
-        const matchesSearch = userLabel.includes(query) ||
-            booking.userId.toLowerCase().includes(query) ||
-            booking.classId.toLowerCase().includes(query)
-        const matchesStatus = statusFilter === "All Status" || booking.status === statusFilter
-        return matchesSearch && matchesStatus
-    })
-    const totalPages = Math.max(1, Math.ceil(totalBookings / PAGE_SIZE))
+    // Browse mode paginates on the server; search mode holds the full result set
+    // in memory and pages through it here.
+    const displayedSource = isSearchMode ? searchResults : bookings
+    const totalItems = isSearchMode ? searchResults.length : totalBookings
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
     const page = Math.min(requestedPage, totalPages)
-    const paginatedBookings = filteredBookings
+    const paginatedBookings = isSearchMode
+        ? displayedSource.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+        : displayedSource
+    const showLoading = isSearchMode ? isSearchLoading : isLoading
+
+    // Resolve the class behind each booking so rows can name the session
+    useEffect(() => {
+        const classIds = displayedSource.map((b) => b.classId).filter(Boolean)
+        // Nothing to add. The existing map is keyed by class id, so leaving it
+        // in place can only ever hold extra entries, never mislabel a row.
+        if (classIds.length === 0) return
+
+        let cancelled = false
+        getClassesByIds(classIds)
+            .then((map) => {
+                if (!cancelled) setClassMap(map)
+            })
+            .catch(() => {
+                // A missing class only degrades the label; the row still renders
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [displayedSource])
+
+    const getClassLabel = (booking: Booking) => {
+        const cls = classMap.get(booking.classId)
+        if (!cls) return { title: "Unknown class", subtitle: booking.classId }
+        return {
+            title: cls.classType || "Class",
+            subtitle: [fmtTime(cls.startTime), cls.location].filter(Boolean).join(" · "),
+        }
+    }
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -255,14 +408,26 @@ export default function BookingsPage() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300 group-focus-within:text-terra-400 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search by user or class ID..."
+                        placeholder="Search all bookings by name, email, or class ID..."
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value)
                             setRequestedPage(1)
                         }}
-                        className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
+                        className="w-full h-12 pl-11 pr-11 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                     />
+                    {searchQuery && (
+                        <button
+                            onClick={() => {
+                                setSearchQuery("")
+                                setRequestedPage(1)
+                            }}
+                            aria-label="Clear search"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-olive-300 hover:text-olive-600 transition-colors"
+                        >
+                            <XCircle className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
                 <select
                     value={statusFilter}
@@ -279,8 +444,20 @@ export default function BookingsPage() {
                 </select>
             </motion.div>
 
+            {/* Search context line */}
+            {isSearchMode && !showLoading && (
+                <p className="text-sm text-olive-400 -mt-2">
+                    {totalItems === 0
+                        ? <>No bookings match <span className="font-bold text-olive-600">{trimmedSearch}</span>.</>
+                        : <>{totalItems} booking{totalItems === 1 ? "" : "s"} across all pages match <span className="font-bold text-olive-600">{trimmedSearch}</span>.</>}
+                    {searchTruncated && (
+                        <span className="text-yellow-700"> Showing the first {MAX_SEARCH_MEMBERS} matching members only — narrow your search.</span>
+                    )}
+                </p>
+            )}
+
             {/* Loading State */}
-            {isLoading && (
+            {showLoading && (
                 <div className="bg-peach-50 border border-peach-400/20 overflow-hidden">
                     <div className="divide-y divide-peach-400/10">
                         {[1, 2, 3, 4, 5, 6].map(i => (
@@ -305,7 +482,7 @@ export default function BookingsPage() {
             )}
 
             {/* Bookings Table */}
-            {!isLoading && (
+            {!showLoading && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -317,6 +494,7 @@ export default function BookingsPage() {
                             <thead>
                                 <tr className="border-b border-peach-400/15 bg-peach-200/30">
                                     <th className="text-left app-label p-4 pl-6">User</th>
+                                    <th className="text-left app-label p-4">Class</th>
                                     <th className="text-left app-label p-4">Spot</th>
                                     <th className="text-left app-label p-4">Class Date</th>
                                     <th className="text-left app-label p-4">Status</th>
@@ -352,6 +530,19 @@ export default function BookingsPage() {
                                                     )}
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="p-4">
+                                            {(() => {
+                                                const { title, subtitle } = getClassLabel(booking)
+                                                return (
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-olive-600 text-sm truncate max-w-[180px]">{title}</p>
+                                                        {subtitle && (
+                                                            <p className="text-[11px] text-olive-300 truncate max-w-[180px]">{subtitle}</p>
+                                                        )}
+                                                    </div>
+                                                )
+                                            })()}
                                         </td>
                                         <td className="p-4">
                                             <span className="text-olive-600 font-black text-lg tracking-normal">#{booking.spotNumber}</span>
@@ -452,6 +643,12 @@ export default function BookingsPage() {
                                             {booking.userName && (
                                                 <p className="text-[10px] text-olive-300 truncate max-w-[200px]">{booking.userId}</p>
                                             )}
+                                            <p className="text-xs text-olive-500 font-medium mt-0.5 truncate max-w-[200px]">
+                                                {getClassLabel(booking).title}
+                                                {getClassLabel(booking).subtitle && (
+                                                    <span className="text-olive-300 font-normal"> · {getClassLabel(booking).subtitle}</span>
+                                                )}
+                                            </p>
                                             <p className="text-xs text-olive-300 mt-0.5">Spot #{booking.spotNumber}</p>
                                         </div>
                                     </div>
@@ -519,7 +716,7 @@ export default function BookingsPage() {
                         })}
                     </div>
 
-                    {filteredBookings.length === 0 && (
+                    {paginatedBookings.length === 0 && (
                         <div className="text-center py-16">
                             <div className="w-16 h-16 bg-peach-200/40 flex items-center justify-center mx-auto mb-4">
                                 <BookOpen className="w-8 h-8 text-olive-300/30" />
@@ -528,10 +725,10 @@ export default function BookingsPage() {
                             <p className="text-olive-300 text-sm">Try adjusting your search or filter criteria</p>
                         </div>
                     )}
-                    {filteredBookings.length > 0 && (
+                    {paginatedBookings.length > 0 && (
                         <PaginationControls
                             page={page}
-                            totalItems={totalBookings}
+                            totalItems={totalItems}
                             pageSize={PAGE_SIZE}
                             itemLabel="bookings"
                             onPageChange={setRequestedPage}
@@ -541,19 +738,28 @@ export default function BookingsPage() {
             )}
 
             {/* Footer Summary */}
-            {!isLoading && filteredBookings.length > 0 && (
+            {!showLoading && paginatedBookings.length > 0 && (
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                     className="flex items-center justify-between text-olive-300 text-xs tracking-wider"
                 >
-                    <span>Showing {filteredBookings.length} of {bookings.length} bookings</span>
+                    <span>Showing {paginatedBookings.length} of {totalItems} bookings</span>
                     <span className="font-mono bg-peach-200/30 px-3 py-1 rounded-full border border-peach-400/15">
                         {bookingStats.attendedBookings} attended &bull; {bookingStats.confirmedBookings} pending
                     </span>
                 </motion.div>
             )}
         </div>
+    )
+}
+
+export default function BookingsPage() {
+    // useSearchParams needs a boundary so the route is not forced to client rendering
+    return (
+        <Suspense fallback={null}>
+            <BookingsPageContent />
+        </Suspense>
     )
 }
