@@ -1,6 +1,11 @@
 import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import {
+    findClassConflict,
+    describeClassConflict,
+    type ScheduledClassWindow,
+} from './schedule-conflicts';
 
 interface UpdateClassData {
     classId: string;
@@ -46,17 +51,32 @@ function toDate(value: unknown): Date | null {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
-async function hasActiveClassAtSlot(classDate: Date, startTime: string, excludeClassId: string): Promise<boolean> {
+/**
+ * Existing classes that could overlap `classDate`, widened a day either side so
+ * a class running past midnight is compared against the neighbouring day too.
+ */
+async function loadNeighbouringClasses(classDate: Date): Promise<ScheduledClassWindow[]> {
     const { start, end } = getDayWindow(classDate);
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() + 1);
+
     const snapshot = await db.collection('classes')
         .where('date', '>=', Timestamp.fromDate(start))
         .where('date', '<=', Timestamp.fromDate(end))
         .get();
 
-    return snapshot.docs.some((doc) => {
-        if (doc.id === excludeClassId) return false;
+    return snapshot.docs.map((doc) => {
         const data = doc.data();
-        return data.startTime === startTime && data.status !== 'canceled';
+        return {
+            id: doc.id,
+            date: toDate(data.date) ?? classDate,
+            startTime: typeof data.startTime === 'string' ? data.startTime : '00:00',
+            duration: data.duration,
+            location: data.location,
+            trainerId: data.trainerId,
+            classType: data.classType,
+            status: data.status,
+        } as ScheduledClassWindow;
     });
 }
 
@@ -107,17 +127,33 @@ export const updateClass = functions.https.onCall(async (data: UpdateClassData, 
             ? updates.startTime
             : classData.startTime;
         const nextStatus = updates.status !== undefined ? updates.status : classData.status;
+        const nextClassType = updates.classType ?? classData.classType;
+        const nextDuration = isIntroClassType(nextClassType)
+            ? 30
+            : (updates.duration ?? classData.duration);
+        const nextLocation = updates.location ?? classData.location ?? 'Main Studio';
+        const nextTrainerId = updates.trainerId ?? classData.trainerId;
 
         if (!nextDate || Number.isNaN(nextDate.getTime())) {
             throw new functions.https.HttpsError('invalid-argument', 'Invalid date format');
         }
+        // Re-checked against every field that can move the class: a longer
+        // duration or a room change can create an overlap on its own.
         if (nextStatus !== 'canceled' && typeof nextStartTime === 'string') {
-            const hasConflict = await hasActiveClassAtSlot(nextDate, nextStartTime, classId);
-            if (hasConflict) {
-                throw new functions.https.HttpsError(
-                    'already-exists',
-                    'A class is already scheduled for this date and time',
-                );
+            const conflict = findClassConflict(
+                {
+                    id: classId,
+                    date: nextDate,
+                    startTime: nextStartTime,
+                    duration: nextDuration,
+                    location: nextLocation,
+                    trainerId: nextTrainerId,
+                    classType: nextClassType,
+                },
+                await loadNeighbouringClasses(nextDate),
+            );
+            if (conflict) {
+                throw new functions.https.HttpsError('already-exists', describeClassConflict(conflict));
             }
         }
 
@@ -130,7 +166,6 @@ export const updateClass = functions.https.onCall(async (data: UpdateClassData, 
             updateData.date = Timestamp.fromDate(newDate);
         }
         if (updates.startTime !== undefined) updateData.startTime = updates.startTime;
-        const nextClassType = updates.classType ?? classData.classType;
         if (isIntroClassType(nextClassType)) {
             updateData.duration = 30;
         } else if (updates.duration !== undefined) {

@@ -12,6 +12,7 @@
     "./firebase/*": "./src/firebase/*.ts",
     "./stores/*": "./src/stores/*.ts",
     "./payments/*": "./src/payments/*.ts",
+    "./schedule/*": "./src/schedule/*.ts",
     "./design/*": "./src/design/*.ts",
     "./theme": "./src/theme/index.ts"
   },

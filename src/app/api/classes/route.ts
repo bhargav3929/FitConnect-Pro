@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
+import {
+    findClassConflict,
+    describeClassConflict,
+    type ScheduledClassWindow,
+} from '@fitconnect/shared/schedule/class-conflicts';
 
 function getDayWindow(date: Date): { start: Date; end: Date } {
     const start = new Date(date);
@@ -22,18 +27,47 @@ function toDate(value: unknown): Date | null {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
-async function hasActiveClassAtSlot(classDate: Date, startTime: string, excludeClassId?: string): Promise<boolean> {
-    const { start, end } = getDayWindow(classDate);
+/**
+ * Existing classes that could overlap `classDate`. Widened by a day either side
+ * so a late class running past midnight is still compared against the next
+ * morning's schedule (and vice versa).
+ */
+async function loadNeighbouringClasses(classDate: Date): Promise<ScheduledClassWindow[]> {
+    const { start } = getDayWindow(classDate);
+    const { end } = getDayWindow(classDate);
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() + 1);
+
     const snapshot = await adminDb.collection('classes')
         .where('date', '>=', Timestamp.fromDate(start))
         .where('date', '<=', Timestamp.fromDate(end))
         .get();
 
-    return snapshot.docs.some((doc) => {
-        if (doc.id === excludeClassId) return false;
+    return snapshot.docs.map((doc) => {
         const data = doc.data();
-        return data.startTime === startTime && data.status !== 'canceled';
+        return {
+            id: doc.id,
+            date: toDate(data.date) ?? classDate,
+            startTime: typeof data.startTime === 'string' ? data.startTime : '00:00',
+            duration: data.duration,
+            location: data.location,
+            trainerId: data.trainerId,
+            classType: data.classType,
+            status: data.status,
+        } as ScheduledClassWindow;
     });
+}
+
+/**
+ * Refuses a slot when it overlaps an existing class in the same room or with
+ * the same trainer. Returns the admin-facing message, or null when free.
+ */
+async function findScheduleConflictMessage(
+    candidate: ScheduledClassWindow,
+): Promise<string | null> {
+    const existing = await loadNeighbouringClasses(candidate.date);
+    const conflict = findClassConflict(candidate, existing);
+    return conflict ? describeClassConflict(conflict) : null;
 }
 
 // POST — createClass (admin only)
@@ -91,19 +125,30 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Trainer not found', code: 'not-found' }, { status: 404 });
         }
 
-        const hasConflict = await hasActiveClassAtSlot(classDate, startTime);
-        if (hasConflict) {
-            return NextResponse.json(
-                { error: 'A class is already scheduled for this date and time.', code: 'already-exists' },
-                { status: 409 },
-            );
-        }
-
         const classRef = adminDb.collection('classes').doc();
         const now = FieldValue.serverTimestamp();
         const spots = totalSpots || capacity;
         const finalClassType = classType || 'Sol Flow';
         const finalDuration = isIntroClassType(finalClassType) ? 30 : duration;
+        const finalLocation = location || 'Main Studio';
+
+        // Checked against the real duration and location, so an overlapping
+        // class is caught even when its start time differs.
+        const conflict = await findScheduleConflictMessage({
+            id: classRef.id,
+            date: classDate,
+            startTime,
+            duration: finalDuration,
+            location: finalLocation,
+            trainerId,
+            classType: finalClassType,
+        });
+        if (conflict) {
+            return NextResponse.json(
+                { error: conflict, code: 'already-exists' },
+                { status: 409 },
+            );
+        }
 
         const classDoc = {
             id: classRef.id,
@@ -120,7 +165,7 @@ export async function POST(req: NextRequest) {
             status: 'scheduled',
             totalSpots: spots,
             bookedSpots: [],
-            location: location || 'Main Studio',
+            location: finalLocation,
             intensityLevel: intensityLevel || 2,
             createdAt: now,
             updatedAt: now,
@@ -205,15 +250,31 @@ export async function PUT(req: NextRequest) {
             ? updates.startTime
             : classData.startTime;
         const nextStatus = updates.status !== undefined ? updates.status : classData.status;
+        const nextClassType = updates.classType ?? classData.classType;
+        const nextDuration = isIntroClassType(nextClassType)
+            ? 30
+            : (updates.duration ?? classData.duration);
+        const nextLocation = updates.location ?? classData.location ?? 'Main Studio';
+        const nextTrainerId = updates.trainerId ?? classData.trainerId;
 
         if (!nextDate || Number.isNaN(nextDate.getTime())) {
             return NextResponse.json({ error: 'Invalid date format', code: 'invalid-argument' }, { status: 400 });
         }
+        // Re-checked against every field that can move the class: a longer
+        // duration or a room change can create an overlap on its own.
         if (nextStatus !== 'canceled' && typeof nextStartTime === 'string') {
-            const hasConflict = await hasActiveClassAtSlot(nextDate, nextStartTime, classId);
-            if (hasConflict) {
+            const conflict = await findScheduleConflictMessage({
+                id: classId,
+                date: nextDate,
+                startTime: nextStartTime,
+                duration: nextDuration,
+                location: nextLocation,
+                trainerId: nextTrainerId,
+                classType: nextClassType,
+            });
+            if (conflict) {
                 return NextResponse.json(
-                    { error: 'A class is already scheduled for this date and time.', code: 'already-exists' },
+                    { error: conflict, code: 'already-exists' },
                     { status: 409 },
                 );
             }
@@ -228,7 +289,6 @@ export async function PUT(req: NextRequest) {
             updateData.date = Timestamp.fromDate(newDate);
         }
         if (updates.startTime !== undefined) updateData.startTime = updates.startTime;
-        const nextClassType = updates.classType ?? classData.classType;
         if (isIntroClassType(nextClassType)) {
             updateData.duration = 30;
         } else if (updates.duration !== undefined) {

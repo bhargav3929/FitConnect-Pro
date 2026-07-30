@@ -1,6 +1,11 @@
 import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import {
+    findClassConflict,
+    describeClassConflict,
+    type ScheduledClassWindow,
+} from './schedule-conflicts';
 
 interface CreateClassData {
     trainerId: string;
@@ -33,16 +38,33 @@ function getDayWindow(date: Date): { start: Date; end: Date } {
     return { start, end };
 }
 
-async function hasActiveClassAtSlot(classDate: Date, startTime: string): Promise<boolean> {
+/**
+ * Existing classes that could overlap `classDate`, widened a day either side so
+ * a class running past midnight is compared against the neighbouring day too.
+ */
+async function loadNeighbouringClasses(classDate: Date): Promise<ScheduledClassWindow[]> {
     const { start, end } = getDayWindow(classDate);
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() + 1);
+
     const snapshot = await db.collection('classes')
         .where('date', '>=', Timestamp.fromDate(start))
         .where('date', '<=', Timestamp.fromDate(end))
         .get();
 
-    return snapshot.docs.some((doc) => {
+    return snapshot.docs.map((doc) => {
         const data = doc.data();
-        return data.startTime === startTime && data.status !== 'canceled';
+        const date = data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date);
+        return {
+            id: doc.id,
+            date: Number.isNaN(date.getTime()) ? classDate : date,
+            startTime: typeof data.startTime === 'string' ? data.startTime : '00:00',
+            duration: data.duration,
+            location: data.location,
+            trainerId: data.trainerId,
+            classType: data.classType,
+            status: data.status,
+        } as ScheduledClassWindow;
     });
 }
 
@@ -100,19 +122,31 @@ export const createClass = functions.https.onCall(async (data: CreateClassData, 
         throw new functions.https.HttpsError('not-found', 'Trainer not found');
     }
 
-    if (await hasActiveClassAtSlot(classDate, startTime)) {
-        throw new functions.https.HttpsError(
-            'already-exists',
-            'A class is already scheduled for this date and time',
-        );
-    }
-
     try {
         const classRef = db.collection('classes').doc();
         const now = FieldValue.serverTimestamp();
         const spots = totalSpots || capacity;
         const finalClassType = classType || 'Pilates';
         const finalDuration = isIntroClassType(finalClassType) ? 30 : duration;
+        const finalLocation = location || 'Main Studio';
+
+        // Checked against the real duration and location, so an overlapping
+        // class is caught even when its start time differs.
+        const conflict = findClassConflict(
+            {
+                id: classRef.id,
+                date: classDate,
+                startTime,
+                duration: finalDuration,
+                location: finalLocation,
+                trainerId,
+                classType: finalClassType,
+            },
+            await loadNeighbouringClasses(classDate),
+        );
+        if (conflict) {
+            throw new functions.https.HttpsError('already-exists', describeClassConflict(conflict));
+        }
 
         const classDoc = {
             id: classRef.id,
@@ -129,7 +163,7 @@ export const createClass = functions.https.onCall(async (data: CreateClassData, 
             status: 'scheduled',
             totalSpots: spots,
             bookedSpots: [],
-            location: location || 'Main Studio',
+            location: finalLocation,
             intensityLevel: intensityLevel || 2,
             createdAt: now,
             updatedAt: now,
@@ -139,6 +173,8 @@ export const createClass = functions.https.onCall(async (data: CreateClassData, 
 
         return { success: true, classId: classRef.id };
     } catch (error) {
+        // Conflict/validation errors are already client-facing — do not mask them
+        if (error instanceof functions.https.HttpsError) throw error;
         console.error('Error creating class:', error);
         throw new functions.https.HttpsError('internal', 'Failed to create class');
     }

@@ -44,10 +44,10 @@ const DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const
 const LOCATIONS = ["Main Studio", "Reformer Studio", "Mat Studio", "Private Suite", "Barre & Stretch", "Recovery Lounge"]
 
 const CLASS_TYPES = [
-    { name: "Sol Flow", description: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
-    { name: "Sol Cardio", description: "Fast-paced movement that gets your heart rate up.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
-    { name: "Sol Stretch", description: "Hit reset on your body, one stretch at a time.", duration: 50, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
-    { name: INTRO_CLASS_TYPE, description: "A focused 30-minute first session for clients who have paid for the demo class.", duration: 30, timeSlots: ["08:00", "09:00", "10:00", "17:00", "18:00", "19:00"] },
+    { name: "Sol Flow", description: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.", duration: 50 },
+    { name: "Sol Cardio", description: "Fast-paced movement that gets your heart rate up.", duration: 50 },
+    { name: "Sol Stretch", description: "Hit reset on your body, one stretch at a time.", duration: 50 },
+    { name: INTRO_CLASS_TYPE, description: "A focused 30-minute first session for clients who have paid for the demo class.", duration: 30 },
 ] as const
 
 // Each class type gets a distinct, earthy accent that harmonises with the SOL palette.
@@ -61,11 +61,11 @@ const TYPE_THEME: Record<string, TypeTheme> = {
 const DEFAULT_THEME: TypeTheme = { accent: "#8A947A", soft: "rgba(138,148,122,0.12)", text: "#566044" }
 const typeTheme = (t?: string): TypeTheme => (t && TYPE_THEME[t]) || DEFAULT_THEME
 
-// Day-agenda time grid (06:00 → 21:00)
-const DAY_START_HOUR = 6
-const DAY_END_HOUR = 21
+// Day-agenda time grid — 06:00 → 21:00 by default, widened to fit any class
+// scheduled outside those hours (start times are free-form).
+const DEFAULT_DAY_START_HOUR = 6
+const DEFAULT_DAY_END_HOUR = 21
 const HOUR_PX = 60
-const GRID_HEIGHT = (DAY_END_HOUR - DAY_START_HOUR) * HOUR_PX
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -90,10 +90,12 @@ const timeToMinutes = (t: string) => {
     const [h, m] = (t || "0:0").split(":").map(Number)
     return (h || 0) * 60 + (m || 0)
 }
-const minutesToY = (min: number) => ((min - DAY_START_HOUR * 60) / 60) * HOUR_PX
+const minutesToY = (min: number, startHour: number) => ((min - startHour * 60) / 60) * HOUR_PX
 
 function fmtClock(min: number, compact = false) {
-    const h = Math.floor(min / 60)
+    // Wrap at 24h: the agenda grid can now end at hour 24 (midnight), which
+    // would otherwise read "12 PM" instead of "12 AM".
+    const h = Math.floor(min / 60) % 24
     const m = min % 60
     const ampm = h >= 12 ? "PM" : "AM"
     const dh = h % 12 === 0 ? 12 : h % 12
@@ -428,6 +430,7 @@ export default function ClassesPage() {
     const [editingClass, setEditingClass] = useState<ClassSession | null>(null)
     const [formData, setFormData] = useState<ClassFormData>(defaultFormData)
     const [isSaving, setIsSaving] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState(false)
 
     // Bulk scheduling
     const [scheduleMode, setScheduleMode] = useState<"single" | "multi">("single")
@@ -498,13 +501,26 @@ export default function ClassesPage() {
 
     const positioned = useMemo(() => layoutDay(selectedDayClasses), [selectedDayClasses])
 
+    // Grid bounds stretch to cover anything scheduled outside the default window.
+    const { dayStartHour, dayEndHour } = useMemo(() => {
+        let startHour = DEFAULT_DAY_START_HOUR
+        let endHour = DEFAULT_DAY_END_HOUR
+        for (const p of positioned) {
+            startHour = Math.min(startHour, Math.floor(p.start / 60))
+            endHour = Math.max(endHour, Math.ceil(p.end / 60))
+        }
+        return { dayStartHour: startHour, dayEndHour: Math.min(endHour, 24) }
+    }, [positioned])
+
+    const gridHeight = (dayEndHour - dayStartHour) * HOUR_PX
+
     // auto-scroll agenda to the first class (or 7:30am) whenever the day changes
     useEffect(() => {
         const el = agendaScrollRef.current
         if (!el) return
         const firstStart = selectedDayClasses.length ? timeToMinutes(selectedDayClasses[0].startTime) : 7.5 * 60
-        el.scrollTo({ top: Math.max(0, minutesToY(firstStart) - 24), behavior: "smooth" })
-    }, [selectedDate, selectedDayClasses])
+        el.scrollTo({ top: Math.max(0, minutesToY(firstStart, dayStartHour) - 24), behavior: "smooth" })
+    }, [selectedDate, selectedDayClasses, dayStartHour])
 
     const cells = useMemo(() => {
         const { start } = gridRange(viewMonth)
@@ -516,12 +532,12 @@ export default function ClassesPage() {
     }, [viewMonth])
 
     const hours = useMemo(
-        () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i),
-        [],
+        () => Array.from({ length: dayEndHour - dayStartHour + 1 }, (_, i) => dayStartHour + i),
+        [dayStartHour, dayEndHour],
     )
 
     const nowMinutes = today.getHours() * 60 + today.getMinutes()
-    const showNowLine = isSameDay(selectedDate, today) && nowMinutes >= DAY_START_HOUR * 60 && nowMinutes <= DAY_END_HOUR * 60
+    const showNowLine = isSameDay(selectedDate, today) && nowMinutes >= dayStartHour * 60 && nowMinutes <= dayEndHour * 60
 
     // ── CRUD ──
     const refresh = async () => {
@@ -530,6 +546,7 @@ export default function ClassesPage() {
 
     const openAddDialog = (date: Date = selectedDate) => {
         setEditingClass(null)
+        setConfirmDelete(false)
         setFormData({ ...defaultFormData, date: toYmd(date), trainerId: trainers[0]?.id || "" })
         setScheduleMode("single")
         setBulkDates([toYmd(date)])
@@ -540,6 +557,7 @@ export default function ClassesPage() {
     const openEditDialog = (cls: ClassSession) => {
         setEditingClass(cls)
         setScheduleMode("single") // editing is always single-day
+        setConfirmDelete(false)
         setApplyToSeries(false)
         setSeriesClasses([])
         setFormData({
@@ -978,11 +996,11 @@ export default function ClassesPage() {
                                     exit={{ opacity: 0 }}
                                     transition={{ duration: 0.2 }}
                                     className="relative px-4 py-3"
-                                    style={{ height: GRID_HEIGHT + 24 }}
+                                    style={{ height: gridHeight + 24 }}
                                 >
                                     {/* hour lines + labels */}
                                     {hours.map((h) => (
-                                        <div key={h} className="absolute left-0 right-0 flex items-start" style={{ top: minutesToY(h * 60) + 12 }}>
+                                        <div key={h} className="absolute left-0 right-0 flex items-start" style={{ top: minutesToY(h * 60, dayStartHour) + 12 }}>
                                             <span className="w-14 -translate-y-1/2 pr-3 text-right text-[10px] font-semibold uppercase tracking-wide text-olive-300/70">
                                                 {fmtClock(h * 60, true)}
                                             </span>
@@ -992,7 +1010,7 @@ export default function ClassesPage() {
 
                                     {/* now line */}
                                     {showNowLine && (
-                                        <div className="absolute left-14 right-3 z-20 pointer-events-none" style={{ top: minutesToY(nowMinutes) + 12 }}>
+                                        <div className="absolute left-14 right-3 z-20 pointer-events-none" style={{ top: minutesToY(nowMinutes, dayStartHour) + 12 }}>
                                             <div className="relative">
                                                 <span className="absolute -left-1 -top-[3px] w-2 h-2 rounded-full bg-terra-500" />
                                                 <div className="border-t-[1.5px] border-terra-500/70" />
@@ -1004,7 +1022,7 @@ export default function ClassesPage() {
                                     <div className="absolute z-10" style={{ left: 56, right: 12, top: 12, bottom: 12 }}>
                                         {positioned.map((p) => {
                                             const theme = typeTheme(p.cls.classType)
-                                            const top = minutesToY(p.start)
+                                            const top = minutesToY(p.start, dayStartHour)
                                             const rawH = ((p.end - p.start) / 60) * HOUR_PX
                                             const height = Math.max(rawH - 4, 44)
                                             const canceled = p.cls.status === "canceled"
@@ -1071,8 +1089,8 @@ export default function ClassesPage() {
                                                             )}
                                                         </div>
 
-                                                        {/* hover quick-actions */}
-                                                        <div className="absolute bottom-1.5 right-1.5 hidden group-hover:flex items-center gap-1">
+                                                        {/* Quick-actions: always visible on touch (no hover there), revealed on hover elsewhere */}
+                                                        <div className="absolute bottom-1.5 right-1.5 flex [@media(hover:hover)]:hidden [@media(hover:hover)]:group-hover:flex items-center gap-1">
                                                             <span
                                                                 role="button"
                                                                 tabIndex={0}
@@ -1162,12 +1180,14 @@ export default function ClassesPage() {
                                 value={formData.classType}
                                 onChange={(e) => {
                                     const selected = CLASS_TYPES.find((ct) => ct.name === e.target.value)
+                                    // Start time is deliberately left alone — changing the type
+                                    // must not move the class into another slot and trip the
+                                    // date+time conflict check on save.
                                     setFormData((prev) => ({
                                         ...prev,
                                         classType: e.target.value,
                                         description: selected?.description || prev.description,
                                         duration: selected?.duration || prev.duration,
-                                        startTime: selected?.timeSlots[0] || prev.startTime,
                                     }))
                                 }}
                                 className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none appearance-none cursor-pointer transition-all text-sm rounded-[10px]"
@@ -1244,19 +1264,13 @@ export default function ClassesPage() {
                                 </div>
                                 <div>
                                     <label className="block app-label mb-2">Start Time</label>
-                                    <select
+                                    <input
+                                        type="time"
                                         value={formData.startTime}
+                                        step={300}
                                         onChange={(e) => setFormData((prev) => ({ ...prev, startTime: e.target.value }))}
-                                        className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer transition-all text-sm rounded-[10px]"
-                                    >
-                                        {(CLASS_TYPES.find((ct) => ct.name === formData.classType)?.timeSlots ?? []).map((slot) => {
-                                            const [h, m] = slot.split(":")
-                                            const hour = parseInt(h, 10)
-                                            const ampm = hour >= 12 ? "PM" : "AM"
-                                            const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-                                            return <option key={slot} value={slot}>{`${displayHour}:${m} ${ampm}`}</option>
-                                        })}
-                                    </select>
+                                        className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:outline-none transition-all text-sm rounded-[10px]"
+                                    />
                                 </div>
                             </div>
                         ) : (
@@ -1265,19 +1279,13 @@ export default function ClassesPage() {
                                 <div className="grid grid-cols-2 gap-4 items-end">
                                     <div>
                                         <label className="block app-label mb-2">Start Time</label>
-                                        <select
+                                        <input
+                                            type="time"
                                             value={formData.startTime}
+                                            step={300}
                                             onChange={(e) => setFormData((prev) => ({ ...prev, startTime: e.target.value }))}
-                                            className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer transition-all text-sm rounded-[10px]"
-                                        >
-                                            {(CLASS_TYPES.find((ct) => ct.name === formData.classType)?.timeSlots ?? []).map((slot) => {
-                                                const [h, m] = slot.split(":")
-                                                const hour = parseInt(h, 10)
-                                                const ampm = hour >= 12 ? "PM" : "AM"
-                                                const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-                                                return <option key={slot} value={slot}>{`${displayHour}:${m} ${ampm}`}</option>
-                                            })}
-                                        </select>
+                                            className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:outline-none transition-all text-sm rounded-[10px]"
+                                        />
                                     </div>
                                     <p className="text-xs text-olive-300 leading-relaxed pb-3">
                                         This time, trainer &amp; type apply to <span className="text-olive-500 font-semibold">every</span> selected day.
@@ -1388,6 +1396,29 @@ export default function ClassesPage() {
 
                     {/* Fixed footer */}
                     <div className="px-7 pt-[14px] pb-[22px] border-t border-peach-400/[0.13] flex items-center justify-end gap-2 flex-shrink-0 bg-peach-50">
+                        {editingClass && (
+                            <button
+                                type="button"
+                                disabled={isSaving || deletingId === editingClass.id}
+                                onClick={async () => {
+                                    if (!confirmDelete) return setConfirmDelete(true)
+                                    await handleDelete(editingClass.id)
+                                    setDialogOpen(false)
+                                }}
+                                className={`h-10 px-[18px] mr-auto text-[14px] font-medium rounded-full transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    confirmDelete
+                                        ? "bg-red-500 text-white hover:bg-red-600"
+                                        : "text-red-500 hover:bg-red-500/10"
+                                }`}
+                            >
+                                {deletingId === editingClass.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                )}
+                                {confirmDelete ? "Confirm delete" : "Delete"}
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={() => setDialogOpen(false)}
