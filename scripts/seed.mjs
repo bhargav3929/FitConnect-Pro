@@ -304,33 +304,33 @@ console.log('\n─── 4. Classes ───');
 
 const CLASSES = [
     // #1 Today empty
-    { slug: 'cls-today-0600',    dayOffset: 0,   startTime: '06:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-today-0600',    dayOffset: 0,   startTime: '06:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Group Room' },
     // #2 Today partial
-    { slug: 'cls-today-0900',    dayOffset: 0,   startTime: '09:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [1, 3, 5],                        status: 'scheduled', classType: 'Sol Cardio',   intensityLevel: 3, location: 'Performance Floor' },
+    { slug: 'cls-today-0900',    dayOffset: 0,   startTime: '09:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [1, 3, 5],                        status: 'scheduled', classType: 'Sol Cardio',   intensityLevel: 3, location: 'Group Room' },
     // #3 Today FULL
-    { slug: 'cls-today-1730',    dayOffset: 0,   startTime: '17:30', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [1,2,3,4,5,6,7,8,9,10],           status: 'scheduled', classType: 'Sol Stretch',  intensityLevel: 1, location: 'Yoga Studio' },
+    { slug: 'cls-today-1730',    dayOffset: 0,   startTime: '17:30', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [1,2,3,4,5,6,7,8,9,10],           status: 'scheduled', classType: 'Sol Stretch',  intensityLevel: 1, location: 'Group Room' },
     // #4 Today amber (50%)
-    { slug: 'cls-today-1900',    dayOffset: 0,   startTime: '19:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [2,4,6,8,10],                  status: 'scheduled', classType: 'Sol Flow',  intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-today-1900',    dayOffset: 0,   startTime: '19:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [2,4,6,8,10],                  status: 'scheduled', classType: 'Sol Flow',  intensityLevel: 2, location: 'Group Room' },
     // #5 Tomorrow
-    { slug: 'cls-tmrw-0700',     dayOffset: 1,   startTime: '07:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Stretch',           intensityLevel: 2, location: 'Yoga Studio' },
+    { slug: 'cls-tmrw-0700',     dayOffset: 1,   startTime: '07:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Stretch',           intensityLevel: 2, location: 'Group Room' },
     // #6 +3 days
     { slug: 'cls-plus3-0800',    dayOffset: 3,   startTime: '08:00', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Stretch',     intensityLevel: 1, location: 'Rehab Room' },
     // #7 +14 days — exactly at Alice's advance-booking horizon
-    { slug: 'cls-plus14-1000',   dayOffset: 14,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-plus14-1000',   dayOffset: 14,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Group Room' },
     // #8 +15 days — one past Alice's horizon
-    { slug: 'cls-plus15-1000',   dayOffset: 15,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-plus15-1000',   dayOffset: 15,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [],                              status: 'scheduled', classType: 'Sol Flow',      intensityLevel: 2, location: 'Group Room' },
     // #9 Yesterday completed
-    { slug: 'cls-yday-1000',     dayOffset: -1,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [1, 2, 3],                        status: 'completed', classType: 'Sol Flow',      intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-yday-1000',     dayOffset: -1,  startTime: '10:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [1, 2, 3],                        status: 'completed', classType: 'Sol Flow',      intensityLevel: 2, location: 'Group Room' },
     // #10 Today canceled
-    { slug: 'cls-today-1400',    dayOffset: 0,   startTime: '14:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'canceled',  classType: 'Sol Cardio',   intensityLevel: 3, location: 'Performance Floor', canceledAt: now, cancelReason: 'Instructor illness' },
+    { slug: 'cls-today-1400',    dayOffset: 0,   startTime: '14:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'canceled',  classType: 'Sol Cardio',   intensityLevel: 3, location: 'Group Room', canceledAt: now, cancelReason: 'Instructor illness' },
     // #11 3 days ago completed (Alice attended)
-    { slug: 'cls-past3-0900',    dayOffset: -3,  startTime: '09:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [1],                             status: 'completed', classType: 'Sol Cardio',   intensityLevel: 3, location: 'Performance Floor' },
+    { slug: 'cls-past3-0900',    dayOffset: -3,  startTime: '09:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [1],                             status: 'completed', classType: 'Sol Cardio',   intensityLevel: 3, location: 'Group Room' },
     // #12 7 days ago completed (Alice attended)
     { slug: 'cls-past7-0730',    dayOffset: -7,  startTime: '07:30', trainer: 'priya-kapoor',  totalSpots: 10, bookedSpots: [4],                             status: 'completed', classType: 'Sol Stretch',     intensityLevel: 1, location: 'Rehab Room' },
     // #13 10 days ago completed (Alice no-show)
-    { slug: 'cls-past10-1800',   dayOffset: -10, startTime: '18:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [2],                             status: 'completed', classType: 'Sol Flow',  intensityLevel: 2, location: 'Performance Floor' },
+    { slug: 'cls-past10-1800',   dayOffset: -10, startTime: '18:00', trainer: 'maya-chen',     totalSpots: 10, bookedSpots: [2],                             status: 'completed', classType: 'Sol Flow',  intensityLevel: 2, location: 'Group Room' },
     // #14 5 days ago scheduled (Alice canceled her booking)
-    { slug: 'cls-past5-1100',    dayOffset: -5,  startTime: '11:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'completed', classType: 'Sol Stretch',           intensityLevel: 2, location: 'Yoga Studio' },
+    { slug: 'cls-past5-1100',    dayOffset: -5,  startTime: '11:00', trainer: 'julien-okafor', totalSpots: 10, bookedSpots: [],                              status: 'completed', classType: 'Sol Stretch',           intensityLevel: 2, location: 'Group Room' },
 ];
 
 for (const c of CLASSES) {
@@ -397,7 +397,7 @@ for (let offset = 0; offset < 14; offset++) {
             totalSpots: 10,
             bookedSpots: [],
             instructorImage: '',
-            location: 'Performance Floor',
+            location: 'Group Room',
             intensityLevel: 2,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),

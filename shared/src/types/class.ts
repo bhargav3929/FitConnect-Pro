@@ -19,7 +19,7 @@ export interface ClassSession {
     totalSpots?: number; // e.g., 12
     bookedSpots?: number[]; // array of spot numbers taken
     instructorImage?: string; // instructor avatar URL
-    location?: string; // Room/area within the facility, e.g., "Performance Floor", "Yoga Studio"
+    location?: string; // Room within the facility, e.g., "Group Room", "Private Room"
     intensityLevel?: 1 | 2 | 3; // fire emoji count
 }
 

@@ -12,7 +12,7 @@ function cls(overrides: Partial<ScheduledClassWindow> & { id: string }): Schedul
         date: DAY,
         startTime: '08:00',
         duration: 50,
-        location: 'Main Studio',
+        location: 'Group Room',
         trainerId: 'trainer-a',
         classType: 'Sol Flow',
         status: 'scheduled',
@@ -69,7 +69,7 @@ describe('findClassConflict', () => {
 
     it('allows concurrent classes in different rooms with different trainers', () => {
         const conflict = findClassConflict(
-            cls({ id: 'new', location: 'Reformer Studio', trainerId: 'trainer-b' }),
+            cls({ id: 'new', location: 'Private Room', trainerId: 'trainer-b' }),
             [cls({ id: 'existing' })],
         );
         expect(conflict).toBeNull();
@@ -77,8 +77,8 @@ describe('findClassConflict', () => {
 
     it('rejects the same trainer in two rooms at once', () => {
         const conflict = findClassConflict(
-            cls({ id: 'new', location: 'Reformer Studio', trainerId: 'trainer-a' }),
-            [cls({ id: 'existing', location: 'Main Studio', trainerId: 'trainer-a' })],
+            cls({ id: 'new', location: 'Private Room', trainerId: 'trainer-a' }),
+            [cls({ id: 'existing', location: 'Group Room', trainerId: 'trainer-a' })],
         );
         expect(conflict?.reason).toBe('trainer');
     });
@@ -98,8 +98,8 @@ describe('findClassConflict', () => {
 
     it('treats location names case- and whitespace-insensitively', () => {
         const conflict = findClassConflict(
-            cls({ id: 'new', location: '  main studio ', trainerId: 'trainer-b' }),
-            [cls({ id: 'existing', location: 'Main Studio' })],
+            cls({ id: 'new', location: '  group room ', trainerId: 'trainer-b' }),
+            [cls({ id: 'existing', location: 'Group Room' })],
         );
         expect(conflict?.reason).toBe('location');
     });
@@ -129,13 +129,13 @@ describe('describeClassConflict', () => {
             [cls({ id: 'existing', startTime: '08:00', duration: 50 })],
         )!;
         expect(describeClassConflict(conflict)).toBe(
-            'Main Studio is already booked 08:00-08:50 by Sol Flow. Choose another time or location.',
+            'Group Room is already booked 08:00-08:50 by Sol Flow. Choose another time or location.',
         );
     });
 
     it('points at the trainer for a trainer clash', () => {
         const conflict = findClassConflict(
-            cls({ id: 'new', startTime: '08:30', location: 'Mat Studio' }),
+            cls({ id: 'new', startTime: '08:30', location: 'Private Room' }),
             [cls({ id: 'existing', startTime: '08:00', duration: 50 })],
         )!;
         expect(describeClassConflict(conflict)).toBe(

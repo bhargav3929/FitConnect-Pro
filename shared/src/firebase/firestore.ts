@@ -263,7 +263,7 @@ export async function getUserBookingsPage(
                 classType: (cls.classType as string) || 'Pilates',
                 classStartTime: (cls.startTime as string) || '',
                 classDuration: (cls.duration as number) || 0,
-                classLocation: (cls.location as string) || 'Main Studio',
+                classLocation: (cls.location as string) || 'Group Room',
                 trainerName: trainerCache.get(trainerId) || 'Instructor',
             } as Booking;
         }),
@@ -422,7 +422,7 @@ export function subscribeToUserBookings(
                 classType: (cls.classType as string) || 'Pilates',
                 classStartTime: (cls.startTime as string) || '',
                 classDuration: (cls.duration as number) || 0,
-                classLocation: (cls.location as string) || 'Main Studio',
+                classLocation: (cls.location as string) || 'Group Room',
                 trainerName: trainerCache.get(trainerId) || 'Instructor',
             } as Booking;
         });
@@ -1207,7 +1207,7 @@ export async function getLocationUtilization(): Promise<LocationUtilization[]> {
 
     snapshot.docs.forEach((d) => {
         const data = d.data();
-        const location = (data.location as string) || 'Main Studio';
+        const location = (data.location as string) || 'Group Room';
         const booked = (data.bookedCount as number) || 0;
         const capacity = (data.totalSpots as number) || (data.capacity as number) || 12;
 

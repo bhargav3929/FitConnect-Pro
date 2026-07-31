@@ -131,7 +131,7 @@ export const updateClass = functions.https.onCall(async (data: UpdateClassData, 
         const nextDuration = isIntroClassType(nextClassType)
             ? 30
             : (updates.duration ?? classData.duration);
-        const nextLocation = updates.location ?? classData.location ?? 'Main Studio';
+        const nextLocation = updates.location ?? classData.location ?? 'Group Room';
         const nextTrainerId = updates.trainerId ?? classData.trainerId;
 
         if (!nextDate || Number.isNaN(nextDate.getTime())) {

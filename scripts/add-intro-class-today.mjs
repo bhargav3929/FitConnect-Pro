@@ -58,7 +58,7 @@ const data = {
     waitlist: [],
     status: 'scheduled',
     intensityLevel: 1,
-    location: 'Yoga Studio',
+    location: 'Group Room',
     trainerId: null,
     trainerName: 'SOL Team',
     durationMinutes: 30,

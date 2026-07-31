@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
         const spots = totalSpots || capacity;
         const finalClassType = classType || 'Sol Flow';
         const finalDuration = isIntroClassType(finalClassType) ? 30 : duration;
-        const finalLocation = location || 'Main Studio';
+        const finalLocation = location || 'Group Room';
 
         // Checked against the real duration and location, so an overlapping
         // class is caught even when its start time differs.
@@ -254,7 +254,7 @@ export async function PUT(req: NextRequest) {
         const nextDuration = isIntroClassType(nextClassType)
             ? 30
             : (updates.duration ?? classData.duration);
-        const nextLocation = updates.location ?? classData.location ?? 'Main Studio';
+        const nextLocation = updates.location ?? classData.location ?? 'Group Room';
         const nextTrainerId = updates.trainerId ?? classData.trainerId;
 
         if (!nextDate || Number.isNaN(nextDate.getTime())) {

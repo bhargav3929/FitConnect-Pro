@@ -174,7 +174,7 @@ Required fields on every class:
   "status": "scheduled",
   "totalSpots": 12,
   "bookedSpots": [],
-  "location": "Performance Floor",
+  "location": "Group Room",
   "intensityLevel": 2,
   "createdAt": "<serverTimestamp>",
   "updatedAt": "<serverTimestamp>"

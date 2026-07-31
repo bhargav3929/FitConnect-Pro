@@ -332,7 +332,7 @@ export default function CheckInPage() {
                                 </h2>
                                 <p className="text-xs text-olive-400 mt-1">
                                     {!isToday && <>{dateLabel} · </>}
-                                    {selectedClass.location || "Main Studio"} ·{" "}
+                                    {selectedClass.location || "Group Room"} ·{" "}
                                     {selectedClass.duration} min
                                 </p>
                             </div>

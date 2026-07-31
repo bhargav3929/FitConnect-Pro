@@ -29,7 +29,7 @@ export const getUserBookings = functions.https.onCall(async (_data, context) => 
                     classType: data.classType || 'Pilates',
                     startTime: data.startTime,
                     duration: data.duration,
-                    location: data.location || 'Main Studio',
+                    location: data.location || 'Group Room',
                     trainerId: data.trainerId,
                     status: data.status,
                 };
@@ -60,7 +60,7 @@ export const getUserBookings = functions.https.onCall(async (_data, context) => 
                 classType: classInfo.classType || 'Pilates',
                 classStartTime: classInfo.startTime || '',
                 classDuration: classInfo.duration || 0,
-                classLocation: classInfo.location || 'Main Studio',
+                classLocation: classInfo.location || 'Group Room',
                 classStatus: classInfo.status || 'unknown',
                 trainerName,
                 // Convert Timestamps to ISO strings

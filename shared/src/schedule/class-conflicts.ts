@@ -42,7 +42,7 @@ export interface ClassConflict {
 }
 
 export const DEFAULT_DURATION_MINUTES = 60;
-const DEFAULT_LOCATION = 'Main Studio';
+const DEFAULT_LOCATION = 'Group Room';
 
 function parseHhMm(startTime: string): number {
     const [rawHours, rawMinutes] = String(startTime ?? '').split(':');

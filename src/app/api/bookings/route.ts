@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
                     classType: data.classType || 'Sol Flow',
                     startTime: data.startTime,
                     duration: data.duration,
-                    location: data.location || 'Main Studio',
+                    location: data.location || 'Group Room',
                     trainerId: data.trainerId,
                     status: data.status,
                 };
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
                 classType: classInfo.classType || 'Sol Flow',
                 classStartTime: classInfo.startTime || '',
                 classDuration: classInfo.duration || 0,
-                classLocation: classInfo.location || 'Main Studio',
+                classLocation: classInfo.location || 'Group Room',
                 classStatus: classInfo.status || 'unknown',
                 trainerName,
                 // Convert Timestamps to ISO strings

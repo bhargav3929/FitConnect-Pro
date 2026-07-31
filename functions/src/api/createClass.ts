@@ -128,7 +128,7 @@ export const createClass = functions.https.onCall(async (data: CreateClassData, 
         const spots = totalSpots || capacity;
         const finalClassType = classType || 'Pilates';
         const finalDuration = isIntroClassType(finalClassType) ? 30 : duration;
-        const finalLocation = location || 'Main Studio';
+        const finalLocation = location || 'Group Room';
 
         // Checked against the real duration and location, so an overlapping
         // class is caught even when its start time differs.

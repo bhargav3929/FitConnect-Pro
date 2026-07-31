@@ -361,7 +361,7 @@ export default function BookingsPage() {
                                             Location
                                         </span>
                                         <span className="font-medium text-olive-600">
-                                            {booking.classLocation || 'Main Studio'}
+                                            {booking.classLocation || 'Group Room'}
                                         </span>
                                     </div>
                                 </div>

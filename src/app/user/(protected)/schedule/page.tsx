@@ -266,7 +266,7 @@ export default function SchedulePage() {
             date: formatDate(selectedDate),
             time: cls.startTime,
             duration: `${cls.duration} min`,
-            location: cls.location || 'Main Studio',
+            location: cls.location || 'Group Room',
             instructor: trainers.find(t => t.id === cls.trainerId)?.name || 'Instructor',
             totalSpots,
             bookedSpots: cls.bookedSpots || []

@@ -70,7 +70,7 @@ export default function ClassCard({ classSession, trainerName, onBook, bookingRe
                     <View style={styles.locationRow}>
                         <Feather name="map-pin" size={10} color={Colors.olive[300]} />
                         <Text style={styles.locationText} numberOfLines={1}>
-                            {classSession.location || 'Main Studio'}
+                            {classSession.location || 'Group Room'}
                         </Text>
                     </View>
                     {/* Trainer row */}

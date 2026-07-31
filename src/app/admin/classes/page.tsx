@@ -174,7 +174,7 @@ const defaultFormData: ClassFormData = {
     capacity: 10,
     classType: "Sol Flow",
     difficultyLevel: "intermediate",
-    location: "Main Studio",
+    location: "Group Room",
     description: "",
 }
 
@@ -568,7 +568,7 @@ export default function ClassesPage() {
             capacity: cls.totalSpots || cls.capacity || 10,
             classType: cls.classType || "Sol Flow",
             difficultyLevel: cls.difficultyLevel || "intermediate",
-            location: cls.location || "Main Studio",
+            location: cls.location || "Group Room",
             description: cls.description || "",
         })
         setDialogOpen(true)

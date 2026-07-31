@@ -181,7 +181,7 @@ export default function SpotSelector({
                                     {trainerName || 'Instructor'}
                                 </Text>
                                 <Text style={styles.infoMeta}>
-                                    {classSession.location || 'Main Studio'} {'\u2022'} {classSession.duration} min
+                                    {classSession.location || 'Group Room'} {'\u2022'} {classSession.duration} min
                                 </Text>
                             </View>
                             <View style={styles.infoOpenBadge}>
