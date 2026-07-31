@@ -31,8 +31,8 @@ const FALLBACK_FACILITY = {
     address: "Kokapet, Hyderabad, TG, 500075, IN",
     rating: 4.9,
     reviewCount: 128,
-    description: "A sophisticated Pilates studio blending strength, mindfulness, and elegance. Five dedicated disciplines — Reformer, Mat, Private Sessions, Barre, and Prenatal — each designed to transform your body and mind.",
-    amenities: ["Reformer Studio", "Mat Studio", "Private Suite", "Barre & Stretch", "Recovery Lounge", "Prenatal Room", "Changing Rooms"],
+    description: "A sophisticated Pilates studio blending strength, mindfulness, and elegance. Two dedicated spaces, a Group Room and a Private Room, host Reformer, Mat, Private Sessions, Barre, and Prenatal.",
+    amenities: ["Group Room", "Private Room", "Changing Rooms"],
     hours: {
         weekday: "06:00 - 21:00",
         weekend: "07:00 - 18:00"

@@ -41,7 +41,7 @@ import { toast } from "sonner"
 // ───────────────────────── constants ─────────────────────────
 
 const DIFFICULTY_LEVELS = ["beginner", "intermediate", "advanced"] as const
-const LOCATIONS = ["Main Studio", "Reformer Studio", "Mat Studio", "Private Suite", "Barre & Stretch", "Recovery Lounge"]
+const LOCATIONS = ["Group Room", "Private Room"]
 
 const CLASS_TYPES = [
     { name: "Sol Flow", description: "Strength meets movement in this smooth, continuous reformer class. No breaks, just flow.", duration: 50 },

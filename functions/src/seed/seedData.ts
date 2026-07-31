@@ -105,7 +105,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'intermediate',
             description: 'Full-body reformer session focusing on Footwork, Long Stretch, and Elephant sequences. Build strength through controlled, intentional movements.',
             equipmentNeeded: 'Reformer (provided)',
-            location: 'Reformer Studio',
+            location: 'Group Room',
             intensityLevel: 2,
         },
         {
@@ -118,7 +118,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'beginner',
             description: 'Classical mat Pilates featuring The Hundred, Roll-Up, and Teaser progressions. Reshape your body through precision and breath.',
             equipmentNeeded: 'Mat (provided)',
-            location: 'Main Studio',
+            location: 'Group Room',
             intensityLevel: 1,
         },
         {
@@ -131,7 +131,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'advanced',
             description: 'Pilates-based strength training with Plank Series, Side Kick, and Leg Pull variations. Functional movement meets deep core stability.',
             equipmentNeeded: 'Mat, light weights (provided)',
-            location: 'Performance Floor',
+            location: 'Group Room',
             intensityLevel: 3,
         },
         {
@@ -144,7 +144,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'intermediate',
             description: 'Barre-fusion class with Spine Stretch, Swan Dive, and Mermaid flows. Unlock freedom and elegance through dance-inspired movement.',
             equipmentNeeded: 'Barre, mat (provided)',
-            location: 'Barre Studio',
+            location: 'Group Room',
             intensityLevel: 2,
         },
         {
@@ -157,7 +157,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'beginner',
             description: 'Gentle restorative session with Pelvic Curl, Cat-Cow, and Side Lying sequences. Purposeful movement designed for recovery and renewal.',
             equipmentNeeded: 'Mat, bolster (provided)',
-            location: 'Wellness Room',
+            location: 'Group Room',
             intensityLevel: 1,
         },
     ],
@@ -173,7 +173,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'intermediate',
             description: 'Morning mat Pilates flow. Build core strength and flexibility with classical sequences adapted for all levels.',
             equipmentNeeded: 'Mat (provided)',
-            location: 'Main Studio',
+            location: 'Group Room',
             intensityLevel: 2,
         },
         {
@@ -186,7 +186,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'advanced',
             description: 'Advanced reformer session. Challenge yourself with complex sequences requiring precision and control.',
             equipmentNeeded: 'Reformer (provided)',
-            location: 'Reformer Studio',
+            location: 'Group Room',
             intensityLevel: 3,
         },
         {
@@ -199,7 +199,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'beginner',
             description: 'Beginner-friendly barre class focusing on alignment, posture, and gentle strengthening through dance-inspired exercises.',
             equipmentNeeded: 'Barre, mat (provided)',
-            location: 'Barre Studio',
+            location: 'Group Room',
             intensityLevel: 1,
         },
         {
@@ -212,7 +212,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'intermediate',
             description: 'Evening strength session blending Pilates principles with resistance training for total body sculpting.',
             equipmentNeeded: 'Mat, resistance bands (provided)',
-            location: 'Performance Floor',
+            location: 'Group Room',
             intensityLevel: 2,
         },
     ],
@@ -228,7 +228,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'beginner',
             description: 'Weekend reformer fundamentals. Perfect for beginners or those seeking a mindful start to the weekend.',
             equipmentNeeded: 'Reformer (provided)',
-            location: 'Reformer Studio',
+            location: 'Group Room',
             intensityLevel: 1,
         },
         {
@@ -241,7 +241,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'intermediate',
             description: 'Weekend mat flow combining breath work with classical Pilates movements for full-body renewal.',
             equipmentNeeded: 'Mat (provided)',
-            location: 'Main Studio',
+            location: 'Group Room',
             intensityLevel: 2,
         },
         {
@@ -254,7 +254,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'intermediate',
             description: 'Weekend barre fusion class — energizing movements at the barre combined with mat Pilates for a complete workout.',
             equipmentNeeded: 'Barre, mat (provided)',
-            location: 'Barre Studio',
+            location: 'Group Room',
             intensityLevel: 2,
         },
         {
@@ -267,7 +267,7 @@ const CLASS_TEMPLATES: ClassTemplate[][] = [
             difficultyLevel: 'beginner',
             description: 'Weekend wind-down session. Deep stretching, gentle movement, and guided breathing for total relaxation.',
             equipmentNeeded: 'Mat, bolster (provided)',
-            location: 'Wellness Room',
+            location: 'Group Room',
             intensityLevel: 1,
         },
     ],
@@ -353,7 +353,7 @@ const GYM_CENTER = {
         saturday: { open: '06:00', close: '22:00' },
         sunday: { open: '07:00', close: '21:00' },
     },
-    facilities: 'Reformer Studio, Main Studio, Performance Floor, Barre Studio, Wellness Room, Recovery Lounge, Changing Rooms, Smoothie Bar',
+    facilities: 'Group Room, Private Room, Changing Rooms',
     photos: [
         'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop',
         'https://images.unsplash.com/photo-1593079831268-3381b0db4a77?q=80&w=1469&auto=format&fit=crop',
