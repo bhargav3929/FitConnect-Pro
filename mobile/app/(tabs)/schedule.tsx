@@ -34,7 +34,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // ── Static fallback facility data (matches web) ──
 const FALLBACK_FACILITY = {
-    name: 'SOL Pilates Studio',
+    name: 'Sol Pilates Studio',
     address: 'Kokapeta, Hyderabad, TG, 500075, India',
     rating: 4.9,
     reviewCount: 128,
@@ -159,6 +159,7 @@ export default function ScheduleScreen() {
     const [trainers, setTrainers] = useState<Trainer[]>([]);
     const [facility, setFacility] = useState<GymCenter | null>(null);
     const [loadingClasses, setLoadingClasses] = useState(true);
+    const [classesError, setClassesError] = useState(false);
     const [loadingTrainers, setLoadingTrainers] = useState(true);
     const [loadingFacility, setLoadingFacility] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -185,11 +186,27 @@ export default function ScheduleScreen() {
     // Real-time listener — spots update live as other members book/cancel
     useEffect(() => {
         setLoadingClasses(true);
-        const unsubscribe = subscribeToClassesByDate(selectedDate, (data) => {
-            setClasses(data);
-            setLoadingClasses(false);
-            setRefreshing(false);
-        });
+        setClassesError(false);
+        const unsubscribe = subscribeToClassesByDate(
+            selectedDate,
+            (data) => {
+                setClasses(data);
+                setClassesError(false);
+                setLoadingClasses(false);
+                setRefreshing(false);
+            },
+            {
+                // A dead listener must never leave the screen spinning — show the
+                // failure so the member knows to retry instead of assuming the
+                // studio has no classes that day.
+                onError: () => {
+                    setClasses([]);
+                    setClassesError(true);
+                    setLoadingClasses(false);
+                    setRefreshing(false);
+                },
+            },
+        );
         return unsubscribe;
     }, [selectedDate, refreshTick]);
 
@@ -332,8 +349,74 @@ export default function ScheduleScreen() {
     const regularClasses = loadingClasses ? [] : classes.filter(c => !isIntroClassType(c.classType));
 
     // ── Tab Renderers ──
-    const renderScheduleTab = () => (
-        <View style={styles.schedulePane}>
+    const renderPageHeader = () => (
+        <View style={styles.pageHeader}>
+            {/* ── Facility Header ── */}
+            <View style={styles.facilityHeader}>
+                {/* Title */}
+                <Text style={styles.pageTitle}>Class Schedule</Text>
+
+                {/* Address */}
+                <View style={styles.addressRow}>
+                    <Feather name="map-pin" size={12} color={Colors.terra[400]} />
+                    {facilityAddress ? (
+                        <Text style={styles.addressText}>{facilityAddress}</Text>
+                    ) : (
+                        <View style={styles.addressSkeleton} />
+                    )}
+                </View>
+            </View>
+
+            {/* ── Section Tabs ── */}
+            <View style={styles.sectionTabsContainer}>
+                <View style={styles.sectionTabsInner}>
+                    {([
+                        { id: 'schedule', label: 'Schedule' },
+                        { id: 'trainers', label: 'Trainers' },
+                        { id: 'facility', label: 'Facility' },
+                    ] as const).map((tab) => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <TouchableOpacity
+                                key={tab.id}
+                                style={[
+                                    styles.sectionTab,
+                                    isActive && styles.sectionTabActive,
+                                ]}
+                                onPress={() => setActiveTab(tab.id)}
+                                activeOpacity={0.7}
+                            >
+                                {/* One line, always. Three equal-width pills leave
+                                    "Schedule" barely enough room on a narrow phone, and
+                                    it was wrapping to "Schedul / e". The multiplier cap
+                                    keeps a large system font size from breaking it again. */}
+                                <Text
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit
+                                    maxFontSizeMultiplier={1.2}
+                                    style={[
+                                        styles.sectionTabText,
+                                        isActive && styles.sectionTabTextActive,
+                                    ]}
+                                >
+                                    {tab.label}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            </View>
+        </View>
+    );
+
+    // Everything above the class list scrolls with it. Keeping the title, address
+    // and section tabs pinned left the list a short window that could not be
+    // scrolled back up, and on shorter/split-view screens pushed the first class
+    // below the fold with no way to reach it.
+    const renderScheduleHeader = () => (
+        <View>
+            {renderPageHeader()}
+
             {/* Calendar Strip */}
             <CalendarStrip
                 selectedDate={selectedDate}
@@ -390,56 +473,42 @@ export default function ScheduleScreen() {
                     )}
                 </View>
             )}
-
-            {/* Class list */}
-            <FlatList
-                data={loadingClasses ? [] : regularClasses}
-                keyExtractor={(cls) => cls.id}
-                renderItem={({ item }) => (
-                    <ClassCard
-                        classSession={item}
-                        trainerName={getTrainerName(item.trainerId)}
-                        onBook={handleBook}
-                        bookingRestriction={
-                            hasValidSubscription(clientUser?.subscription)
-                                ? getClassBookingRestriction(clientUser?.subscription, item)
-                                : undefined
-                        }
-                    />
-                )}
-                style={styles.classListScroller}
-                contentContainerStyle={[
-                    styles.classListContent,
-                    (loadingClasses || classes.length === 0) && styles.classListStateContent,
-                ]}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={handleRefresh}
-                        tintColor={Colors.terra[400]}
-                    />
-                }
-                ListEmptyComponent={
-                    loadingClasses ? (
-                        <View style={styles.loaderContainer}>
-                            <ActivityIndicator size="large" color={Colors.primary} />
-                        </View>
-                    ) : (
-                        <View style={styles.emptyState}>
-                            <View style={styles.emptyIconWrap}>
-                                <Feather name="calendar" size={32} color={Colors.olive[300]} />
-                            </View>
-                            <Text style={styles.emptyTitle}>No classes scheduled</Text>
-                            <Text style={styles.emptySubtitle}>
-                                There are no classes available on this date. Try selecting a different day.
-                            </Text>
-                        </View>
-                    )
-                }
-            />
         </View>
     );
+
+    const renderScheduleEmptyState = () => {
+        if (loadingClasses) {
+            return (
+                <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                </View>
+            );
+        }
+        if (classesError) {
+            return (
+                <View style={styles.emptyState}>
+                    <View style={styles.emptyIconWrap}>
+                        <Feather name="wifi-off" size={32} color={Colors.olive[300]} />
+                    </View>
+                    <Text style={styles.emptyTitle}>Couldn&apos;t load classes</Text>
+                    <Text style={styles.emptySubtitle}>
+                        Check your connection and pull down to try again.
+                    </Text>
+                </View>
+            );
+        }
+        return (
+            <View style={styles.emptyState}>
+                <View style={styles.emptyIconWrap}>
+                    <Feather name="calendar" size={32} color={Colors.olive[300]} />
+                </View>
+                <Text style={styles.emptyTitle}>No classes scheduled</Text>
+                <Text style={styles.emptySubtitle}>
+                    There are no classes available on this date. Try selecting a different day.
+                </Text>
+            </View>
+        );
+    };
 
     const renderTrainersTab = () => {
         if (loadingTrainers) {
@@ -544,61 +613,35 @@ export default function ScheduleScreen() {
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
             <TabHeader />
-            <View style={styles.fixedHeader}>
-                {/* ── Facility Header ── */}
-                <View style={styles.facilityHeader}>
-                    {/* Title */}
-                    <Text style={styles.pageTitle}>Class Schedule</Text>
-
-                    {/* Address */}
-                    <View style={styles.addressRow}>
-                        <Feather name="map-pin" size={12} color={Colors.terra[400]} />
-                        {facilityAddress ? (
-                            <Text style={styles.addressText}>{facilityAddress}</Text>
-                        ) : (
-                            <View style={styles.addressSkeleton} />
-                        )}
-                    </View>
-                </View>
-
-                {/* ── Section Tabs (sticky) ── */}
-                <View style={styles.sectionTabsContainer}>
-                    <View style={styles.sectionTabsInner}>
-                        {([
-                            { id: 'schedule', label: 'Schedule' },
-                            { id: 'trainers', label: 'Trainers' },
-                            { id: 'facility', label: 'Facility' },
-                        ] as const).map((tab) => {
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <TouchableOpacity
-                                    key={tab.id}
-                                    style={[
-                                        styles.sectionTab,
-                                        isActive && styles.sectionTabActive,
-                                    ]}
-                                    onPress={() => setActiveTab(tab.id)}
-                                    activeOpacity={0.7}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.sectionTabText,
-                                            isActive && styles.sectionTabTextActive,
-                                        ]}
-                                    >
-                                        {tab.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                </View>
-            </View>
-
             {activeTab === 'schedule' ? (
-                <View style={styles.tabContent}>
-                    {renderScheduleTab()}
-                </View>
+                <FlatList
+                    data={loadingClasses ? [] : regularClasses}
+                    keyExtractor={(cls) => cls.id}
+                    renderItem={({ item }) => (
+                        <ClassCard
+                            classSession={item}
+                            trainerName={getTrainerName(item.trainerId)}
+                            onBook={handleBook}
+                            bookingRestriction={
+                                hasValidSubscription(clientUser?.subscription)
+                                    ? getClassBookingRestriction(clientUser?.subscription, item)
+                                    : undefined
+                            }
+                        />
+                    )}
+                    ListHeaderComponent={renderScheduleHeader()}
+                    ListEmptyComponent={renderScheduleEmptyState()}
+                    style={styles.container}
+                    contentContainerStyle={styles.classListContent}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={handleRefresh}
+                            tintColor={Colors.terra[400]}
+                        />
+                    }
+                />
             ) : (
                 <ScrollView
                     style={styles.container}
@@ -612,6 +655,7 @@ export default function ScheduleScreen() {
                         />
                     }
                 >
+                    {renderPageHeader()}
                     <View style={styles.tabContent}>
                         {activeTab === 'trainers' && renderTrainersTab()}
                         {activeTab === 'facility' && renderFacilityTab()}
@@ -648,7 +692,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 100, // bottom tab bar clearance
     },
-    fixedHeader: {
+    pageHeader: {
         backgroundColor: Colors.background,
     },
 
@@ -727,10 +771,13 @@ const styles = StyleSheet.create({
     sectionTab: {
         flex: 1,
         paddingVertical: Spacing.sm + 4,
-        paddingHorizontal: Spacing.lg,
+        // Deliberately tight: with flex:1 across three pills, wide side padding
+        // squeezed the label below its own text width on narrow devices.
+        paddingHorizontal: Spacing.xs,
         borderRadius: BorderRadius.full,
         backgroundColor: Colors.peach[200],
         alignItems: 'center',
+        justifyContent: 'center',
     },
     sectionTabActive: {
         backgroundColor: Colors.terra[400],
@@ -751,9 +798,6 @@ const styles = StyleSheet.create({
     },
 
     // ── Schedule Tab ──
-    schedulePane: {
-        flex: 1,
-    },
     introSection: {
         paddingTop: Spacing.sm,
     },
@@ -858,15 +902,8 @@ const styles = StyleSheet.create({
     filterChipTextActive: {
         color: Colors.terra[400],
     },
-    classListScroller: {
-        flex: 1,
-    },
     classListContent: {
-        paddingTop: Spacing.xs,
-        paddingBottom: 100,
-    },
-    classListStateContent: {
-        flexGrow: 1,
+        paddingBottom: 100, // bottom tab bar clearance
     },
 
     // ── Loading / Empty ──

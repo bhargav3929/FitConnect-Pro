@@ -1076,7 +1076,7 @@ export default function ProfileScreen() {
                         </View>
                         <Text style={styles.deleteModalTitle}>Delete Account?</Text>
                         <Text style={styles.deleteModalBody}>
-                            This permanently deletes your SOL Pilates account, removes your profile,
+                            This permanently deletes your Sol Pilates account, removes your profile,
                             cancels upcoming confirmed bookings, and anonymizes booking history.
                             This cannot be undone.
                         </Text>

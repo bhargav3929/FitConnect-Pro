@@ -24,6 +24,7 @@ import { ClassSession, SpotSelection } from '../types/class';
 import { Booking } from '../types/booking';
 import { Trainer } from '../types/trainer';
 import { GymCenter } from '../types/gym';
+import { byStartTime, isOnStudioDay, studioDayQueryWindow } from '../schedule/studio-day';
 
 // ---------------------------------------------------------------------------
 // API call helper — gets ID token and calls our Next.js API routes
@@ -120,18 +121,41 @@ function mapDocWithId<T>(snapshot: QueryDocumentSnapshot<DocumentData>, idField 
 }
 
 // ---------------------------------------------------------------------------
+// Class-day helpers — shared by every "classes on a given day" query.
+// ---------------------------------------------------------------------------
+
+// A class in either state is still on the schedule. 'ongoing' has to be included
+// or a class vanishes from the member schedule the moment the studio starts it.
+const ACTIVE_CLASS_STATUSES: ClassSession['status'][] = ['scheduled', 'ongoing'];
+
+// `classes.date` is written as a Timestamp, but tolerate docs that carry a raw
+// value rather than throwing and losing the whole day's list.
+function readClassDate(data: DocumentData): Date | null {
+    const raw = data.date;
+    if (raw instanceof Timestamp) return raw.toDate();
+    if (raw instanceof Date) return raw;
+    if (typeof raw === 'string' || typeof raw === 'number') {
+        const parsed = new Date(raw);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+    return null;
+}
+
+function isClassOnDay(data: DocumentData, day: Date): boolean {
+    const date = readClassDate(data);
+    return date !== null && isOnStudioDay(date, day);
+}
+
+// ---------------------------------------------------------------------------
 // 1. getClassesByDate — Query classes for a given date
 // ---------------------------------------------------------------------------
 
 export async function getClassesByDate(date: Date): Promise<ClassSession[]> {
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
+    const { start, end } = studioDayQueryWindow(date);
 
     const q = query(
         collection(db, 'classes'),
-        where('status', '==', 'scheduled'),
+        where('status', 'in', ACTIVE_CLASS_STATUSES),
         where('date', '>=', Timestamp.fromDate(start)),
         where('date', '<=', Timestamp.fromDate(end)),
         orderBy('date'),
@@ -139,10 +163,13 @@ export async function getClassesByDate(date: Date): Promise<ClassSession[]> {
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return convertTimestamps({ ...data, id: doc.id }) as unknown as ClassSession;
-    });
+    return snapshot.docs
+        .filter((doc) => isClassOnDay(doc.data(), date))
+        .map((doc) => {
+            const data = doc.data();
+            return convertTimestamps({ ...data, id: doc.id }) as unknown as ClassSession;
+        })
+        .sort(byStartTime);
 }
 
 // ---------------------------------------------------------------------------
@@ -338,16 +365,14 @@ export function subscribeToClassesByDate(
     options: {
         trainerId?: string;
         classType?: string;
+        onError?: (error: Error) => void;
     } = {},
 ): Unsubscribe {
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
+    const { start, end } = studioDayQueryWindow(date);
 
     const q = query(
         collection(db, 'classes'),
-        where('status', '==', 'scheduled'),
+        where('status', 'in', ACTIVE_CLASS_STATUSES),
         ...(options.trainerId ? [where('trainerId', '==', options.trainerId)] : []),
         ...(options.classType ? [where('classType', '==', options.classType)] : []),
         where('date', '>=', Timestamp.fromDate(start)),
@@ -355,13 +380,25 @@ export function subscribeToClassesByDate(
         orderBy('date'),
         orderBy('startTime'),
     );
-    return onSnapshot(q, (snapshot) => {
-        const classes = snapshot.docs.map((doc) => {
-            const data = doc.data();
-            return convertTimestamps({ ...data, id: doc.id }) as unknown as ClassSession;
-        });
-        callback(classes);
-    });
+    return onSnapshot(
+        q,
+        (snapshot) => {
+            const classes = snapshot.docs
+                .filter((doc) => isClassOnDay(doc.data(), date))
+                .map((doc) => {
+                    const data = doc.data();
+                    return convertTimestamps({ ...data, id: doc.id }) as unknown as ClassSession;
+                })
+                .sort(byStartTime);
+            callback(classes);
+        },
+        // Without this the listener fails silently and callers sit on a loading
+        // spinner forever — a missing index or a rules change reads as a hang.
+        (error) => {
+            console.error('[subscribeToClassesByDate] listener failed', error);
+            options.onError?.(error);
+        },
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -1302,10 +1339,7 @@ export function subscribeToCheckinClasses(
     date: Date,
     callback: (classes: ClassSession[]) => void,
 ): Unsubscribe {
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
+    const { start, end } = studioDayQueryWindow(date);
 
     const q = query(
         collection(db, 'classes'),
@@ -1315,15 +1349,23 @@ export function subscribeToCheckinClasses(
         orderBy('startTime'),
     );
 
-    return onSnapshot(q, (snapshot) => {
-        const classes = snapshot.docs
-            .map((d) => {
-                const data = d.data();
-                return convertTimestamps({ ...data, id: d.id }) as unknown as ClassSession;
-            })
-            .filter((cls) => cls.status !== 'canceled' && cls.status !== 'completed');
-        callback(classes);
-    });
+    return onSnapshot(
+        q,
+        (snapshot) => {
+            const classes = snapshot.docs
+                .filter((d) => isClassOnDay(d.data(), date))
+                .map((d) => {
+                    const data = d.data();
+                    return convertTimestamps({ ...data, id: d.id }) as unknown as ClassSession;
+                })
+                .filter((cls) => cls.status !== 'canceled' && cls.status !== 'completed')
+                .sort(byStartTime);
+            callback(classes);
+        },
+        (error) => {
+            console.error('[subscribeToCheckinClasses] listener failed', error);
+        },
+    );
 }
 
 // ---------------------------------------------------------------------------

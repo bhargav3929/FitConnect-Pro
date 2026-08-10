@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "SOL Pilates Studio",
+    "name": "Sol Pilates Studio",
     "slug": "sol-pilates",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "newArchEnabled": false,
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fitconnect.pro",
-      "buildNumber": "11",
+      "buildNumber": "12",
       "usesAppleSignIn": true,
       "googleServicesFile": "./GoogleService-Info.plist",
       "privacyManifests": {
@@ -36,11 +36,11 @@
         ]
       },
       "infoPlist": {
-        "CFBundleDisplayName": "SOL Pilates",
+        "CFBundleDisplayName": "Sol Pilates",
         "CFBundleAllowMixedLocalizations": true,
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "SOL Pilates uses your camera only if you choose to take a new profile photo.",
-        "NSPhotoLibraryUsageDescription": "SOL Pilates may need access to your photo library if you choose to upload or update a profile photo.",
+        "NSCameraUsageDescription": "Sol Pilates uses your camera only if you choose to take a new profile photo.",
+        "NSPhotoLibraryUsageDescription": "Sol Pilates may need access to your photo library if you choose to upload or update a profile photo.",
         "LSApplicationQueriesSchemes": [
           "tez",
           "phonepe",

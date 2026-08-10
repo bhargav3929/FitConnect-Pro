@@ -52,7 +52,11 @@ const data = {
     startTime: '11:00',
     startTimestamp: Timestamp.fromDate(start),
     endTimestamp: Timestamp.fromDate(end),
-    date: start.toISOString().slice(0, 10),
+    // Must be a Timestamp at UTC midnight, exactly like createClass writes it.
+    // Firestore orders Timestamps before strings, so a 'YYYY-MM-DD' string here
+    // can never satisfy the schedule's `date >= <Timestamp>` filter and the class
+    // becomes invisible in the app on every device.
+    date: Timestamp.fromDate(new Date(`${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}T00:00:00.000Z`)),
     capacity: 10,
     bookedSpots: [],
     waitlist: [],
@@ -66,7 +70,7 @@ const data = {
 };
 
 console.log('\nDoc ID :', docId);
-console.log('Date   :', data.date);
+console.log('Date   :', data.date.toDate().toISOString());
 console.log('Time   :', data.startTime);
 console.log('Type   :', data.classType);
 console.log('Status :', data.status);

@@ -190,6 +190,12 @@ export default function SchedulePage() {
             {
                 trainerId: selectedFilterValues.instructor || undefined,
                 classType: selectedFilterValues.classType || undefined,
+                // A failed listener must still clear the spinner, otherwise the
+                // page looks like it is loading forever.
+                onError: () => {
+                    setClasses([])
+                    setIsLoadingClasses(false)
+                },
             },
         )
         return unsub
