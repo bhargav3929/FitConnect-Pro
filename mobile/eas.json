@@ -33,7 +33,9 @@
         "buildType": "app-bundle",
         "autoIncrement": true
       },
-      "ios": {},
+      "ios": {
+        "autoIncrement": true
+      },
       "channel": "production"
     }
   },
