@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "fitconnect",
+    "scheme": ["fitconnect", "com.fitconnect.pro"],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -82,8 +82,8 @@
       "googleAuth": {
         "iosClientId": "792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj.apps.googleusercontent.com",
         "iosReversedClientId": "com.googleusercontent.apps.792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj",
-        "androidClientId": "792852037404-5ignujiais7f6bs17l3etikus0lqc5eo.apps.googleusercontent.com",
-        "webClientId": "792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj.apps.googleusercontent.com"
+        "androidClientId": "792852037404-vnkb3cam4a64s56g6gvaihhttb361n5i.apps.googleusercontent.com",
+        "webClientId": "792852037404-5ignujiais7f6bs17l3etikus0lqc5eo.apps.googleusercontent.com"
       },
       "router": {},
       "eas": {

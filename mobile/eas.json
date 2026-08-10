@@ -30,7 +30,8 @@
         "EXPO_PUBLIC_API_BASE_URL": "https://www.solpilatesstudio.in"
       },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "autoIncrement": true
       },
       "ios": {},
       "channel": "production"
