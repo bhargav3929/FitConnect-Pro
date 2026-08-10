@@ -497,6 +497,9 @@ export default function ScheduleScreen() {
                 </View>
             );
         }
+        if (introClasses.length > 0) {
+            return null;
+        }
         return (
             <View style={styles.emptyState}>
                 <View style={styles.emptyIconWrap}>

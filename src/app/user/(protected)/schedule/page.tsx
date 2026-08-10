@@ -681,7 +681,7 @@ export default function SchedulePage() {
                             )}
 
                             {/* Empty State */}
-                            {!isLoadingClasses && filteredClasses.length === 0 && (
+                            {!isLoadingClasses && filteredClasses.length === 0 && introClasses.length === 0 && (
                                 <div className="text-center py-20">
                                     <div className="w-16 h-16 bg-peach-200/50 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <Calendar className="w-8 h-8 text-olive-300/40" />
