@@ -2,6 +2,7 @@ import {
     doc,
     getDoc,
     setDoc,
+    updateDoc,
     collection,
     query,
     where,
@@ -23,6 +24,7 @@ import { UserProfile } from '../types/user';
 import { ClassSession, SpotSelection } from '../types/class';
 import { Booking } from '../types/booking';
 import { Trainer } from '../types/trainer';
+import { AppNotification, NotificationType } from '../types/notification';
 import { GymCenter } from '../types/gym';
 import { byStartTime, isOnStudioDay, studioDayQueryWindow } from '../schedule/studio-day';
 
@@ -49,9 +51,30 @@ export async function apiFetch<T>(
 
     const data = (await res.json()) as Record<string, unknown>;
     if (!res.ok) {
-        throw new Error((data.error as string) || 'API request failed');
+        throw new ApiError(
+            (data.error as string) || 'API request failed',
+            (data.code as string) || 'unknown',
+            data,
+        );
     }
     return data as T;
+}
+
+/**
+ * Error thrown by apiFetch on a non-2xx response. Carries the API's machine
+ * -readable `code` and full payload so callers can branch on the failure
+ * (e.g. offering to reassign classes) instead of matching on message text.
+ */
+export class ApiError extends Error {
+    readonly code: string;
+    readonly data: Record<string, unknown>;
+
+    constructor(message: string, code: string, data: Record<string, unknown> = {}) {
+        super(message);
+        this.name = 'ApiError';
+        this.code = code;
+        this.data = data;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1072,16 +1095,52 @@ export async function callUpdateTrainer(
 }
 
 // ---------------------------------------------------------------------------
-// 24. callDeleteTrainer — API route wrapper for admin (soft delete)
+// 24. callDeleteTrainer — API route wrapper for admin (hard delete)
 // ---------------------------------------------------------------------------
 
+/**
+ * Deletes a trainer. If the trainer still has classes assigned, the API rejects
+ * with code 'trainer-has-classes' unless reassignToTrainerId is supplied, in
+ * which case those classes and their bookings move to the replacement first.
+ */
 export async function callDeleteTrainer(
     trainerId: string,
-): Promise<{ success: boolean }> {
-    return apiFetch<{ success: boolean }>('/api/admin/trainers', {
+    reassignToTrainerId?: string,
+): Promise<{ success: boolean; reassignedClasses: number }> {
+    return apiFetch<{ success: boolean; reassignedClasses: number }>('/api/admin/trainers', {
         method: 'DELETE',
-        body: { trainerId },
+        body: { trainerId, ...(reassignToTrainerId ? { reassignToTrainerId } : {}) },
     });
+}
+
+// ---------------------------------------------------------------------------
+// 24a. callCreateMember / callDeleteMember — admin member management
+// ---------------------------------------------------------------------------
+
+export interface CreateMemberInput {
+    name: string;
+    email: string;
+    phone?: string;
+    age?: number;
+    password?: string;
+}
+
+export async function callCreateMember(
+    member: CreateMemberInput,
+): Promise<{ success: boolean; uid: string }> {
+    return apiFetch<{ success: boolean; uid: string }>('/api/admin/members', {
+        method: 'POST',
+        body: member,
+    });
+}
+
+export async function callDeleteMember(
+    userId: string,
+): Promise<{ success: boolean; deletedBookings: number; releasedClasses: number }> {
+    return apiFetch<{ success: boolean; deletedBookings: number; releasedClasses: number }>(
+        '/api/admin/members',
+        { method: 'DELETE', body: { userId } },
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -1520,6 +1579,91 @@ export async function getBookingsByClassId(classId: string): Promise<Booking[]> 
         .map((d) => mapDocWithId<Booking>(d))
         .sort((a, b) => (a.spotNumber ?? 0) - (b.spotNumber ?? 0));
 }
+
+// ---------------------------------------------------------------------------
+// Notifications — in-app inbox
+// ---------------------------------------------------------------------------
+
+const NOTIFICATIONS_FEED_LIMIT = 50;
+
+function mapNotification(snapshot: QueryDocumentSnapshot<DocumentData>): AppNotification {
+    return convertTimestamps({
+        ...snapshot.data(),
+        id: snapshot.id,
+    }) as unknown as AppNotification;
+}
+
+/** One-shot read of the signed-in user's most recent notifications. */
+export async function getUserNotifications(userId: string): Promise<AppNotification[]> {
+    const q = query(
+        collection(db, 'notifications'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limitTo(NOTIFICATIONS_FEED_LIMIT),
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(mapNotification);
+}
+
+/**
+ * Live subscription to the user's notifications, newest first. Returns the
+ * unsubscribe function - call it on unmount.
+ */
+export function subscribeToUserNotifications(
+    userId: string,
+    onChange: (notifications: AppNotification[]) => void,
+    onError?: (error: Error) => void,
+): Unsubscribe {
+    const q = query(
+        collection(db, 'notifications'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limitTo(NOTIFICATIONS_FEED_LIMIT),
+    );
+    return onSnapshot(
+        q,
+        (snapshot) => onChange(snapshot.docs.map(mapNotification)),
+        (error) => onError?.(error),
+    );
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+    await updateDoc(doc(db, 'notifications', notificationId), {
+        read: true,
+        readAt: Timestamp.now(),
+    });
+}
+
+/** Marks every unread notification in the given list as read. */
+export async function markAllNotificationsRead(
+    notifications: AppNotification[],
+): Promise<void> {
+    const unread = notifications.filter((n) => !n.read);
+    await Promise.all(unread.map((n) => markNotificationRead(n.id)));
+}
+
+// ---------------------------------------------------------------------------
+// callSendAnnouncement — admin broadcast to members
+// ---------------------------------------------------------------------------
+
+export interface SendAnnouncementInput {
+    title: string;
+    body: string;
+    /** 'all' = every member, 'active' = active subscriptions only. */
+    audience: 'all' | 'active';
+    link?: string;
+}
+
+export async function callSendAnnouncement(
+    input: SendAnnouncementInput,
+): Promise<{ success: boolean; recipients: number }> {
+    return apiFetch<{ success: boolean; recipients: number }>('/api/admin/notifications', {
+        method: 'POST',
+        body: input,
+    });
+}
+
+export type { AppNotification, NotificationType };
 
 // ---------------------------------------------------------------------------
 // Re-export SpotSelection for convenience

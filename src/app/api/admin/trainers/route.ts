@@ -170,7 +170,7 @@ export async function DELETE(req: NextRequest) {
             );
         }
 
-        const { trainerId } = body;
+        const { trainerId, reassignToTrainerId } = body;
 
         if (!trainerId || typeof trainerId !== 'string') {
             return NextResponse.json({ error: 'trainerId is required', code: 'invalid-argument' }, { status: 400 });
@@ -182,10 +182,71 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'Trainer not found', code: 'not-found' }, { status: 404 });
         }
 
+        // Classes keep a trainerId. Deleting the trainer outright would leave
+        // those classes pointing at nothing, so they must be reassigned first.
+        const assignedClasses = await adminDb
+            .collection('classes')
+            .where('trainerId', '==', trainerId)
+            .get();
+
+        if (!assignedClasses.empty) {
+            if (typeof reassignToTrainerId !== 'string' || !reassignToTrainerId) {
+                return NextResponse.json(
+                    {
+                        error: `This instructor is assigned to ${assignedClasses.size} class${assignedClasses.size === 1 ? '' : 'es'}. Choose another instructor to take them over first.`,
+                        code: 'trainer-has-classes',
+                        classCount: assignedClasses.size,
+                    },
+                    { status: 409 },
+                );
+            }
+
+            if (reassignToTrainerId === trainerId) {
+                return NextResponse.json(
+                    { error: 'Cannot reassign classes to the instructor being deleted', code: 'invalid-argument' },
+                    { status: 400 },
+                );
+            }
+
+            const replacementRef = adminDb.collection('trainers').doc(reassignToTrainerId);
+            const replacementDoc = await replacementRef.get();
+            if (!replacementDoc.exists) {
+                return NextResponse.json(
+                    { error: 'Replacement instructor not found', code: 'not-found' },
+                    { status: 404 },
+                );
+            }
+
+            // Bookings snapshot the trainerId too, so move those across as well
+            // or member booking history would point at a deleted instructor.
+            const classIds = assignedClasses.docs.map((d) => d.id);
+            const bookingDocs = [];
+            for (let i = 0; i < classIds.length; i += 30) {
+                const chunk = classIds.slice(i, i + 30);
+                const snap = await adminDb.collection('bookings').where('classId', 'in', chunk).get();
+                bookingDocs.push(...snap.docs);
+            }
+
+            const updates = [...assignedClasses.docs, ...bookingDocs];
+            for (let i = 0; i < updates.length; i += 450) {
+                const batch = adminDb.batch();
+                for (const d of updates.slice(i, i + 450)) {
+                    batch.update(d.ref, {
+                        trainerId: reassignToTrainerId,
+                        updatedAt: FieldValue.serverTimestamp(),
+                    });
+                }
+                await batch.commit();
+            }
+        }
+
         // Hard delete the trainer document
         await trainerRef.delete();
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({
+            success: true,
+            reassignedClasses: assignedClasses.size,
+        });
     } catch (error) {
         console.error('Error deleting trainer:', error);
         return NextResponse.json(

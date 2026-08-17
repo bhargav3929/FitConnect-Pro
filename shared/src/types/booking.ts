@@ -20,4 +20,12 @@ export interface Booking {
     attendedAt?: Date;
     createdAt: Date;
     updatedAt: Date;
+
+    // ── Hydrated from the linked class/trainer docs by query helpers such as
+    // getUserBookingsPage. Not persisted on the booking document itself.
+    classType?: string;
+    classStartTime?: string;
+    classDuration?: number;
+    classLocation?: string;
+    trainerName?: string;
 }

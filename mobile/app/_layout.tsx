@@ -60,6 +60,7 @@ export default function RootLayout() {
                 <Stack.Screen name="signup" options={{ headerShown: false }} />
                 <Stack.Screen name="subscribe" />
                 <Stack.Screen name="about" />
+                <Stack.Screen name="notifications" />
                 <Stack.Screen name="(tabs)" />
             </Stack>
         </ErrorBoundary>

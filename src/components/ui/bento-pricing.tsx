@@ -33,7 +33,7 @@ function formatPrice(rupees: number) {
 
 function priceSuffix(plan: PlanDefinition) {
     if (plan.id === 'drop_in') return '/ session';
-    if (plan.id === 'kickstarter') return '/ 2 weeks';
+    if (plan.id === 'kickstarter') return '/ 4 classes';
     if (plan.durationDays === 90) return '/ quarter';
     if (plan.durationDays === 180) return '/ 6 months';
     return '';

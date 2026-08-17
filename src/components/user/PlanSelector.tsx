@@ -66,11 +66,9 @@ function PlanCard({
                             ? '/ quarter'
                             : plan.durationDays === 180
                                 ? '/ 6 months'
-                                : plan.durationDays === 14
-                                    ? '/ 2 weeks'
-                                    : plan.credits === 1
-                                        ? '/ session'
-                                        : `/ ${plan.credits} classes`}
+                                : plan.credits === 1
+                                    ? '/ session'
+                                    : `/ ${plan.credits} classes`}
                     </span>
                 </div>
 

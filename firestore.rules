@@ -113,6 +113,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Notifications collection
+    // - Read: owner only (admins read via the Admin SDK, not the client)
+    // - Create/Delete: blocked; written by scheduled functions and admin API routes
+    // - Update: owner may only flip their own notification to read
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, delete: if false;
+      allow update: if isAuthenticated()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['read', 'readAt']);
+    }
+
     // Feedback collection (public form submissions)
     // - Create: anyone (unauthenticated form submissions allowed)
     // - Read/Update/Delete: admin only

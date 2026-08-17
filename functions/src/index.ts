@@ -8,6 +8,8 @@ export { sendBookingConfirmation } from './triggers/sendBookingConfirmation';
 // Scheduled jobs
 export { expireSubscriptions } from './scheduled/expireSubscriptions';
 export { markNoShows } from './scheduled/markNoShows';
+export { sendClassReminders } from './scheduled/sendClassReminders';
+export { sendPlanExpiryReminders } from './scheduled/sendPlanExpiryReminders';
 
 // HTTPS callable functions
 export { activateSubscription } from './api/activateSubscription';

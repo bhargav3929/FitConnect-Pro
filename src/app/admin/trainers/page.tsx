@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import {
+    ApiError,
     callCreateTrainer,
     callDeleteTrainer,
     callUpdateTrainer,
@@ -82,6 +83,12 @@ export default function TrainersPage() {
     const [formData, setFormData] = useState<TrainerFormData>(defaultTrainerForm)
     const [isSaving, setIsSaving] = useState(false)
     const [deletingId, setDeletingId] = useState<string | null>(null)
+
+    // Delete confirmation. blockingClassCount is set when the API refuses the
+    // delete because the trainer still owns classes.
+    const [trainerToDelete, setTrainerToDelete] = useState<Trainer | null>(null)
+    const [blockingClassCount, setBlockingClassCount] = useState<number | null>(null)
+    const [reassignTo, setReassignTo] = useState("")
 
     useEffect(() => {
         let cancelled = false
@@ -200,13 +207,31 @@ export default function TrainersPage() {
         }
     }
 
-    const handleDelete = async (trainerId: string) => {
+    const handleDelete = async () => {
+        if (!trainerToDelete) return
+
+        const trainerId = trainerToDelete.id
         setDeletingId(trainerId)
         try {
-            await callDeleteTrainer(trainerId)
+            const result = await callDeleteTrainer(trainerId, reassignTo || undefined)
             setTrainers(prev => prev.filter(t => t.id !== trainerId))
-            toast.success("Trainer removed")
+            setTrainerToDelete(null)
+            setReassignTo("")
+            setBlockingClassCount(null)
+            toast.success(
+                result.reassignedClasses > 0
+                    ? `Trainer removed, ${result.reassignedClasses} class${result.reassignedClasses === 1 ? '' : 'es'} reassigned`
+                    : "Trainer removed",
+            )
         } catch (err: unknown) {
+            // The API refuses to orphan classes; surface the picker instead of
+            // just an error toast.
+            if (err instanceof ApiError && err.code === 'trainer-has-classes') {
+                setBlockingClassCount(
+                    typeof err.data.classCount === 'number' ? err.data.classCount : 0,
+                )
+                return
+            }
             const message = err instanceof Error ? err.message : "Failed to delete trainer"
             toast.error(message)
         } finally {
@@ -371,7 +396,7 @@ export default function TrainersPage() {
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             className="text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer gap-2"
-                                            onClick={() => handleDelete(trainer.id)}
+                                            onClick={() => setTrainerToDelete(trainer)}
                                             disabled={deletingId === trainer.id}
                                         >
                                             {deletingId === trainer.id ? (
@@ -479,6 +504,90 @@ export default function TrainersPage() {
                     </span>
                 </motion.div>
             )}
+
+            {/* ═══════════ DELETE TRAINER CONFIRMATION ═══════════ */}
+            <Dialog
+                open={trainerToDelete !== null}
+                onOpenChange={(open) => {
+                    if (open) return
+                    setTrainerToDelete(null)
+                    setBlockingClassCount(null)
+                    setReassignTo("")
+                }}
+            >
+                <DialogContent className="bg-peach-50 border-peach-400/20 max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="app-section-title">Remove Instructor</DialogTitle>
+                        <DialogDescription className="text-olive-300 text-sm">
+                            {blockingClassCount === null ? (
+                                <>
+                                    This permanently removes{" "}
+                                    <span className="font-semibold text-olive-500">{trainerToDelete?.name}</span>{" "}
+                                    from your team. This cannot be undone.
+                                </>
+                            ) : (
+                                <>
+                                    <span className="font-semibold text-olive-500">{trainerToDelete?.name}</span> is
+                                    assigned to {blockingClassCount} class{blockingClassCount === 1 ? "" : "es"}.
+                                    Pick who takes them over - those classes and their bookings move across
+                                    before the instructor is removed.
+                                </>
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {blockingClassCount !== null && (
+                        <div className="mt-2">
+                            <label className="block app-label mb-2">Reassign classes to</label>
+                            <select
+                                value={reassignTo}
+                                onChange={(e) => setReassignTo(e.target.value)}
+                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
+                            >
+                                <option value="">Select an instructor...</option>
+                                {trainers
+                                    .filter((t) => t.id !== trainerToDelete?.id)
+                                    .map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.name}
+                                        </option>
+                                    ))}
+                            </select>
+                            {trainers.filter((t) => t.id !== trainerToDelete?.id).length === 0 && (
+                                <p className="text-[11px] text-red-600 mt-2">
+                                    There is no other instructor to take these classes. Add one first.
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 mt-4">
+                        <button
+                            onClick={() => {
+                                setTrainerToDelete(null)
+                                setBlockingClassCount(null)
+                                setReassignTo("")
+                            }}
+                            disabled={deletingId !== null}
+                            className="flex-1 h-11 border border-peach-400/25 text-olive-500 text-xs font-bold tracking-[0.2em] uppercase hover:bg-peach-200/40 transition-colors disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            disabled={deletingId !== null || (blockingClassCount !== null && !reassignTo)}
+                            className="flex-1 h-11 bg-red-600 text-white text-xs font-bold tracking-[0.2em] uppercase hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {deletingId !== null && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {deletingId !== null
+                                ? "Removing"
+                                : blockingClassCount !== null
+                                    ? "Reassign & Remove"
+                                    : "Remove"}
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* ═══════════ ADD / EDIT TRAINER DIALOG ═══════════ */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

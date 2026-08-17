@@ -6,6 +6,7 @@ import {
     Search,
     Mail,
     Calendar,
+    CalendarDays,
     Activity,
     Users,
     CreditCard,
@@ -13,17 +14,43 @@ import {
     X,
     MapPin,
     Phone,
-    ChevronRight,
+    Plus,
+    Trash2,
+    Loader2,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PaginationControls } from "@/components/ui/pagination-controls"
-import { getAllMembers } from "@fitconnect/shared/firebase/firestore"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog"
+import {
+    getAllMembers,
+    getUserBookingsPage,
+    callCreateMember,
+    callDeleteMember,
+} from "@fitconnect/shared/firebase/firestore"
 import { UserProfile } from "@fitconnect/shared/types/user"
+import { Booking } from "@fitconnect/shared/types/booking"
 import { toast } from "sonner"
 
 const PLAN_FILTERS = ["All Plans", "unlimited", "twice_weekly", "once_weekly", "drop_in", "five_pack", "ten_pack"]
 const STATUS_FILTERS = ["All Status", "active", "No Plan", "expired", "canceled"]
 const PAGE_SIZE = 12
+const MEMBER_BOOKINGS_LIMIT = 50
+
+interface MemberFormData {
+    name: string
+    email: string
+    phone: string
+    age: string
+    password: string
+}
+
+const defaultMemberForm: MemberFormData = { name: "", email: "", phone: "", age: "", password: "" }
 
 function getDateTime(date: Date | string | null | undefined): number {
     if (!date) return 0
@@ -40,6 +67,43 @@ export default function MembersPage() {
     const [statusFilter, setStatusFilter] = useState("All Status")
     const [page, setPage] = useState(1)
     const [selectedMember, setSelectedMember] = useState<UserProfile | null>(null)
+    const [memberBookings, setMemberBookings] = useState<Booking[]>([])
+    const [isLoadingBookings, setIsLoadingBookings] = useState(true)
+
+    // Add-member dialog
+    const [dialogOpen, setDialogOpen] = useState(false)
+    const [formData, setFormData] = useState<MemberFormData>(defaultMemberForm)
+    const [isSaving, setIsSaving] = useState(false)
+
+    // Delete confirmation
+    const [memberToDelete, setMemberToDelete] = useState<UserProfile | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+
+    // Load the selected member's schedule whenever the detail drawer opens.
+    useEffect(() => {
+        if (!selectedMember) return
+
+        let cancelled = false
+
+        getUserBookingsPage(selectedMember.uid, { pageSize: MEMBER_BOOKINGS_LIMIT, direction: 'desc' })
+            .then((result) => {
+                if (!cancelled) setMemberBookings(result.items)
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load this member's classes")
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoadingBookings(false)
+            })
+
+        // Reset on close so the next member never briefly shows the previous
+        // member's classes.
+        return () => {
+            cancelled = true
+            setMemberBookings([])
+            setIsLoadingBookings(true)
+        }
+    }, [selectedMember])
 
     useEffect(() => {
         let cancelled = false
@@ -82,12 +146,93 @@ export default function MembersPage() {
         currentPage * PAGE_SIZE,
     )
 
-    useEffect(() => {
+    // Changing any filter returns to the first page. Done in the handlers rather
+    // than an effect so there is no extra render pass on a stale page number.
+    const applyFilter = <T,>(setter: (value: T) => void) => (value: T) => {
+        setter(value)
         setPage(1)
-    }, [searchQuery, planFilter, statusFilter])
+    }
 
     const activeCount = members.filter(m => m.subscription?.status === 'active').length
     const totalCredits = members.reduce((sum, m) => sum + (m.subscription?.classesRemaining ?? 0), 0)
+
+    const openAddDialog = () => {
+        setFormData(defaultMemberForm)
+        setDialogOpen(true)
+    }
+
+    const handleCreateMember = async () => {
+        const name = formData.name.trim()
+        const email = formData.email.trim()
+
+        if (!name) {
+            toast.error("Name is required")
+            return
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            toast.error("A valid email is required")
+            return
+        }
+        if (formData.password && formData.password.length < 6) {
+            toast.error("Password must be at least 6 characters")
+            return
+        }
+
+        const parsedAge = formData.age.trim() ? Number(formData.age) : undefined
+        if (parsedAge !== undefined && (Number.isNaN(parsedAge) || parsedAge < 0 || parsedAge > 120)) {
+            toast.error("Age must be a number between 0 and 120")
+            return
+        }
+
+        setIsSaving(true)
+        try {
+            await callCreateMember({
+                name,
+                email,
+                ...(formData.phone.trim() ? { phone: formData.phone.trim() } : {}),
+                ...(parsedAge !== undefined ? { age: parsedAge } : {}),
+                ...(formData.password ? { password: formData.password } : {}),
+            })
+
+            // Re-read the list so the new member shows with server-resolved fields.
+            const items = await getAllMembers()
+            setMembers(items.sort((a, b) => getDateTime(b.createdAt) - getDateTime(a.createdAt)))
+
+            setDialogOpen(false)
+            toast.success(
+                formData.password
+                    ? "Member added"
+                    : "Member added - they'll need a password reset email to sign in",
+            )
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to add member"
+            toast.error(message)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const handleDeleteMember = async () => {
+        if (!memberToDelete) return
+
+        setIsDeleting(true)
+        try {
+            const result = await callDeleteMember(memberToDelete.uid)
+            setMembers(prev => prev.filter(m => m.uid !== memberToDelete.uid))
+            setSelectedMember(null)
+            setMemberToDelete(null)
+            toast.success(
+                result.deletedBookings > 0
+                    ? `Member deleted along with ${result.deletedBookings} booking${result.deletedBookings === 1 ? '' : 's'}`
+                    : "Member deleted",
+            )
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to delete member"
+            toast.error(message)
+        } finally {
+            setIsDeleting(false)
+        }
+    }
 
     const getDisplayStatus = (member: UserProfile) => {
         if (!member.subscription?.planId && member.subscription?.status === 'expired') {
@@ -102,6 +247,16 @@ export default function MembersPage() {
             case 'expired': return 'bg-red-500/10 text-red-600 ring-1 ring-red-500/20'
             case 'canceled': return 'bg-yellow-500/10 text-yellow-700 ring-1 ring-yellow-500/20'
             case 'No Plan': return 'bg-peach-300/40 text-olive-500 ring-1 ring-olive-400/15'
+            default: return 'bg-peach-300/30 text-olive-400'
+        }
+    }
+
+    const getBookingStatusColor = (status: Booking['status']) => {
+        switch (status) {
+            case 'confirmed': return 'bg-blue-500/10 text-blue-700 ring-1 ring-blue-500/20'
+            case 'attended': return 'bg-green-500/10 text-green-700 ring-1 ring-green-500/20'
+            case 'canceled': return 'bg-peach-300/40 text-olive-500 ring-1 ring-olive-400/15'
+            case 'no-show': return 'bg-red-500/10 text-red-600 ring-1 ring-red-500/20'
             default: return 'bg-peach-300/30 text-olive-400'
         }
     }
@@ -150,6 +305,13 @@ export default function MembersPage() {
                             </span>
                         </>
                     )}
+                    <button
+                        onClick={openAddDialog}
+                        className="px-6 py-3.5 bg-terra-400 text-peach-50 font-bold text-xs tracking-[0.2em] uppercase hover:bg-terra-300 transition-all flex items-center gap-2.5 w-fit hover:shadow-lg hover:shadow-terra-400/15 active:scale-[0.98]"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Member
+                    </button>
                 </div>
             </motion.div>
 
@@ -200,13 +362,13 @@ export default function MembersPage() {
                         type="text"
                         placeholder="Search by name or email..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => applyFilter(setSearchQuery)(e.target.value)}
                         className="w-full h-12 pl-11 pr-4 bg-peach-50 border border-peach-400/20 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none focus:bg-peach-50 transition-all duration-300"
                     />
                 </div>
                 <select
                     value={planFilter}
-                    onChange={(e) => setPlanFilter(e.target.value)}
+                    onChange={(e) => applyFilter(setPlanFilter)(e.target.value)}
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {PLAN_FILTERS.map(plan => (
@@ -215,7 +377,7 @@ export default function MembersPage() {
                 </select>
                 <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => applyFilter(setStatusFilter)(e.target.value)}
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {STATUS_FILTERS.map(status => (
@@ -518,6 +680,83 @@ export default function MembersPage() {
                                     )}
                                 </div>
 
+                                {/* Scheduled Classes */}
+                                <div className="bg-peach-100/60 border border-peach-400/15 p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <CalendarDays className="w-3.5 h-3.5 text-terra-400" />
+                                            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-olive-300">Scheduled Classes</p>
+                                        </div>
+                                        {!isLoadingBookings && memberBookings.length > 0 && (
+                                            <span className="text-[10px] font-bold text-olive-400">{memberBookings.length}</span>
+                                        )}
+                                    </div>
+
+                                    {isLoadingBookings ? (
+                                        <div className="space-y-2">
+                                            {[0, 1, 2].map(i => (
+                                                <div key={i} className="h-12 bg-peach-200/50 animate-pulse" />
+                                            ))}
+                                        </div>
+                                    ) : memberBookings.length === 0 ? (
+                                        <p className="text-sm text-olive-300 italic">No classes booked yet</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {(() => {
+                                                const now = new Date()
+                                                const isUpcoming = (b: Booking) =>
+                                                    getDateTime(b.classDate) >= getDateTime(now) && b.status === 'confirmed'
+                                                const upcoming = memberBookings
+                                                    .filter(isUpcoming)
+                                                    .sort((a, b) => getDateTime(a.classDate) - getDateTime(b.classDate))
+                                                const past = memberBookings.filter(b => !isUpcoming(b))
+
+                                                const renderBooking = (booking: Booking) => (
+                                                    <div
+                                                        key={booking.id}
+                                                        className="flex items-start justify-between gap-3 py-2 border-b border-peach-400/10 last:border-b-0"
+                                                    >
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-semibold text-olive-600 truncate">
+                                                                {booking.classType || 'Pilates'}
+                                                            </p>
+                                                            <p className="text-xs text-olive-400 mt-0.5">
+                                                                {formatDate(booking.classDate)}
+                                                                {booking.classStartTime ? ` · ${booking.classStartTime}` : ''}
+                                                            </p>
+                                                            <p className="text-[11px] text-olive-300 mt-0.5 truncate">
+                                                                {booking.trainerName || 'Instructor'}
+                                                                {booking.classLocation ? ` · ${booking.classLocation}` : ''}
+                                                                {` · Spot ${booking.spotNumber}`}
+                                                            </p>
+                                                        </div>
+                                                        <span className={`shrink-0 inline-flex px-2 py-0.5 app-badge-text rounded-sm ${getBookingStatusColor(booking.status)}`}>
+                                                            {booking.status}
+                                                        </span>
+                                                    </div>
+                                                )
+
+                                                return (
+                                                    <>
+                                                        {upcoming.length > 0 && (
+                                                            <div>
+                                                                <p className="app-stat-label mb-1">Upcoming ({upcoming.length})</p>
+                                                                {upcoming.map(renderBooking)}
+                                                            </div>
+                                                        )}
+                                                        {past.length > 0 && (
+                                                            <div>
+                                                                <p className="app-stat-label mb-1">Past ({past.length})</p>
+                                                                {past.map(renderBooking)}
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )
+                                            })()}
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Address */}
                                 <div className="bg-peach-100/60 border border-peach-400/15 p-4">
                                     <div className="flex items-center gap-2 mb-3">
@@ -567,12 +806,144 @@ export default function MembersPage() {
                                         <Mail className="w-4 h-4" />
                                         Send Email
                                     </a>
+                                    <button
+                                        onClick={() => setMemberToDelete(selectedMember)}
+                                        className="flex items-center justify-center gap-2 h-11 px-4 border border-red-500/25 text-red-600 hover:bg-red-500/10 text-sm font-bold tracking-wide transition-colors"
+                                        aria-label="Delete member"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>
                     </>
                 )}
             </AnimatePresence>
+
+            {/* ═══════════ ADD MEMBER DIALOG ═══════════ */}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent className="bg-peach-50 border-peach-400/20 max-w-xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="app-section-title">Add New Member</DialogTitle>
+                        <DialogDescription className="text-olive-300 text-sm">
+                            Creates the member&apos;s account with no plan attached. Assign a plan afterwards.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-5 mt-2">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block app-label mb-2">Full Name</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Priya Sharma"
+                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block app-label mb-2">Email</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                    placeholder="priya@example.com"
+                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block app-label mb-2">Phone (optional)</label>
+                                <input
+                                    type="tel"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                    placeholder="+91 98765 43210"
+                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block app-label mb-2">Age (optional)</label>
+                                <input
+                                    type="number"
+                                    value={formData.age}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
+                                    placeholder="32"
+                                    className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block app-label mb-2">Temporary Password (optional)</label>
+                            <input
+                                type="text"
+                                value={formData.password}
+                                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                                placeholder="Leave blank to have them set one via password reset"
+                                className="w-full h-11 px-4 bg-peach-200/30 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:bg-peach-50 focus:outline-none transition-all text-sm"
+                            />
+                            <p className="text-[11px] text-olive-300 mt-1.5">
+                                Minimum 6 characters. Share it with the member and ask them to change it after signing in.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setDialogOpen(false)}
+                                disabled={isSaving}
+                                className="flex-1 h-11 border border-peach-400/25 text-olive-500 text-xs font-bold tracking-[0.2em] uppercase hover:bg-peach-200/40 transition-colors disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleCreateMember}
+                                disabled={isSaving}
+                                className="flex-1 h-11 bg-terra-400 text-peach-50 text-xs font-bold tracking-[0.2em] uppercase hover:bg-terra-300 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                                {isSaving ? 'Adding' : 'Add Member'}
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ═══════════ DELETE MEMBER CONFIRMATION ═══════════ */}
+            <Dialog open={memberToDelete !== null} onOpenChange={(open) => !open && setMemberToDelete(null)}>
+                <DialogContent className="bg-peach-50 border-peach-400/20 max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="app-section-title">Delete Member</DialogTitle>
+                        <DialogDescription className="text-olive-300 text-sm">
+                            This permanently removes <span className="font-semibold text-olive-500">{memberToDelete?.name || memberToDelete?.email}</span>,
+                            their login, and their entire booking history. Spots they hold on upcoming
+                            classes are freed up. This cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex gap-3 mt-4">
+                        <button
+                            onClick={() => setMemberToDelete(null)}
+                            disabled={isDeleting}
+                            className="flex-1 h-11 border border-peach-400/25 text-olive-500 text-xs font-bold tracking-[0.2em] uppercase hover:bg-peach-200/40 transition-colors disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleDeleteMember}
+                            disabled={isDeleting}
+                            className="flex-1 h-11 bg-red-600 text-white text-xs font-bold tracking-[0.2em] uppercase hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {isDeleting ? 'Deleting' : 'Delete'}
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

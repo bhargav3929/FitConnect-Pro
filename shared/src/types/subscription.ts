@@ -47,7 +47,7 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         category: 'class_pack',
         price: 1000,
         credits: 1,
-        durationDays: 30,
+        durationDays: 60,
         maxClassesPerDay: 1,
         weeklyClassLimit: 1,
         advanceBookingDays: 7,
@@ -62,26 +62,26 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         ],
     },
 
-    // ── 2-week intro program ─────────────────────────────────────
+    // ── Intro program ────────────────────────────────────────────
     {
         id: 'kickstarter',
         name: 'Sol Intro Program',
         category: 'class_pack',
         price: 5000,
         credits: 4,
-        durationDays: 14,
+        durationDays: 30,
         maxClassesPerDay: 1,
         weeklyClassLimit: 2,
-        advanceBookingDays: 14,
+        advanceBookingDays: 30,
         guestPasses: 0,
         autoRenew: false,
         requiresConsultation: true,
-        tagline: "New to Pilates or just new to us? Start with a private 30-minute session with Swetha, then continue with 4 group classes over 2 weeks — enough to feel the difference.",
+        tagline: "New to Pilates or just new to us? Start with a private 30-minute session with Swetha, then continue with 4 group classes at your own pace - enough to feel the difference.",
         features: [
             'Private 30-min consult with Swetha',
-            '4 group classes over 2 weeks',
-            '2 classes per week',
-            'Designed for new clients',
+            '4 group classes',
+            'Up to 2 classes per week',
+            '30 days validity',
         ],
     },
 

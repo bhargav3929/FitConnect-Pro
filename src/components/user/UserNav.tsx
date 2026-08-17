@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { useRouter } from "next/navigation"
+import { NotificationBell } from "@/components/user/NotificationBell"
 
 const NAV_ITEMS = [
     { label: "Home", href: "/user/dashboard", icon: House },
@@ -61,10 +62,11 @@ export function UserNav() {
                                 <img src={clientUser.avatar} alt={firstName} className="w-full h-full object-cover" />
                             ) : initials}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                             <p className="text-peach-200 font-bold text-sm truncate">{firstName}</p>
                             <p className="text-peach-400/50 text-[11px] truncate">{clientUser?.subscription?.planId ? `${clientUser.subscription.planId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} Plan` : 'Free Plan'}</p>
                         </div>
+                        <NotificationBell tone="dark" align="right" className="-mr-1 flex-shrink-0" />
                     </div>
                 </div>
 
@@ -189,13 +191,16 @@ export function UserNav() {
                         height={400}
                         className="h-20 w-auto -my-4"
                     />
-                    <Link href="/user/profile" className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-terra-400 to-terra-300 flex items-center justify-center text-peach-50 text-xs font-bold shadow-sm overflow-hidden">
-                            {clientUser?.avatar ? (
-                                <img src={clientUser.avatar} alt={firstName} className="w-full h-full object-cover" />
-                            ) : initials}
-                        </div>
-                    </Link>
+                    <div className="flex items-center gap-1">
+                        <NotificationBell />
+                        <Link href="/user/profile" className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-terra-400 to-terra-300 flex items-center justify-center text-peach-50 text-xs font-bold shadow-sm overflow-hidden">
+                                {clientUser?.avatar ? (
+                                    <img src={clientUser.avatar} alt={firstName} className="w-full h-full object-cover" />
+                                ) : initials}
+                            </div>
+                        </Link>
+                    </div>
                 </div>
             </header>
         </>

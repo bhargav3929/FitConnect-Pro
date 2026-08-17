@@ -20,6 +20,7 @@ import {
     X,
     Star,
     CheckSquare,
+    Megaphone,
 } from "@phosphor-icons/react"
 import { useState } from "react"
 import { useAdminAuthStore } from "@fitconnect/shared/stores/adminAuthStore"
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
     { label: "Trainers", icon: UsersThree, href: "/admin/trainers" },
     { label: "Facility", icon: MapPin, href: "/admin/locations" },
     { label: "Feedback", icon: ChatCircle, href: "/admin/feedback" },
+    { label: "Announcements", icon: Megaphone, href: "/admin/notifications" },
     { label: "Reports", icon: ChartBar, href: "/admin/reports" },
 ]
 
