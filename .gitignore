@@ -64,3 +64,11 @@ shared/dist/
 .expo/
 .env*
 shared/node_modules/
+
+# MCP config (contains API token)
+.mcp.json
+
+# Local build artifacts and signing material
+*.aab
+*.apk
+certificates.zip
