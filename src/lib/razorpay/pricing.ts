@@ -27,6 +27,21 @@ export interface SyncedPricing {
 
 const PRICING_CACHE_MS = 5 * 60 * 1000;
 
+/**
+ * The synced pricing cache lives in Firestore, and dev, preview and production
+ * all share one Firestore project. Razorpay plan IDs are per-account, so a doc
+ * written by a test-key environment is meaningless (and harmful) to a live-key
+ * one - it hands out plan IDs that do not exist on the live account.
+ *
+ * Two guards keep them apart:
+ *   1. Test and live keys write to different documents.
+ *   2. Every document records the key that produced it; a read from a different
+ *      key is treated as a cache miss and re-synced.
+ */
+function pricingCacheDocId(keyId: string | undefined): string {
+    return keyId?.startsWith('rzp_test') ? 'razorpayPlans-test' : 'razorpayPlans';
+}
+
 function buildFallbackPlans(): SyncedPlanEntry[] {
     return PLAN_CATALOG.map((plan) => ({
         planId: plan.id,
@@ -198,26 +213,37 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
         if (plan.razorpayItemId) itemIdMap[plan.planId] = plan.razorpayItemId;
     }
 
-    await adminDb.collection('settings').doc('razorpayPlans').set({
+    await adminDb.collection('settings').doc(pricingCacheDocId(keyId)).set({
         planIdMap,
         foundingPlanIdMap,
         itemIdMap,
         plans,
         lastSyncedAt,
         source,
+        keyId,
     });
 
     return { plans, lastSyncedAt, source };
 }
 
 export async function getSyncedPricing(): Promise<SyncedPricing> {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+
     try {
-        const settingsDoc = await adminDb.collection('settings').doc('razorpayPlans').get();
+        const settingsDoc = await adminDb.collection('settings').doc(pricingCacheDocId(keyId)).get();
         const data = settingsDoc.exists ? settingsDoc.data() : undefined;
         const stored = normalizeStoredPricing(data);
         const lastSyncedAt = toMillis(data?.lastSyncedAt);
+        const storedKeyId = typeof data?.keyId === 'string' ? data.keyId : null;
 
-        if (stored && lastSyncedAt && Date.now() - lastSyncedAt < PRICING_CACHE_MS) {
+        // A doc with no `keyId` predates this guard, so its provenance is unknown -
+        // re-sync rather than trust it.
+        if (stored && storedKeyId !== keyId) {
+            console.warn(
+                `[pricing] Cached pricing was synced with ${storedKeyId ?? 'an unrecorded key'} but ` +
+                `this environment uses ${keyId ?? 'no key'}; ignoring the cache and re-syncing.`,
+            );
+        } else if (stored && lastSyncedAt && Date.now() - lastSyncedAt < PRICING_CACHE_MS) {
             return stored;
         }
     } catch (error) {
