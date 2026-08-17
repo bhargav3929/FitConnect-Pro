@@ -21,8 +21,12 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
+import {
+    GoogleSignin,
+    isErrorWithCode,
+    isSuccessResponse,
+    statusCodes,
+} from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import Constants from 'expo-constants';
@@ -36,8 +40,6 @@ import {
     FontFamily,
 } from '../constants/theme';
 import Logo from '../components/Logo';
-
-WebBrowser.maybeCompleteAuthSession();
 
 type AuthTab = 'signin' | 'signup';
 
@@ -80,35 +82,22 @@ export default function LoginScreen() {
         androidClientId: undefined,
         webClientId: undefined,
     };
-    const googleClientId = Platform.select({
-        ios: googleAuthConfig.iosClientId,
-        android: googleAuthConfig.androidClientId,
-        default: googleAuthConfig.webClientId,
-    });
-    const googleRedirectUri =
-        Platform.OS === 'ios' && googleAuthConfig.iosReversedClientId
-            ? `${googleAuthConfig.iosReversedClientId}:/oauthredirect`
-            : undefined;
-
-    const [request, response, promptAsync] = Google.useIdTokenAuthRequest(
-        {
-            iosClientId: googleAuthConfig.iosClientId,
-            androidClientId: googleAuthConfig.androidClientId,
-            webClientId: googleAuthConfig.webClientId,
-            redirectUri: googleRedirectUri,
-            scopes: ['openid', 'profile', 'email'],
-            selectAccount: true,
-        },
+    // The native Google SDK always needs the Web client ID to mint the Firebase
+    // ID token; iOS additionally needs its own client ID.
+    const isGoogleConfigured = Boolean(
+        googleAuthConfig.webClientId &&
+        (Platform.OS !== 'ios' || googleAuthConfig.iosClientId),
     );
 
     useEffect(() => {
-        if (response?.type === 'success') {
-            const { id_token } = response.params;
-            if (id_token) {
-                handleGoogleSignInWithToken(id_token);
-            }
-        }
-    }, [response]);
+        if (!googleAuthConfig.webClientId) return;
+        GoogleSignin.configure({
+            webClientId: googleAuthConfig.webClientId,
+            iosClientId: googleAuthConfig.iosClientId,
+            scopes: ['profile', 'email'],
+            offlineAccess: false,
+        });
+    }, [googleAuthConfig.webClientId, googleAuthConfig.iosClientId]);
 
     useEffect(() => {
         let mounted = true;
@@ -149,9 +138,7 @@ export default function LoginScreen() {
     };
 
     const handleGoogleSignInWithToken = async (idToken: string) => {
-        setGoogleLoading(true);
         const result = await googleSignInWithIdToken(idToken);
-        setGoogleLoading(false);
         if (result.success) {
             router.replace(returnTo);
         } else {
@@ -160,17 +147,43 @@ export default function LoginScreen() {
     };
 
     const handleGoogleSignIn = async () => {
-        if (!googleClientId) {
+        if (!isGoogleConfigured) {
             Alert.alert(
                 'Configuration Error',
                 'Google OAuth client IDs not configured. Please contact support.',
             );
             return;
         }
+
+        setGoogleLoading(true);
         try {
-            await promptAsync();
-        } catch {
-            Alert.alert('Error', 'Failed to initiate Google sign-in');
+            if (Platform.OS === 'android') {
+                await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+            }
+            // Sign out first so the account picker always appears instead of
+            // silently reusing the last Google account on the device.
+            await GoogleSignin.signOut();
+            const response = await GoogleSignin.signIn();
+            if (!isSuccessResponse(response)) return;
+
+            const idToken = response.data.idToken;
+            if (!idToken) {
+                Alert.alert('Sign-in Failed', 'Google did not return an identity token.');
+                return;
+            }
+            await handleGoogleSignInWithToken(idToken);
+        } catch (error) {
+            if (isErrorWithCode(error) && error.code === statusCodes.SIGN_IN_CANCELLED) return;
+            if (isErrorWithCode(error) && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                Alert.alert(
+                    'Google Play Services Required',
+                    'Update Google Play Services on this device to sign in with Google.',
+                );
+                return;
+            }
+            Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
+        } finally {
+            setGoogleLoading(false);
         }
     };
 
