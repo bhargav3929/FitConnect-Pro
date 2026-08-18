@@ -4,6 +4,7 @@ import { View, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { Colors, Spacing, FontSize, Shadows, Alpha } from '../../constants/theme';
+import { PhoneCaptureGate } from '../../components/PhoneCaptureGate';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -15,12 +16,16 @@ const TAB_ICONS: Record<string, { active: IoniconName; inactive: IoniconName }> 
 };
 
 export default function TabLayout() {
-    const { firebaseUser, startProfileListener } = useClientAuthStore();
+    const { firebaseUser, clientUser, startProfileListener } = useClientAuthStore();
 
     useEffect(() => {
         if (!firebaseUser) return undefined;
         return startProfileListener();
     }, [firebaseUser, startProfileListener]);
+
+    // Social sign-ups and pre-existing members never supplied a number. Hold them
+    // here until they do - the studio needs a way to reach every member.
+    if (clientUser && !clientUser.phone) return <PhoneCaptureGate />;
 
     return (
         <Tabs

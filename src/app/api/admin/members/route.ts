@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
+import { normalizePhone, PHONE_VALIDATION_MESSAGE } from '@fitconnect/shared/utils/phone';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 // ---------------------------------------------------------------------------
@@ -60,6 +61,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'age must be between 0 and 120', code: 'invalid-argument' }, { status: 400 });
         }
 
+        // Firebase Auth only accepts E.164, so an unnormalized number would throw
+        // from createUser. Reject it here with a message the admin can act on.
+        const suppliedPhone = typeof phone === 'string' ? phone.trim() : '';
+        const normalizedPhone = suppliedPhone ? normalizePhone(suppliedPhone) : null;
+        if (suppliedPhone && !normalizedPhone) {
+            return NextResponse.json({ error: PHONE_VALIDATION_MESSAGE, code: 'invalid-argument' }, { status: 400 });
+        }
+
         const normalizedEmail = email.trim().toLowerCase();
         const trimmedName = name.trim();
 
@@ -82,7 +91,7 @@ export async function POST(req: NextRequest) {
             email: normalizedEmail,
             displayName: trimmedName,
             ...(typeof password === 'string' ? { password } : {}),
-            ...(typeof phone === 'string' && phone.trim() ? { phoneNumber: phone.trim() } : {}),
+            ...(normalizedPhone ? { phoneNumber: normalizedPhone } : {}),
         });
 
         const now = FieldValue.serverTimestamp();
@@ -92,7 +101,7 @@ export async function POST(req: NextRequest) {
             email: normalizedEmail,
             name: trimmedName,
             displayName: trimmedName,
-            phone: typeof phone === 'string' ? phone.trim() : '',
+            ...(normalizedPhone ? { phone: normalizedPhone } : {}),
             age: typeof age === 'number' ? age : 0,
             fitnessGoals: [],
             isFoundingMember: false,

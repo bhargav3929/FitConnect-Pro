@@ -33,6 +33,7 @@ import Constants from 'expo-constants';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@fitconnect/shared/firebase/config';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
+import { isValidPhone, PHONE_VALIDATION_MESSAGE } from '@fitconnect/shared/utils/phone';
 import {
     Spacing,
     FontSize,
@@ -366,6 +367,7 @@ export default function LoginScreen() {
 
     const [signupName, setSignupName] = useState('');
     const [signupEmail, setSignupEmail] = useState('');
+    const [signupPhone, setSignupPhone] = useState('');
     const [signupPassword, setSignupPassword] = useState('');
     const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
     const [showSignupPassword, setShowSignupPassword] = useState(false);
@@ -373,6 +375,7 @@ export default function LoginScreen() {
 
     const loginPasswordRef = useRef<TextInput>(null);
     const signupEmailRef = useRef<TextInput>(null);
+    const signupPhoneRef = useRef<TextInput>(null);
     const signupPasswordRef = useRef<TextInput>(null);
     const signupConfirmRef = useRef<TextInput>(null);
 
@@ -391,8 +394,12 @@ export default function LoginScreen() {
     };
 
     const handleSignup = async () => {
-        if (!signupName || !signupEmail || !signupPassword || !signupConfirmPassword) {
+        if (!signupName || !signupEmail || !signupPhone || !signupPassword || !signupConfirmPassword) {
             Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
+        if (!isValidPhone(signupPhone)) {
+            Alert.alert('Error', PHONE_VALIDATION_MESSAGE);
             return;
         }
         if (signupPassword !== signupConfirmPassword) {
@@ -404,7 +411,7 @@ export default function LoginScreen() {
             return;
         }
         setSignupLoading(true);
-        const result = await signupClient(signupEmail, signupPassword, signupName);
+        const result = await signupClient(signupEmail, signupPassword, signupName, signupPhone);
         setSignupLoading(false);
         if (result.success) router.replace(returnTo);
         else Alert.alert('Signup Failed', result.error || 'Something went wrong');
@@ -628,6 +635,26 @@ export default function LoginScreen() {
                                             value={signupEmail}
                                             onChangeText={setSignupEmail}
                                             keyboardType="email-address"
+                                            autoCapitalize="none"
+                                            autoCorrect={false}
+                                            returnKeyType="next"
+                                            onSubmitEditing={() => signupPhoneRef.current?.focus()}
+                                            editable={!isLoading}
+                                            textContentType="oneTimeCode"
+                                            autoComplete="off"
+                                        />
+                                    </InputRow>
+
+                                    <FieldLabel>Mobile number</FieldLabel>
+                                    <InputRow icon="phone">
+                                        <TextInput
+                                            ref={signupPhoneRef}
+                                            style={styles.input}
+                                            placeholder="98765 43210"
+                                            placeholderTextColor={BRAND.oliveMuted}
+                                            value={signupPhone}
+                                            onChangeText={setSignupPhone}
+                                            keyboardType="phone-pad"
                                             autoCapitalize="none"
                                             autoCorrect={false}
                                             returnKeyType="next"

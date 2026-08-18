@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, User, Eye, EyeOff, ArrowLeft, Mail, Lock, UserPlus, X } from "lucide-react"
+import { Loader2, User, Eye, EyeOff, ArrowLeft, Mail, Lock, UserPlus, X, Phone } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -25,6 +25,7 @@ import { toast } from "sonner"
 import { COLORS, withAlpha } from "@fitconnect/shared/theme"
 import { sendPasswordResetEmail } from "firebase/auth"
 import { auth } from "@fitconnect/shared/firebase/config"
+import { isValidPhone, PHONE_VALIDATION_MESSAGE } from "@fitconnect/shared/utils/phone"
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address"),
@@ -34,6 +35,7 @@ const loginSchema = z.object({
 const signupSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Please enter a valid email address"),
+    phone: z.string().refine(isValidPhone, PHONE_VALIDATION_MESSAGE),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -83,7 +85,7 @@ export function UserLoginContent() {
 
     const signupForm = useForm<SignupValues>({
         resolver: zodResolver(signupSchema),
-        defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+        defaultValues: { name: "", email: "", phone: "", password: "", confirmPassword: "" },
     })
 
     async function onLogin(values: LoginValues) {
@@ -104,7 +106,7 @@ export function UserLoginContent() {
 
     async function onSignup(values: SignupValues) {
         setIsLoading(true)
-        const result = await signupClient(values.email, values.password, values.name)
+        const result = await signupClient(values.email, values.password, values.name, values.phone)
         if (result.success) {
             toast.success("Account created!", {
                 description: "Welcome to SOL Pilates Studio.",
@@ -456,6 +458,31 @@ export function UserLoginContent() {
                                         />
                                         <FormField
                                             control={signupForm.control}
+                                            name="phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-olive-600 text-xs font-bold tracking-wider">
+                                                        MOBILE NUMBER
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300/60" />
+                                                            <Input
+                                                                placeholder="98765 43210"
+                                                                type="tel"
+                                                                inputMode="numeric"
+                                                                autoComplete="tel"
+                                                                {...field}
+                                                                className="h-14 bg-peach-50 border-peach-400/30 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400 focus:ring-0 pl-11"
+                                                            />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={signupForm.control}
                                             name="password"
                                             render={({ field }) => (
                                                 <FormItem>
@@ -603,7 +630,7 @@ export function UserLoginContent() {
                                             <Mail className="w-6 h-6 text-green-600" />
                                         </div>
                                         <p className="font-bold text-olive-600 mb-2">Check your inbox</p>
-                                        <p className="text-sm text-olive-400">A reset link was sent to <span className="font-semibold text-olive-600">{forgotEmail}</span>. If you don't see it, check your spam folder.</p>
+                                        <p className="text-sm text-olive-400">A reset link was sent to <span className="font-semibold text-olive-600">{forgotEmail}</span>. If you don&apos;t see it, check your spam folder.</p>
                                         <button
                                             onClick={() => setForgotOpen(false)}
                                             className="mt-6 w-full h-12 bg-terra-400 text-peach-50 font-black text-xs tracking-wider hover:bg-terra-300 transition-colors"
@@ -613,7 +640,7 @@ export function UserLoginContent() {
                                     </div>
                                 ) : (
                                     <>
-                                        <p className="text-sm text-olive-400 mb-6">Enter your email and we'll send you a link to reset your password.</p>
+                                        <p className="text-sm text-olive-400 mb-6">Enter your email and we&apos;ll send you a link to reset your password.</p>
                                         <div className="space-y-4">
                                             <div>
                                                 <label className="text-[10px] font-bold tracking-[0.2em] uppercase text-olive-400 block mb-2">Email</label>

@@ -21,6 +21,7 @@ import {
     buildClientUser,
     makeFallbackUser,
 } from './clientAuthStore.helpers'
+import { normalizePhone, PHONE_VALIDATION_MESSAGE } from '../utils/phone'
 
 interface ClientAuthState {
     isAuthenticated: boolean
@@ -30,7 +31,8 @@ interface ClientAuthState {
     initAuth: () => () => void
     startProfileListener: () => () => void
     loginClient: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-    signupClient: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
+    signupClient: (email: string, password: string, name: string, phone: string) => Promise<{ success: boolean; error?: string }>
+    savePhone: (phone: string) => Promise<{ success: boolean; error?: string }>
     googleSignIn: () => Promise<{ success: boolean; error?: string }>
     googleSignInWithIdToken: (idToken: string, accessToken?: string) => Promise<{ success: boolean; error?: string }>
     appleSignInWithIdentityToken: (identityToken: string, rawNonce: string, name?: string | null) => Promise<{ success: boolean; error?: string }>
@@ -87,11 +89,12 @@ async function finalizeProviderLogin(
     return { success: true }
 }
 
-async function createClientProfile(uid: string, email: string, name: string): Promise<ClientUser> {
+async function createClientProfile(uid: string, email: string, name: string, phone?: string | null): Promise<ClientUser> {
     const profileData = {
         uid,
         email,
         name,
+        ...(phone ? { phone } : {}),
         age: 0,
         fitnessGoals: [],
         profilePictureUrl: null,
@@ -104,6 +107,7 @@ async function createClientProfile(uid: string, email: string, name: string): Pr
         id: uid,
         name,
         email,
+        ...(phone ? { phone } : {}),
         subscription: { ...DEFAULT_SUBSCRIPTION },
         stats: { ...DEFAULT_STATS },
     }
@@ -220,11 +224,15 @@ export const useClientAuthStore = create<ClientAuthState>()((set, get) => ({
         }
     },
 
-    signupClient: async (email, password, name) => {
+    signupClient: async (email, password, name, phone) => {
+        const normalizedPhone = normalizePhone(phone)
+        if (!normalizedPhone) {
+            return { success: false, error: PHONE_VALIDATION_MESSAGE }
+        }
         try {
             const result = await createUserWithEmailAndPassword(auth, email, password)
             await updateProfile(result.user, { displayName: name })
-            const clientUser = await createClientProfile(result.user.uid, email, name)
+            const clientUser = await createClientProfile(result.user.uid, email, name, normalizedPhone)
             set({
                 isAuthenticated: true,
                 clientUser,
@@ -274,6 +282,27 @@ export const useClientAuthStore = create<ClientAuthState>()((set, get) => ({
         } catch (err: unknown) {
             const code = (err as { code?: string }).code || ''
             return { success: false, error: mapFirebaseError(code) }
+        }
+    },
+
+    // Used by the phone-capture gate: social sign-ups and pre-existing members
+    // never went through the signup form, so this is where they supply a number.
+    savePhone: async (phone: string) => {
+        const { firebaseUser, clientUser } = get()
+        if (!firebaseUser) return { success: false, error: 'You are not signed in.' }
+
+        const normalizedPhone = normalizePhone(phone)
+        if (!normalizedPhone) return { success: false, error: PHONE_VALIDATION_MESSAGE }
+
+        try {
+            await setDoc(doc(db, 'users', firebaseUser.uid), {
+                phone: normalizedPhone,
+                updatedAt: serverTimestamp(),
+            }, { merge: true })
+            if (clientUser) set({ clientUser: { ...clientUser, phone: normalizedPhone } })
+            return { success: true }
+        } catch {
+            return { success: false, error: 'Could not save your number. Please try again.' }
         }
     },
 

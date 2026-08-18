@@ -34,6 +34,7 @@ import {
     callDeleteMember,
 } from "@fitconnect/shared/firebase/firestore"
 import { UserProfile } from "@fitconnect/shared/types/user"
+import { formatPhone, normalizePhone, PHONE_VALIDATION_MESSAGE } from "@fitconnect/shared/utils/phone"
 import { Booking } from "@fitconnect/shared/types/booking"
 import { toast } from "sonner"
 
@@ -128,8 +129,14 @@ export default function MembersPage() {
     const filteredMembers = members.filter(member => {
         const name = member.name ?? ''
         const email = member.email ?? ''
-        const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            email.toLowerCase().includes(searchQuery.toLowerCase())
+        const query = searchQuery.trim().toLowerCase()
+        // Digits typed into the search box are matched against the stored number,
+        // so "43210" or "+91 98765 43210" both find the same member.
+        const queryDigits = query.replace(/\D/g, '')
+        const matchesSearch = !query ||
+            name.toLowerCase().includes(query) ||
+            email.toLowerCase().includes(query) ||
+            (!!queryDigits && (member.phone ?? '').includes(queryDigits))
         const matchesPlan = planFilter === "All Plans" || member.subscription?.planId === planFilter
         const matchesStatus =
             statusFilter === "All Status" ||
@@ -178,6 +185,13 @@ export default function MembersPage() {
             return
         }
 
+        const typedPhone = formData.phone.trim()
+        const normalizedPhone = typedPhone ? normalizePhone(typedPhone) : null
+        if (typedPhone && !normalizedPhone) {
+            toast.error(PHONE_VALIDATION_MESSAGE)
+            return
+        }
+
         const parsedAge = formData.age.trim() ? Number(formData.age) : undefined
         if (parsedAge !== undefined && (Number.isNaN(parsedAge) || parsedAge < 0 || parsedAge > 120)) {
             toast.error("Age must be a number between 0 and 120")
@@ -189,7 +203,7 @@ export default function MembersPage() {
             await callCreateMember({
                 name,
                 email,
-                ...(formData.phone.trim() ? { phone: formData.phone.trim() } : {}),
+                ...(normalizedPhone ? { phone: normalizedPhone } : {}),
                 ...(parsedAge !== undefined ? { age: parsedAge } : {}),
                 ...(formData.password ? { password: formData.password } : {}),
             })
@@ -625,6 +639,17 @@ export default function MembersPage() {
                                     <div>
                                         <p className="font-black text-olive-700 text-lg leading-tight">{selectedMember.name}</p>
                                         <p className="text-sm text-olive-300 mt-0.5">{selectedMember.email}</p>
+                                        {selectedMember.phone ? (
+                                            <a
+                                                href={`tel:${selectedMember.phone}`}
+                                                className="inline-flex items-center gap-1.5 text-sm text-terra-400 hover:text-terra-500 transition-colors mt-1"
+                                            >
+                                                <Phone className="w-3 h-3" />
+                                                {formatPhone(selectedMember.phone)}
+                                            </a>
+                                        ) : (
+                                            <p className="text-sm text-olive-300/70 italic mt-1">No mobile number on file</p>
+                                        )}
                                         {selectedMember.isFoundingMember && (
                                             <span className="inline-flex mt-1.5 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/20">
                                                 Founding Member
@@ -806,6 +831,16 @@ export default function MembersPage() {
                                         <Mail className="w-4 h-4" />
                                         Send Email
                                     </a>
+                                    {selectedMember.phone && (
+                                        <a
+                                            href={`tel:${selectedMember.phone}`}
+                                            className="flex items-center justify-center gap-2 h-11 px-4 border border-terra-400/40 text-terra-500 hover:bg-terra-400/10 text-sm font-bold tracking-wide transition-colors"
+                                            aria-label={`Call ${selectedMember.name}`}
+                                        >
+                                            <Phone className="w-4 h-4" />
+                                            Call
+                                        </a>
+                                    )}
                                     <button
                                         onClick={() => setMemberToDelete(selectedMember)}
                                         className="flex items-center justify-center gap-2 h-11 px-4 border border-red-500/25 text-red-600 hover:bg-red-500/10 text-sm font-bold tracking-wide transition-colors"

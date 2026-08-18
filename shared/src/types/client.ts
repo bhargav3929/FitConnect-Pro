@@ -4,6 +4,8 @@ export interface ClientUser {
     id: string;
     name: string;
     email: string;
+    /** Canonical E.164, e.g. +919876543210. Empty until the member provides one. */
+    phone?: string;
     avatar?: string;
     isFoundingMember?: boolean;
     subscription: {

@@ -127,6 +127,7 @@ export function buildClientUser(uid: string, data: Record<string, unknown>): Cli
         id: (data.id as string) || uid,
         name: (data.name as string) || 'Member',
         email: (data.email as string) || '',
+        phone: (data.phone as string) || undefined,
         avatar: data.avatar as string | undefined,
         isFoundingMember: data.isFoundingMember === true,
         subscription: normalizeSubscription(data.subscription as Record<string, unknown>),

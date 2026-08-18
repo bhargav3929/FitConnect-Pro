@@ -4,6 +4,8 @@ export interface UserProfile {
     uid: string;
     email: string;
     name: string;
+    /** Canonical E.164, e.g. +919876543210. Collected at signup; see shared/src/utils/phone.ts */
+    phone?: string;
     displayName?: string;
     age: number;
     fitnessGoals: string[];

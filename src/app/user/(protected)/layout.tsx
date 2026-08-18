@@ -4,13 +4,14 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 import { UserNav } from "@/components/user/UserNav"
+import { PhoneCaptureGate } from "@/components/user/PhoneCaptureGate"
 
 export default function UserLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const { isAuthenticated, isLoading, initAuth, startProfileListener } = useClientAuthStore()
+    const { isAuthenticated, isLoading, clientUser, initAuth, startProfileListener } = useClientAuthStore()
     const router = useRouter()
 
     useEffect(() => {
@@ -45,6 +46,12 @@ export default function UserLayout({
     }
 
     if (!isAuthenticated) return null
+
+    // Social sign-ups and pre-existing members never supplied a number. Hold them
+    // here until they do - the studio needs a way to reach every member.
+    // clientUser is briefly null while the profile loads; the spinner above covers
+    // the loading window, so a null here means the profile genuinely has no phone.
+    if (clientUser && !clientUser.phone) return <PhoneCaptureGate />
 
     return (
         <div className="min-h-screen bg-peach-100 text-olive-600">
