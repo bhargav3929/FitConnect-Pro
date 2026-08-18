@@ -1,22 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
-import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { verifyPaymentSignature } from '@fitconnect/shared/payments/razorpay-processor';
-import { FieldValue } from 'firebase-admin/firestore';
-
-function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
-    if (!subscription || subscription.status !== 'active') return false;
-    if (!subscription.endDate) return true;
-    const endDate = subscription.endDate && typeof subscription.endDate === 'object' && 'toDate' in subscription.endDate
-        ? (subscription.endDate as { toDate: () => Date }).toDate()
-        : new Date((subscription.endDate as string | number | Date | undefined) || 0);
-    return endDate > new Date();
-}
-
-function isActiveMembership(subscription: Record<string, unknown> | undefined | null): boolean {
-    const plan = subscription?.planId ? getPlanById(subscription.planId as string) : null;
-    return isActiveUnexpiredSubscription(subscription) && (subscription?.planCategory === 'membership' || plan?.category === 'membership');
-}
+import { grantOrderAccess } from '@/lib/payments/order-access';
 
 export async function POST(req: NextRequest) {
     try {
@@ -76,111 +61,19 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const paymentRef = adminDb.collection('payments').doc(paymentId);
-        const userRef = adminDb.collection('users').doc(userId);
-
-        const result = await adminDb.runTransaction(async (transaction) => {
-            const paymentDoc = await transaction.get(paymentRef);
-            const userDoc = await transaction.get(userRef);
-
-            if (!paymentDoc.exists) {
-                throw { status: 404, error: 'Payment not found', code: 'not-found' };
-            }
-            if (!userDoc.exists) {
-                throw { status: 404, error: 'User not found', code: 'not-found' };
-            }
-
-            const paymentData = paymentDoc.data()!;
-
-            if (paymentData.userId !== userId) {
-                throw { status: 403, error: 'Payment does not belong to you', code: 'permission-denied' };
-            }
-
-            if (paymentData.status !== 'pending') {
-                throw { status: 400, error: `Payment is already ${paymentData.status}`, code: 'failed-precondition' };
-            }
-
-            const plan = getPlanById(paymentData.planId);
-            if (!plan) {
-                throw { status: 400, error: 'Invalid plan on payment', code: 'failed-precondition' };
-            }
-
-            const currentSub = userDoc.data()!.subscription as Record<string, unknown> | undefined;
-            const currentIntroCredit = typeof currentSub?.introCreditRemaining === 'number'
-                ? Math.max(0, currentSub.introCreditRemaining)
-                : 0;
-
-            if (plan.category === 'membership') {
-                if (isActiveUnexpiredSubscription(currentSub)) {
-                    throw { status: 400, error: 'You already have an active membership.', code: 'subscription-already-active' };
-                }
-            }
-
-            if (plan.category === 'class_pack' && plan.id !== 'drop_in' && isActiveMembership(currentSub)) {
-                throw { status: 400, error: 'Starter packs are only available before an active membership.', code: 'subscription-already-active' };
-            }
-
-            const now = new Date();
-            const endDate = new Date(now);
-            endDate.setDate(endDate.getDate() + plan.durationDays);
-
-            transaction.update(paymentRef, {
-                status: 'succeeded',
-                razorpayPaymentId: razorpay_payment_id,
-                paidAt: now,
-            });
-
-            transaction.update(userRef, {
-                'subscription.planId': plan.id,
-                'subscription.planCategory': plan.category,
-                'subscription.startDate': now,
-                'subscription.endDate': endDate,
-                'subscription.status': 'active',
-                'subscription.classesRemaining': plan.id === 'drop_in' ? 0 : plan.credits,
-                'subscription.introCreditRemaining': plan.id === 'drop_in' ? 1 : currentIntroCredit,
-                'subscription.maxClassesPerDay': plan.maxClassesPerDay,
-                'subscription.weeklyClassLimit': plan.weeklyClassLimit,
-                'subscription.advanceBookingDays': plan.advanceBookingDays,
-                'subscription.guestPassesRemaining': plan.guestPasses,
-                'subscription.lastPaymentId': paymentRef.id,
-                'subscription.autoRenew': plan.autoRenew,
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-
-            if (plan.id === 'drop_in') {
-                const metadata = paymentData.metadata as Record<string, unknown> | undefined;
-                const lead = metadata?.introClassLead && typeof metadata.introClassLead === 'object'
-                    ? metadata.introClassLead as Record<string, unknown>
-                    : {};
-                const leadRef = adminDb.collection('introClassLeads').doc(userId);
-
-                transaction.set(leadRef, {
-                    name: typeof lead.name === 'string' ? lead.name : userDoc.data()!.name ?? decoded.name ?? '',
-                    email: typeof lead.email === 'string' ? lead.email : decoded.email ?? '',
-                    phone: typeof lead.phone === 'string' ? lead.phone : '',
-                    goals: typeof lead.goals === 'string' ? lead.goals : '',
-                    concerns: typeof lead.concerns === 'string' ? lead.concerns : '',
-                    userId,
-                    source: typeof lead.source === 'string' ? lead.source : 'intro-class-payment',
-                    status: 'new',
-                    paymentStatus: 'paid',
-                    paymentId: paymentRef.id,
-                    razorpayOrderId: razorpay_order_id,
-                    razorpayPaymentId: razorpay_payment_id,
-                    amount: paymentData.amount,
-                    currency: paymentData.currency,
-                    createdAt: FieldValue.serverTimestamp(),
-                    updatedAt: FieldValue.serverTimestamp(),
-                }, { merge: true });
-            }
-
-            return {
-                endDate: endDate.toISOString(),
-                planId: plan.id,
-                planName: plan.name,
-                credits: plan.credits,
-            };
+        const result = await grantOrderAccess({
+            paymentRef: adminDb.collection('payments').doc(paymentId),
+            razorpayPaymentId: razorpay_payment_id,
+            razorpayOrderId: razorpay_order_id,
+            expectedUserId: userId,
+            identity: { name: decoded.name as string | undefined, email: decoded.email },
+            source: 'checkout-callback',
         });
+
+        if (result.status === 'conflict') {
+            const status = result.code === 'not-found' ? 404 : result.code === 'permission-denied' ? 403 : 400;
+            return NextResponse.json({ error: result.message, code: result.code }, { status });
+        }
 
         return NextResponse.json({
             success: true,
@@ -190,10 +83,6 @@ export async function POST(req: NextRequest) {
             credits: result.credits,
         });
     } catch (error: unknown) {
-        if (error && typeof error === 'object' && 'status' in error) {
-            const e = error as { status: number; error: string; code: string };
-            return NextResponse.json({ error: e.error, code: e.code }, { status: e.status });
-        }
         console.error('Error verifying payment:', error);
         return NextResponse.json(
             { error: 'Failed to verify payment', code: 'internal' },

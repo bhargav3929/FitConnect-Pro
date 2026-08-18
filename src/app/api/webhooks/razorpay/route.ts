@@ -4,6 +4,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { verifyWebhookSignature, type RazorpaySubscriptionEntity } from '@fitconnect/shared/payments/razorpay-processor';
 import { getPlanIdForRazorpayPlanId, getPricingVariantForRazorpayPlanId } from '@/lib/razorpay/pricing';
+import { findPaymentRefForOrder, grantOrderAccess } from '@/lib/payments/order-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,11 @@ function extractSubscription(payload: Record<string, unknown>): RazorpaySubscrip
 function extractPayment(payload: Record<string, unknown>): Record<string, unknown> | null {
     const payment = payload.payment as { entity?: Record<string, unknown> } | undefined;
     return payment?.entity ?? null;
+}
+
+function extractOrder(payload: Record<string, unknown>): Record<string, unknown> | null {
+    const order = payload.order as { entity?: Record<string, unknown> } | undefined;
+    return order?.entity ?? null;
 }
 
 function getEventDocumentId(event: RazorpayWebhookEvent): string {
@@ -240,6 +246,10 @@ export async function POST(req: NextRequest) {
             case 'subscription.completed':
                 await handleSubscriptionCompleted(event.payload);
                 break;
+            case 'order.paid':
+            case 'payment.captured':
+                await handleOrderPaid(event.payload, event.event);
+                break;
             case 'payment.failed':
                 await handlePaymentFailed(event.payload);
                 break;
@@ -350,6 +360,61 @@ async function handleSubscriptionCompleted(payload: Record<string, unknown>) {
         'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
     });
+}
+
+/**
+ * Safety net for one-time Orders (drop_in, kickstarter). The checkout callback
+ * normally grants access, but it never fires if the tab closes or the network
+ * drops between capture and redirect - which strands a captured payment with no
+ * plan. This grants from the webhook instead; grantOrderAccess is idempotent, so
+ * whichever path lands first wins.
+ *
+ * Subscription payments carry a subscription_id and are handled by
+ * subscription.charged / invoice.paid, so they are skipped here.
+ */
+async function handleOrderPaid(payload: Record<string, unknown>, source: string) {
+    const payment = extractPayment(payload);
+    const order = extractOrder(payload);
+
+    if (payment && typeof payment.subscription_id === 'string' && payment.subscription_id) return;
+    if (payment && payment.status !== 'captured') return;
+
+    const orderId = (typeof payment?.order_id === 'string' && payment.order_id)
+        || (typeof order?.id === 'string' && order.id)
+        || null;
+    const razorpayPaymentId = typeof payment?.id === 'string' ? payment.id : null;
+
+    if (!orderId || !razorpayPaymentId) {
+        console.warn(`[webhook] ${source}: missing order id or payment id`);
+        return;
+    }
+
+    const paymentRef = await findPaymentRefForOrder(orderId);
+    if (!paymentRef) {
+        console.warn(`[webhook] ${source}: no payment doc for orderId=${orderId}`);
+        return;
+    }
+
+    const result = await grantOrderAccess({
+        paymentRef,
+        razorpayPaymentId,
+        razorpayOrderId: orderId,
+        identity: {
+            email: typeof payment?.email === 'string' ? payment.email : undefined,
+            phone: typeof payment?.contact === 'string' ? payment.contact : undefined,
+        },
+        source,
+    });
+
+    if (result.status === 'conflict') {
+        console.error(`[webhook] ${source}: could not grant access for orderId=${orderId}: ${result.code} ${result.message}`);
+        await paymentRef.set({
+            needsReview: true,
+            reviewReason: `${result.code}: ${result.message}`,
+            razorpayPaymentId,
+            updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+    }
 }
 
 async function handlePaymentFailed(payload: Record<string, unknown>) {

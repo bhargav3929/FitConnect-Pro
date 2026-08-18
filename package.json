@@ -20,6 +20,7 @@
     "build:tokens": "node shared/src/design/build-tokens.mjs",
     "deploy:firestore:indexes": "node scripts/deploy-firestore-indexes.mjs",
     "migrate:google-users": "node scripts/migrate-google-users.mjs",
+    "reconcile:payments": "node scripts/reconcile-pending-payments.mjs",
     "postinstall": "node scripts/postinstall.mjs"
   },
   "dependencies": {

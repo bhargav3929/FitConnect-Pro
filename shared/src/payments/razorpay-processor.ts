@@ -285,3 +285,55 @@ export async function createRazorpayOrder(
         currency: order.currency,
     };
 }
+
+export interface RazorpayOrderEntity {
+    id: string;
+    amount: number;        // in paise
+    amount_paid: number;   // in paise
+    currency: string;
+    receipt?: string;
+    status: 'created' | 'attempted' | 'paid';
+    created_at?: number;
+}
+
+export interface RazorpayPaymentEntity {
+    id: string;
+    order_id?: string;
+    amount: number;        // in paise
+    currency: string;
+    status: 'created' | 'authorized' | 'captured' | 'refunded' | 'failed';
+    email?: string;
+    contact?: string;
+    created_at?: number;
+}
+
+/**
+ * Fetches a Razorpay order. Throws if the order does not exist on this account,
+ * which is the only reliable way to tell "unknown order" from "no payments yet":
+ * the /orders/{id}/payments endpoint answers 200 with an empty list for both.
+ */
+export async function fetchRazorpayOrder(
+    orderId: string,
+    keyId: string,
+    keySecret: string,
+): Promise<RazorpayOrderEntity> {
+    const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    return (client.orders as unknown as {
+        fetch: (id: string) => Promise<RazorpayOrderEntity>;
+    }).fetch(orderId);
+}
+
+/**
+ * Lists the payment attempts made against a Razorpay order.
+ */
+export async function listRazorpayOrderPayments(
+    orderId: string,
+    keyId: string,
+    keySecret: string,
+): Promise<RazorpayPaymentEntity[]> {
+    const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    const result = await (client.orders as unknown as {
+        fetchPayments: (id: string) => Promise<{ items: RazorpayPaymentEntity[] }>;
+    }).fetchPayments(orderId);
+    return result.items ?? [];
+}
