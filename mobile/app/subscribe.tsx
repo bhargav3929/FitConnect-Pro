@@ -45,6 +45,7 @@ import {
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { useIntroClassLead } from '../hooks/useIntroClassLead';
 import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha, FontFamily } from '../constants/theme';
+import { applyGstToRupees, formatPaise, GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -222,7 +223,12 @@ function PlanCard({
             <Text style={planCardStyles.planName}>{plan.name}</Text>
 
             <View style={planCardStyles.priceRow}>
-                <Text style={planCardStyles.price}>₹{displayPrice.toLocaleString('en-IN')}</Text>
+                <Text style={planCardStyles.price}>{formatPaise(applyGstToRupees(displayPrice).basePaise)}</Text>
+                {applyGstToRupees(displayPrice).gstPaise > 0 && (
+                    <Text style={planCardStyles.gstNote}>
+                        + {GST_RATE_PERCENT}% GST · {formatPaise(applyGstToRupees(displayPrice).totalPaise)} total
+                    </Text>
+                )}
                 <Text style={planCardStyles.priceSuffix}>
                     {plan.id === 'drop_in'
                         ? '/session'
@@ -296,6 +302,12 @@ const planCardStyles = StyleSheet.create({
         fontWeight: '700',
         color: Colors.olive[600],
         fontVariant: ['tabular-nums'],
+    },
+    gstNote: {
+        fontFamily: 'PlusJakartaSans_400Regular',
+        fontSize: FontSize.xs,
+        color: Colors.secondaryText,
+        marginTop: 2,
     },
     priceSuffix: {
         fontSize: FontSize.sm,
@@ -774,7 +786,10 @@ export default function SubscribeScreen() {
                             <Text style={styles.orderLabel}>
                                 {selectedPlan.category === 'membership' ? 'Recurring membership' : 'One-time payment'}
                             </Text>
-                            <Text style={styles.orderAmount}>₹{selectedPlanPrice.toLocaleString('en-IN')}</Text>
+                            <Text style={styles.orderAmount}>{formatPaise(applyGstToRupees(selectedPlanPrice).totalPaise)}</Text>
+                            <Text style={styles.orderGstLine}>
+                                {formatPaise(applyGstToRupees(selectedPlanPrice).basePaise)} + {formatPaise(applyGstToRupees(selectedPlanPrice).gstPaise)} GST @ {GST_RATE_PERCENT}%
+                            </Text>
                         </View>
 
                         {/* Razorpay checkout */}
@@ -825,7 +840,7 @@ export default function SubscribeScreen() {
                                 </View>
                             ) : (
                                 <Text style={styles.primaryButtonText}>
-                                    PAY ₹{selectedPlanPrice.toLocaleString('en-IN')}
+                                    PAY {formatPaise(applyGstToRupees(selectedPlanPrice).totalPaise)}
                                 </Text>
                             )}
                         </TouchableOpacity>
@@ -1147,6 +1162,12 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: Colors.olive[600],
         marginTop: Spacing.sm,
+    },
+    orderGstLine: {
+        fontFamily: 'PlusJakartaSans_400Regular',
+        fontSize: FontSize.xs,
+        color: Colors.secondaryText,
+        marginTop: Spacing.xs,
     },
 
     // Form

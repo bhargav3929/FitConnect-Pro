@@ -12,7 +12,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:shared": "npm run test --workspace=@fitconnect/shared",
-    "test:api": "vitest run __tests__/api",
+    "test:api": "vitest run __tests__/api __tests__/lib",
     "test": "npm run test:shared && npm run test:api",
     "typecheck": "tsc --noEmit",
     "typecheck:shared": "npm run typecheck --workspace=@fitconnect/shared",

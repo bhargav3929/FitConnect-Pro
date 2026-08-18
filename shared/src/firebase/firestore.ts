@@ -18,6 +18,7 @@ import {
     type QueryDocumentSnapshot,
     type Unsubscribe,
 } from 'firebase/firestore';
+import type { GstBreakdown } from '../utils/gst';
 import { db, auth } from './config';
 import { getApiBaseUrl } from './api-config';
 import { UserProfile } from '../types/user';
@@ -911,6 +912,9 @@ export async function callGetPricing(): Promise<{
         foundingConfigured: boolean;
         category: string;
         source: 'plans' | 'items' | 'static';
+        /** Server-derived charge split so every surface quotes the checkout figure. */
+        charge?: GstBreakdown;
+        foundingCharge?: GstBreakdown | null;
     }>;
     lastSyncedAt: string | null;
     source: 'plans' | 'items' | 'static';
@@ -932,6 +936,8 @@ export async function callGetPricing(): Promise<{
             foundingConfigured: boolean;
             category: string;
             source: 'plans' | 'items' | 'static';
+            charge?: GstBreakdown;
+            foundingCharge?: GstBreakdown | null;
         }>;
         lastSyncedAt: string | null;
         source: 'plans' | 'items' | 'static';

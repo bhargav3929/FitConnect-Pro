@@ -40,5 +40,16 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
-await db.collection('settings').doc('razorpayPlans').delete();
-console.log('Pricing cache cleared. Next pricing API call will re-sync.');
+// Test-key and live-key pricing live in separate documents (see pricingCacheDocId
+// in src/lib/razorpay/pricing.ts). Clearing only the live doc silently leaves a
+// stale test cache in place, so clear both.
+const DOC_IDS = ['razorpayPlans', 'razorpayPlans-test'];
+
+for (const id of DOC_IDS) {
+    const ref = db.collection('settings').doc(id);
+    const existed = (await ref.get()).exists;
+    await ref.delete();
+    console.log(`${existed ? 'Cleared' : 'Nothing cached at'} settings/${id}`);
+}
+
+console.log('Next pricing API call will re-sync.');

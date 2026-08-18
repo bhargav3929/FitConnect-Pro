@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { BentoPricing } from '@/components/ui/bento-pricing';
+import { GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
 
 export default function SubscriptionPage() {
     return (
@@ -43,7 +44,10 @@ export default function SubscriptionPage() {
 
                     <BentoPricing />
 
-                    <div className="mt-20 text-center border-t border-peach-400/20 pt-10">
+                    <div className="mt-20 text-center border-t border-peach-400/20 pt-10 space-y-3">
+                        <p className="text-sm font-semibold text-olive-500">
+                            All prices shown are exclusive of taxes. {GST_RATE_PERCENT}% GST is added at checkout.
+                        </p>
                         <p className="text-sm text-olive-400">
                             All memberships require a 4-week commitment. Cancellations must be made 7 days prior to renewal.
                         </p>

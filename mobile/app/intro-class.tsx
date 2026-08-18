@@ -37,6 +37,7 @@ import { callCreatePaymentOrder, callGetPricing, callVerifyPayment } from '@fitc
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { Colors, Spacing, FontSize, BorderRadius, Alpha } from '../constants/theme';
 import { useIntroClassLead } from '../hooks/useIntroClassLead';
+import { applyGstToRupees, formatPaise, GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
 
 type FormState = {
     name: string;
@@ -273,7 +274,7 @@ export default function IntroClassScreen() {
 
                     <Text style={styles.intro}>
                         30 minutes, no commitment. Tell us a little about yourself, then
-                        complete the ₹{price.toLocaleString('en-IN')} payment to book.
+                        complete the payment to book. {formatPaise(applyGstToRupees(price).basePaise)} + {GST_RATE_PERCENT}% GST = {formatPaise(applyGstToRupees(price).totalPaise)} payable.
                     </Text>
 
                     <Text style={styles.label}>FULL NAME *</Text>
@@ -346,7 +347,7 @@ export default function IntroClassScreen() {
                             <ActivityIndicator color={Colors.white} />
                         ) : (
                             <Text style={styles.primaryButtonText}>
-                                PAY ₹{price.toLocaleString('en-IN')} & BOOK
+                                PAY {formatPaise(applyGstToRupees(price).totalPaise)} & BOOK
                             </Text>
                         )}
                     </TouchableOpacity>

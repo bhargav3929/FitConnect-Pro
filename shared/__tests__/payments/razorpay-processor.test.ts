@@ -157,7 +157,7 @@ vi.mock('razorpay', () => ({
 
 describe('createRazorpayOrder', () => {
 
-    let createRazorpayOrder: (amount: number, planId: string, keyId: string, keySecret: string) => Promise<{ id: string; amount: number; currency: string }>;
+    let createRazorpayOrder: (amountPaise: number, planId: string, keyId: string, keySecret: string) => Promise<{ id: string; amount: number; currency: string }>;
 
     beforeEach(async () => {
         vi.clearAllMocks();
@@ -165,10 +165,10 @@ describe('createRazorpayOrder', () => {
         createRazorpayOrder = mod.createRazorpayOrder;
     });
 
-    it('sends amount in paise (rupees × 100) to Razorpay', async () => {
+    it('passes the paise amount straight through to Razorpay', async () => {
         mockCreate.mockResolvedValue({ id: 'order_test_1', amount: 5000_00, currency: 'INR', status: 'created' });
 
-        await createRazorpayOrder(5000, 'kickstarter', 'rzp_test_key', 'test_secret');
+        await createRazorpayOrder(500000, 'kickstarter', 'rzp_test_key', 'test_secret');
 
         expect(mockCreate).toHaveBeenCalledWith(
             expect.objectContaining({ amount: 500000, currency: 'INR' }),
@@ -178,7 +178,7 @@ describe('createRazorpayOrder', () => {
     it('includes receipt (planId) in the order', async () => {
         mockCreate.mockResolvedValue({ id: 'order_test_2', amount: 3600000, currency: 'INR', status: 'created' });
 
-        await createRazorpayOrder(36000, 'twice_quarterly', 'rzp_test_key', 'test_secret');
+        await createRazorpayOrder(3600000, 'twice_quarterly', 'rzp_test_key', 'test_secret');
 
         expect(mockCreate).toHaveBeenCalledWith(
             expect.objectContaining({ receipt: 'twice_quarterly' }),
@@ -188,7 +188,7 @@ describe('createRazorpayOrder', () => {
     it('returns order id, amount, and currency from Razorpay response', async () => {
         mockCreate.mockResolvedValue({ id: 'order_real_abc', amount: 9600000, currency: 'INR', status: 'created' });
 
-        const result = await createRazorpayOrder(96000, 'thrice_6mo', 'rzp_test_key', 'test_secret');
+        const result = await createRazorpayOrder(9600000, 'thrice_6mo', 'rzp_test_key', 'test_secret');
 
         expect(result.id).toBe('order_real_abc');
         expect(result.amount).toBe(9600000);
@@ -199,7 +199,7 @@ describe('createRazorpayOrder', () => {
         mockCreate.mockRejectedValue(new Error('Razorpay API unreachable'));
 
         await expect(
-            createRazorpayOrder(5000, 'kickstarter', 'rzp_test_key', 'test_secret'),
+            createRazorpayOrder(500000, 'kickstarter', 'rzp_test_key', 'test_secret'),
         ).rejects.toThrow('Razorpay API unreachable');
     });
 });

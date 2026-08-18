@@ -31,15 +31,42 @@ vi.mock('razorpay', () => ({
 
 vi.mock('@/lib/razorpay/pricing', () => ({
     getSyncedPlanEntry: mockGetSyncedPlanEntry,
-    getChargeAmount: (
-        plan: { price: number; foundingPrice?: number },
-        syncedPlan: { price: number; foundingPrice?: number | null } | null,
+    // Faithful stand-in for the real getChargeBreakdown: a membership priced by a
+    // Razorpay plan is charged that plan's amount (GST-inclusive, split via its
+    // notes); otherwise the catalog price is the base and GST is added on top.
+    getChargeBreakdown: (
+        plan: { price: number; foundingPrice?: number; category: string },
+        syncedPlan: {
+            price: number;
+            foundingPrice?: number | null;
+            amountPaise?: number | null;
+            foundingAmountPaise?: number | null;
+            basePaise?: number | null;
+            foundingBasePaise?: number | null;
+        } | null,
         isFoundingMember: boolean,
     ) => {
+        const useFounding = isFoundingMember && !!plan.foundingPrice && plan.price > 0;
+
+        if (plan.category === 'membership') {
+            const totalPaise = useFounding ? syncedPlan?.foundingAmountPaise : syncedPlan?.amountPaise;
+            if (typeof totalPaise === 'number' && totalPaise > 0) {
+                const notedBase = useFounding ? syncedPlan?.foundingBasePaise : syncedPlan?.basePaise;
+                if (typeof notedBase === 'number' && notedBase > 0 && notedBase <= totalPaise) {
+                    return { basePaise: notedBase, gstPaise: totalPaise - notedBase, totalPaise };
+                }
+                return { basePaise: totalPaise, gstPaise: 0, totalPaise };
+            }
+        }
+
         const basePrice = syncedPlan?.price ?? plan.price;
-        if (!isFoundingMember || !plan.foundingPrice || plan.price <= 0) return basePrice;
-        if (syncedPlan?.foundingPrice) return syncedPlan.foundingPrice;
-        return Math.round(basePrice * (plan.foundingPrice / plan.price));
+        let base = basePrice;
+        if (useFounding) {
+            base = syncedPlan?.foundingPrice ?? Math.round(basePrice * (plan.foundingPrice! / plan.price));
+        }
+        const basePaise = Math.round(base * 100);
+        const gstPaise = Math.round((basePaise * 1800) / 10000);
+        return { basePaise, gstPaise, totalPaise: basePaise + gstPaise };
     },
 }));
 
@@ -122,7 +149,10 @@ describe('POST /api/payments/create-subscription', () => {
             expect(res.status, plan.id).toBe(200);
             const body = await res.json();
             expect(body.subscriptionId).toBe(`sub_${plan.id}`);
-            expect(body.amount).toBe(plan.price * 100);
+            // Charged total is the GST-inclusive figure.
+            expect(body.amount).toBe(Math.round(plan.price * 100 * 1.18));
+            expect(body.basePaise).toBe(plan.price * 100);
+            expect(body.gstRatePercent).toBe(18);
             expect(mockSubCreate).toHaveBeenCalledWith(expect.objectContaining({
                 plan_id: plan.razorpayPlanId,
                 total_count: plan.razorpayTotalCount,
@@ -171,7 +201,8 @@ describe('POST /api/payments/create-subscription', () => {
 
         expect(res.status).toBe(200);
         const body = await res.json();
-        expect(body.amount).toBe(plan.foundingPrice! * 100);
+        expect(body.amount).toBe(Math.round(plan.foundingPrice! * 100 * 1.18));
+        expect(body.basePaise).toBe(plan.foundingPrice! * 100);
         expect(mockSubCreate).toHaveBeenCalledWith(expect.objectContaining({
             plan_id: 'plan_founding_twice_quarterly',
             notes: expect.objectContaining({

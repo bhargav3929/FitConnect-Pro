@@ -1,6 +1,7 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { PLAN_CATALOG, type PlanDefinition, type PlanId } from '@fitconnect/shared/types/subscription';
 import { listRazorpayItems, listRazorpayPlans } from '@fitconnect/shared/payments/razorpay-processor';
+import { applyGstToRupees, type GstBreakdown } from '@fitconnect/shared/utils/gst';
 
 export type PricingSource = 'plans' | 'items' | 'static';
 export type PricingVariant = 'standard' | 'founding';
@@ -8,6 +9,12 @@ export type PricingVariant = 'standard' | 'founding';
 export interface SyncedPlanEntry {
     planId: string;
     name: string;
+    /**
+     * For memberships this is the amount the Razorpay plan charges, which is
+     * GST-INCLUSIVE once GST plans exist. For class packs it is the GST-exclusive
+     * base, because our own code adds GST when creating the order. Use
+     * getChargeBreakdown rather than reading this directly for money decisions.
+     */
     price: number;
     foundingPrice: number | null;
     razorpayPlanId: string | null;
@@ -17,6 +24,18 @@ export interface SyncedPlanEntry {
     foundingConfigured: boolean;
     category: string;
     source: PricingSource;
+    /** Charged amount in paise, straight from the Razorpay plan (memberships). */
+    amountPaise?: number | null;
+    foundingAmountPaise?: number | null;
+    /** GST-exclusive base in paise, from the plan's notes. Absent on pre-GST plans. */
+    basePaise?: number | null;
+    foundingBasePaise?: number | null;
+    /**
+     * What a customer actually pays, split for display. Derived by
+     * getChargeBreakdown so the pricing page can never disagree with checkout.
+     */
+    charge?: GstBreakdown;
+    foundingCharge?: GstBreakdown | null;
 }
 
 export interface SyncedPricing {
@@ -96,7 +115,7 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
         return { plans: buildFallbackPlans(), lastSyncedAt: null, source: 'static' };
     }
 
-    type RazorpayPlanMatch = { razorpayPlanId: string; amountPaise: number; createdAt: number };
+    type RazorpayPlanMatch = { razorpayPlanId: string; amountPaise: number; basePaise: number | null; createdAt: number };
     const planMap = new Map<string, RazorpayPlanMatch[]>();
     const foundingPlanMap = new Map<string, RazorpayPlanMatch[]>();
     const itemMap = new Map<string, { itemId: string; amountPaise: number }>();
@@ -112,6 +131,7 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
             matches.push({
                 razorpayPlanId: plan.id,
                 amountPaise: plan.amount,
+                basePaise: typeof plan.fitconnectBasePaise === 'number' ? plan.fitconnectBasePaise : null,
                 createdAt: plan.createdAt ?? 0,
             });
             targetMap.set(plan.fitconnectPlanId, matches);
@@ -144,9 +164,14 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
         plan: PlanDefinition,
     ): RazorpayPlanMatch | undefined => {
         if (!matches?.length || !plan.foundingPrice) return undefined;
-        const expectedAmount = plan.foundingPrice * 100;
+        // A founding plan may be priced at the bare founding price (pre-GST plans)
+        // or at that price plus GST (plans created by create-razorpay-gst-plans).
+        const expectedBase = plan.foundingPrice * 100;
+        const expectedWithGst = applyGstToRupees(plan.foundingPrice).totalPaise;
         const sortedMatches = [...matches].sort((a, b) => b.createdAt - a.createdAt);
-        return sortedMatches.find((match) => match.amountPaise === expectedAmount) ?? sortedMatches[0];
+        return sortedMatches.find((match) => match.amountPaise === expectedWithGst)
+            ?? sortedMatches.find((match) => match.amountPaise === expectedBase)
+            ?? sortedMatches[0];
     };
 
     const plans: SyncedPlanEntry[] = PLAN_CATALOG.map((plan) => {
@@ -167,6 +192,10 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
                 foundingConfigured: !!foundingPlanMatch,
                 category: plan.category,
                 source: 'plans',
+                amountPaise: planMatch.amountPaise,
+                foundingAmountPaise: foundingPlanMatch?.amountPaise ?? null,
+                basePaise: planMatch.basePaise,
+                foundingBasePaise: foundingPlanMatch?.basePaise ?? null,
             };
         }
 
@@ -226,6 +255,26 @@ export async function syncRazorpayPricing(): Promise<SyncedPricing> {
     return { plans, lastSyncedAt, source };
 }
 
+/**
+ * Attaches the customer-facing charge breakdown to each entry, so every surface
+ * (pricing page, plan selector, mobile) renders the same numbers checkout uses
+ * instead of each recomputing GST and drifting.
+ */
+function withChargeBreakdowns(pricing: SyncedPricing): SyncedPricing {
+    return {
+        ...pricing,
+        plans: pricing.plans.map((entry) => {
+            const plan = PLAN_CATALOG.find((p) => p.id === entry.planId);
+            if (!plan) return entry;
+            return {
+                ...entry,
+                charge: getChargeBreakdown(plan, entry, false),
+                foundingCharge: plan.foundingPrice ? getChargeBreakdown(plan, entry, true) : null,
+            };
+        }),
+    };
+}
+
 export async function getSyncedPricing(): Promise<SyncedPricing> {
     const keyId = process.env.RAZORPAY_KEY_ID;
 
@@ -244,17 +293,17 @@ export async function getSyncedPricing(): Promise<SyncedPricing> {
                 `this environment uses ${keyId ?? 'no key'}; ignoring the cache and re-syncing.`,
             );
         } else if (stored && lastSyncedAt && Date.now() - lastSyncedAt < PRICING_CACHE_MS) {
-            return stored;
+            return withChargeBreakdowns(stored);
         }
     } catch (error) {
         console.warn('[pricing] Failed to read stored Razorpay pricing:', error);
     }
 
     try {
-        return await syncRazorpayPricing();
+        return withChargeBreakdowns(await syncRazorpayPricing());
     } catch (error) {
         console.error('[pricing] Failed to sync Razorpay pricing:', error);
-        return { plans: buildFallbackPlans(), lastSyncedAt: null, source: 'static' };
+        return withChargeBreakdowns({ plans: buildFallbackPlans(), lastSyncedAt: null, source: 'static' });
     }
 }
 
@@ -285,6 +334,47 @@ export async function getPricingVariantForRazorpayPlanId(razorpayPlanId: string)
     }
 
     return syncedMatch.foundingRazorpayPlanId === razorpayPlanId ? 'founding' : 'standard';
+}
+
+/**
+ * The authoritative money figure for a plan: what the member is charged, split
+ * into GST-exclusive base and GST.
+ *
+ * The two payment paths derive it differently and must not be conflated:
+ *
+ *  - Class packs are one-time Orders whose amount OUR code sets, so the catalog
+ *    price is the base and we add GST on top.
+ *  - Memberships are Subscriptions charged whatever their Razorpay plan says, so
+ *    that plan amount IS the total. The base comes from the plan's notes, or is
+ *    backed out of the total when the plan predates GST.
+ *
+ * Deriving membership totals by adding GST to the catalog price would double-count
+ * once GST-inclusive plans exist, and would understate the charge before they do.
+ */
+export function getChargeBreakdown(
+    plan: PlanDefinition,
+    syncedPlan: SyncedPlanEntry | null,
+    isFoundingMember: boolean,
+): GstBreakdown {
+    const useFounding = isFoundingMember && !!plan.foundingPrice && plan.price > 0;
+
+    if (plan.category === 'membership') {
+        const totalPaise = useFounding
+            ? syncedPlan?.foundingAmountPaise ?? null
+            : syncedPlan?.amountPaise ?? null;
+
+        if (typeof totalPaise === 'number' && totalPaise > 0) {
+            const notedBase = useFounding ? syncedPlan?.foundingBasePaise : syncedPlan?.basePaise;
+            if (typeof notedBase === 'number' && notedBase > 0 && notedBase <= totalPaise) {
+                return { basePaise: notedBase, gstPaise: totalPaise - notedBase, totalPaise };
+            }
+            // Pre-GST plan: the amount charged is the whole story, no GST component.
+            return { basePaise: totalPaise, gstPaise: 0, totalPaise };
+        }
+    }
+
+    // Class packs, and memberships with no Razorpay plan yet: catalog price is the base.
+    return applyGstToRupees(getChargeAmount(plan, syncedPlan, isFoundingMember));
 }
 
 export function getChargeAmount(plan: PlanDefinition, syncedPlan: SyncedPlanEntry | null, isFoundingMember: boolean): number {

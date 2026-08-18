@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { CheckIcon, SparklesIcon } from "lucide-react"
 import { PLAN_CATALOG, type PlanId, type PlanDefinition } from "@fitconnect/shared/types/subscription"
 import { cn } from "@/lib/utils"
+import { applyGstToRupees, formatPaise, GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
 
 interface PlanSelectorProps {
     selectedPlanId: PlanId | null
@@ -59,7 +60,7 @@ function PlanCard({
 
                 <div className="flex items-end gap-1.5 mb-2">
                     <span className="font-mono text-3xl font-bold tracking-normal text-olive-600">
-                        {displayPrice === 0 ? 'FREE' : `₹${displayPrice.toLocaleString('en-IN')}`}
+                        {displayPrice === 0 ? 'FREE' : formatPaise(applyGstToRupees(displayPrice).basePaise)}
                     </span>
                     <span className="text-olive-400 text-xs font-semibold pb-1">
                         {plan.durationDays === 90
@@ -71,6 +72,12 @@ function PlanCard({
                                     : `/ ${plan.credits} classes`}
                     </span>
                 </div>
+
+                {displayPrice > 0 && (
+                    <p className="text-olive-400/80 text-[11px] font-medium tracking-wide -mt-1 mb-2">
+                        + {GST_RATE_PERCENT}% GST · {formatPaise(applyGstToRupees(displayPrice).totalPaise)} total
+                    </p>
+                )}
 
                 <div className="text-olive-300 text-xs font-medium">
                     {plan.credits === null ? 'Unlimited classes' : `${plan.credits} credit${plan.credits !== 1 ? 's' : ''}`}

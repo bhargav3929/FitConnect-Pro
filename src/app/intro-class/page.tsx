@@ -8,6 +8,7 @@ import { useIntroClassLead } from '@/lib/hooks/useIntroClassLead';
 import { useRazorpay } from '@/lib/hooks/useRazorpay';
 import { callCreatePaymentOrder, callGetPricing, callVerifyPayment } from '@fitconnect/shared/firebase/firestore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
+import { applyGstToRupees, formatPaise, GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
 
 type FormState = {
     name: string;
@@ -38,6 +39,8 @@ export default function IntroClassPage() {
     const [error, setError] = useState<string | null>(null);
     const [done, setDone] = useState(false);
     const [price, setPrice] = useState(() => getPlanById('drop_in')?.price ?? 1000);
+    // Catalog price is GST-exclusive; the member is charged base + GST.
+    const charge = applyGstToRupees(price);
     const hasActiveSubscription = hasActivePlan(clientUser?.subscription);
 
     useEffect(() => {
@@ -239,7 +242,7 @@ export default function IntroClassPage() {
                         Demo Class
                     </h1>
                     <p className="text-olive-400 leading-relaxed">
-                        30 minutes, no commitment. Tell us a little about yourself, then complete the ₹{price.toLocaleString('en-IN')} payment to book.
+                        30 minutes, no commitment. Tell us a little about yourself, then complete the payment to book. {formatPaise(charge.basePaise)} + {GST_RATE_PERCENT}% GST = {formatPaise(charge.totalPaise)} payable.
                     </p>
                 </header>
 
@@ -310,7 +313,7 @@ export default function IntroClassPage() {
                         disabled={submitting}
                         className="w-full bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wide h-12 rounded-xl disabled:opacity-60"
                     >
-                        {submitting ? 'OPENING PAYMENT…' : `PAY ₹${price.toLocaleString('en-IN')} & BOOK`}
+                        {submitting ? 'OPENING PAYMENT…' : `PAY ${formatPaise(charge.totalPaise)} & BOOK`}
                     </Button>
                 </form>
             </div>

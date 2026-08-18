@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS } from '@fitconnect/shared/types/subscription';
 import { createRazorpayOrder } from '@fitconnect/shared/payments/razorpay-processor';
-import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
+import { getChargeBreakdown, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
+import { GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
 
 function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
     if (!subscription || subscription.status !== 'active') return false;
@@ -96,12 +97,14 @@ export async function POST(req: NextRequest) {
 
         const syncedPlan = await getSyncedPlanEntry(planId);
         const isFoundingMember = userData?.isFoundingMember === true;
-        const chargeAmount = getChargeAmount(plan, syncedPlan, isFoundingMember);
+        // Catalog prices are GST-exclusive; the member pays base + 18% GST.
+        const gst = getChargeBreakdown(plan, syncedPlan, isFoundingMember);
+        const chargeAmount = gst.basePaise / 100;
 
         const keyId = process.env.RAZORPAY_KEY_ID!;
         const keySecret = process.env.RAZORPAY_KEY_SECRET!;
 
-        const order = await createRazorpayOrder(chargeAmount, planId, keyId, keySecret);
+        const order = await createRazorpayOrder(gst.totalPaise, planId, keyId, keySecret);
 
         const paymentRef = adminDb.collection('payments').doc();
         const now = new Date();
@@ -111,6 +114,10 @@ export async function POST(req: NextRequest) {
             razorpayOrderId: order.id,
             userId,
             amount: chargeAmount,
+            basePaise: gst.basePaise,
+            gstPaise: gst.gstPaise,
+            totalPaise: gst.totalPaise,
+            gstRatePercent: GST_RATE_PERCENT,
             currency: 'INR',
             status: 'pending',
             planId,
@@ -136,6 +143,10 @@ export async function POST(req: NextRequest) {
             amount: order.amount,
             currency: order.currency,
             key: keyId,
+            basePaise: gst.basePaise,
+            gstPaise: gst.gstPaise,
+            totalPaise: gst.totalPaise,
+            gstRatePercent: GST_RATE_PERCENT,
         });
     } catch (error) {
         console.error('Error creating Razorpay order:', error);

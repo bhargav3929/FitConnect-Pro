@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckIcon, SparklesIcon } from 'lucide-react';
 import { PLAN_CATALOG, type PlanDefinition } from '@fitconnect/shared/types/subscription';
+import { applyGstToRupees, formatPaise, GST_RATE_PERCENT, type GstBreakdown } from '@fitconnect/shared/utils/gst';
 import { useIntroClassLead } from '@/lib/hooks/useIntroClassLead';
 import { callGetPricing } from '@fitconnect/shared/firebase/firestore';
 
@@ -29,6 +30,25 @@ function FilledCheckDark() {
 function formatPrice(rupees: number) {
     if (rupees === 0) return 'FREE';
     return `₹${rupees.toLocaleString('en-IN')}`;
+}
+
+/**
+ * Headline is the pre-tax price. GST is added at checkout, so the note spells out
+ * both the rate and the amount that will actually be charged - a customer should
+ * never reach Razorpay and meet a number this page never showed them.
+ */
+function formatCharge(charge: GstBreakdown) {
+    if (charge.basePaise === 0) return 'FREE';
+    return formatPaise(charge.basePaise);
+}
+
+function GstNote({ charge, className }: { charge: GstBreakdown; className?: string }) {
+    if (charge.gstPaise <= 0) return null;
+    return (
+        <p className={cn('text-[11px] font-medium tracking-wide mt-1', className ?? 'text-olive-400/80')}>
+            + {GST_RATE_PERCENT}% GST · {formatPaise(charge.totalPaise)} total
+        </p>
+    );
 }
 
 function priceSuffix(plan: PlanDefinition) {
@@ -66,6 +86,7 @@ function IntroCard({
     featured,
     ctaDisabled,
     displayPrice,
+    charge,
 }: {
     plan: PlanDefinition;
     onSelect: (id: string) => void;
@@ -73,8 +94,10 @@ function IntroCard({
     featured?: boolean;
     ctaDisabled?: boolean;
     displayPrice?: number;
+    charge?: GstBreakdown;
 }) {
     const price = displayPrice ?? plan.price;
+    const chargeBreakdown = charge ?? applyGstToRupees(price);
     return (
         <div className={cn(
             'relative overflow-hidden rounded-2xl border flex flex-col bg-peach-50 transition-all duration-300',
@@ -101,12 +124,13 @@ function IntroCard({
             <div className="p-6 pt-4 flex flex-col h-full">
                 <div className="flex items-end gap-2 mb-1">
                     <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
-                        {formatPrice(price)}
+                        {formatCharge(chargeBreakdown)}
                     </span>
                     <span className="text-olive-400 text-sm font-semibold uppercase pb-2">
                         {priceSuffix(plan)}
                     </span>
                 </div>
+                <GstNote charge={chargeBreakdown} />
 
                 {plan.tagline && (
                     <p className="text-olive-400 text-sm leading-relaxed mt-3 mb-5 border-b border-peach-400/20 pb-5">
@@ -147,12 +171,26 @@ function HighlightedMembershipCard({
     plan,
     onSelect,
     displayPrice,
+    charge,
+    foundingCharge,
 }: {
     plan: PlanDefinition;
     onSelect: (id: string) => void;
     displayPrice?: number;
+    charge?: GstBreakdown;
+    foundingCharge?: GstBreakdown | null;
 }) {
     const price = displayPrice ?? plan.price;
+    const chargeBreakdown = charge ?? applyGstToRupees(price);
+    // Both sides of the saving must be on the same tax basis. `price` arrives from
+    // the pricing API GST-INCLUSIVE for memberships, so subtracting the pre-tax
+    // foundingPrice from it would overstate the discount.
+    const foundingBreakdown = plan.foundingPrice
+        ? foundingCharge ?? applyGstToRupees(plan.foundingPrice)
+        : null;
+    const foundingSavingPaise = foundingBreakdown
+        ? chargeBreakdown.basePaise - foundingBreakdown.basePaise
+        : 0;
     const perClass = price > 0 && plan.credits && plan.credits > 1
         ? `≈ ₹${Math.round(price / plan.credits).toLocaleString('en-IN')} / class`
         : getPerClassPrice(plan);
@@ -187,12 +225,13 @@ function HighlightedMembershipCard({
                 <div className="mb-1">
                     <div className="flex items-end gap-1.5">
                         <span className="font-mono text-4xl font-bold tracking-tight text-peach-50">
-                            {formatPrice(price)}
+                            {formatCharge(chargeBreakdown)}
                         </span>
                         <span className="text-peach-300 text-xs font-semibold uppercase pb-1.5">
                             {priceSuffix(plan)}
                         </span>
                     </div>
+                    <GstNote charge={chargeBreakdown} className="text-peach-300/90" />
                     {perClass && (
                         <p className="text-terra-300 text-xs font-bold uppercase tracking-widest mt-1.5">
                             {perClass}
@@ -206,10 +245,15 @@ function HighlightedMembershipCard({
                             Founding Member Price
                         </p>
                         <p className="text-gold-300 font-black text-2xl leading-none">
-                            {formatPrice(plan.foundingPrice)}
+                            {foundingBreakdown ? formatPaise(foundingBreakdown.basePaise) : formatPrice(plan.foundingPrice)}
                         </p>
+                        {foundingBreakdown && foundingBreakdown.gstPaise > 0 && (
+                            <p className="text-peach-400/90 text-[10px] mt-1">
+                                + {GST_RATE_PERCENT}% GST · {formatPaise(foundingBreakdown.totalPaise)} total
+                            </p>
+                        )}
                         <p className="text-peach-400 text-[10px] mt-1">
-                            First 25 members only · Save {formatPrice(price - plan.foundingPrice)}
+                            First 25 members only · Save {formatPaise(foundingSavingPaise)}
                         </p>
                     </div>
                 )}
@@ -246,12 +290,26 @@ function MembershipCard({
     plan,
     onSelect,
     displayPrice,
+    charge,
+    foundingCharge,
 }: {
     plan: PlanDefinition;
     onSelect: (id: string) => void;
     displayPrice?: number;
+    charge?: GstBreakdown;
+    foundingCharge?: GstBreakdown | null;
 }) {
     const price = displayPrice ?? plan.price;
+    const chargeBreakdown = charge ?? applyGstToRupees(price);
+    // Both sides of the saving must be on the same tax basis. `price` arrives from
+    // the pricing API GST-INCLUSIVE for memberships, so subtracting the pre-tax
+    // foundingPrice from it would overstate the discount.
+    const foundingBreakdown = plan.foundingPrice
+        ? foundingCharge ?? applyGstToRupees(plan.foundingPrice)
+        : null;
+    const foundingSavingPaise = foundingBreakdown
+        ? chargeBreakdown.basePaise - foundingBreakdown.basePaise
+        : 0;
     const perClass = getPerClassPrice(plan);
 
     return (
@@ -270,12 +328,13 @@ function MembershipCard({
                 <div className="mb-1">
                     <div className="flex items-end gap-1.5">
                         <span className="font-mono text-3xl font-bold tracking-tight text-olive-600">
-                            {formatPrice(price)}
+                            {formatCharge(chargeBreakdown)}
                         </span>
                         <span className="text-olive-400 text-xs font-semibold uppercase pb-1.5">
                             {priceSuffix(plan)}
                         </span>
                     </div>
+                    <GstNote charge={chargeBreakdown} />
                     {/* Removed PerClass price */}
                     {/* {perClass && (
                         <p className="text-olive-400 text-xs font-bold uppercase tracking-widest mt-1.5">
@@ -290,10 +349,15 @@ function MembershipCard({
                             Founding Member
                         </p>
                         <p className="text-terra-400 font-black text-xl leading-none">
-                            {formatPrice(plan.foundingPrice)}
+                            {foundingBreakdown ? formatPaise(foundingBreakdown.basePaise) : formatPrice(plan.foundingPrice)}
                         </p>
+                        {foundingBreakdown && foundingBreakdown.gstPaise > 0 && (
+                            <p className="text-olive-400/80 text-[10px] mt-1">
+                                + {GST_RATE_PERCENT}% GST · {formatPaise(foundingBreakdown.totalPaise)} total
+                            </p>
+                        )}
                         <p className="text-olive-300 text-[10px] mt-1">
-                            First 25 only · Save {formatPrice(price - plan.foundingPrice)}
+                            First 25 only · Save {formatPaise(foundingSavingPaise)}
                         </p>
                     </div>
                 )}
@@ -330,15 +394,24 @@ export function BentoPricing() {
     const router = useRouter();
     const { hasIntroClassLead } = useIntroClassLead();
     const [priceOverrides, setPriceOverrides] = useState<Record<string, number>>({});
+    const [chargeOverrides, setChargeOverrides] = useState<Record<string, GstBreakdown>>({});
+    const [foundingChargeOverrides, setFoundingChargeOverrides] = useState<Record<string, GstBreakdown>>({});
 
     useEffect(() => {
         callGetPricing()
             .then(data => {
                 const overrides: Record<string, number> = {};
+                const charges: Record<string, GstBreakdown> = {};
+                const foundingCharges: Record<string, GstBreakdown> = {};
                 for (const p of data.plans) {
                     if (p.configured) overrides[p.planId] = p.price;
+                    // Server-derived so the page can never quote a figure checkout disagrees with.
+                    if (p.charge) charges[p.planId] = p.charge;
+                    if (p.foundingCharge) foundingCharges[p.planId] = p.foundingCharge;
                 }
                 setPriceOverrides(overrides);
+                setChargeOverrides(charges);
+                setFoundingChargeOverrides(foundingCharges);
             })
             .catch(() => {/* use hardcoded fallback */});
     }, []);
@@ -366,6 +439,7 @@ export function BentoPricing() {
                     cta={hasIntroClassLead === true ? 'DEMO CLASS BOOKED' : 'BOOK DEMO CLASS'}
                     ctaDisabled={hasIntroClassLead === true}
                     displayPrice={priceOverrides[dropIn.id]}
+                    charge={chargeOverrides[dropIn.id]}
                 />
                 <IntroCard
                     plan={kickstarter}
@@ -373,6 +447,7 @@ export function BentoPricing() {
                     cta="START KICKSTARTER"
                     featured
                     displayPrice={priceOverrides[kickstarter.id]}
+                    charge={chargeOverrides[kickstarter.id]}
                 />
             </div>
 
@@ -394,6 +469,8 @@ export function BentoPricing() {
                                 plan={plan}
                                 onSelect={handleSelect}
                                 displayPrice={priceOverrides[plan.id]}
+                                charge={chargeOverrides[plan.id]}
+                                foundingCharge={foundingChargeOverrides[plan.id]}
                             />
                         ) : (
                             <MembershipCard
@@ -401,6 +478,8 @@ export function BentoPricing() {
                                 plan={plan}
                                 onSelect={handleSelect}
                                 displayPrice={priceOverrides[plan.id]}
+                                charge={chargeOverrides[plan.id]}
+                                foundingCharge={foundingChargeOverrides[plan.id]}
                             />
                         )
                     )}

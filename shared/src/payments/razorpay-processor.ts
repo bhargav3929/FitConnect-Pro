@@ -195,6 +195,8 @@ export async function listRazorpayPlans(
     createdAt?: number;
     fitconnectPlanId?: string;
     fitconnectVariant?: string;
+    /** GST-exclusive base recorded on GST plans, in paise. Absent on pre-GST plans. */
+    fitconnectBasePaise?: number;
 }>> {
     const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
     const result = await (client.plans as unknown as {
@@ -218,6 +220,9 @@ export async function listRazorpayPlans(
         createdAt: plan.created_at,
         fitconnectPlanId: plan.notes?.fitconnect_plan_id,
         fitconnectVariant: plan.notes?.fitconnect_variant,
+        fitconnectBasePaise: plan.notes?.fitconnect_base_paise
+            ? Number(plan.notes.fitconnect_base_paise)
+            : undefined,
     }));
 }
 
@@ -265,17 +270,19 @@ export async function listRazorpayItems(
 }
 
 /**
- * Creates a Razorpay order. Amount must be in INR rupees; this converts to paise internally.
+ * Creates a Razorpay order. The amount is in PAISE, not rupees: GST-inclusive
+ * totals do not always land on a whole rupee, so the caller does the arithmetic
+ * in paise and passes the exact figure through.
  */
 export async function createRazorpayOrder(
-    amountRupees: number,
+    amountPaise: number,
     planId: string,
     keyId: string,
     keySecret: string,
 ): Promise<RazorpayOrder> {
     const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
     const order = await client.orders.create({
-        amount: amountRupees * 100,
+        amount: Math.round(amountPaise),
         currency: 'INR',
         receipt: planId,
     });

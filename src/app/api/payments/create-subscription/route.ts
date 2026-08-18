@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS } from '@fitconnect/shared/types/subscription';
 import { createRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
-import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
+import { getChargeBreakdown, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
+import { GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
 
 function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
     if (!subscription || subscription.status !== 'active') return false;
@@ -87,7 +88,10 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const chargeAmount = getChargeAmount(plan, syncedPlan, isFoundingMember);
+        // The Razorpay plan is charged as-is; once GST plans exist that amount is
+        // GST-inclusive, so the split comes from the plan rather than our arithmetic.
+        const gst = getChargeBreakdown(plan, syncedPlan, isFoundingMember);
+        const chargeAmount = gst.basePaise / 100;
         const subscriptionRazorpayPlanId = foundingDiscountEligible
             ? syncedPlan!.foundingRazorpayPlanId!
             : razorpayPlanId;
@@ -112,6 +116,10 @@ export async function POST(req: NextRequest) {
             razorpaySubscriptionId: rzpSub.id,
             userId,
             amount: chargeAmount,
+            basePaise: gst.basePaise,
+            gstPaise: gst.gstPaise,
+            totalPaise: gst.totalPaise,
+            gstRatePercent: GST_RATE_PERCENT,
             currency: 'INR',
             status: 'pending',
             planId,
@@ -138,10 +146,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             subscriptionId: rzpSub.id,
             paymentId: paymentRef.id,
-            amount: chargeAmount * 100,
+            amount: gst.totalPaise,
             currency: 'INR',
             key: keyId,
             status: rzpSub.status,
+            basePaise: gst.basePaise,
+            gstPaise: gst.gstPaise,
+            totalPaise: gst.totalPaise,
+            gstRatePercent: GST_RATE_PERCENT,
         });
     } catch (error) {
         console.error('Error creating Razorpay subscription:', error);
