@@ -1,6 +1,6 @@
 /**
  * Extends subscription validity for existing Demo Class and Sol Intro Program buyers
- * after the PLAN_CATALOG durationDays increase (drop_in 30->60, kickstarter 14->30).
+ * after the PLAN_CATALOG durationDays increase (drop_in 30->60, kickstarter 14->45).
  *
  * Plan values are copied onto each user document at purchase time, so changing the
  * catalog only affects future purchases. This script recomputes endDate from the
@@ -40,10 +40,10 @@ const APPLY = process.argv.includes('--apply');
 // New catalog values, mirrored from shared/src/types/subscription.ts
 const NEW_DURATION_DAYS = {
     drop_in: 60,
-    kickstarter: 30,
+    kickstarter: 45,
 };
 const NEW_ADVANCE_BOOKING_DAYS = {
-    kickstarter: 30,
+    kickstarter: 45,
 };
 
 // Legacy plan ids that resolve to one of the affected plans
