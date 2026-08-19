@@ -1,8 +1,46 @@
 {
   "project_info": {
-    "project_number": "stub",
-    "project_id": "stub",
-    "storage_bucket": "stub"
+    "project_number": "792852037404",
+    "project_id": "fitness-booking-c8fb3",
+    "storage_bucket": "fitness-booking-c8fb3.firebasestorage.app"
   },
-  "client": []
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:792852037404:android:7e9d3e2f6f56ffe68c84d9",
+        "android_client_info": {
+          "package_name": "com.fitconnect.pro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "792852037404-5ignujiais7f6bs17l3etikus0lqc5eo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5O9ZWl1vKhqS2yXrDLDP526SG0c_UYes"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "792852037404-5ignujiais7f6bs17l3etikus0lqc5eo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "792852037404-0pnaduhug7bbpuclbhbil6nhpb0j23cj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.fitconnect.pro"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
 }

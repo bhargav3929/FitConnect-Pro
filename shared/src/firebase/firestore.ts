@@ -3,6 +3,7 @@ import {
     getDoc,
     setDoc,
     updateDoc,
+    deleteDoc,
     collection,
     query,
     where,
@@ -26,6 +27,7 @@ import { ClassSession, SpotSelection } from '../types/class';
 import { Booking } from '../types/booking';
 import { Trainer } from '../types/trainer';
 import { AppNotification, NotificationType } from '../types/notification';
+import { PushPlatform, PushToken, isExpoPushToken, pushTokenId } from '../types/pushToken';
 import { GymCenter } from '../types/gym';
 import { byStartTime, isOnStudioDay, studioDayQueryWindow } from '../schedule/studio-day';
 
@@ -1649,6 +1651,62 @@ export async function markAllNotificationsRead(
 }
 
 // ---------------------------------------------------------------------------
+// Push tokens — one document per device
+// ---------------------------------------------------------------------------
+
+function pushTokensCollection(userId: string) {
+    return collection(db, 'users', userId, 'pushTokens');
+}
+
+/**
+ * Records an Expo push token for the signed-in member's device.
+ *
+ * The document ID is derived from the token, so re-registering the same device
+ * refreshes `updatedAt` instead of accumulating duplicates. Tokens rotate on
+ * reinstall and OS-level restore, which is why registration runs on every
+ * launch rather than once at signup.
+ */
+export async function registerPushToken(
+    userId: string,
+    token: string,
+    platform: PushPlatform,
+    deviceName?: string | null,
+): Promise<void> {
+    if (!isExpoPushToken(token)) {
+        throw new Error(`Not an Expo push token: ${token}`);
+    }
+
+    const id = pushTokenId(token);
+    const ref = doc(db, 'users', userId, 'pushTokens', id);
+    const now = Timestamp.now();
+    const existing = await getDoc(ref);
+
+    await setDoc(
+        ref,
+        {
+            id,
+            token,
+            platform,
+            deviceName: deviceName ?? null,
+            // Keep the first-seen date so a stale device is recognisable.
+            createdAt: existing.exists() ? existing.data().createdAt ?? now : now,
+            updatedAt: now,
+        },
+        { merge: true },
+    );
+}
+
+/** Drops a device's token, e.g. when the member signs out or revokes permission. */
+export async function removePushToken(userId: string, token: string): Promise<void> {
+    await deleteDoc(doc(db, 'users', userId, 'pushTokens', pushTokenId(token)));
+}
+
+export async function getPushTokens(userId: string): Promise<PushToken[]> {
+    const snapshot = await getDocs(pushTokensCollection(userId));
+    return snapshot.docs.map((d) => convertTimestamps({ ...d.data(), id: d.id }) as unknown as PushToken);
+}
+
+// ---------------------------------------------------------------------------
 // callSendAnnouncement — admin broadcast to members
 // ---------------------------------------------------------------------------
 
@@ -1670,6 +1728,7 @@ export async function callSendAnnouncement(
 }
 
 export type { AppNotification, NotificationType };
+export type { PushToken, PushPlatform };
 
 // ---------------------------------------------------------------------------
 // Re-export SpotSelection for convenience

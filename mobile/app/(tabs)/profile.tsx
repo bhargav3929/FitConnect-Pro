@@ -33,6 +33,7 @@ import { getFirestore, doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@fitconnect/shared/firebase/config';
 import { getApiBaseUrl } from '@fitconnect/shared/firebase/api-config';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
+import { unregisterPushDevice } from '../../hooks/usePushNotifications';
 import TabHeader from '../../components/TabHeader';
 import MilestoneCard from '../../components/MilestoneCard';
 
@@ -383,6 +384,9 @@ export default function ProfileScreen() {
                 text: 'Sign Out',
                 style: 'destructive',
                 onPress: async () => {
+                    // Unregister before sign-out, while the member still has
+                    // permission to write to their own token document.
+                    if (clientUser?.id) await unregisterPushDevice(clientUser.id);
                     await logoutClient();
                     router.replace('/login');
                 },

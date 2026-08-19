@@ -24,6 +24,14 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
+
+      // Expo push tokens, one document per device.
+      // - The owner registers and removes their own device tokens.
+      // - The push fan-out function reads and prunes them with the Admin SDK,
+      //   which bypasses these rules.
+      match /pushTokens/{tokenId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Classes collection
@@ -124,6 +132,14 @@ service cloud.firestore {
                     && resource.data.userId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['read', 'readAt']);
+    }
+
+    // Push delivery tickets
+    // - Written and pruned exclusively by the push fan-out and receipt jobs
+    //   (Admin SDK bypasses rules). They hold no member-facing data, so no
+    //   client ever needs to read them.
+    match /pushTickets/{ticketId} {
+      allow read, write: if false;
     }
 
     // Feedback collection (public form submissions)

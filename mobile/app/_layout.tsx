@@ -15,6 +15,7 @@ import { initApiConfig } from '@fitconnect/shared/firebase/api-config';
 import { BorderRadius, Colors, Spacing } from '../constants/theme';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import Logo from '../components/Logo';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 const MIN_SPLASH_MS = 1200;
@@ -34,6 +35,10 @@ export default function RootLayout() {
     useEffect(() => {
         initApiConfig({ baseUrl: API_BASE_URL });
     }, []);
+
+    // Registers this device for push once a member is signed in, and routes
+    // taps on delivered notifications.
+    usePushNotifications();
 
     useEffect(() => {
         const timer = setTimeout(() => setMinimumSplashDone(true), MIN_SPLASH_MS);

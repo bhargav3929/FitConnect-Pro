@@ -17,6 +17,7 @@ import {
 import type { AppNotification, NotificationType } from '@fitconnect/shared/types/notification';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../constants/theme';
 import { useNotifications } from '../hooks/useNotifications';
+import { LINK_ROUTES } from '../lib/notificationRoutes';
 
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
@@ -24,14 +25,6 @@ const TYPE_ICONS: Record<NotificationType, FeatherName> = {
     class_reminder: 'calendar',
     plan_expiry: 'credit-card',
     announcement: 'volume-2',
-};
-
-/** Maps a notification's web route to the equivalent mobile route. */
-const LINK_ROUTES: Record<string, string> = {
-    '/user/bookings': '/(tabs)/bookings',
-    '/user/schedule': '/(tabs)/schedule',
-    '/user/subscribe': '/subscribe',
-    '/user/profile': '/(tabs)/profile',
 };
 
 function relativeTime(raw: unknown): string {

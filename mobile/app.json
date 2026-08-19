@@ -65,7 +65,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B0F19"
       },
-      "package": "com.fitconnect.pro"
+      "package": "com.fitconnect.pro",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -76,6 +77,14 @@
       "expo-font",
       "expo-apple-authentication",
       "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#FF6A3D",
+          "defaultChannel": "default"
+        }
+      ],
       [
         "@react-native-google-signin/google-signin",
         {

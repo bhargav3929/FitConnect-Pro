@@ -4,12 +4,14 @@ export { onUserCreate } from './triggers/onUserCreate';
 // Firestore triggers
 export { onBookingStatusChange } from './triggers/onBookingStatusChange';
 export { sendBookingConfirmation } from './triggers/sendBookingConfirmation';
+export { onNotificationCreated } from './triggers/onNotificationCreated';
 
 // Scheduled jobs
 export { expireSubscriptions } from './scheduled/expireSubscriptions';
 export { markNoShows } from './scheduled/markNoShows';
 export { sendClassReminders } from './scheduled/sendClassReminders';
 export { sendPlanExpiryReminders } from './scheduled/sendPlanExpiryReminders';
+export { checkPushReceipts } from './scheduled/checkPushReceipts';
 
 // HTTPS callable functions
 export { activateSubscription } from './api/activateSubscription';
