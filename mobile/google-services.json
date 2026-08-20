@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "792852037404-1v5pn1saids1hr587s0ppan6nl9nar75.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fitconnect.pro",
+            "certificate_hash": "ad77dbf2690968c53c6d5592a6f32685fb0ebd62"
+          }
+        },
+        {
+          "client_id": "792852037404-8ous3crggjmhf4f5jtl94nfdbc6tfbnp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fitconnect.pro",
+            "certificate_hash": "a2a7809957ac854836ca8d2027b829f5dcad0b51"
+          }
+        },
+        {
           "client_id": "792852037404-5ignujiais7f6bs17l3etikus0lqc5eo.apps.googleusercontent.com",
           "client_type": 3
         }

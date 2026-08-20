@@ -65,9 +65,10 @@ async function ensurePermission(): Promise<boolean> {
 async function resolvePushToken(): Promise<string | null> {
     if (!(await ensurePermission())) return null;
 
-    // Permission is enough to display a notification, but only real hardware
-    // can register with APNs/FCM and therefore receive a remote one.
-    if (!Device.isDevice) return null;
+    // An iOS simulator has no APNs registration and can never receive a
+    // remote notification. An Android emulator with Google Play services can,
+    // so it is left to register like any other device.
+    if (!Device.isDevice && Platform.OS === 'ios') return null;
 
     const projectId =
         Constants.expoConfig?.extra?.eas?.projectId
