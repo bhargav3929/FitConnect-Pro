@@ -7,6 +7,9 @@ const BATCH_LIMIT = 450;
 
 const MAX_TITLE_LENGTH = 120;
 const MAX_BODY_LENGTH = 1000;
+const MAX_CUSTOM_RECIPIENTS = 500;
+
+type Audience = 'all' | 'active' | 'demo_pending' | 'custom';
 
 async function verifyAdmin(req: NextRequest) {
     const authHeader = req.headers.get('Authorization');
@@ -19,6 +22,27 @@ async function verifyAdmin(req: NextRequest) {
         return { error: 'Admin access required', code: 'permission-denied', status: 403 };
     }
     return { uid: decoded.uid };
+}
+
+function parseAudience(value: unknown): Audience {
+    if (value === 'active' || value === 'demo_pending' || value === 'custom') return value;
+    return 'all';
+}
+
+function isDemoPendingMember(data: Record<string, unknown>): boolean {
+    const subscription = data.subscription as Record<string, unknown> | undefined;
+    return !subscription?.planId;
+}
+
+function parseMemberIds(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+
+    return Array.from(new Set(
+        value
+            .filter((id): id is string => typeof id === 'string')
+            .map((id) => id.trim())
+            .filter(Boolean),
+    ));
 }
 
 // ---------------------------------------------------------------------------
@@ -44,7 +68,7 @@ export async function POST(req: NextRequest) {
 
         const title = typeof body.title === 'string' ? body.title.trim() : '';
         const message = typeof body.body === 'string' ? body.body.trim() : '';
-        const audience = body.audience === 'active' ? 'active' : 'all';
+        const audience = parseAudience(body.audience);
         const link = typeof body.link === 'string' && body.link.trim() ? body.link.trim() : undefined;
 
         if (!title) {
@@ -66,11 +90,40 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const usersSnapshot = audience === 'active'
-            ? await adminDb.collection('users').where('subscription.status', '==', 'active').get()
-            : await adminDb.collection('users').get();
+        let recipientIds: string[] = [];
+        if (audience === 'custom') {
+            const requestedMemberIds = parseMemberIds(body.memberIds);
+            if (requestedMemberIds.length === 0) {
+                return NextResponse.json(
+                    { error: 'Select at least one member', code: 'invalid-argument' },
+                    { status: 400 },
+                );
+            }
+            if (requestedMemberIds.length > MAX_CUSTOM_RECIPIENTS) {
+                return NextResponse.json(
+                    { error: `Select ${MAX_CUSTOM_RECIPIENTS} members or fewer`, code: 'invalid-argument' },
+                    { status: 400 },
+                );
+            }
+            const recipientSnapshots = await adminDb.getAll(
+                ...requestedMemberIds.map((memberId) => adminDb.collection('users').doc(memberId)),
+            );
+            recipientIds = recipientSnapshots
+                .filter((snapshot) => snapshot.exists)
+                .map((snapshot) => snapshot.id);
+        } else if (audience === 'active') {
+            const usersSnapshot = await adminDb.collection('users').where('subscription.status', '==', 'active').get();
+            recipientIds = usersSnapshot.docs.map((d) => d.id);
+        } else if (audience === 'demo_pending') {
+            const usersSnapshot = await adminDb.collection('users').get();
+            recipientIds = usersSnapshot.docs
+                .filter((d) => isDemoPendingMember(d.data()))
+                .map((d) => d.id);
+        } else {
+            const usersSnapshot = await adminDb.collection('users').get();
+            recipientIds = usersSnapshot.docs.map((d) => d.id);
+        }
 
-        const recipientIds = usersSnapshot.docs.map((d) => d.id);
         if (recipientIds.length === 0) {
             return NextResponse.json({ success: true, recipients: 0 });
         }

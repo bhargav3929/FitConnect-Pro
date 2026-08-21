@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { Megaphone, Send, Users, Activity, Loader2, Bell, Clock } from "lucide-react"
+import { Megaphone, Send, Users, Activity, Loader2, Bell, Clock, UserPlus, UserCheck, Search, Check, X } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -10,13 +10,14 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { callSendAnnouncement } from "@fitconnect/shared/firebase/firestore"
+import { callSendAnnouncement, getAllMembers } from "@fitconnect/shared/firebase/firestore"
+import type { UserProfile } from "@fitconnect/shared/types/user"
 import { toast } from "sonner"
 
 const MAX_TITLE_LENGTH = 120
 const MAX_BODY_LENGTH = 1000
 
-type Audience = "all" | "active"
+type Audience = "all" | "active" | "demo_pending" | "custom"
 
 const AUDIENCES: { value: Audience; label: string; description: string; icon: typeof Users }[] = [
     {
@@ -31,18 +32,102 @@ const AUDIENCES: { value: Audience; label: string; description: string; icon: ty
         description: "Only members with a currently active subscription.",
         icon: Activity,
     },
+    {
+        value: "demo_pending",
+        label: "Demo not purchased",
+        description: "Members who signed up but have not bought a Demo Class or membership.",
+        icon: UserPlus,
+    },
+    {
+        value: "custom",
+        label: "Custom members",
+        description: "Pick one or more members manually.",
+        icon: UserCheck,
+    },
 ]
+
+function memberDisplayName(member: UserProfile): string {
+    return member.displayName || member.name || member.email || "Member"
+}
+
+function getAudienceSummary(audience: Audience, selectedCount: number): string {
+    if (audience === "active") return "members with an active plan"
+    if (audience === "demo_pending") return "members who signed up but have not purchased a Demo Class or membership"
+    if (audience === "custom") {
+        return `${selectedCount} selected member${selectedCount === 1 ? "" : "s"}`
+    }
+    return "all members"
+}
 
 export default function AnnouncementsPage() {
     const [title, setTitle] = useState("")
     const [body, setBody] = useState("")
     const [audience, setAudience] = useState<Audience>("all")
+    const [members, setMembers] = useState<UserProfile[]>([])
+    const [isLoadingMembers, setIsLoadingMembers] = useState(false)
+    const [hasLoadedMembers, setHasLoadedMembers] = useState(false)
+    const [memberSearch, setMemberSearch] = useState("")
+    const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [isSending, setIsSending] = useState(false)
 
     const trimmedTitle = title.trim()
     const trimmedBody = body.trim()
-    const canSend = trimmedTitle.length > 0 && trimmedBody.length > 0
+    const canSend = trimmedTitle.length > 0 && trimmedBody.length > 0 && (audience !== "custom" || selectedMemberIds.length > 0)
+
+    const loadMembers = async () => {
+        if (hasLoadedMembers || isLoadingMembers) return
+
+        setIsLoadingMembers(true)
+        try {
+            const items = await getAllMembers()
+            setMembers([...items].sort((a, b) => memberDisplayName(a).localeCompare(memberDisplayName(b))))
+            setHasLoadedMembers(true)
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to load members"
+            toast.error(message)
+        } finally {
+            setIsLoadingMembers(false)
+        }
+    }
+
+    const selectedMemberSet = useMemo(() => new Set(selectedMemberIds), [selectedMemberIds])
+    const selectedMembers = useMemo(
+        () => members.filter((member) => selectedMemberSet.has(member.uid)),
+        [members, selectedMemberSet],
+    )
+    const filteredMembers = useMemo(() => {
+        const query = memberSearch.trim().toLowerCase()
+        if (!query) return members
+
+        return members.filter((member) => {
+            const name = memberDisplayName(member).toLowerCase()
+            const email = member.email?.toLowerCase() ?? ""
+            const phone = member.phone?.toLowerCase() ?? ""
+            return name.includes(query) || email.includes(query) || phone.includes(query)
+        })
+    }, [memberSearch, members])
+
+    const audienceSummary = getAudienceSummary(audience, selectedMemberIds.length)
+
+    const handleAudienceChange = (nextAudience: Audience) => {
+        setAudience(nextAudience)
+        if (nextAudience === "custom") {
+            void loadMembers()
+        }
+    }
+
+    const toggleMember = (memberId: string) => {
+        setSelectedMemberIds((prev) => (
+            prev.includes(memberId)
+                ? prev.filter((id) => id !== memberId)
+                : [...prev, memberId]
+        ))
+    }
+
+    const selectVisibleMembers = () => {
+        setSelectedMemberIds((prev) => Array.from(new Set([...prev, ...filteredMembers.map((member) => member.uid)])))
+    }
 
     const handleSend = async () => {
         setIsSending(true)
@@ -51,10 +136,13 @@ export default function AnnouncementsPage() {
                 title: trimmedTitle,
                 body: trimmedBody,
                 audience,
+                ...(audience === "custom" ? { memberIds: selectedMemberIds } : {}),
             })
             setConfirmOpen(false)
             setTitle("")
             setBody("")
+            setMemberSearch("")
+            setSelectedMemberIds([])
             toast.success(
                 result.recipients === 0
                     ? "No members matched that audience"
@@ -78,8 +166,8 @@ export default function AnnouncementsPage() {
             >
                 <h2 className="app-page-title mb-2">Announcements</h2>
                 <p className="app-page-subtitle">
-                    Send an in-app message to your members. It appears in their notification inbox
-                    the next time they open the app.
+                    Send an in-app and push message to your members. It appears in their notification inbox
+                    and on registered devices.
                 </p>
             </motion.div>
 
@@ -138,7 +226,7 @@ export default function AnnouncementsPage() {
                             {AUDIENCES.map((option) => (
                                 <button
                                     key={option.value}
-                                    onClick={() => setAudience(option.value)}
+                                    onClick={() => handleAudienceChange(option.value)}
                                     className={`text-left p-4 border transition-all ${
                                         audience === option.value
                                             ? "border-terra-400/60 bg-terra-400/5"
@@ -160,6 +248,114 @@ export default function AnnouncementsPage() {
                             ))}
                         </div>
                     </div>
+
+                    {audience === "custom" && (
+                        <div className="border border-peach-400/15 bg-peach-100/35 p-4 space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-bold text-olive-600">Selected members</p>
+                                    <p className="text-[11px] text-olive-300">
+                                        {selectedMemberIds.length} selected for this announcement
+                                    </p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={selectVisibleMembers}
+                                        disabled={filteredMembers.length === 0 || isLoadingMembers}
+                                        className="h-9 px-3 text-[10px] font-bold tracking-[0.16em] uppercase text-olive-500 border border-peach-400/20 hover:bg-peach-200/50 transition-colors disabled:opacity-40"
+                                    >
+                                        Select Visible
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedMemberIds([])}
+                                        disabled={selectedMemberIds.length === 0}
+                                        className="h-9 px-3 text-[10px] font-bold tracking-[0.16em] uppercase text-olive-500 border border-peach-400/20 hover:bg-peach-200/50 transition-colors disabled:opacity-40"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-olive-300" />
+                                <input
+                                    type="text"
+                                    value={memberSearch}
+                                    onChange={(e) => setMemberSearch(e.target.value)}
+                                    placeholder="Search by name, email, or phone"
+                                    className="w-full h-11 pl-10 pr-4 bg-peach-50 border border-peach-400/15 text-olive-600 placeholder:text-olive-300/40 focus:border-terra-400/50 focus:outline-none transition-all text-sm"
+                                />
+                            </div>
+
+                            {selectedMembers.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedMembers.slice(0, 12).map((member) => (
+                                        <button
+                                            key={member.uid}
+                                            type="button"
+                                            onClick={() => toggleMember(member.uid)}
+                                            className="h-8 px-2.5 bg-terra-400/10 text-terra-500 text-[11px] font-semibold flex items-center gap-1.5"
+                                        >
+                                            {memberDisplayName(member)}
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    ))}
+                                    {selectedMembers.length > 12 && (
+                                        <span className="h-8 px-2.5 bg-peach-200/60 text-olive-400 text-[11px] font-semibold inline-flex items-center">
+                                            +{selectedMembers.length - 12} more
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="max-h-80 overflow-y-auto border border-peach-400/15 bg-peach-50">
+                                {isLoadingMembers ? (
+                                    <div className="h-36 flex items-center justify-center gap-2 text-sm text-olive-400">
+                                        <Loader2 className="w-4 h-4 animate-spin text-terra-400" />
+                                        Loading members
+                                    </div>
+                                ) : filteredMembers.length === 0 ? (
+                                    <div className="h-32 flex items-center justify-center text-sm text-olive-300">
+                                        No members found
+                                    </div>
+                                ) : (
+                                    filteredMembers.map((member) => {
+                                        const selected = selectedMemberSet.has(member.uid)
+                                        return (
+                                            <button
+                                                key={member.uid}
+                                                type="button"
+                                                onClick={() => toggleMember(member.uid)}
+                                                className={`w-full px-4 py-3 text-left flex items-center gap-3 border-b border-peach-400/10 last:border-b-0 transition-colors ${
+                                                    selected ? "bg-terra-400/5" : "hover:bg-peach-100/70"
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`w-5 h-5 border flex items-center justify-center shrink-0 ${
+                                                        selected
+                                                            ? "bg-terra-400 border-terra-400 text-peach-50"
+                                                            : "border-peach-400/30 text-transparent"
+                                                    }`}
+                                                >
+                                                    <Check className="w-3.5 h-3.5" />
+                                                </span>
+                                                <span className="min-w-0">
+                                                    <span className="block text-sm font-bold text-olive-600 truncate">
+                                                        {memberDisplayName(member)}
+                                                    </span>
+                                                    <span className="block text-xs text-olive-300 truncate">
+                                                        {member.email || "No email"}{member.phone ? ` - ${member.phone}` : ""}
+                                                    </span>
+                                                </span>
+                                            </button>
+                                        )
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="pt-2">
                         <button
@@ -202,6 +398,12 @@ export default function AnnouncementsPage() {
                                 </div>
                             </div>
                         </div>
+                        <div className="mt-4 pt-4 border-t border-peach-400/15">
+                            <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-olive-300">
+                                Audience
+                            </p>
+                            <p className="text-sm font-bold text-olive-600 mt-1">{audienceSummary}</p>
+                        </div>
                     </div>
 
                     {/* Automatic notifications */}
@@ -234,7 +436,7 @@ export default function AnnouncementsPage() {
                         <DialogDescription className="text-olive-300 text-sm">
                             This goes to{" "}
                             <span className="font-semibold text-olive-500">
-                                {audience === "all" ? "all members" : "members with an active plan"}
+                                {audienceSummary}
                             </span>{" "}
                             immediately and cannot be recalled.
                         </DialogDescription>

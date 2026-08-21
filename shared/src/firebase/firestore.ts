@@ -1713,8 +1713,13 @@ export async function getPushTokens(userId: string): Promise<PushToken[]> {
 export interface SendAnnouncementInput {
     title: string;
     body: string;
-    /** 'all' = every member, 'active' = active subscriptions only. */
-    audience: 'all' | 'active';
+    /**
+     * 'all' = every member, 'active' = active subscriptions only,
+     * 'demo_pending' = signed-up members with no purchased plan yet,
+     * 'custom' = the provided memberIds only.
+     */
+    audience: 'all' | 'active' | 'demo_pending' | 'custom';
+    memberIds?: string[];
     link?: string;
 }
 
