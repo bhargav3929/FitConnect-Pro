@@ -33,7 +33,7 @@ vi.mock('razorpay', () => ({
 vi.mock('@/lib/razorpay/pricing', () => ({
     getSyncedPlanEntry: mockGetSyncedPlanEntry,
     // Mirrors the real class-pack branch: catalog price is the GST-exclusive base
-    // and 18% is added on top to reach the charged total.
+    // and GST is added on top to reach the charged total.
     getChargeBreakdown: (
         plan: { price: number; foundingPrice?: number },
         syncedPlan: { price: number } | null,
@@ -44,7 +44,7 @@ vi.mock('@/lib/razorpay/pricing', () => ({
             ? basePrice
             : Math.round(basePrice * (plan.foundingPrice / plan.price));
         const basePaise = Math.round(base * 100);
-        const gstPaise = Math.round((basePaise * 1800) / 10000);
+        const gstPaise = Math.round((basePaise * 500) / 10000);
         return { basePaise, gstPaise, totalPaise: basePaise + gstPaise };
     },
 }));
@@ -84,7 +84,7 @@ describe('POST /api/payments/create-order', () => {
         mockGetSyncedPlanEntry.mockResolvedValue(null);
         mockOrderCreate.mockResolvedValue({
             id: 'order_razorpay_abc',
-            amount: 590000,
+            amount: 525000,
             currency: 'INR',
             status: 'created',
         });
@@ -127,11 +127,11 @@ describe('POST /api/payments/create-order', () => {
         expect(res.status).toBe(200);
         const body = await res.json();
         expect(body.orderId).toBe('order_razorpay_abc');
-        expect(body.amount).toBe(590000);
+        expect(body.amount).toBe(525000);
         expect(body.basePaise).toBe(500000);
-        expect(body.gstPaise).toBe(90000);
-        expect(body.totalPaise).toBe(590000);
-        expect(body.gstRatePercent).toBe(18);
+        expect(body.gstPaise).toBe(25000);
+        expect(body.totalPaise).toBe(525000);
+        expect(body.gstRatePercent).toBe(5);
         expect(body.currency).toBe('INR');
         expect(body.key).toBe('rzp_test_placeholder');
     });
@@ -143,7 +143,7 @@ describe('POST /api/payments/create-order', () => {
         await POST(req);
         // twice_quarterly foundingPrice = 34680, so paise = 3468000
         expect(mockOrderCreate).toHaveBeenCalledWith(
-            expect.objectContaining({ amount: 4092240 }),
+            expect.objectContaining({ amount: 3641400 }),
         );
     });
 
@@ -153,7 +153,7 @@ describe('POST /api/payments/create-order', () => {
         await POST(req);
         // twice_quarterly price = 40800, so paise = 4080000
         expect(mockOrderCreate).toHaveBeenCalledWith(
-            expect.objectContaining({ amount: 4814400 }),
+            expect.objectContaining({ amount: 4284000 }),
         );
     });
 

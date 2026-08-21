@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
 
         const syncedPlan = await getSyncedPlanEntry(planId);
         const isFoundingMember = userData?.isFoundingMember === true;
-        // Catalog prices are GST-exclusive; the member pays base + 18% GST.
+        // Catalog prices are GST-exclusive; the member pays base + GST.
         const gst = getChargeBreakdown(plan, syncedPlan, isFoundingMember);
         const chargeAmount = gst.basePaise / 100;
 

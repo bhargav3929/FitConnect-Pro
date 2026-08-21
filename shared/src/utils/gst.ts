@@ -3,14 +3,15 @@
  *
  * Prices in PLAN_CATALOG are GST-exclusive base amounts: the customer pays the
  * base plus GST on top. All arithmetic happens in paise because several founding
- * prices do not land on a whole rupee once GST is applied (34,680 + 18% =
- * 40,922.40), and Razorpay charges in paise anyway. Working in rupees and
+ * prices do not land on a whole rupee once GST is applied (34,680 + 5% =
+ * 36,414.00 here, but other rates and prices do not), and Razorpay charges in
+ * paise anyway. Working in rupees and
  * rounding at the end loses up to a rupee per transaction and makes the invoice
  * total disagree with the sum of its lines.
  */
 
-/** 18% expressed in basis points, so the rate stays exact in integer maths. */
-export const GST_RATE_BPS = 1800;
+/** 5% expressed in basis points, so the rate stays exact in integer maths. */
+export const GST_RATE_BPS = 500;
 
 export const GST_RATE_PERCENT = GST_RATE_BPS / 100;
 

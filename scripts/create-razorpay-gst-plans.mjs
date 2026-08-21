@@ -1,7 +1,7 @@
 /**
  * Creates GST-inclusive Razorpay Plans for every membership tier.
  *
- * Catalog prices are GST-exclusive and the member pays base + 18% on top. For
+ * Catalog prices are GST-exclusive and the member pays base + 5% on top. For
  * one-time Orders our own code does that sum, but a Subscription is charged
  * whatever its Razorpay Plan says, and plan amounts are immutable - so adding
  * GST to memberships means creating new plans and pointing the app at them.
@@ -43,7 +43,7 @@ if (!KEY_ID || !KEY_SECRET) {
     process.exit(1);
 }
 
-const GST_RATE_BPS = 1800;
+const GST_RATE_BPS = 500;
 const withGst = (rupees) => {
     const basePaise = Math.round(rupees * 100);
     const gstPaise = Math.round((basePaise * GST_RATE_BPS) / 10000);
@@ -67,7 +67,7 @@ for (const m of MEMBERSHIPS) {
 
 const isLive = !KEY_ID.startsWith('rzp_test');
 console.log(`${APPLY ? 'APPLY' : 'DRY RUN'} - ${isLive ? 'LIVE' : 'TEST'} account (${KEY_ID})\n`);
-console.log('plan                 variant    base        GST @18%    charged');
+console.log('plan                 variant    base        GST @5%     charged');
 console.log('─'.repeat(72));
 for (const t of targets) {
     const g = withGst(t.amountRupees);

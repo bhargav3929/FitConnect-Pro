@@ -10,23 +10,28 @@ import { PLAN_CATALOG } from '../../src/types/subscription';
 
 describe('applyGstToRupees', () => {
     it.each([
-        [1000, 118000, 18000, 100000],       // Demo Class
-        [5000, 590000, 90000, 500000],       // Sol Intro Program
-        [40800, 4814400, 734400, 4080000],   // 2x Weekly Quarterly
-        [108000, 12744000, 1944000, 10800000],
-    ])('adds 18%% to base %i', (base, total, gst, basePaise) => {
+        [1000, 105000, 5000, 100000],        // Demo Class
+        [5000, 525000, 25000, 500000],       // Sol Intro Program
+        [40800, 4284000, 204000, 4080000],   // 2x Weekly Quarterly
+        [108000, 11340000, 540000, 10800000],
+    ])('adds 5%% to base %i', (base, total, gst, basePaise) => {
         const r = applyGstToRupees(base);
         expect(r.basePaise).toBe(basePaise);
         expect(r.gstPaise).toBe(gst);
         expect(r.totalPaise).toBe(total);
     });
 
-    it('keeps founding prices exact to the paise', () => {
-        // 34,680 + 18% = 40,922.40 - the case that rounding in rupees would lose.
+    it('keeps sub-rupee amounts exact to the paise', () => {
+        // 1,234.50 + 5% = 1,296.225 - the case that rounding in rupees would lose.
+        const r = applyGstToPaise(123450);
+        expect(r.gstPaise).toBe(6173);
+        expect(r.totalPaise).toBe(129623);
+    });
+
+    it('applies the founding price cleanly', () => {
         const r = applyGstToRupees(34680);
-        expect(r.gstPaise).toBe(624240);
-        expect(r.totalPaise).toBe(4092240);
-        expect(r.totalPaise / 100).toBeCloseTo(40922.4, 2);
+        expect(r.gstPaise).toBe(173400);
+        expect(r.totalPaise).toBe(3641400);
     });
 
     it('always has total equal to base plus gst', () => {
@@ -47,7 +52,7 @@ describe('applyGstToRupees', () => {
     });
 
     it('exposes the rate as a percentage for display', () => {
-        expect(GST_RATE_PERCENT).toBe(18);
+        expect(GST_RATE_PERCENT).toBe(5);
     });
 });
 

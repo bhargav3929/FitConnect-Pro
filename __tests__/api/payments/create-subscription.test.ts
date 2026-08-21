@@ -65,7 +65,7 @@ vi.mock('@/lib/razorpay/pricing', () => ({
             base = syncedPlan?.foundingPrice ?? Math.round(basePrice * (plan.foundingPrice! / plan.price));
         }
         const basePaise = Math.round(base * 100);
-        const gstPaise = Math.round((basePaise * 1800) / 10000);
+        const gstPaise = Math.round((basePaise * 500) / 10000);
         return { basePaise, gstPaise, totalPaise: basePaise + gstPaise };
     },
 }));
@@ -150,9 +150,9 @@ describe('POST /api/payments/create-subscription', () => {
             const body = await res.json();
             expect(body.subscriptionId).toBe(`sub_${plan.id}`);
             // Charged total is the GST-inclusive figure.
-            expect(body.amount).toBe(Math.round(plan.price * 100 * 1.18));
+            expect(body.amount).toBe(Math.round(plan.price * 100 * 1.05));
             expect(body.basePaise).toBe(plan.price * 100);
-            expect(body.gstRatePercent).toBe(18);
+            expect(body.gstRatePercent).toBe(5);
             expect(mockSubCreate).toHaveBeenCalledWith(expect.objectContaining({
                 plan_id: plan.razorpayPlanId,
                 total_count: plan.razorpayTotalCount,
@@ -201,7 +201,7 @@ describe('POST /api/payments/create-subscription', () => {
 
         expect(res.status).toBe(200);
         const body = await res.json();
-        expect(body.amount).toBe(Math.round(plan.foundingPrice! * 100 * 1.18));
+        expect(body.amount).toBe(Math.round(plan.foundingPrice! * 100 * 1.05));
         expect(body.basePaise).toBe(plan.foundingPrice! * 100);
         expect(mockSubCreate).toHaveBeenCalledWith(expect.objectContaining({
             plan_id: 'plan_founding_twice_quarterly',

@@ -30,7 +30,7 @@ function synced(overrides: Partial<SyncedPlanEntry> = {}): SyncedPlanEntry {
 describe('getChargeBreakdown - class packs', () => {
     it('adds GST on top of the catalog price', () => {
         const r = getChargeBreakdown(kickstarter, null, false);
-        expect(r).toEqual({ basePaise: 500000, gstPaise: 90000, totalPaise: 590000 });
+        expect(r).toEqual({ basePaise: 500000, gstPaise: 25000, totalPaise: 525000 });
     });
 
     it('adds GST on top of a synced item price', () => {
@@ -38,17 +38,17 @@ describe('getChargeBreakdown - class packs', () => {
             planId: 'kickstarter', category: 'class_pack', price: 6000, foundingPrice: null, source: 'items',
         }), false);
         expect(r.basePaise).toBe(600000);
-        expect(r.totalPaise).toBe(708000);
+        expect(r.totalPaise).toBe(630000);
     });
 });
 
 describe('getChargeBreakdown - memberships', () => {
     it('uses the Razorpay plan amount as the total, splitting via the plan notes', () => {
         const r = getChargeBreakdown(twiceQuarterly, synced({
-            amountPaise: 4814400,
+            amountPaise: 4284000,
             basePaise: 4080000,
         }), false);
-        expect(r).toEqual({ basePaise: 4080000, gstPaise: 734400, totalPaise: 4814400 });
+        expect(r).toEqual({ basePaise: 4080000, gstPaise: 204000, totalPaise: 4284000 });
     });
 
     it('reports no GST for a pre-GST plan rather than inventing one', () => {
@@ -60,7 +60,7 @@ describe('getChargeBreakdown - memberships', () => {
 
     it('uses the founding plan amount for founding members', () => {
         const r = getChargeBreakdown(twiceQuarterly, synced({
-            amountPaise: 4814400,
+            amountPaise: 4284000,
             basePaise: 4080000,
             foundingAmountPaise: 4092240,
             foundingBasePaise: 3468000,
@@ -70,7 +70,7 @@ describe('getChargeBreakdown - memberships', () => {
 
     it('falls back to catalog price plus GST when no Razorpay plan is synced', () => {
         const r = getChargeBreakdown(twiceQuarterly, null, false);
-        expect(r).toEqual({ basePaise: 4080000, gstPaise: 734400, totalPaise: 4814400 });
+        expect(r).toEqual({ basePaise: 4080000, gstPaise: 204000, totalPaise: 4284000 });
     });
 
     it('ignores a nonsensical noted base that exceeds the charged total', () => {
