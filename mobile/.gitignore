@@ -40,3 +40,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Signing credentials - contains keystore passwords, never commit
+credentials.json
+*.keystore
