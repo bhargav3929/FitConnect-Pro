@@ -37,7 +37,7 @@ import { callCreatePaymentOrder, callGetPricing, callVerifyPayment } from '@fitc
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { Colors, Spacing, FontSize, BorderRadius, Alpha } from '../constants/theme';
 import { useIntroClassLead } from '../hooks/useIntroClassLead';
-import { applyGstToRupees, formatPaise, GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
+import { applyGstToRupees, formatPaise, GST_RATE_PERCENT, type GstBreakdown } from '@fitconnect/shared/utils/gst';
 
 type FormState = {
     name: string;
@@ -66,7 +66,9 @@ export default function IntroClassScreen() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [done, setDone] = useState(false);
-    const [price, setPrice] = useState(() => getPlanById('drop_in')?.price ?? 1000);
+    const [charge, setCharge] = useState<GstBreakdown>(() =>
+        applyGstToRupees(getPlanById('drop_in')?.price ?? 1000),
+    );
     const hasActiveSubscription = hasActivePlan(clientUser?.subscription);
 
     useEffect(() => {
@@ -98,7 +100,8 @@ export default function IntroClassScreen() {
             .then((data) => {
                 if (!mounted) return;
                 const dropIn = data.plans.find((plan) => plan.planId === 'drop_in');
-                if (dropIn?.price) setPrice(dropIn.price);
+                if (dropIn?.charge) setCharge(dropIn.charge);
+                else if (dropIn?.price) setCharge(applyGstToRupees(dropIn.price));
             })
             .catch(() => {
                 // Static PLAN_CATALOG price remains the fallback.
@@ -274,7 +277,7 @@ export default function IntroClassScreen() {
 
                     <Text style={styles.intro}>
                         30 minutes, no commitment. Tell us a little about yourself, then
-                        complete the payment to book. {formatPaise(applyGstToRupees(price).basePaise)} + {GST_RATE_PERCENT}% GST = {formatPaise(applyGstToRupees(price).totalPaise)} payable.
+                        complete the payment to book. {formatPaise(charge.basePaise)} + {GST_RATE_PERCENT}% GST = {formatPaise(charge.totalPaise)} payable.
                     </Text>
 
                     <Text style={styles.label}>FULL NAME *</Text>
@@ -347,7 +350,7 @@ export default function IntroClassScreen() {
                             <ActivityIndicator color={Colors.white} />
                         ) : (
                             <Text style={styles.primaryButtonText}>
-                                PAY {formatPaise(applyGstToRupees(price).totalPaise)} & BOOK
+                                PAY {formatPaise(charge.totalPaise)} & BOOK
                             </Text>
                         )}
                     </TouchableOpacity>

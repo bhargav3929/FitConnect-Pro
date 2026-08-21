@@ -45,7 +45,9 @@ import {
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { useIntroClassLead } from '../hooks/useIntroClassLead';
 import { Colors, Spacing, FontSize, BorderRadius, Shadows, Alpha, FontFamily } from '../constants/theme';
-import { applyGstToRupees, formatPaise, GST_RATE_PERCENT } from '@fitconnect/shared/utils/gst';
+import { applyGstToRupees, formatPaise, GST_RATE_PERCENT, type GstBreakdown } from '@fitconnect/shared/utils/gst';
+
+const ZERO_CHARGE: GstBreakdown = { basePaise: 0, gstPaise: 0, totalPaise: 0 };
 
 // ---------------------------------------------------------------------------
 // Types
@@ -184,12 +186,12 @@ function PlanCard({
     plan,
     selected,
     onSelect,
-    displayPrice,
+    charge,
 }: {
     plan: PlanDefinition;
     selected: boolean;
     onSelect: () => void;
-    displayPrice: number;
+    charge: GstBreakdown;
 }) {
     return (
         <TouchableOpacity
@@ -223,12 +225,7 @@ function PlanCard({
             <Text style={planCardStyles.planName}>{plan.name}</Text>
 
             <View style={planCardStyles.priceRow}>
-                <Text style={planCardStyles.price}>{formatPaise(applyGstToRupees(displayPrice).basePaise)}</Text>
-                {applyGstToRupees(displayPrice).gstPaise > 0 && (
-                    <Text style={planCardStyles.gstNote}>
-                        + {GST_RATE_PERCENT}% GST · {formatPaise(applyGstToRupees(displayPrice).totalPaise)} total
-                    </Text>
-                )}
+                <Text style={planCardStyles.price}>{formatPaise(charge.basePaise)}</Text>
                 <Text style={planCardStyles.priceSuffix}>
                     {plan.id === 'drop_in'
                         ? '/session'
@@ -237,6 +234,11 @@ function PlanCard({
                             : '/pack'}
                 </Text>
             </View>
+            {charge.gstPaise > 0 && (
+                <Text style={planCardStyles.gstNote}>
+                    + {GST_RATE_PERCENT}% GST · {formatPaise(charge.totalPaise)} total
+                </Text>
+            )}
 
             <Text style={planCardStyles.credits}>
                 {plan.credits === null
@@ -341,7 +343,7 @@ export default function SubscribeScreen() {
     const [step, setStep] = useState<Step>('plan');
     const [activeTab, setActiveTab] = useState<PlanCategory>('membership');
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-    const [priceOverrides, setPriceOverrides] = useState<Record<string, number>>({});
+    const [chargeOverrides, setChargeOverrides] = useState<Record<string, GstBreakdown>>({});
 
     // Processing state
     const [paymentState, setPaymentState] = useState<
@@ -356,7 +358,14 @@ export default function SubscribeScreen() {
     );
 
     const selectedPlan = selectedPlanId ? getPlanById(selectedPlanId) : null;
-    const selectedPlanPrice = selectedPlan ? priceOverrides[selectedPlan.id] ?? selectedPlan.price : 0;
+    // Membership prices arrive from the API GST-INCLUSIVE, so re-applying GST to
+    // them would double-count. The server sends the authoritative split.
+    const chargeFor = useCallback(
+        (plan: PlanDefinition): GstBreakdown =>
+            chargeOverrides[plan.id] ?? applyGstToRupees(plan.price),
+        [chargeOverrides],
+    );
+    const selectedCharge = selectedPlan ? chargeFor(selectedPlan) : ZERO_CHARGE;
     const hasActiveSubscription = clientUser?.subscription?.status === 'active' && (
         !clientUser.subscription.endDate ||
         new Date(clientUser.subscription.endDate).getTime() > Date.now()
@@ -406,11 +415,11 @@ export default function SubscribeScreen() {
         callGetPricing()
             .then((data) => {
                 if (!mounted) return;
-                const overrides: Record<string, number> = {};
+                const overrides: Record<string, GstBreakdown> = {};
                 for (const plan of data.plans) {
-                    overrides[plan.planId] = plan.price;
+                    if (plan.charge) overrides[plan.planId] = plan.charge;
                 }
-                setPriceOverrides(overrides);
+                setChargeOverrides(overrides);
             })
             .catch(() => {
                 // Static PLAN_CATALOG prices remain the offline fallback.
@@ -711,7 +720,7 @@ export default function SubscribeScreen() {
                                 plan={plan}
                                 selected={selectedPlanId === plan.id}
                                 onSelect={() => setSelectedPlanId(plan.id)}
-                                displayPrice={priceOverrides[plan.id] ?? plan.price}
+                                charge={chargeFor(plan)}
                             />
                         ))}
 
@@ -786,9 +795,9 @@ export default function SubscribeScreen() {
                             <Text style={styles.orderLabel}>
                                 {selectedPlan.category === 'membership' ? 'Recurring membership' : 'One-time payment'}
                             </Text>
-                            <Text style={styles.orderAmount}>{formatPaise(applyGstToRupees(selectedPlanPrice).totalPaise)}</Text>
+                            <Text style={styles.orderAmount}>{formatPaise(selectedCharge.totalPaise)}</Text>
                             <Text style={styles.orderGstLine}>
-                                {formatPaise(applyGstToRupees(selectedPlanPrice).basePaise)} + {formatPaise(applyGstToRupees(selectedPlanPrice).gstPaise)} GST @ {GST_RATE_PERCENT}%
+                                {formatPaise(selectedCharge.basePaise)} + {formatPaise(selectedCharge.gstPaise)} GST @ {GST_RATE_PERCENT}%
                             </Text>
                         </View>
 
@@ -840,7 +849,7 @@ export default function SubscribeScreen() {
                                 </View>
                             ) : (
                                 <Text style={styles.primaryButtonText}>
-                                    PAY {formatPaise(applyGstToRupees(selectedPlanPrice).totalPaise)}
+                                    PAY {formatPaise(selectedCharge.totalPaise)}
                                 </Text>
                             )}
                         </TouchableOpacity>
