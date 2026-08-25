@@ -419,7 +419,7 @@ export default function CheckInPage() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-xs text-olive-400 mt-0.5 capitalize">
+                                                    <p className="text-xs text-olive-400 mt-0.5 capitalize truncate">
                                                         {booking.creditType?.replace("_", " ") ??
                                                             "standard"}{" "}
                                                         pass
