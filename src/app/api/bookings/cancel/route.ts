@@ -108,7 +108,9 @@ export async function POST(req: NextRequest) {
             const creditType = bookingData.creditType || 'standard';
             const usedGuestPass = bookingData.usedGuestPass === true;
 
-            if (usedGuestPass || creditType === 'guest_pass') {
+            if (creditType === 'admin_override') {
+                transaction.update(userRef, { updatedAt: now });
+            } else if (usedGuestPass || creditType === 'guest_pass') {
                 transaction.update(userRef, {
                     'subscription.guestPassesRemaining': FieldValue.increment(1),
                     updatedAt: now,

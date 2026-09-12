@@ -5,7 +5,7 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
-import { registerPushToken, removePushToken } from '@fitconnect/shared/firebase/firestore';
+import { registerPushToken } from '@fitconnect/shared/firebase/firestore';
 import type { PushPlatform } from '@fitconnect/shared/types/pushToken';
 import { routeForNotificationLink } from '../lib/notificationRoutes';
 
@@ -145,23 +145,4 @@ export function usePushNotifications(): void {
         const data = response.notification.request.content.data;
         router.push(routeForNotificationLink(data?.link) as never);
     }, [response, router]);
-}
-
-/**
- * Drops this device's token so a signed-out phone stops receiving a member's
- * notifications. Best-effort: failing to unregister must not block sign-out.
- */
-export async function unregisterPushDevice(userId: string): Promise<void> {
-    if (Platform.OS === 'web' || !Device.isDevice) return;
-    try {
-        const projectId =
-            Constants.expoConfig?.extra?.eas?.projectId
-            ?? Constants.easConfig?.projectId;
-        if (!projectId) return;
-
-        const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
-        await removePushToken(userId, token);
-    } catch (error) {
-        console.warn('[push] unregister failed', error);
-    }
 }

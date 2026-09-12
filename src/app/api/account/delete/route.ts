@@ -21,6 +21,8 @@ type AppleTokenResponse = {
     error_description?: string;
 };
 
+const DELETE_BATCH_SIZE = 400;
+
 const APPLE_TOKEN_URL = 'https://appleid.apple.com/auth/token';
 const APPLE_REVOKE_URL = 'https://appleid.apple.com/auth/revoke';
 
@@ -267,6 +269,18 @@ export async function POST(req: NextRequest) {
                 deletedByUser: true,
                 updatedAt: now,
             });
+        }
+
+        // Firestore does not delete subcollections when a parent document is
+        // removed. Remove every device token so a deleted account can no
+        // longer receive notifications on any previously used device.
+        const pushTokensSnap = await userRef.collection('pushTokens').get();
+        for (let i = 0; i < pushTokensSnap.docs.length; i += DELETE_BATCH_SIZE) {
+            const batch = adminDb.batch();
+            for (const tokenDoc of pushTokensSnap.docs.slice(i, i + DELETE_BATCH_SIZE)) {
+                batch.delete(tokenDoc.ref);
+            }
+            await batch.commit();
         }
 
         // Delete the Firestore user profile

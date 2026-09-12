@@ -9,6 +9,7 @@ export { onNotificationCreated } from './triggers/onNotificationCreated';
 // Scheduled jobs
 export { expireSubscriptions } from './scheduled/expireSubscriptions';
 export { markNoShows } from './scheduled/markNoShows';
+export { completeClasses } from './scheduled/completeClasses';
 export { sendClassReminders } from './scheduled/sendClassReminders';
 export { sendPlanExpiryReminders } from './scheduled/sendPlanExpiryReminders';
 export { checkPushReceipts } from './scheduled/checkPushReceipts';

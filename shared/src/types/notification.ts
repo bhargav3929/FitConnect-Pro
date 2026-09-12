@@ -7,6 +7,7 @@
  */
 
 export type NotificationType =
+    | 'booking_confirmed'
     | 'class_reminder'
     | 'plan_expiry'
     | 'announcement';
@@ -27,6 +28,7 @@ export interface AppNotification {
 }
 
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
+    booking_confirmed: 'Booking Confirmed',
     class_reminder: 'Class Reminder',
     plan_expiry: 'Plan Expiry',
     announcement: 'Announcement',

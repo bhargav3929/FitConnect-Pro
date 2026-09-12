@@ -1,32 +1,9 @@
 import * as functions from 'firebase-functions';
-import { FieldValue, Timestamp, type QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { FieldValue, type QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { db } from '../init';
+import { getClassEnd } from './class-time';
 
 const BATCH_SIZE = 400;
-
-function toDate(value: unknown): Date {
-    if (value instanceof Timestamp) return value.toDate();
-    if (value instanceof Date) return value;
-    if (value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
-        return (value as { toDate: () => Date }).toDate();
-    }
-    return new Date(value as string | number);
-}
-
-function getClassEnd(dateValue: unknown, startTime: unknown, durationMinutes: unknown): Date | null {
-    const classDate = toDate(dateValue);
-    if (Number.isNaN(classDate.getTime())) return null;
-
-    const [hh, mm] = typeof startTime === 'string'
-        ? startTime.split(':').map((part) => parseInt(part, 10))
-        : [0, 0];
-    const duration = typeof durationMinutes === 'number' && durationMinutes > 0
-        ? durationMinutes
-        : 60;
-
-    classDate.setHours(Number.isFinite(hh) ? hh : 0, Number.isFinite(mm) ? mm : 0, 0, 0);
-    return new Date(classDate.getTime() + duration * 60 * 1000);
-}
 
 /**
  * Marks confirmed bookings as no-show after the class has ended.

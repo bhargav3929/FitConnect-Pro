@@ -12,7 +12,7 @@ export interface Booking {
     isGuest: boolean;
     guestName?: string;
     status: 'confirmed' | 'canceled' | 'attended' | 'no-show';
-    creditType: 'standard' | 'unlimited' | 'guest_pass' | 'intro_credit';
+    creditType: 'standard' | 'unlimited' | 'guest_pass' | 'intro_credit' | 'admin_override';
     planIdAtBooking: PlanId | null;
     usedGuestPass: boolean;
     canceledAt?: Date;

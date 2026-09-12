@@ -22,6 +22,7 @@ import { LINK_ROUTES } from '../lib/notificationRoutes';
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
 const TYPE_ICONS: Record<NotificationType, FeatherName> = {
+    booking_confirmed: 'check-circle',
     class_reminder: 'calendar',
     plan_expiry: 'credit-card',
     announcement: 'volume-2',

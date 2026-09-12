@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { getClassEnd } from '../scheduled/class-time';
 
 interface BookClassData {
     classId: string;
@@ -104,11 +105,12 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
                 );
             }
 
-            // Validate class date is in the future
+            // A class stops accepting bookings when it ends, not at midnight.
             const classDate = classData.date instanceof Timestamp
                 ? classData.date.toDate()
                 : new Date(classData.date);
-            if (classDate < new Date()) {
+            const classEnd = getClassEnd(classDate, classData.startTime, classData.duration);
+            if (!classEnd || classEnd <= new Date()) {
                 throw new functions.https.HttpsError('failed-precondition', 'Cannot book a class in the past');
             }
 

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
     PlusJakartaSans_300Light,
@@ -16,6 +16,7 @@ import { BorderRadius, Colors, Spacing } from '../constants/theme';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import Logo from '../components/Logo';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useForceUpdate } from '../hooks/useForceUpdate';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 const MIN_SPLASH_MS = 1200;
@@ -39,6 +40,7 @@ export default function RootLayout() {
     // Registers this device for push once a member is signed in, and routes
     // taps on delivered notifications.
     usePushNotifications();
+    const forceUpdate = useForceUpdate();
 
     useEffect(() => {
         const timer = setTimeout(() => setMinimumSplashDone(true), MIN_SPLASH_MS);
@@ -57,6 +59,16 @@ export default function RootLayout() {
         return <BrandedSplash />;
     }
 
+    if (forceUpdate.isUpdateRequired) {
+        return (
+            <ForceUpdateScreen
+                latestVersion={forceUpdate.latestVersion}
+                currentVersion={forceUpdate.currentVersion}
+                onUpdate={forceUpdate.openAppStore}
+            />
+        );
+    }
+
     return (
         <ErrorBoundary>
             <StatusBar style="auto" />
@@ -72,11 +84,49 @@ export default function RootLayout() {
     );
 }
 
+function ForceUpdateScreen({
+    latestVersion,
+    currentVersion,
+    onUpdate,
+}: {
+    latestVersion: string | null;
+    currentVersion: string | null;
+    onUpdate: () => Promise<void>;
+}) {
+    return (
+        <View style={styles.updateScreen}>
+            <StatusBar style="dark" />
+            <View style={styles.updateContent}>
+                <Logo height={92} />
+                <View style={styles.updateTextBlock}>
+                    <Text style={styles.updateEyebrow}>Update required</Text>
+                    <Text style={styles.updateTitle}>Install the latest Sol Pilates app</Text>
+                    <Text style={styles.updateBody}>
+                        A newer version is available in the App Store. Please update to continue booking classes and receiving studio updates.
+                    </Text>
+                    {latestVersion && currentVersion && (
+                        <Text style={styles.updateVersion}>
+                            Current {currentVersion} · Latest {latestVersion}
+                        </Text>
+                    )}
+                </View>
+                <TouchableOpacity
+                    activeOpacity={0.88}
+                    onPress={() => void onUpdate()}
+                    style={styles.updateButton}
+                >
+                    <Text style={styles.updateButtonText}>Update Now</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+}
+
 function BrandedSplash() {
-    const logoScale = useRef(new Animated.Value(0.94)).current;
-    const logoOpacity = useRef(new Animated.Value(0)).current;
-    const lineScale = useRef(new Animated.Value(0)).current;
-    const ambientMotion = useRef(new Animated.Value(0)).current;
+    const logoScale = useMemo(() => new Animated.Value(0.94), []);
+    const logoOpacity = useMemo(() => new Animated.Value(0), []);
+    const lineScale = useMemo(() => new Animated.Value(0), []);
+    const ambientMotion = useMemo(() => new Animated.Value(0), []);
 
     useEffect(() => {
         Animated.parallel([
@@ -170,6 +220,71 @@ function BrandedSplash() {
 }
 
 const styles = StyleSheet.create({
+    updateScreen: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: Colors.background,
+        paddingHorizontal: Spacing.xl,
+    },
+    updateContent: {
+        width: '100%',
+        maxWidth: 420,
+        alignItems: 'center',
+        paddingHorizontal: Spacing.xl,
+        paddingVertical: Spacing['3xl'],
+        backgroundColor: Colors.card,
+        borderWidth: 1,
+        borderColor: Colors.border,
+    },
+    updateTextBlock: {
+        alignItems: 'center',
+        marginTop: Spacing.xl,
+        marginBottom: Spacing.xl,
+        gap: Spacing.sm,
+    },
+    updateEyebrow: {
+        fontFamily: 'PlusJakartaSans_700Bold',
+        fontSize: 11,
+        letterSpacing: 2,
+        textTransform: 'uppercase',
+        color: Colors.primary,
+    },
+    updateTitle: {
+        fontFamily: 'PlusJakartaSans_800ExtraBold',
+        fontSize: 24,
+        lineHeight: 31,
+        color: Colors.foreground,
+        textAlign: 'center',
+    },
+    updateBody: {
+        fontFamily: 'PlusJakartaSans_400Regular',
+        fontSize: 14,
+        lineHeight: 22,
+        color: Colors.secondaryText,
+        textAlign: 'center',
+    },
+    updateVersion: {
+        marginTop: Spacing.xs,
+        fontFamily: 'PlusJakartaSans_500Medium',
+        fontSize: 12,
+        color: Colors.muted,
+        textAlign: 'center',
+    },
+    updateButton: {
+        width: '100%',
+        height: 52,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: Colors.primary,
+    },
+    updateButtonText: {
+        fontFamily: 'PlusJakartaSans_800ExtraBold',
+        fontSize: 12,
+        letterSpacing: 1.8,
+        textTransform: 'uppercase',
+        color: Colors.white,
+    },
     splash: {
         flex: 1,
         justifyContent: 'center',

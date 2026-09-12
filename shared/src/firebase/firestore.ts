@@ -3,7 +3,6 @@ import {
     getDoc,
     setDoc,
     updateDoc,
-    deleteDoc,
     collection,
     query,
     where,
@@ -30,6 +29,7 @@ import { AppNotification, NotificationType } from '../types/notification';
 import { PushPlatform, PushToken, isExpoPushToken, pushTokenId } from '../types/pushToken';
 import { GymCenter } from '../types/gym';
 import { byStartTime, isOnStudioDay, studioDayQueryWindow } from '../schedule/studio-day';
+import { hasClassEnded } from '../schedule/class-time';
 
 // ---------------------------------------------------------------------------
 // API call helper — gets ID token and calls our Next.js API routes
@@ -191,6 +191,10 @@ export async function getClassesByDate(date: Date): Promise<ClassSession[]> {
     const snapshot = await getDocs(q);
     return snapshot.docs
         .filter((doc) => isClassOnDay(doc.data(), date))
+        .filter((doc) => {
+            const classDate = readClassDate(doc.data());
+            return classDate !== null && !hasClassEnded(classDate, doc.data().startTime, doc.data().duration);
+        })
         .map((doc) => {
             const data = doc.data();
             return convertTimestamps({ ...data, id: doc.id }) as unknown as ClassSession;
@@ -411,6 +415,10 @@ export function subscribeToClassesByDate(
         (snapshot) => {
             const classes = snapshot.docs
                 .filter((doc) => isClassOnDay(doc.data(), date))
+                .filter((doc) => {
+                    const classDate = readClassDate(doc.data());
+                    return classDate !== null && !hasClassEnded(classDate, doc.data().startTime, doc.data().duration);
+                })
                 .map((doc) => {
                     const data = doc.data();
                     return convertTimestamps({ ...data, id: doc.id }) as unknown as ClassSession;
@@ -724,10 +732,11 @@ export async function callDeleteClass(
 export async function callAdminEnrollMember(
     classId: string,
     userId: string,
+    creditMode: 'available_credit' | 'no_credit' = 'no_credit',
 ): Promise<{ success: boolean; bookingId: string }> {
     return apiFetch<{ success: boolean; bookingId: string }>('/api/admin/enroll', {
         method: 'POST',
-        body: { classId, userId },
+        body: { classId, userId, creditMode },
     });
 }
 
@@ -1694,11 +1703,6 @@ export async function registerPushToken(
         },
         { merge: true },
     );
-}
-
-/** Drops a device's token, e.g. when the member signs out or revokes permission. */
-export async function removePushToken(userId: string, token: string): Promise<void> {
-    await deleteDoc(doc(db, 'users', userId, 'pushTokens', pushTokenId(token)));
 }
 
 export async function getPushTokens(userId: string): Promise<PushToken[]> {

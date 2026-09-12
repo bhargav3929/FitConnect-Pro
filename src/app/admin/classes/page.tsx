@@ -449,6 +449,7 @@ export default function ClassesPage() {
     const [allMembers, setAllMembers] = useState<UserProfile[]>([])
     const [membersLoaded, setMembersLoaded] = useState(false)
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
+    const [enrollCreditMode, setEnrollCreditMode] = useState<"available_credit" | "no_credit">("no_credit")
     const [enrollInSeries, setEnrollInSeries] = useState(false)
     const [enrollSeries, setEnrollSeries] = useState<ClassSession[]>([])
     const [isEnrolling, setIsEnrolling] = useState(false)
@@ -698,6 +699,7 @@ export default function ClassesPage() {
         setEnrollClass(cls)
         setEnrollSearch("")
         setSelectedMemberId(null)
+        setEnrollCreditMode("no_credit")
         setEnrollInSeries(false)
         setEnrollSeries([])
         setEnrollOpen(true)
@@ -736,7 +738,7 @@ export default function ClassesPage() {
             const skipped: string[] = []
             for (let i = 0; i < targets.length; i++) {
                 try {
-                    await callAdminEnrollMember(targets[i].id, selectedMemberId)
+                    await callAdminEnrollMember(targets[i].id, selectedMemberId, enrollCreditMode)
                     ok++
                 } catch (err: unknown) {
                     skipped.push(fmtChip(toYmd(new Date(targets[i].date))))
@@ -1502,6 +1504,47 @@ export default function ClassesPage() {
                                 )
                             })}
                         </div>
+                        {selectedMemberId && (
+                            <fieldset className="space-y-2">
+                                <legend className="text-[11px] font-bold uppercase tracking-[0.12em] text-olive-400">Credit usage</legend>
+                                <label className={`flex items-start gap-3 p-3.5 border rounded-[10px] cursor-pointer transition-colors ${
+                                    enrollCreditMode === "available_credit"
+                                        ? "bg-terra-400/10 border-terra-400/30"
+                                        : "bg-peach-100/40 border-peach-400/10 hover:border-peach-400/30"
+                                }`}>
+                                    <input
+                                        type="radio"
+                                        name="enroll-credit-mode"
+                                        value="available_credit"
+                                        checked={enrollCreditMode === "available_credit"}
+                                        onChange={() => setEnrollCreditMode("available_credit")}
+                                        className="mt-0.5 w-4 h-4 accent-terra-400"
+                                    />
+                                    <span>
+                                        <span className="block text-[13px] font-semibold text-olive-600">Use available credit</span>
+                                        <span className="block text-[11px] text-olive-400 mt-0.5">Uses a Demo Class credit for Demo Class, otherwise a normal class credit. Unlimited plans are not reduced.</span>
+                                    </span>
+                                </label>
+                                <label className={`flex items-start gap-3 p-3.5 border rounded-[10px] cursor-pointer transition-colors ${
+                                    enrollCreditMode === "no_credit"
+                                        ? "bg-terra-400/10 border-terra-400/30"
+                                        : "bg-peach-100/40 border-peach-400/10 hover:border-peach-400/30"
+                                }`}>
+                                    <input
+                                        type="radio"
+                                        name="enroll-credit-mode"
+                                        value="no_credit"
+                                        checked={enrollCreditMode === "no_credit"}
+                                        onChange={() => setEnrollCreditMode("no_credit")}
+                                        className="mt-0.5 w-4 h-4 accent-terra-400"
+                                    />
+                                    <span>
+                                        <span className="block text-[13px] font-semibold text-olive-600">No credit (complimentary)</span>
+                                        <span className="block text-[11px] text-olive-400 mt-0.5">Adds the member without requiring or reducing a plan credit.</span>
+                                    </span>
+                                </label>
+                            </fieldset>
+                        )}
                         {/* Enroll in series toggle */}
                         {enrollSeries.length > 0 && selectedMemberId && (
                             <label className="flex items-start gap-3 p-3.5 bg-peach-200/30 border border-peach-400/15 rounded-[10px] cursor-pointer hover:border-terra-400/30 transition-colors">

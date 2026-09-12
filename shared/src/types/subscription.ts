@@ -76,12 +76,12 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         guestPasses: 0,
         autoRenew: false,
         requiresConsultation: true,
-        tagline: "New to Pilates or just new to us? Start with a private 30-minute session with Swetha, then continue with 4 group classes at your own pace - enough to feel the difference.",
+        tagline: 'A guided two-week introduction to Pilates with Swetha, in-studio sessions, home workouts, and accountability support.',
         features: [
-            'Private 30-min consult with Swetha',
-            '4 group classes',
-            'Up to 2 classes per week',
-            '45 days validity',
+            '30-minute 1:1 session with Swetha',
+            '2x in-studio sessions/week (4 sessions total)',
+            '2x short home workouts/week',
+            'Accountability support',
         ],
     },
 

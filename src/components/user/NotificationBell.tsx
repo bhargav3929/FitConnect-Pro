@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Bell, CalendarClock, CreditCard, Megaphone, Check } from "lucide-react"
+import { Bell, CalendarClock, CreditCard, Megaphone, Check, CircleCheck } from "lucide-react"
 import {
     subscribeToUserNotifications,
     markNotificationRead,
@@ -13,6 +13,7 @@ import type { AppNotification, NotificationType } from "@fitconnect/shared/types
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
 
 const TYPE_ICONS: Record<NotificationType, typeof Bell> = {
+    booking_confirmed: CircleCheck,
     class_reminder: CalendarClock,
     plan_expiry: CreditCard,
     announcement: Megaphone,

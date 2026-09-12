@@ -3,6 +3,7 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getPlanById, LEGACY_PLAN_MAP } from '@fitconnect/shared/types/subscription';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
+import { classEndAtStudio, classStartAtStudio } from '@fitconnect/shared/schedule/class-time';
 
 function getMondayWeekWindow(date: Date) {
     const start = new Date(date);
@@ -31,19 +32,6 @@ function getMappedPlanId(planId: unknown): string | undefined {
 
 function getPositiveNumber(value: unknown): number | undefined {
     return typeof value === 'number' && value > 0 ? value : undefined;
-}
-
-function getClassStartDate(classDate: Date, startTime: unknown): Date {
-    const date = new Date(classDate);
-    if (typeof startTime === 'string') {
-        const match = startTime.trim().match(/^(\d{1,2}):(\d{2})/);
-        if (match) {
-            date.setHours(Number(match[1]), Number(match[2]), 0, 0);
-            return date;
-        }
-    }
-    date.setHours(0, 0, 0, 0);
-    return date;
 }
 
 export async function POST(req: NextRequest) {
@@ -118,13 +106,12 @@ export async function POST(req: NextRequest) {
                 throw { status: 400, error: `Class is ${classData.status}, cannot book`, code: 'failed-precondition' };
             }
 
-            // Validate class date is in the future (compare end-of-day since date field is midnight)
+            // A class stops accepting bookings when it ends, not at midnight.
             const classDate = classData.date instanceof Timestamp
                 ? classData.date.toDate()
                 : new Date(classData.date);
-            const classEndOfDay = new Date(classDate);
-            classEndOfDay.setHours(23, 59, 59, 999);
-            if (classEndOfDay < new Date()) {
+            const classEnd = classEndAtStudio(classDate, classData.startTime, classData.duration);
+            if (!classEnd || classEnd <= new Date()) {
                 throw { status: 400, error: 'Cannot book a class in the past', code: 'failed-precondition' };
             }
 
@@ -166,7 +153,10 @@ export async function POST(req: NextRequest) {
                 throw { status: 400, error: 'Your subscription has expired. Please renew to continue booking.', code: 'subscription-expired' };
             }
 
-            const classStartDate = getClassStartDate(classDate, classData.startTime);
+            const classStartDate = classStartAtStudio(classDate, classData.startTime);
+            if (!classStartDate) {
+                throw { status: 400, error: 'Class has an invalid start time', code: 'failed-precondition' };
+            }
             if (classStartDate > subEndDate) {
                 throw {
                     status: 400,
