@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { sendTrainerBookingAlert } from '@/lib/email/trainer-booking-alert';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
@@ -234,6 +235,12 @@ export async function POST(req: NextRequest) {
 
             return newBookingRef.id;
         });
+
+        after(() =>
+            sendTrainerBookingAlert(bookingId).catch((err) => {
+                console.error('[trainer-alert] failed for booking', bookingId, err);
+            }),
+        );
 
         return NextResponse.json({ success: true, bookingId });
     } catch (error) {
