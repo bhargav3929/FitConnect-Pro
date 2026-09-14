@@ -1,27 +1,25 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from '@/lib/firebase/admin';
 
 /**
  * Emails the class trainer when a member is booked into their class.
  *
- * Sends through a studio Gmail account over SMTP. Configure with:
- *   GMAIL_USER          the sending address
- *   GMAIL_APP_PASSWORD  a Google "app password" for that account
+ * Sends through Resend. Configure with:
+ *   RESEND_API_KEY   API key from resend.com
+ *   RESEND_FROM      sender, e.g. "Sol Pilates Studio <bookings@solpilatesstudio.in>"
+ *                    (the domain must be verified in Resend)
  * If either is missing the alert is skipped and a warning is logged, so
  * booking never fails because mail is unconfigured.
  */
 
 const STUDIO_TIME_ZONE = 'Asia/Kolkata';
 
-function getTransport() {
-    const user = process.env.GMAIL_USER;
-    const pass = process.env.GMAIL_APP_PASSWORD;
-    if (!user || !pass) return null;
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user, pass },
-    });
+function getMailer(): { resend: Resend; from: string } | null {
+    const apiKey = process.env.RESEND_API_KEY;
+    const from = process.env.RESEND_FROM;
+    if (!apiKey || !from) return null;
+    return { resend: new Resend(apiKey), from };
 }
 
 function toDate(value: unknown): Date | null {
@@ -54,9 +52,9 @@ function escapeHtml(value: string): string {
 }
 
 export async function sendTrainerBookingAlert(bookingId: string): Promise<void> {
-    const transport = getTransport();
-    if (!transport) {
-        console.warn('[trainer-alert] GMAIL_USER / GMAIL_APP_PASSWORD not set; skipping alert for booking', bookingId);
+    const mailer = getMailer();
+    if (!mailer) {
+        console.warn('[trainer-alert] RESEND_API_KEY / RESEND_FROM not set; skipping alert for booking', bookingId);
         return;
     }
 
@@ -129,12 +127,15 @@ export async function sendTrainerBookingAlert(bookingId: string): Promise<void> 
         .map((line) => (line === '' ? '<br>' : `<p style="margin:0 0 6px">${escapeHtml(line)}</p>`))
         .join('')}</div>`;
 
-    await transport.sendMail({
-        from: `"Sol Pilates Studio" <${process.env.GMAIL_USER}>`,
+    const { data, error } = await mailer.resend.emails.send({
+        from: mailer.from,
         to: trainerEmail,
         subject,
         text,
         html,
     });
-    console.log('[trainer-alert] sent', { bookingId, trainerId, to: trainerEmail });
+    if (error) {
+        throw new Error(`Resend rejected the email: ${error.message}`);
+    }
+    console.log('[trainer-alert] sent', { bookingId, trainerId, to: trainerEmail, emailId: data?.id });
 }
