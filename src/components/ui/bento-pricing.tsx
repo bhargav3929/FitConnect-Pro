@@ -53,7 +53,9 @@ function GstNote({ charge, className }: { charge: GstBreakdown; className?: stri
 
 function priceSuffix(plan: PlanDefinition) {
     if (plan.id === 'drop_in') return '/ session';
+    if (plan.id === 'single_session') return '/ class';
     if (plan.id === 'kickstarter') return '/ 4 classes';
+    if (plan.durationDays === 30) return '/ month';
     if (plan.durationDays === 90) return '/ quarter';
     if (plan.durationDays === 180) return '/ 6 months';
     return '';
@@ -123,10 +125,10 @@ function IntroCard({
 
             <div className="p-6 pt-4 flex flex-col h-full">
                 <div className="flex items-end gap-2 mb-1">
-                    <span className="font-mono text-5xl font-bold tracking-tight text-olive-600">
+                    <span className="font-mono text-4xl lg:text-5xl font-bold tracking-tight text-olive-600">
                         {formatCharge(chargeBreakdown)}
                     </span>
-                    <span className="text-olive-400 text-sm font-semibold uppercase pb-2">
+                    <span className="text-olive-400 text-xs font-semibold uppercase pb-2 whitespace-nowrap">
                         {priceSuffix(plan)}
                     </span>
                 </div>
@@ -426,13 +428,14 @@ export function BentoPricing() {
     };
 
     const dropIn = PLAN_CATALOG.find((p) => p.id === 'drop_in')!;
+    const singleSession = PLAN_CATALOG.find((p) => p.id === 'single_session')!;
     const kickstarter = PLAN_CATALOG.find((p) => p.id === 'kickstarter')!;
     const memberships = PLAN_CATALOG.filter((p) => p.category === 'membership');
 
     return (
         <div className="space-y-24">
             {/* SECTION 1: TRY IT */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                 <IntroCard
                     plan={dropIn}
                     onSelect={handleSelect}
@@ -440,6 +443,13 @@ export function BentoPricing() {
                     ctaDisabled={hasIntroClassLead === true}
                     displayPrice={priceOverrides[dropIn.id]}
                     charge={chargeOverrides[dropIn.id]}
+                />
+                <IntroCard
+                    plan={singleSession}
+                    onSelect={handleSelect}
+                    cta="BOOK A CLASS"
+                    displayPrice={priceOverrides[singleSession.id]}
+                    charge={chargeOverrides[singleSession.id]}
                 />
                 <IntroCard
                     plan={kickstarter}
@@ -461,7 +471,7 @@ export function BentoPricing() {
                     <div className="h-px w-10 bg-terra-400/40" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start pt-4">
                     {memberships.map((plan) =>
                         plan.recommended ? (
                             <HighlightedMembershipCard

@@ -227,10 +227,10 @@ function PlanCard({
             <View style={planCardStyles.priceRow}>
                 <Text style={planCardStyles.price}>{formatPaise(charge.basePaise)}</Text>
                 <Text style={planCardStyles.priceSuffix}>
-                    {plan.id === 'drop_in'
+                    {plan.credits === 1
                         ? '/session'
                         : plan.category === 'membership'
-                            ? ''
+                            ? plan.durationDays === 30 ? '/month' : ''
                             : '/pack'}
                 </Text>
             </View>

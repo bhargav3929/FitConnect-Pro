@@ -7,8 +7,8 @@ import {
 } from '../../src/types/subscription';
 
 describe('PLAN_CATALOG', () => {
-    it('contains exactly 6 plans', () => {
-        expect(PLAN_CATALOG).toHaveLength(6);
+    it('contains exactly 9 plans', () => {
+        expect(PLAN_CATALOG).toHaveLength(9);
     });
 
     it('every plan has required fields', () => {
@@ -48,7 +48,30 @@ describe('PLAN_CATALOG', () => {
         expect(getPlanById('kickstarter')?.weeklyClassLimit).toBe(2);
     });
 
+    it('single_session is a one-credit regular class pack', () => {
+        const plan = getPlanById('single_session');
+        expect(plan?.price).toBe(2000);
+        expect(plan?.category).toBe('class_pack');
+        expect(plan?.credits).toBe(1);
+        expect(plan?.weeklyClassLimit).toBe(1);
+    });
+
+    it('monthly memberships bill every month with weekly credits', () => {
+        const twice = getPlanById('twice_monthly');
+        expect(twice?.price).toBe(14400);
+        expect(twice?.credits).toBe(8);
+        expect(twice?.durationDays).toBe(30);
+        expect(twice?.razorpayInterval).toBe(1);
+        const thrice = getPlanById('thrice_monthly');
+        expect(thrice?.price).toBe(21600);
+        expect(thrice?.credits).toBe(12);
+        expect(thrice?.durationDays).toBe(30);
+        expect(thrice?.razorpayInterval).toBe(1);
+    });
+
     it('enforces expected weekly plan limits', () => {
+        expect(getPlanById('twice_monthly')?.weeklyClassLimit).toBe(2);
+        expect(getPlanById('thrice_monthly')?.weeklyClassLimit).toBe(3);
         expect(getPlanById('twice_quarterly')?.weeklyClassLimit).toBe(2);
         expect(getPlanById('twice_6mo')?.weeklyClassLimit).toBe(2);
         expect(getPlanById('thrice_quarterly')?.weeklyClassLimit).toBe(3);
@@ -80,8 +103,8 @@ describe('getPlanById', () => {
 });
 
 describe('VALID_PLAN_IDS', () => {
-    it('contains all 6 plan IDs', () => {
-        expect(VALID_PLAN_IDS).toHaveLength(6);
+    it('contains all 9 plan IDs', () => {
+        expect(VALID_PLAN_IDS).toHaveLength(9);
     });
 
     it('matches PLAN_CATALOG order', () => {

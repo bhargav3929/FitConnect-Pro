@@ -34,6 +34,7 @@ function getMondayWeekWindow(date: Date) {
 function getFallbackWeeklyLimit(planId: unknown): number {
     switch (planId) {
         case 'kickstarter':
+        case 'twice_monthly':
         case 'twice_quarterly':
         case 'twice_6mo':
         case 'weekly':
@@ -41,6 +42,7 @@ function getFallbackWeeklyLimit(planId: unknown): number {
         case 'quarterly':
         case 'twice_weekly':
             return 2;
+        case 'thrice_monthly':
         case 'thrice_quarterly':
         case 'thrice_6mo':
         case 'unlimited':

@@ -130,7 +130,7 @@ export async function grantOrderAccess(options: {
             return {
                 status: 'conflict' as const,
                 code: 'subscription-already-active',
-                message: 'Starter packs are only available before an active membership.',
+                message: 'Class packs are only available without an active membership.',
             };
         }
 

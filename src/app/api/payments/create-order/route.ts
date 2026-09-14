@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
         if (plan.category === 'class_pack' && plan.id !== 'drop_in' && isActiveMembership(userData?.subscription)) {
             return NextResponse.json(
-                { error: 'Starter packs are only available before an active membership.', code: 'already-exists' },
+                { error: 'Class packs are only available without an active membership.', code: 'already-exists' },
                 { status: 409 },
             );
         }

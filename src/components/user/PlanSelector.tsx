@@ -63,13 +63,15 @@ function PlanCard({
                         {displayPrice === 0 ? 'FREE' : formatPaise(applyGstToRupees(displayPrice).basePaise)}
                     </span>
                     <span className="text-olive-400 text-xs font-semibold pb-1">
-                        {plan.durationDays === 90
-                            ? '/ quarter'
-                            : plan.durationDays === 180
-                                ? '/ 6 months'
-                                : plan.credits === 1
-                                    ? '/ session'
-                                    : `/ ${plan.credits} classes`}
+                        {plan.category === 'membership' && plan.durationDays === 30
+                            ? '/ month'
+                            : plan.durationDays === 90
+                                ? '/ quarter'
+                                : plan.durationDays === 180
+                                    ? '/ 6 months'
+                                    : plan.credits === 1
+                                        ? '/ session'
+                                        : `/ ${plan.credits} classes`}
                     </span>
                 </div>
 
@@ -82,7 +84,7 @@ function PlanCard({
                 <div className="text-olive-300 text-xs font-medium">
                     {plan.credits === null ? 'Unlimited classes' : `${plan.credits} credit${plan.credits !== 1 ? 's' : ''}`}
                     {' · '}
-                    {plan.durationDays <= 30 ? `${plan.durationDays} days` : `${Math.round(plan.durationDays / 30)} months`}
+                    {plan.durationDays < 30 ? `${plan.durationDays} days` : plan.durationDays === 30 ? '1 month' : `${Math.round(plan.durationDays / 30)} months`}
                 </div>
             </div>
         </motion.button>

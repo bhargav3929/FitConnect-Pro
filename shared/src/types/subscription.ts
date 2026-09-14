@@ -4,9 +4,12 @@
 
 export type PlanId =
     | 'drop_in'
+    | 'single_session'
     | 'kickstarter'
+    | 'twice_monthly'
     | 'twice_quarterly'
     | 'twice_6mo'
+    | 'thrice_monthly'
     | 'thrice_quarterly'
     | 'thrice_6mo';
 
@@ -29,7 +32,7 @@ export interface PlanDefinition {
     razorpayPlanId?: string;
     /** Billing period for Razorpay (monthly + interval). */
     razorpayPeriod?: 'monthly';
-    /** Billing interval in months (3 = quarterly, 6 = halfyearly). */
+    /** Billing interval in months (1 = monthly, 3 = quarterly, 6 = halfyearly). */
     razorpayInterval?: number;
     /** Total billing cycles before subscription completes (large = effectively indefinite). */
     razorpayTotalCount?: number;
@@ -62,6 +65,28 @@ export const PLAN_CATALOG: PlanDefinition[] = [
         ],
     },
 
+    // ── Single drop-in class ─────────────────────────────────────
+    {
+        id: 'single_session',
+        name: 'Single Drop-In',
+        category: 'class_pack',
+        price: 2000,
+        credits: 1,
+        durationDays: 30,
+        maxClassesPerDay: 1,
+        weeklyClassLimit: 1,
+        advanceBookingDays: 14,
+        guestPasses: 0,
+        autoRenew: false,
+        tagline: 'One full class, whenever it suits you. No membership needed.',
+        features: [
+            '1 regular class credit',
+            '30 days to use it',
+            'Any class on the schedule',
+            'No commitment',
+        ],
+    },
+
     // ── Intro program ────────────────────────────────────────────
     {
         id: 'kickstarter',
@@ -86,6 +111,30 @@ export const PLAN_CATALOG: PlanDefinition[] = [
     },
 
     // ── 2x / week ────────────────────────────────────────────────
+    {
+        id: 'twice_monthly',
+        name: '2x Weekly · Monthly',
+        category: 'membership',
+        price: 14400,
+        credits: 8,
+        durationDays: 30,
+        maxClassesPerDay: 1,
+        weeklyClassLimit: 2,
+        advanceBookingDays: 14,
+        guestPasses: 0,
+        autoRenew: true,
+        razorpayPlanId: 'plan_TbsnQOrAyzbFk3',
+        razorpayPeriod: 'monthly',
+        razorpayInterval: 1,
+        razorpayTotalCount: 72,
+        tagline: 'Twice a week, billed monthly. The easiest way to get started.',
+        features: [
+            '2 classes per week',
+            '1 month validity',
+            '8 total credits',
+            '14-day advance booking',
+        ],
+    },
     {
         id: 'twice_quarterly',
         name: '2x Weekly · Quarterly',
@@ -138,6 +187,30 @@ export const PLAN_CATALOG: PlanDefinition[] = [
     },
 
     // ── 3x / week ────────────────────────────────────────────────
+    {
+        id: 'thrice_monthly',
+        name: '3x Weekly · Monthly',
+        category: 'membership',
+        price: 21600,
+        credits: 12,
+        durationDays: 30,
+        maxClassesPerDay: 1,
+        weeklyClassLimit: 3,
+        advanceBookingDays: 14,
+        guestPasses: 0,
+        autoRenew: true,
+        razorpayPlanId: 'plan_TbsnQsRQhc9kfE',
+        razorpayPeriod: 'monthly',
+        razorpayInterval: 1,
+        razorpayTotalCount: 72,
+        tagline: 'Three times a week, billed monthly. Build momentum without the long commitment.',
+        features: [
+            '3 classes per week',
+            '1 month validity',
+            '12 total credits',
+            '14-day advance booking',
+        ],
+    },
     {
         id: 'thrice_quarterly',
         name: '3x Weekly · Quarterly',

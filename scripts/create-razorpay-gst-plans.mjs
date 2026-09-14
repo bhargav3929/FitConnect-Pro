@@ -19,6 +19,7 @@
  * Usage:
  *   node scripts/create-razorpay-gst-plans.mjs                 # dry run
  *   node scripts/create-razorpay-gst-plans.mjs --apply         # creates plans
+ *   node scripts/create-razorpay-gst-plans.mjs --apply --only=twice_monthly,thrice_monthly
  *   RAZORPAY_KEY_ID=... RAZORPAY_KEY_SECRET=... node ... --apply   # live keys
  */
 import Razorpay from 'razorpay';
@@ -53,16 +54,23 @@ const fmt = (paise) => `₹${(paise / 100).toLocaleString('en-IN', { minimumFrac
 
 // Mirrored from shared/src/types/subscription.ts (membership tiers only).
 const MEMBERSHIPS = [
+    { planId: 'twice_monthly',    name: '2x Weekly · Monthly',   price: 14400,  foundingPrice: null,  period: 'monthly', interval: 1 },
+    { planId: 'thrice_monthly',   name: '3x Weekly · Monthly',   price: 21600,  foundingPrice: null,  period: 'monthly', interval: 1 },
     { planId: 'twice_quarterly',  name: '2x Weekly · Quarterly', price: 40800,  foundingPrice: 34680, period: 'monthly', interval: 3 },
     { planId: 'twice_6mo',        name: '2x Weekly · 6 Months',  price: 72000,  foundingPrice: 61200, period: 'monthly', interval: 6 },
     { planId: 'thrice_quarterly', name: '3x Weekly · Quarterly', price: 61200,  foundingPrice: 52020, period: 'monthly', interval: 3 },
     { planId: 'thrice_6mo',       name: '3x Weekly · 6 Months',  price: 108000, foundingPrice: 91800, period: 'monthly', interval: 6 },
 ];
 
+// --only=twice_monthly,thrice_monthly limits the run to specific plan ids.
+const onlyArg = process.argv.find((a) => a.startsWith('--only='));
+const only = onlyArg ? new Set(onlyArg.slice('--only='.length).split(',').map((s) => s.trim())) : null;
+
 const targets = [];
 for (const m of MEMBERSHIPS) {
+    if (only && !only.has(m.planId)) continue;
     targets.push({ ...m, variant: 'standard', amountRupees: m.price });
-    targets.push({ ...m, variant: 'founding', amountRupees: m.foundingPrice });
+    if (m.foundingPrice) targets.push({ ...m, variant: 'founding', amountRupees: m.foundingPrice });
 }
 
 const isLive = !KEY_ID.startsWith('rzp_test');

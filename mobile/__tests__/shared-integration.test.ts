@@ -47,7 +47,7 @@ describe('shared package integration from mobile', () => {
         const { PLAN_CATALOG, getPlanById, VALID_PLAN_IDS } = await import(
             '@fitconnect/shared/types/subscription'
         );
-        expect(PLAN_CATALOG).toHaveLength(6);
+        expect(PLAN_CATALOG).toHaveLength(9);
         expect(getPlanById('thrice_quarterly')?.price).toBe(61200);
         expect(VALID_PLAN_IDS).toContain('drop_in');
     });
