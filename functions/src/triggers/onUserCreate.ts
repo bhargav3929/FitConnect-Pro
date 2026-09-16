@@ -80,6 +80,35 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
             foundingWaitlistId = null;
         }
 
+        const defaultSubscription = {
+            planId: null,
+            planType: null,
+            planCategory: null,
+            startDate: null,
+            endDate: null,
+            status: 'expired',
+            classesRemaining: 0,
+            introCreditRemaining: 0,
+            maxClassesPerDay: 0,
+            weeklyClassLimit: 0,
+            advanceBookingDays: 0,
+            guestPassesRemaining: 0,
+            lastPaymentId: null,
+            autoRenew: false,
+            cancelAtPeriodEnd: false,
+            canceledAt: null,
+            razorpaySubscriptionId: null,
+            razorpayPlanId: null,
+            pendingPlanId: null,
+            pendingRazorpayPlanId: null,
+            pendingPlanEffectiveAt: null,
+            pendingPricingVariant: null,
+            pricingVariant: null,
+            lastSyncedAt: null,
+            kickstarterCreditsCarriedForward: false,
+            carriedForwardCredits: 0,
+        };
+
         const profileData: Record<string, unknown> = {
             uid: user.uid,
             email: user.email,
@@ -90,34 +119,6 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
             foundingWaitlistId,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-            subscription: {
-                planId: null,
-                planType: null,
-                planCategory: null,
-                startDate: null,
-                endDate: null,
-                status: 'expired',
-                classesRemaining: 0,
-                introCreditRemaining: 0,
-                maxClassesPerDay: 0,
-                weeklyClassLimit: 0,
-                advanceBookingDays: 0,
-                guestPassesRemaining: 0,
-                lastPaymentId: null,
-                autoRenew: false,
-                cancelAtPeriodEnd: false,
-                canceledAt: null,
-                razorpaySubscriptionId: null,
-                razorpayPlanId: null,
-                pendingPlanId: null,
-                pendingRazorpayPlanId: null,
-                pendingPlanEffectiveAt: null,
-                pendingPricingVariant: null,
-                pricingVariant: null,
-                lastSyncedAt: null,
-                kickstarterCreditsCarriedForward: false,
-                carriedForwardCredits: 0,
-            },
             stats: {
                 totalClassesAttended: 0,
                 currentStreak: 0,
@@ -129,7 +130,34 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
             profileData.name = user.displayName;
         }
 
-        await userRef.set(profileData, { merge: true });
+        // Auth events can be delayed. Never let a late onCreate event replace a
+        // subscription already granted by a successful payment transaction.
+        await db.runTransaction(async (transaction) => {
+            const existingUser = await transaction.get(userRef);
+
+            if (!existingUser.exists) {
+                transaction.set(userRef, {
+                    ...profileData,
+                    subscription: defaultSubscription,
+                });
+                return;
+            }
+
+            const existingData = existingUser.data() ?? {};
+            const patch: Record<string, unknown> = {
+                isFoundingMember,
+                foundingWaitlistId,
+                updatedAt: FieldValue.serverTimestamp(),
+            };
+
+            if (!existingData.uid) patch.uid = user.uid;
+            if (!existingData.email && user.email) patch.email = user.email;
+            if (!existingData.name && user.displayName) patch.name = user.displayName;
+            if (!existingData.subscription) patch.subscription = defaultSubscription;
+            if (!existingData.stats) patch.stats = profileData.stats;
+
+            transaction.set(userRef, patch, { merge: true });
+        });
 
         console.log(
             `User document created for ${user.uid}` +
