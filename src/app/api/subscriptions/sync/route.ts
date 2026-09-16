@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { fetchRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
         const localStatus = rawLocalStatus === 'canceled' && isStillUsable ? 'active' : rawLocalStatus;
         const periodAdvanced = !!currentEnd && (!localEnd || currentEnd.getTime() > localEnd.getTime() + 60 * 1000);
 
-        await userRef.update({
+        const userUpdate = {
             'subscription.planId': plan.id,
             'subscription.planCategory': plan.category,
             'subscription.status': localStatus,
@@ -117,7 +118,22 @@ export async function POST(req: NextRequest) {
             'subscription.pendingPricingVariant': rzpSub.has_scheduled_changes ? subscription?.pendingPricingVariant ?? null : null,
             'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
+        };
+        const batch = adminDb.batch();
+        batch.update(userRef, userUpdate);
+        recordSubscriptionEvent(batch, {
+            userId,
+            action: 'plan-synced',
+            source: 'member',
+            reason: `Synced from Razorpay subscription ${rzpSub.id} (status ${rzpSub.status}); local status ${localStatus}`
+                + (periodAdvanced ? ', new billing period so credits reset' : ', credits kept'),
+            actorId: userId,
+            razorpaySubscriptionId: rzpSub.id,
+            before: subscription ?? null,
+            changes: subscriptionChanges(userUpdate),
+            metadata: { route: 'subscriptions/sync', razorpayStatus: rzpSub.status, razorpayPlanId: rzpSub.plan_id },
         });
+        await batch.commit();
 
         return NextResponse.json({
             success: true,

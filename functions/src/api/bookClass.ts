@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent } from '../lib/subscriptionEvents';
 import { getClassEnd } from '../scheduled/class-time';
 
 interface BookClassData {
@@ -267,10 +268,34 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
                     'subscription.introCreditRemaining': FieldValue.increment(-1),
                     updatedAt: now,
                 });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-consumed',
+                    source: 'member',
+                    reason: `Member booked a class (callable); 1 intro credit used`,
+                    actorId: userId,
+                    bookingId: newBookingRef.id,
+                    classId: classId,
+                    before: subscription,
+                    changes: { introCreditRemaining: -1 },
+                    metadata: { creditType: isIntroClass ? 'intro_credit' : 'standard' },
+                });
             } else {
                 transaction.update(userRef, {
                     'subscription.classesRemaining': FieldValue.increment(-1),
                     updatedAt: now,
+                });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-consumed',
+                    source: 'member',
+                    reason: `Member booked a class (callable); 1 class credit used`,
+                    actorId: userId,
+                    bookingId: newBookingRef.id,
+                    classId: classId,
+                    before: subscription,
+                    changes: { classesRemaining: -1 },
+                    metadata: { creditType: isIntroClass ? 'intro_credit' : 'standard' },
                 });
             }
 

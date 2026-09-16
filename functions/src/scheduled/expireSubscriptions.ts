@@ -1,8 +1,11 @@
 import * as functions from 'firebase-functions';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '../lib/subscriptionEvents';
 import { db } from '../init';
 
-const BATCH_SIZE = 450;
+// Each member costs two writes (the user doc and its ledger row); Firestore
+// batches allow 500.
+const BATCH_SIZE = 240;
 
 /**
  * Expires subscriptions whose access window has ended.
@@ -40,12 +43,25 @@ export const expireSubscriptions = functions.pubsub
                 if (nextStatus === 'canceled') canceledCount += 1;
                 else expiredCount += 1;
 
-                batch.update(doc.ref, {
+                const userUpdate = {
                     'subscription.status': nextStatus,
                     'subscription.autoRenew': false,
                     'subscription.cancelAtPeriodEnd': false,
                     'subscription.expiredAt': FieldValue.serverTimestamp(),
                     updatedAt: FieldValue.serverTimestamp(),
+                };
+                batch.update(doc.ref, userUpdate);
+                recordSubscriptionEvent(batch, {
+                    userId: doc.id,
+                    action: nextStatus === 'canceled' ? 'plan-canceled' : 'plan-expired',
+                    source: 'scheduled',
+                    reason: nextStatus === 'canceled'
+                        ? 'Paid period ended after the member canceled renewal'
+                        : `Plan end date passed (${String(subscription?.planId ?? 'unknown plan')})`,
+                    razorpaySubscriptionId: typeof subscription?.razorpaySubscriptionId === 'string' ? subscription.razorpaySubscriptionId : null,
+                    before: subscription ?? null,
+                    changes: subscriptionChanges(userUpdate),
+                    metadata: { job: 'expireSubscriptions' },
                 });
             }
 

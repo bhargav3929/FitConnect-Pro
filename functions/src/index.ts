@@ -13,6 +13,7 @@ export { completeClasses } from './scheduled/completeClasses';
 export { sendClassReminders } from './scheduled/sendClassReminders';
 export { sendPlanExpiryReminders } from './scheduled/sendPlanExpiryReminders';
 export { checkPushReceipts } from './scheduled/checkPushReceipts';
+export { checkPaymentGrants } from './scheduled/checkPaymentGrants';
 
 // HTTPS callable functions
 export { activateSubscription } from './api/activateSubscription';

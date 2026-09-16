@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from 'next/server';
 import { sendTrainerBookingAlert } from '@/lib/email/trainer-booking-alert';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 import { getPlanById, LEGACY_PLAN_MAP } from '@fitconnect/shared/types/subscription';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
 import { classEndAtStudio, classStartAtStudio } from '@fitconnect/shared/schedule/class-time';
@@ -324,15 +325,51 @@ export async function POST(req: NextRequest) {
                     'subscription.introCreditRemaining': FieldValue.increment(-1),
                     updatedAt: now,
                 });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-consumed',
+                    source: 'member',
+                    reason: `Member booked a class; 1 intro credit used`,
+                    actorId: userId,
+                    bookingId: newBookingRef.id,
+                    classId: classId,
+                    before: subscription,
+                    changes: { introCreditRemaining: -1 },
+                    metadata: { creditType: usedIntroCredit ? 'intro_credit' : usedGuestPass ? 'guest_pass' : 'standard' },
+                });
             } else if (usedGuestPass) {
                 transaction.update(userRef, {
                     'subscription.guestPassesRemaining': FieldValue.increment(-1),
                     updatedAt: now,
                 });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-consumed',
+                    source: 'member',
+                    reason: `Member booked a class; 1 guest pass used`,
+                    actorId: userId,
+                    bookingId: newBookingRef.id,
+                    classId: classId,
+                    before: subscription,
+                    changes: { guestPassesRemaining: -1 },
+                    metadata: { creditType: usedIntroCredit ? 'intro_credit' : usedGuestPass ? 'guest_pass' : 'standard' },
+                });
             } else if (!isUnlimited) {
                 transaction.update(userRef, {
                     'subscription.classesRemaining': FieldValue.increment(-1),
                     updatedAt: now,
+                });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-consumed',
+                    source: 'member',
+                    reason: `Member booked a class; 1 class credit used`,
+                    actorId: userId,
+                    bookingId: newBookingRef.id,
+                    classId: classId,
+                    before: subscription,
+                    changes: { classesRemaining: -1 },
+                    metadata: { creditType: usedIntroCredit ? 'intro_credit' : usedGuestPass ? 'guest_pass' : 'standard' },
                 });
             } else {
                 // Unlimited — just update timestamp

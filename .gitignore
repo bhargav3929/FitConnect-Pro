@@ -72,3 +72,6 @@ shared/node_modules/
 *.aab
 *.apk
 certificates.zip
+
+# keep the functions env template
+!functions/.env.example

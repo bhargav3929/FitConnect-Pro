@@ -15,6 +15,16 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // A self-created profile may only carry the empty default subscription;
+    // any plan or credits must come from a payment through the Admin SDK.
+    function isEmptyDefaultSubscription(sub) {
+      return sub.get('planId', null) == null
+          && sub.get('status', 'expired') == 'expired'
+          && sub.get('classesRemaining', 0) == 0
+          && sub.get('introCreditRemaining', 0) == 0
+          && sub.get('guestPassesRemaining', 0) == 0;
+    }
+
     // Users collection
     // - Read: owner can read own profile; admin can read all (for member management)
     // - Create: authenticated users can create their own profile
@@ -22,8 +32,15 @@ service cloud.firestore {
     // - Subscription and stats fields are updated by Cloud Functions (Admin SDK bypasses rules)
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow create: if isOwner(userId)
+                    && !request.resource.data.keys().hasAny(['isFoundingMember', 'foundingWaitlistId', 'role'])
+                    && (!('subscription' in request.resource.data)
+                        || isEmptyDefaultSubscription(request.resource.data.subscription));
+      // Members edit their own profile, never their entitlements. Plans and
+      // credits are written only by API routes and Cloud Functions (Admin SDK).
+      allow update: if isOwner(userId)
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['subscription', 'isFoundingMember', 'foundingWaitlistId', 'stats', 'role']);
 
       // Expo push tokens, one document per device.
       // - The owner registers and removes their own device tokens.
@@ -140,6 +157,15 @@ service cloud.firestore {
     //   client ever needs to read them.
     match /pushTickets/{ticketId} {
       allow read, write: if false;
+    }
+
+    // Subscription ledger
+    // - Append-only history of every change to users/{uid}.subscription.
+    // - Written only by API routes and Cloud Functions (Admin SDK); read by
+    //   admins through /api/admin/members/events. Never client-writable.
+    match /subscriptionEvents/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // Feedback collection (public form submissions)

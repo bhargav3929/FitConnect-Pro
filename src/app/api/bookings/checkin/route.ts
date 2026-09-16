@@ -76,7 +76,13 @@ export async function POST(req: NextRequest) {
             if (!isAdmin && action !== 'attended') {
                 throw { status: 403, error: 'Only admins can mark no-show', code: 'permission-denied' };
             }
-            if (booking.status !== 'confirmed') {
+            // Members may only check in from a confirmed booking. Admins may also
+            // flip attended <-> no-show to correct mistakes and auto no-shows.
+            const adminEditable = booking.status === 'attended' || booking.status === 'no-show';
+            if (booking.status !== 'confirmed' && !(isAdmin && adminEditable)) {
+                throw { status: 400, error: `Booking is already ${booking.status}`, code: 'failed-precondition' };
+            }
+            if (booking.status === action) {
                 throw { status: 400, error: `Booking is already ${booking.status}`, code: 'failed-precondition' };
             }
 
@@ -102,7 +108,9 @@ export async function POST(req: NextRequest) {
             const now = FieldValue.serverTimestamp();
             transaction.update(bookingRef, {
                 status: action as CheckInAction,
-                ...(action === 'attended' ? { attendedAt: now } : { noShowAt: now }),
+                ...(action === 'attended'
+                    ? { attendedAt: now, noShowAt: FieldValue.delete(), noShowReason: FieldValue.delete() }
+                    : { noShowAt: now, attendedAt: FieldValue.delete() }),
                 checkedInBy: isAdmin ? 'admin' : 'user',
                 updatedAt: now,
             });

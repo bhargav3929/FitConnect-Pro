@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { normalizePhone, PHONE_VALIDATION_MESSAGE } from '@fitconnect/shared/utils/phone';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent } from '@/lib/subscription-events';
 
 // ---------------------------------------------------------------------------
 // Helper: verify admin token
@@ -95,37 +96,61 @@ export async function POST(req: NextRequest) {
         });
 
         const now = FieldValue.serverTimestamp();
+        const userRef = adminDb.collection('users').doc(authUser.uid);
 
-        await adminDb.collection('users').doc(authUser.uid).set({
+        const identity = {
             uid: authUser.uid,
             email: normalizedEmail,
             name: trimmedName,
             displayName: trimmedName,
             ...(normalizedPhone ? { phone: normalizedPhone } : {}),
             age: typeof age === 'number' ? age : 0,
-            fitnessGoals: [],
-            isFoundingMember: false,
             createdBy: authResult.uid,
-            createdAt: now,
             updatedAt: now,
-            subscription: {
-                planId: null,
-                planCategory: null,
-                startDate: null,
-                endDate: null,
-                status: 'expired',
-                classesRemaining: 0,
-                introCreditRemaining: 0,
-                maxClassesPerDay: 0,
-                weeklyClassLimit: 0,
-                advanceBookingDays: 0,
-                guestPassesRemaining: 0,
-            },
-            stats: {
-                totalClassesAttended: 0,
-                currentStreak: 0,
-                longestStreak: 0,
-            },
+        };
+
+        // The onUserCreate function may already have written this document, so
+        // only a brand-new document gets a default subscription. An existing
+        // subscription is never overwritten from here.
+        await adminDb.runTransaction(async (transaction) => {
+            const existing = await transaction.get(userRef);
+            if (existing.exists) {
+                transaction.set(userRef, identity, { merge: true });
+                return;
+            }
+            transaction.set(userRef, {
+                ...identity,
+                fitnessGoals: [],
+                isFoundingMember: false,
+                createdAt: now,
+                subscription: {
+                    planId: null,
+                    planCategory: null,
+                    startDate: null,
+                    endDate: null,
+                    status: 'expired',
+                    classesRemaining: 0,
+                    introCreditRemaining: 0,
+                    maxClassesPerDay: 0,
+                    weeklyClassLimit: 0,
+                    advanceBookingDays: 0,
+                    guestPassesRemaining: 0,
+                },
+                stats: {
+                    totalClassesAttended: 0,
+                    currentStreak: 0,
+                    longestStreak: 0,
+                },
+            });
+            recordSubscriptionEvent(transaction, {
+                userId: authUser.uid,
+                action: 'profile-created',
+                source: 'admin',
+                reason: 'Admin created the member; profile starts with an empty subscription',
+                actorId: authResult.uid,
+                before: null,
+                changes: { planId: null, status: 'expired', classesRemaining: 0, introCreditRemaining: 0 },
+            });
         });
 
         return NextResponse.json({ success: true, uid: authUser.uid });

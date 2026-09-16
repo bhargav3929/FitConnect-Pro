@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent } from '../lib/subscriptionEvents';
 
 interface DeleteClassData {
     classId: string;
@@ -72,10 +73,32 @@ export const deleteClass = functions.https.onCall(async (data: DeleteClassData, 
                         'subscription.introCreditRemaining': FieldValue.increment(1),
                         updatedAt: now,
                     });
+                    recordSubscriptionEvent(transaction, {
+                        userId: bookingData.userId,
+                        action: 'credit-restored',
+                        source: 'admin',
+                        reason: `Class canceled by admin (callable); booking canceled and 1 intro credit restored`,
+                        actorId: context.auth?.uid ?? null,
+                        bookingId: bookingDoc.id,
+                        classId: classId,
+                        changes: { introCreditRemaining: 1 },
+                        metadata: { creditType: creditType },
+                    });
                 } else if (creditType === 'guest_pass') {
                     transaction.update(userRef, {
                         'subscription.guestPassesRemaining': FieldValue.increment(1),
                         updatedAt: now,
+                    });
+                    recordSubscriptionEvent(transaction, {
+                        userId: bookingData.userId,
+                        action: 'credit-restored',
+                        source: 'admin',
+                        reason: `Class canceled by admin (callable); booking canceled and 1 guest pass restored`,
+                        actorId: context.auth?.uid ?? null,
+                        bookingId: bookingDoc.id,
+                        classId: classId,
+                        changes: { guestPassesRemaining: 1 },
+                        metadata: { creditType: creditType },
                     });
                 } else if (creditType === 'unlimited') {
                     transaction.update(userRef, {
@@ -85,6 +108,17 @@ export const deleteClass = functions.https.onCall(async (data: DeleteClassData, 
                     transaction.update(userRef, {
                         'subscription.classesRemaining': FieldValue.increment(1),
                         updatedAt: now,
+                    });
+                    recordSubscriptionEvent(transaction, {
+                        userId: bookingData.userId,
+                        action: 'credit-restored',
+                        source: 'admin',
+                        reason: `Class canceled by admin (callable); booking canceled and 1 class credit restored`,
+                        actorId: context.auth?.uid ?? null,
+                        bookingId: bookingDoc.id,
+                        classId: classId,
+                        changes: { classesRemaining: 1 },
+                        metadata: { creditType: creditType },
                     });
                 }
             }

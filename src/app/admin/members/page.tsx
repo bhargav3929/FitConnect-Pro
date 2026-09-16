@@ -30,9 +30,13 @@ import {
 import {
     getAllMembers,
     getUserBookingsPage,
+    getMemberSubscriptionEvents,
     callCreateMember,
     callDeleteMember,
+    type MemberPaymentSummary,
 } from "@fitconnect/shared/firebase/firestore"
+import type { SubscriptionEvent } from "@fitconnect/shared/types/subscriptionEvent"
+import { SubscriptionTimeline } from "@/components/admin/SubscriptionTimeline"
 import { UserProfile } from "@fitconnect/shared/types/user"
 import { formatPhone, normalizePhone, PHONE_VALIDATION_MESSAGE } from "@fitconnect/shared/utils/phone"
 import { Booking } from "@fitconnect/shared/types/booking"
@@ -69,6 +73,9 @@ export default function MembersPage() {
     const [page, setPage] = useState(1)
     const [selectedMember, setSelectedMember] = useState<UserProfile | null>(null)
     const [memberBookings, setMemberBookings] = useState<Booking[]>([])
+    const [memberEvents, setMemberEvents] = useState<SubscriptionEvent[]>([])
+    const [memberPayments, setMemberPayments] = useState<MemberPaymentSummary[]>([])
+    const [isLoadingEvents, setIsLoadingEvents] = useState(true)
     const [isLoadingBookings, setIsLoadingBookings] = useState(true)
 
     // Add-member dialog
@@ -97,12 +104,28 @@ export default function MembersPage() {
                 if (!cancelled) setIsLoadingBookings(false)
             })
 
+        getMemberSubscriptionEvents(selectedMember.uid)
+            .then((result) => {
+                if (cancelled) return
+                setMemberEvents(result.events)
+                setMemberPayments(result.payments)
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load this member's subscription history")
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoadingEvents(false)
+            })
+
         // Reset on close so the next member never briefly shows the previous
         // member's classes.
         return () => {
             cancelled = true
             setMemberBookings([])
             setIsLoadingBookings(true)
+            setMemberEvents([])
+            setMemberPayments([])
+            setIsLoadingEvents(true)
         }
     }, [selectedMember])
 
@@ -781,6 +804,9 @@ export default function MembersPage() {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Payments + subscription ledger */}
+                                <SubscriptionTimeline events={memberEvents} payments={memberPayments} isLoading={isLoadingEvents} />
 
                                 {/* Address */}
                                 <div className="bg-peach-100/60 border border-peach-400/15 p-4">

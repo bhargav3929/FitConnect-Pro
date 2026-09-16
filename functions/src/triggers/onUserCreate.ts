@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent } from '../lib/subscriptionEvents';
 
 const FOUNDING_MEMBER_LIMIT = 25;
 
@@ -140,6 +141,15 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
                     ...profileData,
                     subscription: defaultSubscription,
                 });
+                recordSubscriptionEvent(transaction, {
+                    userId: user.uid,
+                    action: 'profile-created',
+                    source: 'auth-trigger',
+                    reason: 'New account: profile created with an empty subscription',
+                    before: null,
+                    changes: { ...defaultSubscription },
+                    metadata: { isFoundingMember, provider: user.providerData?.[0]?.providerId ?? null },
+                });
                 return;
             }
 
@@ -157,6 +167,17 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
             if (!existingData.stats) patch.stats = profileData.stats;
 
             transaction.set(userRef, patch, { merge: true });
+            recordSubscriptionEvent(transaction, {
+                userId: user.uid,
+                action: 'profile-repaired',
+                source: 'auth-trigger',
+                reason: patch.subscription
+                    ? 'Late auth event: profile existed without a subscription, default added'
+                    : 'Late auth event: profile already existed, subscription left untouched',
+                before: (existingData.subscription as Record<string, unknown> | undefined) ?? null,
+                changes: patch.subscription ? { ...defaultSubscription } : {},
+                metadata: { patchedFields: Object.keys(patch) },
+            });
         });
 
         console.log(

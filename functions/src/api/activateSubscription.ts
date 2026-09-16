@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '../lib/subscriptionEvents';
 
 export const activateSubscription = functions.https.onCall(async (data, context) => {
     // Validate authentication
@@ -40,7 +41,8 @@ export const activateSubscription = functions.https.onCall(async (data, context)
         endDate.setDate(endDate.getDate() + duration);
 
         // Update user subscription
-        await db.collection('users').doc(userId).update({
+        const userRef = db.collection('users').doc(userId);
+        const userUpdate = {
             'subscription.planType': planType,
             'subscription.startDate': startDate,
             'subscription.endDate': endDate,
@@ -52,6 +54,20 @@ export const activateSubscription = functions.https.onCall(async (data, context)
             'subscription.advanceBookingDays': 14,
             'subscription.guestPassesRemaining': 0,
             'updatedAt': FieldValue.serverTimestamp()
+        };
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            transaction.update(userRef, userUpdate);
+            recordSubscriptionEvent(transaction, {
+                userId,
+                action: 'plan-granted',
+                source: 'member',
+                reason: `Legacy activateSubscription callable granted ${planType} for ${duration} days`,
+                actorId: userId,
+                before: (userDoc.data()?.subscription as Record<string, unknown> | undefined) ?? null,
+                changes: subscriptionChanges(userUpdate),
+                metadata: { callable: 'activateSubscription' },
+            });
         });
 
         // Future: Send confirmation email

@@ -11,7 +11,7 @@ import {
     signInWithCredential,
     User as FirebaseUser,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, type Unsubscribe } from 'firebase/firestore'
+import { doc, getDoc, setDoc, onSnapshot, runTransaction, serverTimestamp, type Unsubscribe } from 'firebase/firestore'
 import { auth, db } from '../firebase/config'
 import { ClientUser } from '../types/client'
 import {
@@ -103,7 +103,7 @@ async function createClientProfile(uid: string, email: string, name: string, pho
         subscription: { ...DEFAULT_SUBSCRIPTION },
         stats: { ...DEFAULT_STATS },
     }
-    const profile: ClientUser = {
+    const fallback: ClientUser = {
         id: uid,
         name,
         email,
@@ -112,11 +112,23 @@ async function createClientProfile(uid: string, email: string, name: string, pho
         stats: { ...DEFAULT_STATS },
     }
     try {
-        await setDoc(doc(db, 'users', uid), profileData, { merge: true })
+        // A profile is only ever created once. If a document already exists
+        // (for example the read that led here failed, or the onUserCreate
+        // function won the race) we must not write a default subscription over
+        // a plan the member may already have paid for.
+        return await runTransaction(db, async (transaction) => {
+            const ref = doc(db, 'users', uid)
+            const existing = await transaction.get(ref)
+            if (existing.exists()) {
+                return buildClientUser(uid, existing.data() as Record<string, unknown>)
+            }
+            transaction.set(ref, profileData)
+            return fallback
+        })
     } catch {
         // Firestore write may fail if rules aren't set up yet — still return the profile
+        return fallback
     }
-    return profile
 }
 
 async function backfillClientProfile(uid: string, data: Record<string, unknown>) {

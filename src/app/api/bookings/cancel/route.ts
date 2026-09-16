@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 
 export async function POST(req: NextRequest) {
     try {
@@ -115,10 +116,32 @@ export async function POST(req: NextRequest) {
                     'subscription.guestPassesRemaining': FieldValue.increment(1),
                     updatedAt: now,
                 });
+                recordSubscriptionEvent(transaction, {
+                    userId: bookingData.userId,
+                    action: 'credit-restored',
+                    source: isAdmin ? 'admin' : 'member',
+                    reason: `Booking canceled${isAdmin ? ' by admin' : ' by member'}; 1 guest pass restored`,
+                    actorId: userId,
+                    bookingId: bookingId,
+                    classId: bookingData.classId,
+                    changes: { guestPassesRemaining: 1 },
+                    metadata: { creditType: creditType },
+                });
             } else if (creditType === 'intro_credit') {
                 transaction.update(userRef, {
                     'subscription.introCreditRemaining': FieldValue.increment(1),
                     updatedAt: now,
+                });
+                recordSubscriptionEvent(transaction, {
+                    userId: bookingData.userId,
+                    action: 'credit-restored',
+                    source: isAdmin ? 'admin' : 'member',
+                    reason: `Booking canceled${isAdmin ? ' by admin' : ' by member'}; 1 intro credit restored`,
+                    actorId: userId,
+                    bookingId: bookingId,
+                    classId: bookingData.classId,
+                    changes: { introCreditRemaining: 1 },
+                    metadata: { creditType: creditType },
                 });
             } else if (creditType === 'unlimited') {
                 transaction.update(userRef, {
@@ -128,6 +151,17 @@ export async function POST(req: NextRequest) {
                 transaction.update(userRef, {
                     'subscription.classesRemaining': FieldValue.increment(1),
                     updatedAt: now,
+                });
+                recordSubscriptionEvent(transaction, {
+                    userId: bookingData.userId,
+                    action: 'credit-restored',
+                    source: isAdmin ? 'admin' : 'member',
+                    reason: `Booking canceled${isAdmin ? ' by admin' : ' by member'}; 1 class credit restored`,
+                    actorId: userId,
+                    bookingId: bookingId,
+                    classId: bookingData.classId,
+                    changes: { classesRemaining: 1 },
+                    metadata: { creditType: creditType },
                 });
             }
         });

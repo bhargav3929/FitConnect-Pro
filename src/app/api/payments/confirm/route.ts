@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 
 function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
     if (!subscription || subscription.status !== 'active') return false;
@@ -13,6 +14,8 @@ function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | u
 }
 
 export async function POST(req: NextRequest) {
+    // Captured as soon as known so a rejection can be written to the ledger.
+    let ledger: { userId: string; paymentId: string | null } | null = null;
     try {
         // Auth
         const authHeader = req.headers.get('Authorization');
@@ -44,6 +47,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        ledger = { userId, paymentId };
         const paymentRef = adminDb.collection('payments').doc(paymentId);
         const userRef = adminDb.collection('users').doc(userId);
 
@@ -100,7 +104,7 @@ export async function POST(req: NextRequest) {
             });
 
             // Update user subscription
-            transaction.update(userRef, {
+            const userUpdate = {
                 'subscription.planId': plan.id,
                 'subscription.planCategory': plan.category,
                 'subscription.startDate': now,
@@ -115,6 +119,18 @@ export async function POST(req: NextRequest) {
                 'subscription.lastPaymentId': paymentRef.id,
                 'subscription.autoRenew': plan.autoRenew,
                 updatedAt: FieldValue.serverTimestamp(),
+            };
+            transaction.update(userRef, userUpdate);
+            recordSubscriptionEvent(transaction, {
+                userId,
+                action: 'plan-granted',
+                source: 'checkout-callback',
+                reason: `Confirmed payment for ${plan.name} (${plan.id}); access until ${endDate.toISOString()}`,
+                actorId: userId,
+                paymentId: paymentRef.id,
+                before: currentSub ?? null,
+                changes: subscriptionChanges(userUpdate),
+                metadata: { route: 'payments/confirm', amount: paymentData.amount ?? null },
             });
 
             return {
@@ -135,6 +151,17 @@ export async function POST(req: NextRequest) {
     } catch (error: unknown) {
         if (error && typeof error === 'object' && 'status' in error) {
             const e = error as { status: number; error: string; code: string };
+            if (ledger) {
+                await recordSubscriptionEvent(null, {
+                    userId: ledger.userId,
+                    action: 'grant-rejected',
+                    source: 'checkout-callback',
+                    reason: `${e.error} (${e.code})`,
+                    actorId: ledger.userId,
+                    paymentId: ledger.paymentId,
+                    metadata: { route: 'payments/confirm' },
+                }).catch((err: unknown) => console.error('[confirm] failed to record rejection', err));
+            }
             return NextResponse.json({ error: e.error, code: e.code }, { status: e.status });
         }
         console.error('Error confirming payment:', error);

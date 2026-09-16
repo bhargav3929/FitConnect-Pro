@@ -5,6 +5,7 @@ import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { verifyWebhookSignature, type RazorpaySubscriptionEntity } from '@fitconnect/shared/payments/razorpay-processor';
 import { getPlanIdForRazorpayPlanId, getPricingVariantForRazorpayPlanId } from '@/lib/razorpay/pricing';
 import { findPaymentRefForOrder, grantOrderAccess } from '@/lib/payments/order-access';
+import { recordSubscriptionEvent, subscriptionChanges, type SubscriptionEventInput } from '@/lib/subscription-events';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,27 +55,58 @@ function getEventDocumentId(event: RazorpayWebhookEvent): string {
         ?? `${event.event}:${sub?.id ?? payment?.id ?? 'unknown'}:${event.created_at ?? Date.now()}`;
 }
 
+/**
+ * Per-request context. `notes` collects every decision the handlers make
+ * (skipped, no user found, granted, ...) and is stored on the webhook event
+ * document, so an event that was "processed" but changed nothing can still be
+ * explained from Firestore.
+ */
+interface WebhookContext {
+    eventId: string;
+    notes: string[];
+}
+
+function note(ctx: WebhookContext, message: string) {
+    ctx.notes.push(message);
+    console.warn(`[webhook] ${ctx.eventId}: ${message}`);
+}
+
 async function registerWebhookEvent(event: RazorpayWebhookEvent): Promise<boolean> {
     const eventRef = adminDb.collection('razorpayWebhookEvents').doc(getEventDocumentId(event));
+    const sub = extractSubscription(event.payload);
+    const payment = extractPayment(event.payload);
+    const order = extractOrder(event.payload);
     return adminDb.runTransaction(async (transaction) => {
         const existing = await transaction.get(eventRef);
-        if (existing.exists) return false;
+        if (existing.exists) {
+            transaction.update(eventRef, { duplicateCount: FieldValue.increment(1), lastDuplicateAt: FieldValue.serverTimestamp() });
+            return false;
+        }
         transaction.set(eventRef, {
             id: eventRef.id,
             event: event.event,
+            razorpayEventCreatedAt: fromUnixSeconds(event.created_at),
+            razorpaySubscriptionId: sub?.id ?? null,
+            razorpayPaymentId: typeof payment?.id === 'string' ? payment.id : null,
+            razorpayOrderId: (typeof payment?.order_id === 'string' && payment.order_id) || (typeof order?.id === 'string' && order.id) || null,
+            // Raw payload kept for replay and dispute; it is Razorpay's own data.
+            payload: event.payload,
             receivedAt: FieldValue.serverTimestamp(),
             processedAt: null,
             status: 'processing',
+            notes: [],
+            duplicateCount: 0,
         });
         return true;
     });
 }
 
-async function markWebhookEventProcessed(event: RazorpayWebhookEvent, status: 'processed' | 'failed', error?: unknown) {
-    const eventRef = adminDb.collection('razorpayWebhookEvents').doc(getEventDocumentId(event));
+async function markWebhookEventProcessed(ctx: WebhookContext, status: 'processed' | 'failed', error?: unknown) {
+    const eventRef = adminDb.collection('razorpayWebhookEvents').doc(ctx.eventId);
     await eventRef.set({
         status,
         processedAt: FieldValue.serverTimestamp(),
+        notes: ctx.notes,
         ...(error ? { error: error instanceof Error ? error.message : String(error) } : {}),
     }, { merge: true });
 }
@@ -126,12 +158,13 @@ function getAccessWindow(sub: RazorpaySubscriptionEntity, durationDays: number):
 }
 
 async function applySubscriptionAccess(
+    ctx: WebhookContext,
     sub: RazorpaySubscriptionEntity,
     options: { resetCredits: boolean; paymentId?: string; source: string },
 ) {
     const userRef = await findUserRefForSubscription(sub.id);
     if (!userRef) {
-        console.warn(`[webhook] ${options.source}: no user found for subscriptionId=${sub.id}`);
+        note(ctx, `${options.source}: no user found for subscriptionId=${sub.id}`);
         return;
     }
 
@@ -139,7 +172,16 @@ async function applySubscriptionAccess(
     const pricingVariant = await getPricingVariantForRazorpayPlanId(sub.plan_id);
     const plan = planId ? getPlanById(planId) : null;
     if (!plan) {
-        console.warn(`[webhook] ${options.source}: no app plan mapped for razorpayPlanId=${sub.plan_id}`);
+        note(ctx, `${options.source}: no app plan mapped for razorpayPlanId=${sub.plan_id}`);
+        await recordSubscriptionEvent(null, {
+            userId: userRef.id,
+            action: 'grant-rejected',
+            source: 'webhook',
+            reason: `${options.source}: no app plan mapped for Razorpay plan ${sub.plan_id}`,
+            razorpaySubscriptionId: sub.id,
+            razorpayPaymentId: options.paymentId ?? null,
+            webhookEventId: ctx.eventId,
+        });
         return;
     }
 
@@ -148,7 +190,10 @@ async function applySubscriptionAccess(
 
     await adminDb.runTransaction(async (transaction) => {
         const freshUserDoc = await transaction.get(userRef);
-        if (!freshUserDoc.exists) return;
+        if (!freshUserDoc.exists) {
+            note(ctx, `${options.source}: user ${userRef.id} disappeared before grant`);
+            return;
+        }
 
         const currentSub = freshUserDoc.data()?.subscription as Record<string, unknown> | undefined;
         const currentIntroCredit = typeof currentSub?.introCreditRemaining === 'number'
@@ -176,7 +221,7 @@ async function applySubscriptionAccess(
             ? plan.credits
             : existingClassesRemaining ?? activationCredits;
 
-        transaction.update(userRef, {
+        const userUpdate = {
             'subscription.planId': plan.id,
             'subscription.planCategory': plan.category,
             'subscription.startDate': accessWindow.startDate,
@@ -205,7 +250,28 @@ async function applySubscriptionAccess(
             'subscription.pendingPricingVariant': sub.has_scheduled_changes ? currentSub?.pendingPricingVariant ?? null : null,
             'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
+        };
+        transaction.update(userRef, userUpdate);
+
+        const action = options.source === 'subscription.activated'
+            ? 'plan-granted'
+            : options.resetCredits ? 'plan-renewed' : 'plan-changed';
+        recordSubscriptionEvent(transaction, {
+            userId: userRef.id,
+            action,
+            source: 'webhook',
+            reason: `${options.source}: ${plan.name} (${plan.id}) active until ${accessWindow.endDate.toISOString()}`
+                + (options.resetCredits ? ', credits reset' : ', credits kept')
+                + (carriedKickstarterCredits > 0 ? `, ${carriedKickstarterCredits} intro credits carried forward` : ''),
+            paymentId: paymentDocId,
+            razorpayPaymentId: options.paymentId ?? null,
+            razorpaySubscriptionId: sub.id,
+            webhookEventId: ctx.eventId,
+            before: currentSub ?? null,
+            changes: subscriptionChanges(userUpdate),
+            metadata: { razorpayStatus: sub.status ?? null, razorpayPlanId: sub.plan_id },
         });
+        ctx.notes.push(`${options.source}: ${action} for user ${userRef.id}`);
     });
 }
 
@@ -225,140 +291,187 @@ export async function POST(req: NextRequest) {
     const shouldProcess = await registerWebhookEvent(event);
     if (!shouldProcess) return NextResponse.json({ received: true, duplicate: true });
 
+    const ctx: WebhookContext = { eventId: getEventDocumentId(event), notes: [] };
+
     try {
         switch (event.event) {
             case 'subscription.activated':
-                await handleSubscriptionActivated(event.payload);
+                await handleSubscriptionActivated(ctx, event.payload);
                 break;
             case 'subscription.charged':
             case 'invoice.paid':
-                await handleSubscriptionCharged(event.payload);
+                await handleSubscriptionCharged(ctx, event.payload);
                 break;
             case 'subscription.updated':
-                await handleSubscriptionUpdated(event.payload);
+                await handleSubscriptionUpdated(ctx, event.payload);
                 break;
             case 'subscription.halted':
-                await handleSubscriptionHalted(event.payload);
+                await handleSubscriptionHalted(ctx, event.payload);
                 break;
             case 'subscription.cancelled':
-                await handleSubscriptionCancelled(event.payload);
+                await handleSubscriptionCancelled(ctx, event.payload);
                 break;
             case 'subscription.completed':
-                await handleSubscriptionCompleted(event.payload);
+                await handleSubscriptionCompleted(ctx, event.payload);
                 break;
             case 'order.paid':
             case 'payment.captured':
-                await handleOrderPaid(event.payload, event.event);
+                await handleOrderPaid(ctx, event.payload, event.event);
                 break;
             case 'payment.failed':
-                await handlePaymentFailed(event.payload);
+                await handlePaymentFailed(ctx, event.payload);
                 break;
             default:
+                ctx.notes.push(`ignored: no handler for ${event.event}`);
                 break;
         }
-        await markWebhookEventProcessed(event, 'processed');
+        await markWebhookEventProcessed(ctx, 'processed');
     } catch (error) {
         console.error(`[webhook] Error handling ${event.event}:`, error);
-        await markWebhookEventProcessed(event, 'failed', error);
+        await markWebhookEventProcessed(ctx, 'failed', error);
     }
 
     return NextResponse.json({ received: true });
 }
 
-async function handleSubscriptionActivated(payload: Record<string, unknown>) {
+async function handleSubscriptionActivated(ctx: WebhookContext, payload: Record<string, unknown>) {
     const sub = extractSubscription(payload);
-    if (!sub) return;
-    await applySubscriptionAccess(sub, { resetCredits: false, source: 'subscription.activated' });
+    if (!sub) { note(ctx, 'subscription.activated: payload has no subscription entity'); return; }
+    await applySubscriptionAccess(ctx, sub, { resetCredits: false, source: 'subscription.activated' });
 }
 
-async function handleSubscriptionCharged(payload: Record<string, unknown>) {
+async function handleSubscriptionCharged(ctx: WebhookContext, payload: Record<string, unknown>) {
     const sub = extractSubscription(payload);
-    if (!sub) return;
+    if (!sub) { note(ctx, 'subscription.charged: payload has no subscription entity'); return; }
     const payment = extractPayment(payload);
-    await applySubscriptionAccess(sub, {
+    await applySubscriptionAccess(ctx, sub, {
         resetCredits: true,
         paymentId: typeof payment?.id === 'string' ? payment.id : undefined,
         source: 'subscription.charged',
     });
 }
 
-async function handleSubscriptionUpdated(payload: Record<string, unknown>) {
+/**
+ * Applies a small subscription update in a transaction and writes the matching
+ * ledger row with the before snapshot, for the status-only webhook handlers.
+ */
+async function updateSubscriptionWithEvent(
+    ctx: WebhookContext,
+    userRef: DocumentReference,
+    buildUpdate: (current: Record<string, unknown> | undefined) => Record<string, unknown>,
+    event: Omit<SubscriptionEventInput, 'userId' | 'source' | 'before' | 'changes' | 'webhookEventId'>,
+) {
+    await adminDb.runTransaction(async (transaction) => {
+        const doc = await transaction.get(userRef);
+        if (!doc.exists) {
+            note(ctx, `${event.reason}: user ${userRef.id} not found`);
+            return;
+        }
+        const current = doc.data()?.subscription as Record<string, unknown> | undefined;
+        const update = buildUpdate(current);
+        transaction.update(userRef, update);
+        recordSubscriptionEvent(transaction, {
+            ...event,
+            userId: userRef.id,
+            source: 'webhook',
+            webhookEventId: ctx.eventId,
+            before: current ?? null,
+            changes: subscriptionChanges(update),
+        });
+        ctx.notes.push(`${event.action} for user ${userRef.id}`);
+    });
+}
+
+async function handleSubscriptionUpdated(ctx: WebhookContext, payload: Record<string, unknown>) {
     const sub = extractSubscription(payload);
-    if (!sub) return;
+    if (!sub) { note(ctx, 'subscription.updated: payload has no subscription entity'); return; }
 
     if (sub.has_scheduled_changes) {
         const userRef = await findUserRefForSubscription(sub.id);
-        if (!userRef) return;
+        if (!userRef) { note(ctx, `subscription.updated: no user found for subscriptionId=${sub.id}`); return; }
         const pendingPlanId = await getPlanIdForRazorpayPlanId(sub.plan_id);
         const pendingPricingVariant = await getPricingVariantForRazorpayPlanId(sub.plan_id);
+        const effectiveAt = fromUnixSeconds(sub.change_scheduled_at);
 
-        await userRef.update({
+        await updateSubscriptionWithEvent(ctx, userRef, () => ({
             'subscription.pendingPlanId': pendingPlanId,
             'subscription.pendingRazorpayPlanId': sub.plan_id,
-            'subscription.pendingPlanEffectiveAt': fromUnixSeconds(sub.change_scheduled_at),
+            'subscription.pendingPlanEffectiveAt': effectiveAt,
             'subscription.pendingPricingVariant': pendingPricingVariant,
             'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
+        }), {
+            action: 'plan-change-scheduled',
+            reason: `subscription.updated: change to ${pendingPlanId ?? sub.plan_id} scheduled for ${effectiveAt?.toISOString() ?? 'next cycle'}`,
+            razorpaySubscriptionId: sub.id,
         });
         return;
     }
 
     // A mid-cycle plan update should preserve the app-calculated credit balance.
     // Renewals are handled by subscription.charged / invoice.paid, which resets credits.
-    await applySubscriptionAccess(sub, { resetCredits: false, source: 'subscription.updated' });
+    await applySubscriptionAccess(ctx, sub, { resetCredits: false, source: 'subscription.updated' });
 }
 
-async function handleSubscriptionHalted(payload: Record<string, unknown>) {
+async function handleSubscriptionHalted(ctx: WebhookContext, payload: Record<string, unknown>) {
     const sub = extractSubscription(payload);
-    if (!sub) return;
+    if (!sub) { note(ctx, 'subscription.halted: payload has no subscription entity'); return; }
 
     const userRef = await findUserRefForSubscription(sub.id);
-    if (!userRef) return;
+    if (!userRef) { note(ctx, `subscription.halted: no user found for subscriptionId=${sub.id}`); return; }
 
-    await userRef.update({
+    await updateSubscriptionWithEvent(ctx, userRef, () => ({
         'subscription.status': 'halted',
         'subscription.autoRenew': false,
         'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
+    }), {
+        action: 'plan-halted',
+        reason: 'subscription.halted: Razorpay halted the subscription after repeated failed charges',
+        razorpaySubscriptionId: sub.id,
     });
 }
 
-async function handleSubscriptionCancelled(payload: Record<string, unknown>) {
+async function handleSubscriptionCancelled(ctx: WebhookContext, payload: Record<string, unknown>) {
     const sub = extractSubscription(payload);
-    if (!sub) return;
+    if (!sub) { note(ctx, 'subscription.cancelled: payload has no subscription entity'); return; }
 
     const userRef = await findUserRefForSubscription(sub.id);
-    if (!userRef) return;
+    if (!userRef) { note(ctx, `subscription.cancelled: no user found for subscriptionId=${sub.id}`); return; }
 
-    await adminDb.runTransaction(async (transaction) => {
-        const doc = await transaction.get(userRef);
-        if (!doc.exists) return;
-        const subscription = doc.data()?.subscription as Record<string, unknown> | undefined;
+    await updateSubscriptionWithEvent(ctx, userRef, (subscription) => {
         const endDate = toDate(subscription?.endDate) ?? fromUnixSeconds(sub.current_end) ?? fromUnixSeconds(sub.ended_at);
         const isStillUsable = !!endDate && endDate > new Date();
-
-        transaction.update(userRef, {
+        return {
             'subscription.status': isStillUsable ? 'active' : 'canceled',
             'subscription.autoRenew': false,
             'subscription.cancelAtPeriodEnd': isStillUsable,
             'subscription.canceledAt': subscription?.canceledAt ?? FieldValue.serverTimestamp(),
             'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-        });
+        };
+    }, {
+        action: 'plan-canceled',
+        reason: 'subscription.cancelled: renewal stopped; access continues until the paid period ends',
+        razorpaySubscriptionId: sub.id,
     });
 }
 
-async function handleSubscriptionCompleted(payload: Record<string, unknown>) {
+async function handleSubscriptionCompleted(ctx: WebhookContext, payload: Record<string, unknown>) {
     const sub = extractSubscription(payload);
-    if (!sub) return;
+    if (!sub) { note(ctx, 'subscription.completed: payload has no subscription entity'); return; }
 
     const userRef = await findUserRefForSubscription(sub.id);
-    if (!userRef) return;
+    if (!userRef) { note(ctx, `subscription.completed: no user found for subscriptionId=${sub.id}`); return; }
 
-    await userRef.update({
+    await updateSubscriptionWithEvent(ctx, userRef, () => ({
         'subscription.autoRenew': false,
         'subscription.lastSyncedAt': FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
+    }), {
+        action: 'plan-canceled',
+        reason: 'subscription.completed: all billing cycles finished, auto-renew turned off',
+        razorpaySubscriptionId: sub.id,
     });
 }
 
@@ -372,12 +485,18 @@ async function handleSubscriptionCompleted(payload: Record<string, unknown>) {
  * Subscription payments carry a subscription_id and are handled by
  * subscription.charged / invoice.paid, so they are skipped here.
  */
-async function handleOrderPaid(payload: Record<string, unknown>, source: string) {
+async function handleOrderPaid(ctx: WebhookContext, payload: Record<string, unknown>, source: string) {
     const payment = extractPayment(payload);
     const order = extractOrder(payload);
 
-    if (payment && typeof payment.subscription_id === 'string' && payment.subscription_id) return;
-    if (payment && payment.status !== 'captured') return;
+    if (payment && typeof payment.subscription_id === 'string' && payment.subscription_id) {
+        ctx.notes.push(`${source}: skipped, belongs to subscription ${payment.subscription_id}`);
+        return;
+    }
+    if (payment && payment.status !== 'captured') {
+        ctx.notes.push(`${source}: skipped, payment status is ${String(payment.status)}`);
+        return;
+    }
 
     const orderId = (typeof payment?.order_id === 'string' && payment.order_id)
         || (typeof order?.id === 'string' && order.id)
@@ -385,13 +504,13 @@ async function handleOrderPaid(payload: Record<string, unknown>, source: string)
     const razorpayPaymentId = typeof payment?.id === 'string' ? payment.id : null;
 
     if (!orderId || !razorpayPaymentId) {
-        console.warn(`[webhook] ${source}: missing order id or payment id`);
+        note(ctx, `${source}: missing order id or payment id`);
         return;
     }
 
     const paymentRef = await findPaymentRefForOrder(orderId);
     if (!paymentRef) {
-        console.warn(`[webhook] ${source}: no payment doc for orderId=${orderId}`);
+        note(ctx, `${source}: no payment doc for orderId=${orderId} (order not created by this app?)`);
         return;
     }
 
@@ -404,7 +523,10 @@ async function handleOrderPaid(payload: Record<string, unknown>, source: string)
             phone: typeof payment?.contact === 'string' ? payment.contact : undefined,
         },
         source,
+        webhookEventId: ctx.eventId,
     });
+
+    ctx.notes.push(`${source}: grant result ${result.status}${result.status === 'conflict' ? ` (${result.code}: ${result.message})` : ''}`);
 
     if (result.status === 'conflict') {
         console.error(`[webhook] ${source}: could not grant access for orderId=${orderId}: ${result.code} ${result.message}`);
@@ -417,9 +539,9 @@ async function handleOrderPaid(payload: Record<string, unknown>, source: string)
     }
 }
 
-async function handlePaymentFailed(payload: Record<string, unknown>) {
+async function handlePaymentFailed(ctx: WebhookContext, payload: Record<string, unknown>) {
     const payment = extractPayment(payload);
-    if (!payment) return;
+    if (!payment) { note(ctx, 'payment.failed: payload has no payment entity'); return; }
 
     const subscriptionId = typeof payment.subscription_id === 'string'
         ? payment.subscription_id
@@ -435,7 +557,23 @@ async function handlePaymentFailed(payload: Record<string, unknown>) {
         recordedAt: FieldValue.serverTimestamp(),
     });
 
+    const failureReason = String(payment.error_description ?? payment.description ?? 'unknown');
+    ctx.notes.push(`payment.failed: ${failureReason}`);
+
     if (subscriptionId) {
-        await markSubscriptionPayment(subscriptionId, 'failed', typeof payment.id === 'string' ? payment.id : undefined);
+        const paymentDocId = await markSubscriptionPayment(subscriptionId, 'failed', typeof payment.id === 'string' ? payment.id : undefined);
+        const userRef = await findUserRefForSubscription(subscriptionId);
+        if (userRef) {
+            await recordSubscriptionEvent(null, {
+                userId: userRef.id,
+                action: 'grant-rejected',
+                source: 'webhook',
+                reason: `payment.failed: Razorpay reported "${failureReason}"; no plan change made`,
+                paymentId: paymentDocId,
+                razorpayPaymentId: typeof payment.id === 'string' ? payment.id : null,
+                razorpaySubscriptionId: subscriptionId,
+                webhookEventId: ctx.eventId,
+            });
+        }
     }
 }

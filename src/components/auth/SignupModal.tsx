@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { auth, db } from "@fitconnect/shared/firebase/config"
 import { useClientAuthStore } from "@fitconnect/shared/stores/clientAuthStore"
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { doc, runTransaction, serverTimestamp } from "firebase/firestore"
 import { toast } from "sonner"
 
 const signupSchema = z.object({
@@ -104,7 +104,12 @@ export function SignupModal({ onSuccess, onClose, trigger }: SignupModalProps) {
                 }
             }
 
-            await setDoc(doc(db, "users", userCredential.user.uid), userData, { merge: true })
+            // Create-only: never overwrite a profile (and its subscription) that already exists.
+            await runTransaction(db, async (transaction) => {
+                const ref = doc(db, "users", userCredential.user.uid)
+                const existing = await transaction.get(ref)
+                if (!existing.exists()) transaction.set(ref, userData)
+            })
 
             toast.success("Account created successfully!")
             setOpen(false)

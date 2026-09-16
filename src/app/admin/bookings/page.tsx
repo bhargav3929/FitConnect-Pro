@@ -250,18 +250,20 @@ function BookingsPageContent() {
         }
     }
 
-    const handleMarkNoShow = async (bookingId: string) => {
+    const handleSetAttendance = async (bookingId: string, action: 'attended' | 'no-show') => {
         setMarkingNoShowId(bookingId)
         try {
-            await callCheckInBooking(bookingId, 'no-show')
-            setBookings(prev => prev.map(b =>
-                b.id === bookingId ? { ...b, status: 'no-show' as const } : b
-            ))
+            await callCheckInBooking(bookingId, action)
+            const apply = (list: Booking[]) => list.map(b =>
+                b.id === bookingId ? { ...b, status: action } : b
+            )
+            setBookings(apply)
+            setSearchSnapshot(prev => prev ? { ...prev, results: apply(prev.results) } : prev)
             const stats = await getBookingStats()
             setBookingStats(stats)
-            toast.success("Booking marked as no-show")
+            toast.success(action === 'attended' ? "Booking marked as attended" : "Booking marked as no-show")
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : "Failed to mark no-show"
+            const message = err instanceof Error ? err.message : "Failed to update booking"
             toast.error(message)
         } finally {
             setMarkingNoShowId(null)
@@ -581,8 +583,20 @@ function BookingsPageContent() {
                                                     {booking.status === 'confirmed' && (
                                                         <>
                                                             <DropdownMenuItem
+                                                                className="text-green-700 focus:bg-green-500/10 focus:text-green-800 cursor-pointer gap-2"
+                                                                onClick={() => handleSetAttendance(booking.id, 'attended')}
+                                                                disabled={isActionLoading}
+                                                            >
+                                                                {markingNoShowId === booking.id ? (
+                                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                                ) : (
+                                                                    <UserCheck className="w-4 h-4" />
+                                                                )}
+                                                                Mark Attended
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
                                                                 className="text-yellow-700 focus:bg-yellow-500/10 focus:text-yellow-800 cursor-pointer gap-2"
-                                                                onClick={() => handleMarkNoShow(booking.id)}
+                                                                onClick={() => handleSetAttendance(booking.id, 'no-show')}
                                                                 disabled={isActionLoading}
                                                             >
                                                                 {markingNoShowId === booking.id ? (
@@ -606,7 +620,35 @@ function BookingsPageContent() {
                                                             </DropdownMenuItem>
                                                         </>
                                                     )}
-                                                    {booking.status !== 'confirmed' && (
+                                                    {booking.status === 'no-show' && (
+                                                        <DropdownMenuItem
+                                                            className="text-green-700 focus:bg-green-500/10 focus:text-green-800 cursor-pointer gap-2"
+                                                            onClick={() => handleSetAttendance(booking.id, 'attended')}
+                                                            disabled={isActionLoading}
+                                                        >
+                                                            {markingNoShowId === booking.id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <UserCheck className="w-4 h-4" />
+                                                            )}
+                                                            Mark Attended
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {booking.status === 'attended' && (
+                                                        <DropdownMenuItem
+                                                            className="text-yellow-700 focus:bg-yellow-500/10 focus:text-yellow-800 cursor-pointer gap-2"
+                                                            onClick={() => handleSetAttendance(booking.id, 'no-show')}
+                                                            disabled={isActionLoading}
+                                                        >
+                                                            {markingNoShowId === booking.id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <Ban className="w-4 h-4" />
+                                                            )}
+                                                            Mark No Show
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {booking.status === 'canceled' && (
                                                         <DropdownMenuItem disabled className="text-olive-300 gap-2">
                                                             No actions available
                                                         </DropdownMenuItem>
@@ -633,8 +675,8 @@ function BookingsPageContent() {
                                     transition={{ delay: 0.3 + idx * 0.05 }}
                                     className="p-4 hover:bg-peach-100/60 transition-colors"
                                 >
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-center gap-2.5">
+                                <div className="flex items-start justify-between gap-2 mb-3">
+                                    <div className="flex items-center gap-2.5 min-w-0">
                                         <div className="w-8 h-8 bg-peach-200/60 rounded-full flex items-center justify-center flex-shrink-0">
                                             <User className="w-4 h-4 text-olive-400" />
                                         </div>
@@ -652,8 +694,8 @@ function BookingsPageContent() {
                                             <p className="text-xs text-olive-300 mt-0.5">Spot #{booking.spotNumber}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-1 app-badge-text rounded-sm ${getStatusColor(booking.status)}`}>
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 app-badge-text rounded-sm whitespace-nowrap ${getStatusColor(booking.status)}`}>
                                             {getStatusIcon(booking.status)}
                                             {booking.status}
                                         </span>
@@ -667,8 +709,20 @@ function BookingsPageContent() {
                                                 {booking.status === 'confirmed' && (
                                                     <>
                                                         <DropdownMenuItem
+                                                            className="text-green-700 focus:bg-green-500/10 focus:text-green-800 cursor-pointer gap-2"
+                                                            onClick={() => handleSetAttendance(booking.id, 'attended')}
+                                                            disabled={isActionLoading}
+                                                        >
+                                                            {markingNoShowId === booking.id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <UserCheck className="w-4 h-4" />
+                                                            )}
+                                                            Mark Attended
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
                                                             className="text-yellow-700 focus:bg-yellow-500/10 focus:text-yellow-800 cursor-pointer gap-2"
-                                                            onClick={() => handleMarkNoShow(booking.id)}
+                                                            onClick={() => handleSetAttendance(booking.id, 'no-show')}
                                                             disabled={isActionLoading}
                                                         >
                                                             {markingNoShowId === booking.id ? (
@@ -692,7 +746,35 @@ function BookingsPageContent() {
                                                         </DropdownMenuItem>
                                                     </>
                                                 )}
-                                                {booking.status !== 'confirmed' && (
+                                                {booking.status === 'no-show' && (
+                                                    <DropdownMenuItem
+                                                        className="text-green-700 focus:bg-green-500/10 focus:text-green-800 cursor-pointer gap-2"
+                                                        onClick={() => handleSetAttendance(booking.id, 'attended')}
+                                                        disabled={isActionLoading}
+                                                    >
+                                                        {markingNoShowId === booking.id ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <UserCheck className="w-4 h-4" />
+                                                        )}
+                                                        Mark Attended
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {booking.status === 'attended' && (
+                                                    <DropdownMenuItem
+                                                        className="text-yellow-700 focus:bg-yellow-500/10 focus:text-yellow-800 cursor-pointer gap-2"
+                                                        onClick={() => handleSetAttendance(booking.id, 'no-show')}
+                                                        disabled={isActionLoading}
+                                                    >
+                                                        {markingNoShowId === booking.id ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <Ban className="w-4 h-4" />
+                                                        )}
+                                                        Mark No Show
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {booking.status === 'canceled' && (
                                                     <DropdownMenuItem disabled className="text-olive-300 gap-2">
                                                         No actions available
                                                     </DropdownMenuItem>

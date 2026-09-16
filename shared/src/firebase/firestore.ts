@@ -24,6 +24,7 @@ import { getApiBaseUrl } from './api-config';
 import { UserProfile } from '../types/user';
 import { ClassSession, SpotSelection } from '../types/class';
 import { Booking } from '../types/booking';
+import type { SubscriptionEvent } from '../types/subscriptionEvent';
 import { Trainer } from '../types/trainer';
 import { AppNotification, NotificationType } from '../types/notification';
 import { PushPlatform, PushToken, isExpoPushToken, pushTokenId } from '../types/pushToken';
@@ -1157,6 +1158,35 @@ export async function callDeleteMember(
     return apiFetch<{ success: boolean; deletedBookings: number; releasedClasses: number }>(
         '/api/admin/members',
         { method: 'DELETE', body: { userId } },
+    );
+}
+
+export interface MemberPaymentSummary {
+    id: string;
+    planId: string | null;
+    planName: string | null;
+    status: string | null;
+    amount: number | null;
+    totalPaise: number | null;
+    currency: string | null;
+    razorpayPaymentId: string | null;
+    razorpayOrderId: string | null;
+    razorpaySubscriptionId: string | null;
+    grantedBy: string | null;
+    needsReview: boolean;
+    reviewReason: string | null;
+    createdAt: string | null;
+    paidAt: string | null;
+}
+
+/** Subscription ledger for one member, newest first, with their payments. */
+export async function getMemberSubscriptionEvents(
+    userId: string,
+    limit = 100,
+): Promise<{ events: SubscriptionEvent[]; payments: MemberPaymentSummary[] }> {
+    const params = new URLSearchParams({ userId, limit: String(limit) });
+    return apiFetch<{ events: SubscriptionEvent[]; payments: MemberPaymentSummary[] }>(
+        `/api/admin/members/events?${params.toString()}`,
     );
 }
 

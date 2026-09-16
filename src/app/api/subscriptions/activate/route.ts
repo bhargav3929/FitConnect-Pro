@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById, LEGACY_PLAN_MAP, VALID_PLAN_IDS, type PlanId } from '@fitconnect/shared/types/subscription';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 import { processPayment } from '@fitconnect/shared/payments/mock-processor';
 import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
 
@@ -111,7 +112,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Update user subscription
-        await userRef.update({
+        const userUpdate = {
             'subscription.planId': plan.id,
             'subscription.planCategory': plan.category,
             'subscription.startDate': now,
@@ -125,7 +126,21 @@ export async function POST(req: NextRequest) {
             'subscription.guestPassesRemaining': plan.guestPasses,
             'subscription.lastPaymentId': paymentRef.id,
             'updatedAt': FieldValue.serverTimestamp(),
+        };
+        const batch = adminDb.batch();
+        batch.update(userRef, userUpdate);
+        recordSubscriptionEvent(batch, {
+            userId,
+            action: 'plan-granted',
+            source: 'checkout-callback',
+            reason: `Mock payment activated ${plan.name} (${plan.id}); access until ${endDate.toISOString()}`,
+            actorId: userId,
+            paymentId: paymentRef.id,
+            before: currentSub ?? null,
+            changes: subscriptionChanges(userUpdate),
+            metadata: { route: 'subscriptions/activate', processor: 'mock', amount: chargeAmount },
         });
+        await batch.commit();
 
         return NextResponse.json({ success: true, endDate: endDate.toISOString() });
     } catch (error) {

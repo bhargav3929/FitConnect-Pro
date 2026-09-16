@@ -3,6 +3,7 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { verifyPaymentSignature } from '@fitconnect/shared/payments/razorpay-processor';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 
 function getPaymentPricingVariant(paymentData: Record<string, unknown>): 'standard' | 'founding' {
     return paymentData.metadata &&
@@ -27,6 +28,8 @@ function isActiveMembership(subscription: Record<string, unknown> | undefined | 
 }
 
 export async function POST(req: NextRequest) {
+    // Captured as soon as known so a rejection can be written to the ledger.
+    let ledger: { userId: string; paymentId: string | null; razorpayPaymentId: string | null; razorpaySubscriptionId: string | null } | null = null;
     try {
         const authHeader = req.headers.get('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -71,6 +74,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'paymentId is required', code: 'invalid-argument' }, { status: 400 });
         }
 
+        ledger = { userId, paymentId, razorpayPaymentId: razorpay_payment_id, razorpaySubscriptionId: razorpay_subscription_id };
         const paymentRef = adminDb.collection('payments').doc(paymentId);
         const userRef = adminDb.collection('users').doc(userId);
 
@@ -119,7 +123,7 @@ export async function POST(req: NextRequest) {
                 paidAt: now,
             });
 
-            transaction.update(userRef, {
+            const userUpdate = {
                 'subscription.planId': plan.id,
                 'subscription.planCategory': plan.category,
                 'subscription.startDate': now,
@@ -143,6 +147,21 @@ export async function POST(req: NextRequest) {
                 'subscription.pendingPlanEffectiveAt': null,
                 'subscription.pendingPricingVariant': null,
                 updatedAt: FieldValue.serverTimestamp(),
+            };
+            transaction.update(userRef, userUpdate);
+            recordSubscriptionEvent(transaction, {
+                userId,
+                action: 'plan-granted',
+                source: 'checkout-callback',
+                reason: `Membership ${plan.name} (${plan.id}) started; access until ${endDate.toISOString()}`
+                    + (carriedKickstarterCredits > 0 ? `, ${carriedKickstarterCredits} intro credits carried forward` : ''),
+                actorId: userId,
+                paymentId: paymentRef.id,
+                razorpayPaymentId: razorpay_payment_id,
+                razorpaySubscriptionId: razorpay_subscription_id,
+                before: currentSub ?? null,
+                changes: subscriptionChanges(userUpdate),
+                metadata: { route: 'payments/verify-subscription', pricingVariant },
             });
 
             return { endDate: endDate.toISOString(), planId: plan.id, planName: plan.name, credits: membershipCredits };
@@ -152,6 +171,19 @@ export async function POST(req: NextRequest) {
     } catch (error: unknown) {
         if (error && typeof error === 'object' && 'status' in error) {
             const e = error as { status: number; error: string; code: string };
+            if (ledger) {
+                await recordSubscriptionEvent(null, {
+                    userId: ledger.userId,
+                    action: 'grant-rejected',
+                    source: 'checkout-callback',
+                    reason: `${e.error} (${e.code})`,
+                    actorId: ledger.userId,
+                    paymentId: ledger.paymentId,
+                    razorpayPaymentId: ledger.razorpayPaymentId,
+                    razorpaySubscriptionId: ledger.razorpaySubscriptionId,
+                    metadata: { route: 'payments/verify-subscription' },
+                }).catch((err: unknown) => console.error('[verify-subscription] failed to record rejection', err));
+            }
             return NextResponse.json({ error: e.error, code: e.code }, { status: e.status });
         }
         console.error('Error verifying subscription payment:', error);

@@ -178,22 +178,24 @@ export default function CheckInPage() {
     });
 
     return (
-        <div className="flex h-[calc(100vh-5rem)] -m-6 lg:-m-8 overflow-hidden">
+        <div className="flex flex-col md:flex-row h-[calc(100vh-5rem)] -m-6 lg:-m-8 overflow-hidden">
             {/* ── Left panel: class list ─────────────────────────────── */}
-            <aside className="w-56 lg:w-64 flex-shrink-0 border-r border-peach-400/20 bg-peach-50 flex flex-col overflow-y-auto">
-                <div className="p-4 border-b border-peach-400/20">
+            <aside className="w-full md:w-56 lg:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-peach-400/20 bg-peach-50 flex flex-col md:overflow-y-auto max-h-[45vh] md:max-h-none">
+                <div className="p-3 md:p-4 border-b border-peach-400/20 flex items-center justify-between gap-3 flex-wrap md:block">
+                    <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-terra-400">
                         {eyebrowLabel}
                     </p>
                     <p className="text-sm font-bold text-olive-600 mt-0.5 leading-snug">
                         {dateLabel}
                     </p>
-                    <p className="text-xs text-olive-400 mt-1">
+                    <p className="text-xs text-olive-400 mt-1 hidden md:block">
                         {isToday ? clockLabel : "Roster view"}
                     </p>
+                    </div>
 
                     {/* Day navigation */}
-                    <div className="flex items-center gap-1 mt-3">
+                    <div className="flex items-center gap-1 mt-0 md:mt-3 min-w-[13rem] flex-1 md:flex-none">
                         <button
                             onClick={() => setSelectedDate((d) => addDays(d, -1))}
                             aria-label="Previous day"
@@ -223,7 +225,7 @@ export default function CheckInPage() {
                     {!isToday && (
                         <button
                             onClick={() => setSelectedDate(new Date())}
-                            className="mt-2 text-[10px] font-bold uppercase tracking-[0.15em] text-terra-400 hover:text-terra-300 transition-colors"
+                            className="mt-0 md:mt-2 text-[10px] font-bold uppercase tracking-[0.15em] text-terra-400 hover:text-terra-300 transition-colors"
                         >
                             Jump to today
                         </button>
@@ -231,22 +233,22 @@ export default function CheckInPage() {
                 </div>
 
                 {classesLoading ? (
-                    <div className="p-3 space-y-2">
+                    <div className="p-3 flex md:flex-col gap-2 md:space-y-0">
                         {[1, 2, 3].map((i) => (
                             <div
                                 key={i}
-                                className="h-16 bg-peach-200/50 animate-pulse rounded"
+                                className="h-16 w-36 md:w-auto flex-shrink-0 bg-peach-200/50 animate-pulse rounded"
                             />
                         ))}
                     </div>
                 ) : classes.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center p-6 text-center">
+                    <div className="flex-1 flex items-center justify-center p-4 md:p-6 text-center">
                         <p className="text-olive-300 text-sm">
                             No classes scheduled on this day
                         </p>
                     </div>
                 ) : (
-                    <nav className="flex-1 p-2 space-y-1">
+                    <nav className="flex-1 p-2 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible md:space-y-0">
                         {classes.map((cls) => {
                             const isSelected = selectedClass?.id === cls.id;
                             const nowActive = isClassNow(cls);
@@ -254,7 +256,7 @@ export default function CheckInPage() {
                                 <button
                                     key={cls.id}
                                     onClick={() => setSelectedClassId(cls.id)}
-                                    className={`w-full text-left p-3 rounded-lg transition-all relative ${
+                                    className={`w-36 md:w-full flex-shrink-0 text-left p-3 rounded-lg transition-all relative ${
                                         isSelected
                                             ? "bg-terra-400 shadow-lg shadow-terra-400/20"
                                             : nowActive
@@ -318,14 +320,14 @@ export default function CheckInPage() {
                 ) : (
                     <>
                         {/* Panel header */}
-                        <header className="flex items-center justify-between px-6 py-4 border-b border-peach-400/20 bg-peach-50 flex-wrap gap-3">
+                        <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-peach-400/20 bg-peach-50 flex-wrap gap-3">
                             <div>
-                                <h2 className="text-xl font-black text-olive-600 font-display leading-none">
+                                <h2 className="text-lg sm:text-xl font-black text-olive-600 font-display leading-tight">
                                     {selectedClass.classType || "Class"}{" "}
                                     <span className="text-terra-400">·</span>{" "}
                                     {fmtTime(selectedClass.startTime)}
                                     {isClassNow(selectedClass) && (
-                                        <span className="ml-3 text-sm font-bold text-terra-400 border border-terra-400/40 px-2 py-0.5 align-middle">
+                                        <span className="ml-2 sm:ml-3 text-xs sm:text-sm font-bold text-terra-400 border border-terra-400/40 px-2 py-0.5 align-middle whitespace-nowrap">
                                             IN SESSION
                                         </span>
                                     )}
@@ -338,7 +340,7 @@ export default function CheckInPage() {
                             </div>
 
                             {/* Attendance counters */}
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-4 sm:gap-6">
                                 <div className="text-center">
                                     <p className="text-3xl font-black text-green-700 leading-none">
                                         {attended}
@@ -392,7 +394,7 @@ export default function CheckInPage() {
                                         return (
                                             <li
                                                 key={booking.id}
-                                                className={`flex items-center gap-4 px-6 py-4 transition-colors ${
+                                                className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 transition-colors ${
                                                     isAttended
                                                         ? "bg-green-50/50"
                                                         : isNoShow
@@ -401,7 +403,7 @@ export default function CheckInPage() {
                                                 }`}
                                             >
                                                 {/* Spot badge */}
-                                                <div className="w-10 h-10 flex-shrink-0 border border-peach-400/30 bg-peach-200/40 flex items-center justify-center">
+                                                <div className="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 border border-peach-400/30 bg-peach-200/40 flex items-center justify-center">
                                                     <span className="text-sm font-black text-olive-500">
                                                         #{booking.spotNumber}
                                                     </span>
@@ -410,7 +412,7 @@ export default function CheckInPage() {
                                                 {/* Name + credit type */}
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 flex-wrap">
-                                                        <p className="font-bold text-olive-600 truncate">
+                                                        <p className="font-bold text-olive-600 truncate text-sm sm:text-base">
                                                             {name}
                                                         </p>
                                                         {booking.isGuest && (
@@ -440,27 +442,29 @@ export default function CheckInPage() {
                                                                 handleAction(booking.id, "attended")
                                                             }
                                                             disabled={isLoading}
-                                                            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-terra-400 text-peach-50 text-sm font-bold hover:bg-terra-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            aria-label="Check In"
+                                                            className="inline-flex items-center gap-1.5 px-3 sm:px-5 py-2.5 bg-terra-400 text-peach-50 text-sm font-bold hover:bg-terra-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
                                                             <CheckCircle className="w-4 h-4" />
-                                                            Check In
+                                                            <span className="hidden sm:inline">Check In</span>
                                                         </button>
                                                         <button
                                                             onClick={() =>
                                                                 handleAction(booking.id, "no-show")
                                                             }
                                                             disabled={isLoading}
-                                                            className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-peach-400/40 text-olive-400 text-sm font-bold hover:border-olive-400/60 hover:text-olive-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            aria-label="No Show"
+                                                            className="inline-flex items-center gap-1.5 px-3 sm:px-5 py-2.5 border border-peach-400/40 text-olive-400 text-sm font-bold hover:border-olive-400/60 hover:text-olive-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
                                                             <X className="w-4 h-4" />
-                                                            No Show
+                                                            <span className="hidden sm:inline">No Show</span>
                                                         </button>
                                                     </div>
                                                 )}
 
                                                 {isAttended && (
                                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                                        <span className="inline-flex items-center gap-1.5 text-sm font-bold text-green-700 px-3 py-1.5 bg-green-100 border border-green-200">
+                                                        <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-green-700 px-2 sm:px-3 py-1.5 bg-green-100 border border-green-200">
                                                             <CheckCircle className="w-4 h-4" />
                                                             Attended
                                                         </span>
@@ -471,12 +475,13 @@ export default function CheckInPage() {
                                                             }
                                                             disabled={isLoading}
                                                             title="Mark as No Show instead"
-                                                            className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-olive-500 hover:bg-peach-200/50 rounded transition-colors disabled:opacity-40"
+                                                            aria-label="Mark as No Show instead"
+                                                            className="w-9 h-9 flex items-center justify-center border border-peach-400/30 text-olive-400 hover:text-olive-600 hover:bg-peach-200/50 transition-colors disabled:opacity-40"
                                                         >
                                                             {isLoading ? (
-                                                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                                                <RefreshCw className="w-4 h-4 animate-spin" />
                                                             ) : (
-                                                                <X className="w-3.5 h-3.5" />
+                                                                <X className="w-4 h-4" />
                                                             )}
                                                         </button>
                                                     </div>
@@ -484,7 +489,7 @@ export default function CheckInPage() {
 
                                                 {isNoShow && (
                                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                                        <span className="inline-flex items-center gap-1.5 text-sm font-bold text-olive-400 px-3 py-1.5 bg-peach-200/50 border border-peach-400/30">
+                                                        <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-olive-400 px-2 sm:px-3 py-1.5 bg-peach-200/50 border border-peach-400/30">
                                                             <X className="w-4 h-4" />
                                                             No Show
                                                         </span>
@@ -495,12 +500,13 @@ export default function CheckInPage() {
                                                             }
                                                             disabled={isLoading}
                                                             title="Check In (they arrived late)"
-                                                            className="w-8 h-8 flex items-center justify-center text-olive-300 hover:text-terra-400 hover:bg-terra-400/10 rounded transition-colors disabled:opacity-40"
+                                                            aria-label="Check In (they arrived late)"
+                                                            className="w-9 h-9 flex items-center justify-center border border-terra-400/40 text-terra-400 hover:bg-terra-400/10 transition-colors disabled:opacity-40"
                                                         >
                                                             {isLoading ? (
-                                                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                                                <RefreshCw className="w-4 h-4 animate-spin" />
                                                             ) : (
-                                                                <CheckCircle className="w-3.5 h-3.5" />
+                                                                <CheckCircle className="w-4 h-4" />
                                                             )}
                                                         </button>
                                                     </div>

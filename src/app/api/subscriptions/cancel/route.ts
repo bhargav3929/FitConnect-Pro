@@ -3,6 +3,7 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { cancelRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 
 function toDate(value: unknown): Date | null {
     if (!value) return null;
@@ -69,13 +70,29 @@ export async function POST(req: NextRequest) {
         const endDate = toDate(subscription.endDate);
         const isStillUsable = !!endDate && endDate > new Date();
 
-        await userRef.update({
+        const userUpdate = {
             'subscription.status': isStillUsable ? 'active' : 'canceled',
             'subscription.autoRenew': false,
             'subscription.cancelAtPeriodEnd': isStillUsable,
             'subscription.canceledAt': FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
+        };
+        const batch = adminDb.batch();
+        batch.update(userRef, userUpdate);
+        recordSubscriptionEvent(batch, {
+            userId,
+            action: 'plan-canceled',
+            source: 'member',
+            reason: isStillUsable
+                ? `Member canceled renewal; access continues until ${endDate!.toISOString()}`
+                : 'Member canceled an already-ended plan; marked canceled immediately',
+            actorId: userId,
+            razorpaySubscriptionId: razorpaySubscriptionId ?? null,
+            before: subscription,
+            changes: subscriptionChanges(userUpdate),
+            metadata: { route: 'subscriptions/cancel' },
         });
+        await batch.commit();
 
         return NextResponse.json({ success: true, mode: isStillUsable ? 'period_end' : 'immediate' });
     } catch (error) {

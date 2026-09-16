@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from 'next/server';
 import { sendTrainerBookingAlert } from '@/lib/email/trainer-booking-alert';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
 import { classEndAtStudio, classStartAtStudio } from '@fitconnect/shared/schedule/class-time';
 
@@ -224,10 +225,34 @@ export async function POST(req: NextRequest) {
                     'subscription.introCreditRemaining': FieldValue.increment(-1),
                     updatedAt: now,
                 });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-consumed',
+                    source: 'admin',
+                    reason: `Admin enrolled member into a class; 1 intro credit used`,
+                    actorId: decoded.uid,
+                    bookingId: newBookingRef.id,
+                    classId: classId,
+                    before: subscription,
+                    changes: { introCreditRemaining: -1 },
+                    metadata: { creditType: creditType },
+                });
             } else if (creditType === 'standard') {
                 transaction.update(userRef, {
                     'subscription.classesRemaining': FieldValue.increment(-1),
                     updatedAt: now,
+                });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-consumed',
+                    source: 'admin',
+                    reason: `Admin enrolled member into a class; 1 class credit used`,
+                    actorId: decoded.uid,
+                    bookingId: newBookingRef.id,
+                    classId: classId,
+                    before: subscription,
+                    changes: { classesRemaining: -1 },
+                    metadata: { creditType: creditType },
                 });
             } else if (creditType === 'unlimited') {
                 transaction.update(userRef, { updatedAt: now });

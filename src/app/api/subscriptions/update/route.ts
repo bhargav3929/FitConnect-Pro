@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS, type PlanId } from '@fitconnect/shared/types/subscription';
 import { updateRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
@@ -200,16 +201,28 @@ export async function POST(req: NextRequest) {
         });
 
         if (scheduleChangeAt === 'cycle_end' || rzpSub.has_scheduled_changes) {
-            batch.update(userRef, {
+            const userUpdate = {
                 'subscription.pendingPlanId': targetPlan.id,
                 'subscription.pendingRazorpayPlanId': razorpayPlanId,
                 'subscription.pendingPlanEffectiveAt': effectiveAt,
                 'subscription.pendingPricingVariant': foundingDiscountEligible ? 'founding' : 'standard',
                 'subscription.cancelAtPeriodEnd': false,
                 updatedAt: FieldValue.serverTimestamp(),
+            };
+            batch.update(userRef, userUpdate);
+            recordSubscriptionEvent(batch, {
+                userId,
+                action: 'plan-change-scheduled',
+                source: 'member',
+                reason: `Member scheduled change from ${currentPlanId ?? 'none'} to ${targetPlan.id}, effective ${effectiveAt?.toISOString() ?? 'next cycle'}`,
+                actorId: userId,
+                razorpaySubscriptionId,
+                before: currentSub,
+                changes: subscriptionChanges(userUpdate),
+                metadata: { route: 'subscriptions/update', subscriptionChangeId: changeRef.id },
             });
         } else {
-            batch.update(userRef, {
+            const userUpdate = {
                 'subscription.planId': targetPlan.id,
                 'subscription.planCategory': targetPlan.category,
                 'subscription.startDate': accessWindow.startDate,
@@ -231,6 +244,18 @@ export async function POST(req: NextRequest) {
                 'subscription.pendingPlanEffectiveAt': null,
                 'subscription.pendingPricingVariant': null,
                 updatedAt: FieldValue.serverTimestamp(),
+            };
+            batch.update(userRef, userUpdate);
+            recordSubscriptionEvent(batch, {
+                userId,
+                action: 'plan-changed',
+                source: 'member',
+                reason: `Member changed plan from ${currentPlanId ?? 'none'} to ${targetPlan.id} immediately; credits ${String(currentSub.classesRemaining)} -> ${String(immediateClassesRemaining)}`,
+                actorId: userId,
+                razorpaySubscriptionId,
+                before: currentSub,
+                changes: subscriptionChanges(userUpdate),
+                metadata: { route: 'subscriptions/update', subscriptionChangeId: changeRef.id },
             });
         }
 

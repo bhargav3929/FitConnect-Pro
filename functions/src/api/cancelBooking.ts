@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent } from '../lib/subscriptionEvents';
 
 interface CancelBookingData {
     bookingId: string;
@@ -79,10 +80,32 @@ export const cancelBooking = functions.https.onCall(async (data: CancelBookingDa
                     'subscription.introCreditRemaining': FieldValue.increment(1),
                     updatedAt: now,
                 });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-restored',
+                    source: 'member',
+                    reason: `Member canceled a booking (callable); 1 intro credit restored`,
+                    actorId: userId,
+                    bookingId: bookingId,
+                    classId: bookingData.classId,
+                    changes: { introCreditRemaining: 1 },
+                    metadata: { creditType: creditType },
+                });
             } else if (creditType === 'guest_pass') {
                 transaction.update(userRef, {
                     'subscription.guestPassesRemaining': FieldValue.increment(1),
                     updatedAt: now,
+                });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-restored',
+                    source: 'member',
+                    reason: `Member canceled a booking (callable); 1 guest pass restored`,
+                    actorId: userId,
+                    bookingId: bookingId,
+                    classId: bookingData.classId,
+                    changes: { guestPassesRemaining: 1 },
+                    metadata: { creditType: creditType },
                 });
             } else if (creditType === 'unlimited') {
                 transaction.update(userRef, {
@@ -92,6 +115,17 @@ export const cancelBooking = functions.https.onCall(async (data: CancelBookingDa
                 transaction.update(userRef, {
                     'subscription.classesRemaining': FieldValue.increment(1),
                     updatedAt: now,
+                });
+                recordSubscriptionEvent(transaction, {
+                    userId: userId,
+                    action: 'credit-restored',
+                    source: 'member',
+                    reason: `Member canceled a booking (callable); 1 class credit restored`,
+                    actorId: userId,
+                    bookingId: bookingId,
+                    classId: bookingData.classId,
+                    changes: { classesRemaining: 1 },
+                    metadata: { creditType: creditType },
                 });
             }
         });

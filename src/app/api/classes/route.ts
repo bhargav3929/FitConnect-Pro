@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
 import {
     findClassConflict,
@@ -389,10 +390,32 @@ export async function DELETE(req: NextRequest) {
                         'subscription.introCreditRemaining': FieldValue.increment(1),
                         updatedAt: now,
                     });
+                    recordSubscriptionEvent(batch, {
+                        userId: bookingData.userId,
+                        action: 'credit-restored',
+                        source: 'admin',
+                        reason: `Class deleted by admin; booking canceled and 1 intro credit restored`,
+                        actorId: decoded.uid,
+                        bookingId: bookingDoc.id,
+                        classId: classId,
+                        changes: { introCreditRemaining: 1 },
+                        metadata: { creditType: creditType },
+                    });
                 } else if (creditType === 'guest_pass') {
                     batch.update(userRef, {
                         'subscription.guestPassesRemaining': FieldValue.increment(1),
                         updatedAt: now,
+                    });
+                    recordSubscriptionEvent(batch, {
+                        userId: bookingData.userId,
+                        action: 'credit-restored',
+                        source: 'admin',
+                        reason: `Class deleted by admin; booking canceled and 1 guest pass restored`,
+                        actorId: decoded.uid,
+                        bookingId: bookingDoc.id,
+                        classId: classId,
+                        changes: { guestPassesRemaining: 1 },
+                        metadata: { creditType: creditType },
                     });
                 } else if (creditType === 'unlimited') {
                     batch.update(userRef, {
@@ -402,6 +425,17 @@ export async function DELETE(req: NextRequest) {
                     batch.update(userRef, {
                         'subscription.classesRemaining': FieldValue.increment(1),
                         updatedAt: now,
+                    });
+                    recordSubscriptionEvent(batch, {
+                        userId: bookingData.userId,
+                        action: 'credit-restored',
+                        source: 'admin',
+                        reason: `Class deleted by admin; booking canceled and 1 class credit restored`,
+                        actorId: decoded.uid,
+                        bookingId: bookingDoc.id,
+                        classId: classId,
+                        changes: { classesRemaining: 1 },
+                        metadata: { creditType: creditType },
                     });
                 }
             }

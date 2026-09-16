@@ -1,6 +1,7 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
-import { FieldValue, type DocumentReference } from 'firebase-admin/firestore';
+import { FieldValue, type DocumentReference, type Transaction } from 'firebase-admin/firestore';
+import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 
 /**
  * Grants plan access for a one-time Razorpay Order (drop_in, kickstarter).
@@ -63,31 +64,54 @@ export async function grantOrderAccess(options: {
     expectedUserId?: string;
     identity?: GrantIdentity;
     source: string;
+    /** Razorpay webhook event id when the grant comes from a webhook. */
+    webhookEventId?: string | null;
 }): Promise<GrantOutcome> {
-    const { paymentRef, razorpayPaymentId, razorpayOrderId, expectedUserId, identity, source } = options;
+    const { paymentRef, razorpayPaymentId, razorpayOrderId, expectedUserId, identity, source, webhookEventId } = options;
+    const eventSource = source === 'checkout-callback' ? 'checkout-callback' : 'webhook';
 
     return adminDb.runTransaction(async (transaction) => {
         const paymentDoc = await transaction.get(paymentRef);
         if (!paymentDoc.exists) {
+            console.error(`[grant] ${source}: payment ${paymentRef.id} not found for razorpayPaymentId=${razorpayPaymentId}`);
             return { status: 'conflict' as const, code: 'not-found', message: 'Payment not found' };
         }
 
         const paymentData = paymentDoc.data()!;
+        const userId = paymentData.userId as string;
+
+        // Every rejection is written to the ledger so a member who paid but
+        // has no plan can be explained without reading server logs.
+        const reject = (transaction: Transaction, code: string, message: string, before: Record<string, unknown> | null = null) => {
+            recordSubscriptionEvent(transaction, {
+                userId,
+                action: 'grant-rejected',
+                source: eventSource,
+                reason: `${message} (${code})`,
+                actorId: expectedUserId ?? null,
+                paymentId: paymentRef.id,
+                razorpayPaymentId,
+                razorpayOrderId,
+                webhookEventId,
+                before,
+                metadata: { planId: paymentData.planId ?? null, paymentStatus: paymentData.status ?? null, expectedUserId: expectedUserId ?? null },
+            });
+            return { status: 'conflict' as const, code, message };
+        };
 
         if (expectedUserId && paymentData.userId !== expectedUserId) {
-            return { status: 'conflict' as const, code: 'permission-denied', message: 'Payment does not belong to you' };
+            return reject(transaction, 'permission-denied', 'Payment does not belong to you');
         }
 
-        const userId = paymentData.userId as string;
         const userRef = adminDb.collection('users').doc(userId);
         const userDoc = await transaction.get(userRef);
         if (!userDoc.exists) {
-            return { status: 'conflict' as const, code: 'not-found', message: 'User not found' };
+            return reject(transaction, 'not-found', 'User not found');
         }
 
         const plan = getPlanById(paymentData.planId);
         if (!plan) {
-            return { status: 'conflict' as const, code: 'failed-precondition', message: 'Invalid plan on payment' };
+            return reject(transaction, 'failed-precondition', 'Invalid plan on payment');
         }
 
         // Idempotency: the webhook and the checkout callback race by design.
@@ -102,15 +126,11 @@ export async function grantOrderAccess(options: {
                     endDate: toIsoDate(currentSub?.endDate),
                 };
             }
-            return { status: 'conflict' as const, code: 'failed-precondition', message: 'Payment is already succeeded' };
+            return reject(transaction, 'failed-precondition', 'Payment is already succeeded', userDoc.data()!.subscription ?? null);
         }
 
         if (paymentData.status !== 'pending') {
-            return {
-                status: 'conflict' as const,
-                code: 'failed-precondition',
-                message: `Payment is already ${paymentData.status}`,
-            };
+            return reject(transaction, 'failed-precondition', `Payment is already ${paymentData.status}`, userDoc.data()!.subscription ?? null);
         }
 
         const currentSub = userDoc.data()!.subscription as Record<string, unknown> | undefined;
@@ -119,19 +139,11 @@ export async function grantOrderAccess(options: {
             : 0;
 
         if (plan.category === 'membership' && isActiveUnexpiredSubscription(currentSub)) {
-            return {
-                status: 'conflict' as const,
-                code: 'subscription-already-active',
-                message: 'You already have an active membership.',
-            };
+            return reject(transaction, 'subscription-already-active', 'You already have an active membership.', currentSub ?? null);
         }
 
         if (plan.category === 'class_pack' && plan.id !== 'drop_in' && isActiveMembership(currentSub)) {
-            return {
-                status: 'conflict' as const,
-                code: 'subscription-already-active',
-                message: 'Class packs are only available without an active membership.',
-            };
+            return reject(transaction, 'subscription-already-active', 'Class packs are only available without an active membership.', currentSub ?? null);
         }
 
         const now = new Date();
@@ -147,7 +159,7 @@ export async function grantOrderAccess(options: {
             updatedAt: FieldValue.serverTimestamp(),
         });
 
-        transaction.update(userRef, {
+        const userUpdate = {
             'subscription.planId': plan.id,
             'subscription.planCategory': plan.category,
             'subscription.startDate': now,
@@ -162,6 +174,21 @@ export async function grantOrderAccess(options: {
             'subscription.lastPaymentId': paymentRef.id,
             'subscription.autoRenew': plan.autoRenew,
             updatedAt: FieldValue.serverTimestamp(),
+        };
+        transaction.update(userRef, userUpdate);
+        recordSubscriptionEvent(transaction, {
+            userId,
+            action: 'plan-granted',
+            source: eventSource,
+            reason: `Paid for ${plan.name} (${plan.id}); access until ${endDate.toISOString()}`,
+            actorId: expectedUserId ?? null,
+            paymentId: paymentRef.id,
+            razorpayPaymentId,
+            razorpayOrderId,
+            webhookEventId,
+            before: currentSub ?? null,
+            changes: subscriptionChanges(userUpdate),
+            metadata: { grantedBy: source, amount: paymentData.amount ?? null, currency: paymentData.currency ?? null },
         });
 
         if (plan.id === 'drop_in') {
