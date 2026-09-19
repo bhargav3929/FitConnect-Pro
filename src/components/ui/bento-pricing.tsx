@@ -55,6 +55,7 @@ function priceSuffix(plan: PlanDefinition) {
     if (plan.id === 'drop_in') return '/ session';
     if (plan.id === 'single_session') return '/ class';
     if (plan.id === 'kickstarter') return '/ 4 classes';
+    if (plan.id === 'ten_class_pack') return '/ 10 classes';
     if (plan.durationDays === 30) return '/ month';
     if (plan.durationDays === 90) return '/ quarter';
     if (plan.durationDays === 180) return '/ 6 months';
@@ -111,8 +112,8 @@ function IntroCard({
                 <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-terra-400 to-transparent" />
             )}
 
-            <div className="p-6 pb-0 flex items-center justify-between">
-                <Badge className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wider uppercase text-xs px-3">
+            <div className="p-6 pb-0 flex flex-wrap items-center justify-between gap-2">
+                <Badge className="bg-terra-400 text-peach-50 hover:bg-terra-300 font-bold tracking-wider uppercase text-xs px-3 whitespace-nowrap">
                     {plan.name}
                 </Badge>
                 {featured && (
@@ -124,11 +125,12 @@ function IntroCard({
             </div>
 
             <div className="p-6 pt-4 flex flex-col h-full">
-                <div className="flex items-end gap-2 mb-1">
-                    <span className="font-mono text-4xl lg:text-5xl font-bold tracking-tight text-olive-600">
+                {/* Four cards share a row on desktop, so the suffix wraps under a long price. */}
+                <div className="flex flex-wrap items-end gap-x-2 mb-1">
+                    <span className="font-mono text-4xl font-bold tracking-tight text-olive-600 whitespace-nowrap">
                         {formatCharge(chargeBreakdown)}
                     </span>
-                    <span className="text-olive-400 text-xs font-semibold uppercase pb-2 whitespace-nowrap">
+                    <span className="text-olive-400 text-xs font-semibold uppercase pb-1.5 whitespace-nowrap">
                         {priceSuffix(plan)}
                     </span>
                 </div>
@@ -430,12 +432,13 @@ export function BentoPricing() {
     const dropIn = PLAN_CATALOG.find((p) => p.id === 'drop_in')!;
     const singleSession = PLAN_CATALOG.find((p) => p.id === 'single_session')!;
     const kickstarter = PLAN_CATALOG.find((p) => p.id === 'kickstarter')!;
+    const tenClassPack = PLAN_CATALOG.find((p) => p.id === 'ten_class_pack')!;
     const memberships = PLAN_CATALOG.filter((p) => p.category === 'membership');
 
     return (
         <div className="space-y-24">
             {/* SECTION 1: TRY IT */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
                 <IntroCard
                     plan={dropIn}
                     onSelect={handleSelect}
@@ -458,6 +461,13 @@ export function BentoPricing() {
                     featured
                     displayPrice={priceOverrides[kickstarter.id]}
                     charge={chargeOverrides[kickstarter.id]}
+                />
+                <IntroCard
+                    plan={tenClassPack}
+                    onSelect={handleSelect}
+                    cta="BUY 10 CLASSES"
+                    displayPrice={priceOverrides[tenClassPack.id]}
+                    charge={chargeOverrides[tenClassPack.id]}
                 />
             </div>
 

@@ -895,8 +895,45 @@ export async function callSyncRazorpaySubscription(): Promise<{ success: boolean
 // 17k. callCancelSubscription — Cancel the current subscription
 // ---------------------------------------------------------------------------
 
-export async function callCancelSubscription(): Promise<{ success: boolean; mode?: 'immediate' | 'period_end' }> {
-    return apiFetch<{ success: boolean; mode?: 'immediate' | 'period_end' }>('/api/subscriptions/cancel', { method: 'POST' });
+export interface CancelSubscriptionResult {
+    success: boolean;
+    /** after_next_charge: less than the notice period was given, one more cycle is billed. */
+    mode?: 'immediate' | 'period_end' | 'after_next_charge';
+    nextChargeAt?: string;
+}
+
+export async function callCancelSubscription(): Promise<CancelSubscriptionResult> {
+    return apiFetch<CancelSubscriptionResult>('/api/subscriptions/cancel', { method: 'POST' });
+}
+
+/** Withdraws a cancellation that is still waiting on the next charge. */
+export async function callWithdrawCancellation(): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>('/api/subscriptions/cancel', { method: 'DELETE' });
+}
+
+// ---------------------------------------------------------------------------
+// 17k-2. Plan freeze - schedule, start or end a freeze (see /policies#membership-freeze)
+// ---------------------------------------------------------------------------
+
+export interface FreezePlanResult {
+    success: boolean;
+    freezeStartDate: string;
+    freezeEndDate: string;
+    endDate: string;
+    canceledBookings: number;
+}
+
+/** startDate is the studio calendar day (YYYY-MM-DD). userId lets an admin act for a member. */
+export async function callFreezePlan(
+    input: { startDate: string; days: number; userId?: string },
+): Promise<FreezePlanResult> {
+    return apiFetch<FreezePlanResult>('/api/subscriptions/freeze', { method: 'POST', body: input });
+}
+
+export async function callEndFreeze(
+    input: { userId?: string } = {},
+): Promise<{ success: boolean; endDate: string; usedDays: number; unusedDays: number }> {
+    return apiFetch('/api/subscriptions/freeze', { method: 'DELETE', body: input });
 }
 
 // ---------------------------------------------------------------------------
@@ -1159,6 +1196,24 @@ export async function callDeleteMember(
         '/api/admin/members',
         { method: 'DELETE', body: { userId } },
     );
+}
+
+export interface AdminSubscriptionEdit {
+    userId: string;
+    reason: string;
+    planId?: string;
+    classesRemaining?: number | null;
+    introCreditRemaining?: number;
+    guestPassesRemaining?: number;
+    /** Last studio day of access, YYYY-MM-DD. */
+    endDate?: string;
+    status?: 'active' | 'expired' | 'canceled';
+}
+
+export async function callAdminUpdateMemberSubscription(
+    edit: AdminSubscriptionEdit,
+): Promise<{ success: boolean; changes: Record<string, unknown> }> {
+    return apiFetch('/api/admin/members/subscription', { method: 'PATCH', body: edit });
 }
 
 export interface MemberPaymentSummary {

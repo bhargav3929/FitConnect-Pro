@@ -3,6 +3,7 @@ import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { FieldValue } from 'firebase-admin/firestore';
 import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
+import { FRESH_PLAN_POLICY_STATE } from '@/lib/subscriptions/billing';
 
 function isActiveUnexpiredSubscription(subscription: Record<string, unknown> | undefined | null): boolean {
     if (!subscription || subscription.status !== 'active') return false;
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
 
             // Update user subscription
             const userUpdate = {
+                ...FRESH_PLAN_POLICY_STATE,
                 'subscription.planId': plan.id,
                 'subscription.planCategory': plan.category,
                 'subscription.startDate': now,

@@ -84,7 +84,7 @@ function PlanCard({
                 <div className="text-olive-300 text-xs font-medium">
                     {plan.credits === null ? 'Unlimited classes' : `${plan.credits} credit${plan.credits !== 1 ? 's' : ''}`}
                     {' · '}
-                    {plan.durationDays < 30 ? `${plan.durationDays} days` : plan.durationDays === 30 ? '1 month' : `${Math.round(plan.durationDays / 30)} months`}
+                    {plan.durationDays % 30 !== 0 ? `${plan.durationDays} days` : plan.durationDays === 30 ? '1 month' : `${plan.durationDays / 30} months`}
                 </div>
             </div>
         </motion.button>

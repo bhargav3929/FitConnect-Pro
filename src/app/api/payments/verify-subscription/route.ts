@@ -4,6 +4,7 @@ import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { verifyPaymentSignature } from '@fitconnect/shared/payments/razorpay-processor';
 import { FieldValue } from 'firebase-admin/firestore';
 import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
+import { FRESH_PLAN_POLICY_STATE } from '@/lib/subscriptions/billing';
 
 function getPaymentPricingVariant(paymentData: Record<string, unknown>): 'standard' | 'founding' {
     return paymentData.metadata &&
@@ -124,6 +125,7 @@ export async function POST(req: NextRequest) {
             });
 
             const userUpdate = {
+                ...FRESH_PLAN_POLICY_STATE,
                 'subscription.planId': plan.id,
                 'subscription.planCategory': plan.category,
                 'subscription.startDate': now,

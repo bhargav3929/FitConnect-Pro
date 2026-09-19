@@ -6,6 +6,7 @@ import { verifyWebhookSignature, type RazorpaySubscriptionEntity } from '@fitcon
 import { getPlanIdForRazorpayPlanId, getPricingVariantForRazorpayPlanId } from '@/lib/razorpay/pricing';
 import { findPaymentRefForOrder, grantOrderAccess } from '@/lib/payments/order-access';
 import { recordSubscriptionEvent, subscriptionChanges, type SubscriptionEventInput } from '@/lib/subscription-events';
+import { accessEndDate, accessOffsetDaysFor, cancelRenewalAtCycleEnd, isDeferredCancelDue } from '@/lib/subscriptions/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -188,6 +189,13 @@ async function applySubscriptionAccess(
     const paymentDocId = options.paymentId ? await markSubscriptionPayment(sub.id, 'succeeded', options.paymentId) : null;
     const accessWindow = getAccessWindow(sub, plan.durationDays);
 
+    // A member who cancelled with less than the required notice owed this
+    // charge; now that it has landed, stop renewal at the end of this cycle.
+    const preGrantSub = (await userRef.get()).data()?.subscription as Record<string, unknown> | undefined;
+    const deferredCancelApplied = options.resetCredits
+        && isDeferredCancelDue(preGrantSub, sub.id, accessWindow.startDate)
+        && await cancelRenewalAtCycleEnd(sub.id);
+
     await adminDb.runTransaction(async (transaction) => {
         const freshUserDoc = await transaction.get(userRef);
         if (!freshUserDoc.exists) {
@@ -201,10 +209,13 @@ async function applySubscriptionAccess(
             : 0;
         const existingClassesRemaining = currentSub?.classesRemaining as number | null | undefined;
         const existingGuestPasses = currentSub?.guestPassesRemaining as number | undefined;
+        const offsetDays = accessOffsetDaysFor(currentSub, sub.id);
+        const endDate = accessEndDate(accessWindow.endDate, currentSub, sub.id);
         const renewalCanceled = (
             currentSub?.cancelAtPeriodEnd === true ||
-            sub.cancel_at_cycle_end === true
-        ) && accessWindow.endDate > new Date();
+            sub.cancel_at_cycle_end === true ||
+            deferredCancelApplied
+        ) && endDate > new Date();
         const shouldCarryKickstarterCredits =
             options.source === 'subscription.activated' &&
             currentSub?.planId === 'kickstarter' &&
@@ -225,7 +236,8 @@ async function applySubscriptionAccess(
             'subscription.planId': plan.id,
             'subscription.planCategory': plan.category,
             'subscription.startDate': accessWindow.startDate,
-            'subscription.endDate': accessWindow.endDate,
+            'subscription.endDate': endDate,
+            'subscription.accessOffsetDays': offsetDays,
             'subscription.status': 'active',
             'subscription.classesRemaining': nextClassesRemaining,
             'subscription.introCreditRemaining': currentIntroCredit,
@@ -236,7 +248,9 @@ async function applySubscriptionAccess(
             'subscription.lastPaymentId': paymentDocId ?? currentSub?.lastPaymentId ?? null,
             'subscription.autoRenew': !renewalCanceled,
             'subscription.cancelAtPeriodEnd': renewalCanceled,
-            'subscription.canceledAt': null,
+            'subscription.canceledAt': deferredCancelApplied ? FieldValue.serverTimestamp() : null,
+            ...(deferredCancelApplied || currentSub?.razorpaySubscriptionId !== sub.id
+                ? { 'subscription.cancelAfterNextCharge': false } : {}),
             'subscription.razorpaySubscriptionId': sub.id,
             'subscription.razorpayPlanId': sub.plan_id,
             'subscription.pricingVariant': pricingVariant ?? currentSub?.pricingVariant ?? 'standard',
@@ -260,7 +274,9 @@ async function applySubscriptionAccess(
             userId: userRef.id,
             action,
             source: 'webhook',
-            reason: `${options.source}: ${plan.name} (${plan.id}) active until ${accessWindow.endDate.toISOString()}`
+            reason: `${options.source}: ${plan.name} (${plan.id}) active until ${endDate.toISOString()}`
+                + (offsetDays > 0 ? ` (includes ${offsetDays} frozen day(s))` : '')
+                + (deferredCancelApplied ? ', final cycle: renewal stopped per late cancellation notice' : '')
                 + (options.resetCredits ? ', credits reset' : ', credits kept')
                 + (carriedKickstarterCredits > 0 ? `, ${carriedKickstarterCredits} intro credits carried forward` : ''),
             paymentId: paymentDocId,

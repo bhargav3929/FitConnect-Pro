@@ -23,7 +23,8 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useClientAuthStore } from '@fitconnect/shared/stores/clientAuthStore';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
-import { callCancelSubscription, callDeleteAccount } from '@fitconnect/shared/firebase/firestore';
+import { callCancelSubscription, callDeleteAccount, callWithdrawCancellation } from '@fitconnect/shared/firebase/firestore';
+import { CANCELLATION_NOTICE_DAYS, meetsCancellationNotice } from '@fitconnect/shared/subscriptions/policy';
 import {
     updatePassword,
     EmailAuthProvider,
@@ -35,6 +36,7 @@ import { getApiBaseUrl } from '@fitconnect/shared/firebase/api-config';
 import { Colors, Spacing, FontSize, BorderRadius, FontFamily, Alpha } from '../../constants/theme';
 import TabHeader from '../../components/TabHeader';
 import MilestoneCard from '../../components/MilestoneCard';
+import PlanFreezeSection from '../../components/PlanFreezeSection';
 
 const PRIVACY_POLICY_URL = 'https://www.solpilatesstudio.in/privacy';
 const TERMS_OF_SERVICE_URL = 'https://www.solpilatesstudio.in/terms';
@@ -90,6 +92,8 @@ export default function ProfileScreen() {
     const [chevronRotation] = useState(new Animated.Value(0));
 
     const [isCancelling, setIsCancelling] = useState(false);
+    // Snapshot of "now" for render-time date maths, so renders stay pure.
+    const [nowMs] = useState(() => Date.now());
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -101,6 +105,7 @@ export default function ProfileScreen() {
     const isIntroPlan = subscription?.planId === 'drop_in';
     const isMembershipPlan = subscription?.planCategory === 'membership' || plan?.category === 'membership';
     const renewalCanceled = subscription?.cancelAtPeriodEnd === true;
+    const cancelPendingCharge = subscription?.cancelAfterNextCharge === true;
     const displayedCredits = isIntroPlan
         ? subscription?.introCreditRemaining ?? 0
         : subscription?.classesRemaining ?? 0;
@@ -115,8 +120,16 @@ export default function ProfileScreen() {
         const d = new Date(raw as string | number);
         return isNaN(d.getTime()) ? null : d;
     })();
-    const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - Date.now()) / 86400000)) : 0;
+    const daysLeft = endDateObj ? Math.max(0, Math.ceil((endDateObj.getTime() - nowMs) / 86400000)) : 0;
     const expiryLabel = endDateObj ? endDateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+    // Razorpay bills on the period end; frozen days sit on top of that in endDate.
+    const nextChargeAt = endDateObj
+        ? new Date(endDateObj.getTime() - (subscription?.accessOffsetDays ?? 0) * 86400000)
+        : null;
+    const nextChargeLabel = nextChargeAt
+        ? nextChargeAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : null;
+    const hasCancellationNotice = meetsCancellationNotice(nextChargeAt);
     const providerData = firebaseUser?.providerData ?? auth.currentUser?.providerData ?? [];
     const hasPasswordProvider = providerData.some((provider) => provider.providerId === 'password');
     const hasGoogleProvider = providerData.some((provider) => provider.providerId === 'google.com');
@@ -280,9 +293,11 @@ export default function ProfileScreen() {
 
         Alert.alert(
             isMembershipPlan ? 'Cancel renewal?' : 'Cancel your plan?',
-            isMembershipPlan
-                ? `You'll keep access until ${expiryLabel}. No further charges.`
-                : 'Class packs do not auto-renew. Credits remain usable until the plan expires.',
+            !isMembershipPlan
+                ? 'Class packs do not auto-renew. Credits remain usable until the plan expires.'
+                : hasCancellationNotice
+                    ? `You'll keep access until ${expiryLabel}. No further charges.`
+                    : `Cancellations need ${CANCELLATION_NOTICE_DAYS} days' notice. Your next payment${nextChargeLabel ? ` on ${nextChargeLabel}` : ''} is less than ${CANCELLATION_NOTICE_DAYS} days away, so it will still be collected and your membership ends after that billing period.`,
             [
                 { text: 'Keep Plan', style: 'cancel' },
                 {
@@ -294,10 +309,12 @@ export default function ProfileScreen() {
                             const result = await callCancelSubscription();
                             await refreshSubscription();
                             Alert.alert(
-                                result.mode === 'immediate' ? 'Plan cancelled' : 'Renewal cancelled',
+                                result.mode === 'immediate' ? 'Plan cancelled' : 'Cancellation received',
                                 result.mode === 'immediate'
                                     ? 'Your plan has been cancelled.'
-                                    : 'Your membership stays active until the current period ends.',
+                                    : result.mode === 'after_next_charge'
+                                        ? 'Your next payment is still due, and your membership ends after that billing period.'
+                                        : 'Your membership stays active until the current period ends.',
                             );
                         } catch {
                             Alert.alert('Error', 'Failed to cancel subscription. Please try again.');
@@ -308,7 +325,20 @@ export default function ProfileScreen() {
                 },
             ],
         );
-    }, [expiryLabel, isMembershipPlan, refreshSubscription, renewalCanceled]);
+    }, [expiryLabel, hasCancellationNotice, isMembershipPlan, nextChargeLabel, refreshSubscription, renewalCanceled]);
+
+    const handleWithdrawCancellation = useCallback(async () => {
+        setIsCancelling(true);
+        try {
+            await callWithdrawCancellation();
+            await refreshSubscription();
+            Alert.alert('Membership kept', 'Your membership will keep renewing.');
+        } catch (err) {
+            Alert.alert('Error', err instanceof Error ? err.message : 'Please try again.');
+        } finally {
+            setIsCancelling(false);
+        }
+    }, [refreshSubscription]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -606,15 +636,15 @@ export default function ProfileScreen() {
                             <Text style={styles.rowSubtitle}>
                                 {isActive && plan
                                     ? plan.category === 'membership'
-                                        ? renewalCanceled ? 'Renewal canceled' : 'Membership'
+                                        ? renewalCanceled ? 'Renewal canceled' : cancelPendingCharge ? 'Ends after next payment' : 'Membership'
                                         : 'Class Pack'
                                     : 'Choose a plan to start booking classes'}
                             </Text>
                         </View>
                         {isActive && (
-                            <View style={[styles.activeBadge, renewalCanceled && styles.renewalCanceledBadge]}>
-                                <Text style={[styles.activeBadgeText, renewalCanceled && styles.renewalCanceledBadgeText]}>
-                                    {renewalCanceled ? 'RENEWAL CANCELED' : 'ACTIVE'}
+                            <View style={[styles.activeBadge, (renewalCanceled || cancelPendingCharge) && styles.renewalCanceledBadge]}>
+                                <Text style={[styles.activeBadgeText, (renewalCanceled || cancelPendingCharge) && styles.renewalCanceledBadgeText]}>
+                                    {renewalCanceled ? 'RENEWAL CANCELED' : cancelPendingCharge ? 'ENDING' : 'ACTIVE'}
                                 </Text>
                             </View>
                         )}
@@ -654,7 +684,19 @@ export default function ProfileScreen() {
                             <Text style={styles.upgradeBtnText}>UPGRADE</Text>
                             <Feather name="arrow-right" size={14} color={Colors.peach[50]} />
                         </TouchableOpacity>
-                        {isActive && isMembershipPlan && !renewalCanceled && (
+                        {isActive && isMembershipPlan && cancelPendingCharge && (
+                            <TouchableOpacity
+                                style={styles.cancelBtn}
+                                onPress={handleWithdrawCancellation}
+                                disabled={isCancelling}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.cancelBtnText}>
+                                    {isCancelling ? 'SAVING...' : 'KEEP MEMBERSHIP'}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                        {isActive && isMembershipPlan && !renewalCanceled && !cancelPendingCharge && (
                             <TouchableOpacity
                                 style={styles.cancelBtn}
                                 onPress={handleCancelSubscription}
@@ -668,6 +710,9 @@ export default function ProfileScreen() {
                             </TouchableOpacity>
                         )}
                     </View>
+                    {isActive && subscription && (
+                        <PlanFreezeSection subscription={subscription} onChanged={refreshSubscription} />
+                    )}
                 </View>
 
                 {/* ─── Quick Actions ─────────────────────────────── */}

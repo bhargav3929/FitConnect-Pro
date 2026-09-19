@@ -5,6 +5,7 @@ import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { getPlanById, VALID_PLAN_IDS, type PlanId } from '@fitconnect/shared/types/subscription';
 import { updateRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
 import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
+import { accessEndDate } from '@/lib/subscriptions/billing';
 
 function toDate(value: unknown): Date | null {
     if (!value) return null;
@@ -166,7 +167,8 @@ export async function POST(req: NextRequest) {
             : 0;
         const accessWindow = getAccessWindow(rzpSub, targetPlan.durationDays);
         const effectiveAt = scheduleChangeAt === 'cycle_end'
-            ? toDate(currentSub.endDate) ?? fromUnixSeconds(rzpSub.change_scheduled_at) ?? accessWindow.endDate
+            // Razorpay's cycle end, not the local end date, which may include frozen days.
+            ? fromUnixSeconds(rzpSub.change_scheduled_at) ?? fromUnixSeconds(rzpSub.current_end) ?? toDate(currentSub.endDate) ?? accessWindow.endDate
             : accessWindow.startDate;
         const immediateClassesRemaining = getImmediateChangeCredits(
             currentSub.classesRemaining,
@@ -226,7 +228,7 @@ export async function POST(req: NextRequest) {
                 'subscription.planId': targetPlan.id,
                 'subscription.planCategory': targetPlan.category,
                 'subscription.startDate': accessWindow.startDate,
-                'subscription.endDate': accessWindow.endDate,
+                'subscription.endDate': accessEndDate(accessWindow.endDate, currentSub, razorpaySubscriptionId),
                 'subscription.status': 'active',
                 'subscription.classesRemaining': immediateClassesRemaining,
                 'subscription.introCreditRemaining': currentIntroCredit,

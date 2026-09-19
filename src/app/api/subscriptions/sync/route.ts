@@ -5,6 +5,7 @@ import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { fetchRazorpaySubscription } from '@fitconnect/shared/payments/razorpay-processor';
 import { getPlanIdForRazorpayPlanId, getPricingVariantForRazorpayPlanId } from '@/lib/razorpay/pricing';
+import { accessEndDate, accessOffsetDaysFor, cancelRenewalAtCycleEnd, isDeferredCancelDue } from '@/lib/subscriptions/billing';
 
 function fromUnixSeconds(value: unknown): Date | null {
     return typeof value === 'number' && value > 0 ? new Date(value * 1000) : null;
@@ -77,14 +78,22 @@ export async function POST(req: NextRequest) {
             ? Math.max(0, subscription.introCreditRemaining)
             : 0;
         const currentStart = fromUnixSeconds(rzpSub.current_start) ?? fromUnixSeconds(rzpSub.start_at);
-        const currentEnd = fromUnixSeconds(rzpSub.current_end) ?? fromUnixSeconds(rzpSub.charge_at);
+        const razorpayEnd = fromUnixSeconds(rzpSub.current_end) ?? fromUnixSeconds(rzpSub.charge_at);
+        // Access runs past Razorpay's period by any frozen days the member is owed.
+        const offsetDays = accessOffsetDaysFor(subscription, rzpSub.id);
+        const currentEnd = razorpayEnd ? accessEndDate(razorpayEnd, subscription, rzpSub.id) : null;
         const localEnd = toDate(subscription?.endDate);
         const effectiveEnd = currentEnd ?? localEnd;
         const isStillUsable = !!effectiveEnd && effectiveEnd > new Date();
+        // Safety net for the webhook: a late cancellation whose owed charge has landed.
+        const deferredCancelApplied = rzpSub.status === 'active'
+            && isDeferredCancelDue(subscription, rzpSub.id, currentStart)
+            && await cancelRenewalAtCycleEnd(rzpSub.id);
         const renewalCanceled = (
             subscription?.cancelAtPeriodEnd === true ||
             rzpSub.cancel_at_cycle_end === true ||
-            rzpSub.status === 'cancelled'
+            rzpSub.status === 'cancelled' ||
+            deferredCancelApplied
         ) && isStillUsable;
         const localStatus = rawLocalStatus === 'canceled' && isStillUsable ? 'active' : rawLocalStatus;
         const periodAdvanced = !!currentEnd && (!localEnd || currentEnd.getTime() > localEnd.getTime() + 60 * 1000);
@@ -95,6 +104,8 @@ export async function POST(req: NextRequest) {
             'subscription.status': localStatus,
             'subscription.startDate': currentStart ?? subscription?.startDate ?? new Date(),
             'subscription.endDate': currentEnd ?? subscription?.endDate ?? null,
+            'subscription.accessOffsetDays': offsetDays,
+            ...(deferredCancelApplied ? { 'subscription.cancelAfterNextCharge': false } : {}),
             'subscription.classesRemaining': localStatus === 'active' && periodAdvanced
                 ? plan.credits
                 : subscription?.classesRemaining ?? plan.credits,
@@ -126,7 +137,8 @@ export async function POST(req: NextRequest) {
             action: 'plan-synced',
             source: 'member',
             reason: `Synced from Razorpay subscription ${rzpSub.id} (status ${rzpSub.status}); local status ${localStatus}`
-                + (periodAdvanced ? ', new billing period so credits reset' : ', credits kept'),
+                + (periodAdvanced ? ', new billing period so credits reset' : ', credits kept')
+                + (deferredCancelApplied ? ', renewal stopped per late cancellation notice' : ''),
             actorId: userId,
             razorpaySubscriptionId: rzpSub.id,
             before: subscription ?? null,

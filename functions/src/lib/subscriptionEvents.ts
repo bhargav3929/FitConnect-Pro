@@ -12,7 +12,8 @@ export type SubscriptionEventSource =
 
 export type SubscriptionEventAction =
     | 'plan-granted' | 'plan-renewed' | 'plan-changed' | 'plan-change-scheduled' | 'plan-synced'
-    | 'plan-canceled' | 'plan-expired' | 'plan-halted' | 'credit-consumed' | 'credit-restored'
+    | 'plan-canceled' | 'plan-expired' | 'plan-halted' | 'plan-frozen' | 'plan-unfrozen' | 'plan-adjusted'
+    | 'cancel-scheduled' | 'credit-consumed' | 'credit-restored'
     | 'profile-created' | 'profile-repaired' | 'grant-rejected' | 'audit-mismatch';
 
 export interface SubscriptionEventInput {

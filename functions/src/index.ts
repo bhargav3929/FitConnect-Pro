@@ -14,6 +14,7 @@ export { sendClassReminders } from './scheduled/sendClassReminders';
 export { sendPlanExpiryReminders } from './scheduled/sendPlanExpiryReminders';
 export { checkPushReceipts } from './scheduled/checkPushReceipts';
 export { checkPaymentGrants } from './scheduled/checkPaymentGrants';
+export { retryDeferredCancellations } from './scheduled/retryDeferredCancellations';
 
 // HTTPS callable functions
 export { activateSubscription } from './api/activateSubscription';

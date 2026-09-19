@@ -7,8 +7,8 @@ import {
 } from '../../src/types/subscription';
 
 describe('PLAN_CATALOG', () => {
-    it('contains exactly 9 plans', () => {
-        expect(PLAN_CATALOG).toHaveLength(9);
+    it('contains exactly 10 plans', () => {
+        expect(PLAN_CATALOG).toHaveLength(10);
     });
 
     it('every plan has required fields', () => {
@@ -54,6 +54,18 @@ describe('PLAN_CATALOG', () => {
         expect(plan?.category).toBe('class_pack');
         expect(plan?.credits).toBe(1);
         expect(plan?.weeklyClassLimit).toBe(1);
+    });
+
+    it('ten_class_pack is a 75-day, 10-credit pack with no weekly cap', () => {
+        const plan = getPlanById('ten_class_pack');
+        expect(plan?.price).toBe(19000);
+        expect(plan?.category).toBe('class_pack');
+        expect(plan?.credits).toBe(10);
+        expect(plan?.durationDays).toBe(75);
+        expect(plan?.autoRenew).toBe(false);
+        // One class a day is the only pacing limit.
+        expect(plan?.maxClassesPerDay).toBe(1);
+        expect(plan?.weeklyClassLimit).toBe(7);
     });
 
     it('monthly memberships bill every month with weekly credits', () => {
@@ -103,8 +115,8 @@ describe('getPlanById', () => {
 });
 
 describe('VALID_PLAN_IDS', () => {
-    it('contains all 9 plan IDs', () => {
-        expect(VALID_PLAN_IDS).toHaveLength(9);
+    it('contains all 10 plan IDs', () => {
+        expect(VALID_PLAN_IDS).toHaveLength(10);
     });
 
     it('matches PLAN_CATALOG order', () => {

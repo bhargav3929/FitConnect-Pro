@@ -5,6 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 import { processPayment } from '@fitconnect/shared/payments/mock-processor';
 import { getChargeAmount, getSyncedPlanEntry } from '@/lib/razorpay/pricing';
+import { FRESH_PLAN_POLICY_STATE } from '@/lib/subscriptions/billing';
 
 export async function POST(req: NextRequest) {
     try {
@@ -113,6 +114,7 @@ export async function POST(req: NextRequest) {
 
         // Update user subscription
         const userUpdate = {
+            ...FRESH_PLAN_POLICY_STATE,
             'subscription.planId': plan.id,
             'subscription.planCategory': plan.category,
             'subscription.startDate': now,

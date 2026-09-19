@@ -13,6 +13,8 @@
     "./stores/*": "./src/stores/*.ts",
     "./payments/*": "./src/payments/*.ts",
     "./schedule/*": "./src/schedule/*.ts",
+    "./subscriptions/*": "./src/subscriptions/*.ts",
+    "./utils/*": "./src/utils/*.ts",
     "./design/*": "./src/design/*.ts",
     "./theme": "./src/theme/index.ts"
   },

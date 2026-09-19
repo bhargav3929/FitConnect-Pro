@@ -12,7 +12,7 @@ function toDate(value: unknown): Date | null {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function getClassEnd(dateValue: unknown, startTime: unknown, durationMinutes: unknown): Date | null {
+export function getClassStart(dateValue: unknown, startTime: unknown): Date | null {
     const classDate = toDate(dateValue);
     if (!classDate || typeof startTime !== 'string') return null;
     const match = startTime.trim().match(/^(\d{1,2}):(\d{2})$/);
@@ -23,13 +23,18 @@ export function getClassEnd(dateValue: unknown, startTime: unknown, durationMinu
     if (hours > 23 || minutes > 59) return null;
 
     const studioDate = new Date(classDate.getTime() + STUDIO_UTC_OFFSET_MINUTES * 60_000);
-    const start = Date.UTC(
+    return new Date(Date.UTC(
         studioDate.getUTCFullYear(),
         studioDate.getUTCMonth(),
         studioDate.getUTCDate(),
         hours,
         minutes,
-    ) - STUDIO_UTC_OFFSET_MINUTES * 60_000;
+    ) - STUDIO_UTC_OFFSET_MINUTES * 60_000);
+}
+
+export function getClassEnd(dateValue: unknown, startTime: unknown, durationMinutes: unknown): Date | null {
+    const start = getClassStart(dateValue, startTime);
+    if (!start) return null;
     const duration = typeof durationMinutes === 'number' && durationMinutes > 0 ? durationMinutes : 60;
-    return new Date(start + duration * 60_000);
+    return new Date(start.getTime() + duration * 60_000);
 }

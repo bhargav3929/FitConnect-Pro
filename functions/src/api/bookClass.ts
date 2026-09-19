@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions';
 import { db } from '../init';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { recordSubscriptionEvent } from '../lib/subscriptionEvents';
-import { getClassEnd } from '../scheduled/class-time';
+import { getClassEnd, getClassStart } from '../scheduled/class-time';
 
 interface BookClassData {
     classId: string;
@@ -48,6 +48,8 @@ function getFallbackWeeklyLimit(planId: unknown): number {
         case 'thrice_6mo':
         case 'unlimited':
             return 3;
+        case 'ten_class_pack':
+            return 7;
         case 'drop_in':
         default:
             return 1;
@@ -157,6 +159,17 @@ export const bookClass = functions.https.onCall(async (data: BookClassData, cont
                 throw new functions.https.HttpsError(
                     'failed-precondition',
                     'Your subscription has expired'
+                );
+            }
+
+            // Bookings inside a freeze window are refused (see /api/subscriptions/freeze).
+            const freezeStart = subscription.freezeStartDate instanceof Timestamp ? subscription.freezeStartDate.toDate() : null;
+            const freezeEnd = subscription.freezeEndDate instanceof Timestamp ? subscription.freezeEndDate.toDate() : null;
+            const classStart = getClassStart(classDate, classData.startTime);
+            if (freezeStart && freezeEnd && classStart && classStart >= freezeStart && classStart < freezeEnd) {
+                throw new functions.https.HttpsError(
+                    'failed-precondition',
+                    'Your plan is frozen on this date. End the freeze from your profile to book it.'
                 );
             }
 

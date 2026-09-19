@@ -34,17 +34,25 @@ import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 
 import { doc, updateDoc } from "firebase/firestore"
 import { auth, db } from "@fitconnect/shared/firebase/config"
 
-import { callCancelSubscription } from "@fitconnect/shared/firebase/firestore"
+import { callCancelSubscription, callWithdrawCancellation } from "@fitconnect/shared/firebase/firestore"
+import { CANCELLATION_NOTICE_DAYS, meetsCancellationNotice } from "@fitconnect/shared/subscriptions/policy"
+import { PlanFreezePanel } from "@/components/user/PlanFreezePanel"
 import { getPlanById } from "@fitconnect/shared/types/subscription"
 import { toast } from "sonner"
 import Link from "next/link"
 import { AnimatePresence, motion as m } from "framer-motion"
+
+function formatShortDate(date: Date): string {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
 export default function ProfilePage() {
     const { clientUser, firebaseUser, logoutClient, refreshSubscription } = useClientAuthStore()
     const router = useRouter()
     const [showPasswordSection, setShowPasswordSection] = useState(false)
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+    // Snapshot of "now" for render-time date maths, so renders stay pure.
+    const [nowMs] = useState(() => Date.now())
     const [isCancelling, setIsCancelling] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
@@ -185,13 +193,28 @@ export default function ProfilePage() {
             const result = await callCancelSubscription()
             await refreshSubscription()
             setShowCancelConfirm(false)
-            toast.success(result.mode === 'immediate' ? 'Plan cancelled' : 'Renewal cancelled', {
+            toast.success(result.mode === 'immediate' ? 'Plan cancelled' : 'Cancellation received', {
                 description: result.mode === 'immediate'
                     ? 'Your plan has been cancelled.'
-                    : 'Your membership stays active until the current period ends.',
+                    : result.mode === 'after_next_charge'
+                        ? `Your next payment${result.nextChargeAt ? ` on ${formatShortDate(new Date(result.nextChargeAt))}` : ''} is still due, and your membership ends after that billing period.`
+                        : 'Your membership stays active until the current period ends.',
             })
         } catch (err: unknown) {
             toast.error('Error', { description: err instanceof Error ? err.message : 'Failed to cancel' })
+        } finally {
+            setIsCancelling(false)
+        }
+    }
+
+    const handleWithdrawCancellation = async () => {
+        setIsCancelling(true)
+        try {
+            await callWithdrawCancellation()
+            await refreshSubscription()
+            toast.success('Your membership will keep renewing')
+        } catch (err: unknown) {
+            toast.error('Error', { description: err instanceof Error ? err.message : 'Failed to withdraw cancellation' })
         } finally {
             setIsCancelling(false)
         }
@@ -253,10 +276,16 @@ export default function ProfilePage() {
     const isMembershipPlan = sub.planCategory === 'membership' || currentPlan?.category === 'membership'
     const isUnlimited = !isIntroPlan && sub.classesRemaining === null
     const displayedCredits = isIntroPlan ? sub.introCreditRemaining : sub.classesRemaining
-    const planLabel = sub.planId?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Free'
-    const daysLeft = sub.endDate ? Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0
+    const planLabel = currentPlan?.name ?? (sub.planId?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Free')
+    const daysLeft = sub.endDate ? Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - nowMs) / (1000 * 60 * 60 * 24))) : 0
     const renewalDate = sub.endDate ? new Date(sub.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
     const renewalCanceled = sub.cancelAtPeriodEnd === true
+    const cancelPendingCharge = sub.cancelAfterNextCharge === true
+    // Razorpay bills on the period end; frozen days sit on top of that in endDate.
+    const nextChargeAt = sub.endDate
+        ? new Date(new Date(sub.endDate).getTime() - (sub.accessOffsetDays ?? 0) * 24 * 60 * 60 * 1000)
+        : null
+    const hasCancellationNotice = meetsCancellationNotice(nextChargeAt)
     const providerData = firebaseUser?.providerData ?? auth.currentUser?.providerData ?? []
     const hasPasswordProvider = providerData.some((provider) => provider.providerId === 'password')
     const hasGoogleProvider = providerData.some((provider) => provider.providerId === 'google.com')
@@ -377,17 +406,17 @@ export default function ProfilePage() {
                                         <p className="text-olive-600 font-bold text-sm">{planLabel}</p>
                                         <p className="text-olive-300 text-xs">
                                             {isMembershipPlan
-                                                ? renewalCanceled ? 'Renewal canceled' : 'Auto-renewing'
+                                                ? renewalCanceled ? 'Renewal canceled' : cancelPendingCharge ? 'Ends after next payment' : 'Auto-renewing'
                                                 : 'Class pack'}
                                         </p>
                                     </div>
                                 </div>
                                 <span className={`px-2.5 py-1 rounded-full app-badge-text ring-1 ${
-                                    renewalCanceled
+                                    renewalCanceled || cancelPendingCharge
                                         ? 'bg-yellow-500/10 text-yellow-700 ring-yellow-500/20'
                                         : 'bg-green-500/10 text-green-700 ring-green-500/20'
                                 }`}>
-                                    {renewalCanceled ? 'Renewal Canceled' : 'Active'}
+                                    {renewalCanceled ? 'Renewal Canceled' : cancelPendingCharge ? 'Ending' : 'Active'}
                                 </span>
                             </div>
                             <div className="grid grid-cols-3 gap-3 pt-3 border-t border-peach-400/10">
@@ -413,7 +442,16 @@ export default function ProfilePage() {
                                         <ArrowRight className="w-3.5 h-3.5" />
                                     </Button>
                                 </Link>
-                                {isMembershipPlan && !renewalCanceled && (
+                                {isMembershipPlan && cancelPendingCharge && (
+                                    <button
+                                        onClick={handleWithdrawCancellation}
+                                        disabled={isCancelling}
+                                        className="flex-1 h-11 rounded-xl border-2 border-olive-400/30 text-olive-500 font-black text-xs tracking-wider flex items-center justify-center gap-1.5 hover:bg-peach-100 transition-colors disabled:opacity-50"
+                                    >
+                                        {isCancelling ? 'SAVING...' : 'KEEP MEMBERSHIP'}
+                                    </button>
+                                )}
+                                {isMembershipPlan && !renewalCanceled && !cancelPendingCharge && (
                                     <button
                                         onClick={() => setShowCancelConfirm(true)}
                                         className="flex-1 h-11 rounded-xl border-2 border-terra-400 bg-terra-400/10 text-terra-400 font-black text-xs tracking-wider flex items-center justify-center gap-1.5 hover:bg-terra-400/20 transition-colors"
@@ -440,9 +478,13 @@ export default function ProfilePage() {
                                                     {isMembershipPlan ? 'Cancel renewal?' : 'Cancel your plan?'}
                                                 </p>
                                                 <p className="text-olive-400 text-xs mt-0.5 leading-relaxed">
-                                                    {isMembershipPlan
-                                                        ? `You'll keep access until ${renewalDate}. No further charges.`
-                                                        : 'Class packs do not auto-renew. Credits remain usable until the plan expires.'}
+                                                    {!isMembershipPlan
+                                                        ? 'Class packs do not auto-renew. Credits remain usable until the plan expires.'
+                                                        : hasCancellationNotice
+                                                            ? `You'll keep access until ${renewalDate}. No further charges.`
+                                                            : `Cancellations need ${CANCELLATION_NOTICE_DAYS} days' notice. Your next payment${nextChargeAt ? ` on ${formatShortDate(nextChargeAt)}` : ''} is less than ${CANCELLATION_NOTICE_DAYS} days away, so it will still be collected and your membership ends after that billing period.`}
+                                                    {' '}
+                                                    <Link href="/policies#membership-cancellation" className="text-terra-400 font-bold">Cancellation policy</Link>
                                                 </p>
                                             </div>
                                         </div>
@@ -466,6 +508,8 @@ export default function ProfilePage() {
                                     </m.div>
                                 )}
                             </AnimatePresence>
+
+                            <PlanFreezePanel subscription={sub} onChanged={refreshSubscription} />
                         </div>
                     ) : (
                         <Link href="/user/subscribe" className="block">

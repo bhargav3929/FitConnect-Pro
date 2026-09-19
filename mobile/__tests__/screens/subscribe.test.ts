@@ -43,11 +43,11 @@ vi.mock('firebase/functions', () => ({
 }));
 
 describe('Subscribe screen — plan catalog integration', () => {
-    it('PLAN_CATALOG has 9 plans', async () => {
+    it('PLAN_CATALOG has 10 plans', async () => {
         const { PLAN_CATALOG } = await import(
             '@fitconnect/shared/types/subscription'
         );
-        expect(PLAN_CATALOG).toHaveLength(9);
+        expect(PLAN_CATALOG).toHaveLength(10);
     });
 
     it('has both memberships and class packs', async () => {
@@ -58,7 +58,7 @@ describe('Subscribe screen — plan catalog integration', () => {
         const classPacks = PLAN_CATALOG.filter((p) => p.category === 'class_pack');
 
         expect(memberships.length).toBe(6);
-        expect(classPacks.length).toBe(3);
+        expect(classPacks.length).toBe(4);
     });
 
     it('getPlanById returns the correct plan', async () => {

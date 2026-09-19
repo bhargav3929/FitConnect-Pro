@@ -6,6 +6,7 @@ export type PlanId =
     | 'drop_in'
     | 'single_session'
     | 'kickstarter'
+    | 'ten_class_pack'
     | 'twice_monthly'
     | 'twice_quarterly'
     | 'twice_6mo'
@@ -107,6 +108,29 @@ export const PLAN_CATALOG: PlanDefinition[] = [
             '2x in-studio sessions/week (4 sessions total)',
             '2x short home workouts/week',
             'Accountability support',
+        ],
+    },
+
+    // ── 10-class pack ────────────────────────────────────────────
+    {
+        id: 'ten_class_pack',
+        name: '10 Class Pack',
+        category: 'class_pack',
+        price: 19000,
+        credits: 10,
+        durationDays: 75,
+        maxClassesPerDay: 1,
+        // No weekly cap: one class a day is the only pacing limit.
+        weeklyClassLimit: 7,
+        advanceBookingDays: 14,
+        guestPasses: 0,
+        autoRenew: false,
+        tagline: 'Ten classes on your own schedule. No weekly cap, no auto-renewal.',
+        features: [
+            '10 regular class credits',
+            '75 days to use them',
+            'Book as often as you like',
+            'No auto-renewal',
         ],
     },
 

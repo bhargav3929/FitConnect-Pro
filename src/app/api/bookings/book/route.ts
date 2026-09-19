@@ -6,6 +6,7 @@ import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription
 import { getPlanById, LEGACY_PLAN_MAP } from '@fitconnect/shared/types/subscription';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
 import { classEndAtStudio, classStartAtStudio } from '@fitconnect/shared/schedule/class-time';
+import { isFrozenAt } from '@fitconnect/shared/subscriptions/policy';
 
 function getMondayWeekWindow(date: Date) {
     const start = new Date(date);
@@ -164,6 +165,18 @@ export async function POST(req: NextRequest) {
                     status: 400,
                     error: 'This class is after your subscription end date. Please renew to book it.',
                     code: 'subscription-expired-before-class',
+                };
+            }
+
+            const freezeState = {
+                freezeStartDate: subscription.freezeStartDate instanceof Timestamp ? subscription.freezeStartDate.toDate() : null,
+                freezeEndDate: subscription.freezeEndDate instanceof Timestamp ? subscription.freezeEndDate.toDate() : null,
+            };
+            if (isFrozenAt(freezeState, classStartDate)) {
+                throw {
+                    status: 400,
+                    error: 'Your plan is frozen on this date. End the freeze from your profile to book it.',
+                    code: 'plan-frozen',
                 };
             }
 

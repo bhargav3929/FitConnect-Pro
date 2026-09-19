@@ -5,6 +5,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 import { isIntroClassType } from '@fitconnect/shared/types/class';
 import { classEndAtStudio, classStartAtStudio } from '@fitconnect/shared/schedule/class-time';
+import { isFrozenAt } from '@fitconnect/shared/subscriptions/policy';
 
 // POST — admin enrolls a member into a class, either with a plan credit or complimentary.
 export async function POST(req: NextRequest) {
@@ -148,6 +149,14 @@ export async function POST(req: NextRequest) {
                 const currentClassStart = classStartAtStudio(currentClassDate, currentClass.startTime);
                 if (!currentClassStart || currentClassStart > endDate) {
                     throw { status: 400, error: 'This class is after the member\'s subscription end date.', code: 'subscription-expired-before-class' };
+                }
+
+                const toFreezeDate = (value: unknown) => value instanceof Timestamp ? value.toDate() : null;
+                if (isFrozenAt({
+                    freezeStartDate: toFreezeDate(subscription.freezeStartDate),
+                    freezeEndDate: toFreezeDate(subscription.freezeEndDate),
+                }, currentClassStart)) {
+                    throw { status: 400, error: 'This member\'s plan is frozen on this date. Enroll without a credit or end the freeze first.', code: 'plan-frozen' };
                 }
 
                 if (isDemoClass) {

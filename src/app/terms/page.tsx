@@ -6,9 +6,12 @@ export const metadata: Metadata = {
   description: "Terms for using SOL Pilates Studio class booking, membership, website, and mobile app services.",
 };
 
-const UPDATED_AT = "June 9, 2026";
+const UPDATED_AT = "September 19, 2026";
 
-const sections = [
+type LinkedParagraph = { before: string; href: string; label: string; after: string };
+type Paragraph = string | LinkedParagraph;
+
+const sections: { title: string; body: Paragraph[] }[] = [
   {
     title: "Using SOL Pilates Services",
     body: [
@@ -27,7 +30,13 @@ const sections = [
     title: "Bookings And Attendance",
     body: [
       "Class bookings are subject to availability, plan eligibility, instructor availability, studio capacity, and schedule changes. Booking a class reserves a spot for the selected session only.",
-      "You are responsible for arriving on time and following studio instructions. SOL Pilates Studio may mark missed classes as no-show according to the booking rules shown in the app or communicated by the studio.",
+      "You can cancel a booking in the app up to 12 hours before the class starts and the credit is returned. Inside 12 hours, a booking cannot be cancelled and the credit is used. Doors close 10 minutes after class start, and late arrivals beyond that are not admitted. Missed classes and late arrivals that are not admitted are marked as no-show and the credit is lost.",
+      {
+        before: "Full booking, late arrival, and no-show rules are set out in our ",
+        href: "/policies#booking-cancellation",
+        label: "Studio Policies",
+        after: ", which form part of these Terms.",
+      },
     ],
   },
   {
@@ -35,20 +44,39 @@ const sections = [
     body: [
       "Demo classes, class packs, and memberships may include limits such as credits, weekly booking caps, validity periods, guest passes, or plan-specific restrictions. These limits are shown in the app or website and may vary by plan.",
       "Payments are processed by Razorpay or its payment partners. Physical Pilates classes and studio services are consumed outside the app. Prices, taxes, discounts, and payment methods may change where permitted by law.",
+      "All payments, including memberships, class packs, drop-in classes, and demo classes, are non-refundable except where a refund is required by law. Plans, packs, and credits are personal and cannot be transferred, shared, or sold. Unused credits expire at the end of the plan's validity period.",
+      {
+        before: "See the payments, validity, and transfer sections of our ",
+        href: "/policies#payments-refunds",
+        label: "Studio Policies",
+        after: " for details.",
+      },
     ],
   },
   {
     title: "Cancellations, Renewals, And Schedule Changes",
     body: [
-      "Memberships, renewals, plan changes, and cancellations are handled according to the rules shown at checkout, in your profile, or in studio communications. If a renewal is canceled, access may continue until the current paid period ends.",
-      "SOL Pilates Studio may cancel, reschedule, substitute, or modify classes when needed because of instructor availability, safety, facility issues, holidays, or operational reasons. If we cancel a class, we may restore the applicable credit or provide another remedy at our discretion and as required by law.",
+      "Cancelling an auto-renewing membership requires at least 14 days' notice before the next billing date. If you cancel 14 or more days before the next charge, renewal stops and access continues until the end of the current paid period. If you cancel with less than 14 days to go, the next scheduled payment is still collected and the membership ends at the end of that following period. Class packs do not auto-renew. Memberships and class packs may be frozen once every 12 months for up to 30 days.",
+      "SOL Pilates Studio may cancel, reschedule, substitute instructors for, or modify classes because of instructor availability, safety, facility issues, holidays, or operational reasons, with at least 12 hours' notice except in emergencies. If we cancel a class you have booked, the credit is returned to your plan.",
+      {
+        before: "Membership cancellation, freeze, and schedule change rules are set out in our ",
+        href: "/policies#membership-cancellation",
+        label: "Studio Policies",
+        after: ".",
+      },
     ],
   },
   {
     title: "Health And Safety",
     body: [
       "Pilates and fitness activities involve physical movement and may involve risk of injury. You are responsible for deciding whether a class is appropriate for your health, ability, and condition.",
-      "Consult a qualified medical professional before starting any exercise program if you have injuries, health conditions, pain, pregnancy-related concerns, or any uncertainty. Tell the instructor about relevant limitations before class.",
+      "Consult a qualified medical professional before starting any exercise program if you have injuries, health conditions, pain, pregnancy-related concerns, or any uncertainty. You must disclose any medical conditions, injuries, surgeries, pregnancy or postnatal status, or medications that may affect exercise before your first class and whenever something changes, and provide a doctor's written clearance after surgery or injury before resuming classes.",
+      {
+        before: "Health disclosure, safety, and studio etiquette rules are set out in our ",
+        href: "/policies#health-medical",
+        label: "Studio Policies",
+        after: ".",
+      },
     ],
   },
   {
@@ -119,9 +147,19 @@ export default function TermsPage() {
                     {section.title}
                   </h2>
                   <div className="space-y-4 text-olive-400 leading-relaxed">
-                    {section.body.map((paragraph) => (
-                      <p key={paragraph}>{paragraph}</p>
-                    ))}
+                    {section.body.map((paragraph) =>
+                      typeof paragraph === "string" ? (
+                        <p key={paragraph}>{paragraph}</p>
+                      ) : (
+                        <p key={paragraph.before}>
+                          {paragraph.before}
+                          <Link className="text-terra-400 font-bold" href={paragraph.href}>
+                            {paragraph.label}
+                          </Link>
+                          {paragraph.after}
+                        </p>
+                      ),
+                    )}
                   </div>
                 </section>
               ))}

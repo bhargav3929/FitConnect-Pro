@@ -1,7 +1,7 @@
 "use client";
 import Link from 'next/link';
 import Image from 'next/image';
-import { Instagram, Mail } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 import { Reveal } from '@/lib/animation/Reveal';
 
 const SOL_INSTAGRAM_URL = "https://instagram.com/pilates.with.swetha";
@@ -27,6 +27,7 @@ const COPY = {
     legalLinks: [
         { label: "Privacy Policy", href: "/privacy" },
         { label: "Terms of Service", href: "/terms" },
+        { label: "Studio Policies", href: "/policies" },
         { label: "Contact", href: "/contact" },
     ],
     newsletterHeading: "STAY CONNECTED",
@@ -38,6 +39,7 @@ const COPY = {
     bottomLinks: [
         { label: "Privacy", href: "/privacy" },
         { label: "Terms", href: "/terms" },
+        { label: "Policies", href: "/policies" },
         { label: "Contact", href: "/contact" },
     ],
 };

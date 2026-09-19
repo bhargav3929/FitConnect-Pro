@@ -62,6 +62,24 @@ export default function AccountDeletionPage() {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl bg-peach-50 border border-peach-400/30 p-6 md:p-10">
             <div className="space-y-10">
+              <div
+                role="alert"
+                className="border-l-4 border-terra-500 bg-terra-400/10 p-5 md:p-6"
+              >
+                <p className="text-sm font-black tracking-widest uppercase text-terra-600 mb-2">
+                  Before you delete
+                </p>
+                <p className="text-olive-600 leading-relaxed">
+                  Deleting your account permanently removes all remaining credits and plans. They
+                  cannot be restored or refunded. An auto-renewing membership stops immediately and
+                  any paid time left on it is forfeited. See our{" "}
+                  <Link className="text-terra-500 font-bold" href="/policies#account-deletion">
+                    Studio Policies
+                  </Link>
+                  .
+                </p>
+              </div>
+
               {sections.map((section) => (
                 <section key={section.title}>
                   <h2 className="text-2xl md:text-3xl font-black text-olive-600 tracking-normal mb-4 font-display">

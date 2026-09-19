@@ -37,12 +37,15 @@ import {
 } from "@fitconnect/shared/firebase/firestore"
 import type { SubscriptionEvent } from "@fitconnect/shared/types/subscriptionEvent"
 import { SubscriptionTimeline } from "@/components/admin/SubscriptionTimeline"
+import { MemberPlanDialog, type MemberPlanDialogMode } from "@/components/admin/MemberPlanDialog"
+import { PLAN_CATALOG, getPlanById } from "@fitconnect/shared/types/subscription"
+import { hasOpenFreeze } from "@fitconnect/shared/subscriptions/policy"
 import { UserProfile } from "@fitconnect/shared/types/user"
 import { formatPhone, normalizePhone, PHONE_VALIDATION_MESSAGE } from "@fitconnect/shared/utils/phone"
 import { Booking } from "@fitconnect/shared/types/booking"
 import { toast } from "sonner"
 
-const PLAN_FILTERS = ["All Plans", "unlimited", "twice_weekly", "once_weekly", "drop_in", "five_pack", "ten_pack"]
+const PLAN_FILTERS = ["All Plans", ...PLAN_CATALOG.map((plan) => plan.id)]
 const STATUS_FILTERS = ["All Status", "active", "No Plan", "expired", "canceled"]
 const PAGE_SIZE = 12
 const MEMBER_BOOKINGS_LIMIT = 50
@@ -56,6 +59,28 @@ interface MemberFormData {
 }
 
 const defaultMemberForm: MemberFormData = { name: "", email: "", phone: "", age: "", password: "" }
+
+/** Up to two initials from the letters of the name, so "Asha (guest)" reads "A" rather than "A(". */
+function getInitials(name: string | undefined): string {
+    const letters = (name ?? '').split(/\s+/).map((part) => part.replace(/[^\p{L}]/gu, '')[0]).filter(Boolean)
+    return letters.slice(0, 2).join('').toUpperCase() || '?'
+}
+
+/** The catalog name for a plan id, falling back to a readable id for legacy plans. */
+function getPlanLabel(planId: string | null | undefined): string {
+    if (!planId) return 'None'
+    return getPlanById(planId)?.name ?? planId.replace(/_/g, ' ')
+}
+
+function toJsDate(value: unknown): Date | null {
+    if (!value) return null
+    if (value instanceof Date) return value
+    if (typeof value === "object" && "toDate" in value && typeof (value as { toDate: () => Date }).toDate === "function") {
+        return (value as { toDate: () => Date }).toDate()
+    }
+    const d = new Date(value as string | number)
+    return Number.isNaN(d.getTime()) ? null : d
+}
 
 function getDateTime(date: Date | string | null | undefined): number {
     if (!date) return 0
@@ -82,6 +107,9 @@ export default function MembersPage() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [formData, setFormData] = useState<MemberFormData>(defaultMemberForm)
     const [isSaving, setIsSaving] = useState(false)
+
+    // Plan & credits / freeze dialog
+    const [planDialogMode, setPlanDialogMode] = useState<MemberPlanDialogMode | null>(null)
 
     // Delete confirmation
     const [memberToDelete, setMemberToDelete] = useState<UserProfile | null>(null)
@@ -128,6 +156,17 @@ export default function MembersPage() {
             setIsLoadingEvents(true)
         }
     }, [selectedMember])
+
+    // After an admin edit, reload so the list, drawer and history all show the new state.
+    const reloadMembers = async (focusUid?: string) => {
+        try {
+            const items = await getAllMembers()
+            setMembers(items.sort((a, b) => getDateTime(b.createdAt) - getDateTime(a.createdAt)))
+            if (focusUid) setSelectedMember(items.find((m) => m.uid === focusUid) ?? null)
+        } catch {
+            toast.error("Failed to reload members")
+        }
+    }
 
     useEffect(() => {
         let cancelled = false
@@ -409,7 +448,7 @@ export default function MembersPage() {
                     className="h-12 px-4 bg-peach-50 border border-peach-400/20 text-olive-600 focus:border-terra-400/50 focus:outline-none appearance-none cursor-pointer capitalize hover:border-peach-400/40 transition-colors"
                 >
                     {PLAN_FILTERS.map(plan => (
-                        <option key={plan} value={plan} className="capitalize">{plan}</option>
+                        <option key={plan} value={plan}>{PLAN_CATALOG.find((p) => p.id === plan)?.name ?? plan}</option>
                     ))}
                 </select>
                 <select
@@ -484,7 +523,7 @@ export default function MembersPage() {
                                                 <Avatar className="h-10 w-10 ring-2 ring-peach-400/10 group-hover:ring-terra-400/20 transition-all">
                                                     <AvatarImage src={member.profilePictureUrl} className="object-cover" />
                                                     <AvatarFallback className="bg-peach-200/60 text-olive-600 font-bold text-sm">
-                                                        {(member.name ?? '?').split(' ').map(n => n[0]).join('')}
+                                                        {getInitials(member.name)}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div>
@@ -494,7 +533,7 @@ export default function MembersPage() {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-olive-400 capitalize text-sm font-medium">{member.subscription.planId?.replace(/_/g, ' ') || 'None'}</span>
+                                            <span className="text-olive-400 capitalize text-sm font-medium">{getPlanLabel(member.subscription?.planId)}</span>
                                         </td>
                                         <td className="p-4">
                                             <span className={`inline-flex px-2.5 py-1 app-badge-text rounded-sm ${getStatusColor(getDisplayStatus(member))}`}>
@@ -546,7 +585,7 @@ export default function MembersPage() {
                                         <Avatar className="h-10 w-10 ring-2 ring-peach-400/10">
                                             <AvatarImage src={member.profilePictureUrl} className="object-cover" />
                                             <AvatarFallback className="bg-peach-200/60 text-olive-600 font-bold text-sm">
-                                                {(member.name ?? '?').split(' ').map(n => n[0]).join('')}
+                                                {getInitials(member.name)}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
@@ -561,7 +600,7 @@ export default function MembersPage() {
                                 <div className="grid grid-cols-3 gap-2 text-sm ml-[52px] mb-3">
                                     <div>
                                         <p className="app-stat-label mb-0.5">Plan</p>
-                                        <p className="text-olive-400 font-medium capitalize">{member.subscription?.planId?.replace(/_/g, ' ') || 'None'}</p>
+                                        <p className="text-olive-400 font-medium capitalize">{getPlanLabel(member.subscription?.planId)}</p>
                                     </div>
                                     <div>
                                         <p className="app-stat-label mb-0.5">Classes</p>
@@ -656,7 +695,7 @@ export default function MembersPage() {
                                     <Avatar className="h-14 w-14 ring-2 ring-peach-400/15">
                                         <AvatarImage src={selectedMember.profilePictureUrl} className="object-cover" />
                                         <AvatarFallback className="bg-peach-200/60 text-olive-600 font-black text-lg">
-                                            {(selectedMember.name ?? '?').split(' ').map(n => n[0]).join('')}
+                                            {getInitials(selectedMember.name)}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
@@ -687,7 +726,7 @@ export default function MembersPage() {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <p className="app-stat-label mb-0.5">Plan</p>
-                                            <p className="text-olive-600 font-semibold text-sm capitalize">{selectedMember.subscription.planId?.replace(/_/g, ' ') || 'None'}</p>
+                                            <p className="text-olive-600 font-semibold text-sm capitalize">{getPlanLabel(selectedMember.subscription?.planId)}</p>
                                         </div>
                                         <div>
                                             <p className="app-stat-label mb-0.5">Status</p>
@@ -726,6 +765,48 @@ export default function MembersPage() {
                                             <p className="text-sm text-olive-400">{formatDate(selectedMember.subscription?.endDate)}</p>
                                         </div>
                                     )}
+                                    {hasOpenFreeze({
+                                        freezeStartDate: toJsDate(selectedMember.subscription?.freezeStartDate),
+                                        freezeEndDate: toJsDate(selectedMember.subscription?.freezeEndDate),
+                                    }) && (
+                                        <div className="pt-2 border-t border-peach-400/15">
+                                            <p className="app-stat-label mb-0.5">Frozen</p>
+                                            <p className="text-sm text-olive-400">
+                                                {formatDate(selectedMember.subscription?.freezeStartDate)} to {formatDate(selectedMember.subscription?.freezeEndDate)}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {selectedMember.subscription?.cancelAfterNextCharge && (
+                                        <div className="pt-2 border-t border-peach-400/15">
+                                            <p className="app-stat-label mb-0.5">Cancellation</p>
+                                            <p className="text-sm text-olive-400">Ends after the next charge (late notice)</p>
+                                        </div>
+                                    )}
+                                    {selectedMember.subscription?.cancelAtPeriodEnd && (
+                                        <div className="pt-2 border-t border-peach-400/15">
+                                            <p className="app-stat-label mb-0.5">Cancellation</p>
+                                            <p className="text-sm text-olive-400">Renewal stopped, ends on the expiry date</p>
+                                        </div>
+                                    )}
+                                    <div className="pt-3 border-t border-peach-400/15 flex gap-2">
+                                        <button
+                                            onClick={() => setPlanDialogMode("edit")}
+                                            className="flex-1 h-10 bg-terra-400 text-peach-50 text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-terra-300 transition-colors"
+                                        >
+                                            Edit Plan & Credits
+                                        </button>
+                                        {selectedMember.subscription?.status === "active" && selectedMember.subscription?.planId && (
+                                        <button
+                                            onClick={() => setPlanDialogMode("freeze")}
+                                            className="flex-1 h-10 border border-peach-400/25 text-olive-500 text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-peach-200/40 transition-colors"
+                                        >
+                                            {hasOpenFreeze({
+                                                freezeStartDate: toJsDate(selectedMember.subscription?.freezeStartDate),
+                                                freezeEndDate: toJsDate(selectedMember.subscription?.freezeEndDate),
+                                            }) ? "Manage Freeze" : "Freeze Plan"}
+                                        </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Scheduled Classes */}
@@ -881,6 +962,18 @@ export default function MembersPage() {
                     </>
                 )}
             </AnimatePresence>
+
+            <MemberPlanDialog
+                key={`${selectedMember?.uid ?? "none"}-${planDialogMode ?? "closed"}`}
+                member={planDialogMode ? selectedMember : null}
+                mode={planDialogMode ?? "edit"}
+                onClose={() => setPlanDialogMode(null)}
+                onSaved={() => {
+                    const uid = selectedMember?.uid
+                    setPlanDialogMode(null)
+                    void reloadMembers(uid)
+                }}
+            />
 
             {/* ═══════════ ADD MEMBER DIALOG ═══════════ */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

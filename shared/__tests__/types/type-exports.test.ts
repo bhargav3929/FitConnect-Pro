@@ -85,8 +85,8 @@ describe('type exports', () => {
     });
 
     it('PlanId union accepts valid values', () => {
-        const ids: PlanId[] = ['drop_in', 'single_session', 'kickstarter', 'twice_monthly', 'twice_quarterly', 'twice_6mo', 'thrice_monthly', 'thrice_quarterly', 'thrice_6mo'];
-        expect(ids).toHaveLength(9);
+        const ids: PlanId[] = ['drop_in', 'single_session', 'kickstarter', 'ten_class_pack', 'twice_monthly', 'twice_quarterly', 'twice_6mo', 'thrice_monthly', 'thrice_quarterly', 'thrice_6mo'];
+        expect(ids).toHaveLength(10);
     });
 
     it('PlanCategory union accepts valid values', () => {

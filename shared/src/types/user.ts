@@ -37,6 +37,19 @@ export interface UserProfile {
         lastSyncedAt?: Date | null;
         kickstarterCreditsCarriedForward?: boolean;
         carriedForwardCredits?: number;
+        /** Scheduled or in-progress freeze window; bookings inside it are blocked. */
+        freezeStartDate?: Date | null;
+        freezeEndDate?: Date | null;
+        freezeDays?: number;
+        lastFreezeRequestedAt?: Date | null;
+        /**
+         * Days of frozen access carried on top of the Razorpay billing period.
+         * Every renewal sets endDate = Razorpay current_end + accessOffsetDays.
+         */
+        accessOffsetDays?: number;
+        /** Cancelled inside the notice window: cancel renewal right after the next charge. */
+        cancelAfterNextCharge?: boolean;
+        cancelRequestedAt?: Date | null;
     };
     address?: {
         line1: string;

@@ -2,6 +2,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { getPlanById } from '@fitconnect/shared/types/subscription';
 import { FieldValue, type DocumentReference, type Transaction } from 'firebase-admin/firestore';
 import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
+import { FRESH_PLAN_POLICY_STATE } from '@/lib/subscriptions/billing';
 
 /**
  * Grants plan access for a one-time Razorpay Order (drop_in, kickstarter).
@@ -150,6 +151,17 @@ export async function grantOrderAccess(options: {
         const endDate = new Date(now);
         endDate.setDate(endDate.getDate() + plan.durationDays);
 
+        // Buying a pack while another pack is still running tops it up rather
+        // than wiping the credits the member already paid for.
+        const carriedPackCredits = plan.id !== 'drop_in'
+            && typeof plan.credits === 'number'
+            && currentSub?.planCategory === 'class_pack'
+            && currentSub?.planId !== 'drop_in'
+            && isActiveUnexpiredSubscription(currentSub)
+            && typeof currentSub?.classesRemaining === 'number'
+            ? Math.max(0, currentSub.classesRemaining)
+            : 0;
+
         transaction.update(paymentRef, {
             status: 'succeeded',
             razorpayPaymentId,
@@ -160,12 +172,15 @@ export async function grantOrderAccess(options: {
         });
 
         const userUpdate = {
+            ...FRESH_PLAN_POLICY_STATE,
             'subscription.planId': plan.id,
             'subscription.planCategory': plan.category,
             'subscription.startDate': now,
             'subscription.endDate': endDate,
             'subscription.status': 'active',
-            'subscription.classesRemaining': plan.id === 'drop_in' ? 0 : plan.credits,
+            'subscription.classesRemaining': plan.id === 'drop_in'
+                ? 0
+                : plan.credits === null ? null : plan.credits + carriedPackCredits,
             'subscription.introCreditRemaining': plan.id === 'drop_in' ? 1 : currentIntroCredit,
             'subscription.maxClassesPerDay': plan.maxClassesPerDay,
             'subscription.weeklyClassLimit': plan.weeklyClassLimit,
@@ -180,7 +195,8 @@ export async function grantOrderAccess(options: {
             userId,
             action: 'plan-granted',
             source: eventSource,
-            reason: `Paid for ${plan.name} (${plan.id}); access until ${endDate.toISOString()}`,
+            reason: `Paid for ${plan.name} (${plan.id}); access until ${endDate.toISOString()}`
+                + (carriedPackCredits > 0 ? `; ${carriedPackCredits} unused credit(s) from ${String(currentSub?.planId)} carried over` : ''),
             actorId: expectedUserId ?? null,
             paymentId: paymentRef.id,
             razorpayPaymentId,

@@ -24,6 +24,13 @@ export const DEFAULT_SUBSCRIPTION: ClientUser['subscription'] = {
     lastSyncedAt: null,
     kickstarterCreditsCarriedForward: false,
     carriedForwardCredits: 0,
+    freezeStartDate: null,
+    freezeEndDate: null,
+    freezeDays: 0,
+    lastFreezeRequestedAt: null,
+    accessOffsetDays: 0,
+    cancelAfterNextCharge: false,
+    cancelRequestedAt: null,
 }
 
 export const DEFAULT_STATS: ClientUser['stats'] = {
@@ -117,6 +124,13 @@ export function normalizeSubscription(raw: Record<string, unknown> | undefined):
         lastSyncedAt: toSafeDate(raw.lastSyncedAt),
         kickstarterCreditsCarriedForward: raw.kickstarterCreditsCarriedForward === true,
         carriedForwardCredits: typeof raw.carriedForwardCredits === 'number' ? raw.carriedForwardCredits : 0,
+        freezeStartDate: toSafeDate(raw.freezeStartDate),
+        freezeEndDate: toSafeDate(raw.freezeEndDate),
+        freezeDays: typeof raw.freezeDays === 'number' ? raw.freezeDays : 0,
+        lastFreezeRequestedAt: toSafeDate(raw.lastFreezeRequestedAt),
+        accessOffsetDays: typeof raw.accessOffsetDays === 'number' ? raw.accessOffsetDays : 0,
+        cancelAfterNextCharge: raw.cancelAfterNextCharge === true,
+        cancelRequestedAt: toSafeDate(raw.cancelRequestedAt),
     }
 }
 

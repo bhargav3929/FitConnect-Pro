@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { classStartAtStudio } from '@fitconnect/shared/schedule/class-time';
+import { BOOKING_CANCELLATION_WINDOW_HOURS } from '@fitconnect/shared/subscriptions/policy';
 import { recordSubscriptionEvent, subscriptionChanges } from '@/lib/subscription-events';
 
 export async function POST(req: NextRequest) {
@@ -61,25 +63,14 @@ export async function POST(req: NextRequest) {
             const classDoc = await transaction.get(classRef);
             const userRef = adminDb.collection('users').doc(bookingData.userId);
 
-            // 12-hour cancellation window (non-admins only)
+            // 12-hour cancellation window (non-admins only). The class start is
+            // resolved in studio time; the server clock may be in any timezone.
             if (!isAdmin && classDoc.exists) {
                 const cd = classDoc.data()!;
-                const rawDate = cd.date;
-                let classStart: Date;
-                if (rawDate && typeof rawDate === 'object' && 'seconds' in (rawDate as Record<string, unknown>)) {
-                    classStart = new Date((rawDate as { seconds: number }).seconds * 1000);
-                } else if (rawDate instanceof Date) {
-                    classStart = new Date(rawDate.getTime());
-                } else {
-                    classStart = new Date(rawDate as string);
-                }
-                const startTime = cd.startTime as string | undefined;
-                if (startTime && /^\d{2}:\d{2}$/.test(startTime)) {
-                    const [h, m] = startTime.split(':').map(Number);
-                    classStart.setHours(h, m, 0, 0);
-                }
-                if (classStart.getTime() - Date.now() < 12 * 60 * 60 * 1000) {
-                    throw { status: 400, error: 'Cancellations are only allowed up to 12 hours before the class starts', code: 'failed-precondition' };
+                const classDate = cd.date instanceof Timestamp ? cd.date.toDate() : new Date(cd.date);
+                const classStart = classStartAtStudio(classDate, cd.startTime);
+                if (classStart && classStart.getTime() - Date.now() < BOOKING_CANCELLATION_WINDOW_HOURS * 60 * 60 * 1000) {
+                    throw { status: 400, error: `Cancellations are only allowed up to ${BOOKING_CANCELLATION_WINDOW_HOURS} hours before the class starts`, code: 'failed-precondition' };
                 }
             }
 
